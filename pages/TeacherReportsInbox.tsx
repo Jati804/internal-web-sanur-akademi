@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo } from 'react';
 import { User, Attendance } from '../types';
 import { supabase } from '../services/supabase.ts';
@@ -152,7 +153,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
   }, [reportForm.sessions]);
 
   const handlePublishReport = async () => {
-    if (!reportForm.narrative || reportForm.sessions.some(s => !s.material)) return alert("Lengkapi data materi per sesi ya! ✨");
+    if (!reportForm.narrative || reportForm.sessions.some(s => !s.material)) return alert("Lengkapi data materi per sesi Kak! ✨");
     setLoading(true);
     try {
       const sName = selectedPackage.studentsAttended?.[0] || 'SISWA';
@@ -202,7 +203,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
 
       <div className="bg-orange-50 p-6 rounded-[2.5rem] border border-orange-100 flex items-center gap-4 animate-pulse shadow-sm max-w-2xl mx-auto">
          <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-orange-600 shadow-sm shrink-0"><Info size={20}/></div>
-         <p className="text-[10px] font-black text-orange-800 uppercase italic">"Info: Jika rapot siswa sudah keluar, ingatkan siswa untuk segera mengamankan filenya ya! Karena akun akan dihapus pengurus setelah siswa satu tahun lulus untuk meringankan sistem. ✨"</p>
+         <p className="text-[10px] font-black text-orange-800 uppercase italic">"Info: Jika rapot siswa sudah keluar, ingatkan mereka segera mengamankan filenya ya Kak! Karena akun akan dihapus pengurus setelah satu tahun lulus untuk meringankan sistem. ✨"</p>
       </div>
 
       <div className="flex bg-slate-100 p-2 rounded-[2rem] w-full max-w-xl mx-auto shadow-inner">
