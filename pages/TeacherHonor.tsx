@@ -85,16 +85,26 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs }) => {
     if (!Array.isArray(logs)) return [];
     const groups: Record<string, any> = {};
     
+    // FILTER: Hanya sesi mengajar (SESSION/SUB) 
+    // DAN guru terkait 
+    // DAN tahun sesuai 
+    // DAN harus ada penghasilannya (earnings > 0). Rapot tidak boleh muncul di dompet honor.
     const relevantLogs = logs.filter(l => 
       (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG') && 
       (l.teacherId === user.id || l.originalTeacherId === user.id) &&
-      l.date.startsWith(selectedYear)
+      l.date.startsWith(selectedYear) &&
+      (l.earnings || 0) > 0
     );
 
     relevantLogs.forEach(log => {
       const pkgId = log.packageId || 'UNKNOWN';
       if (!groups[pkgId]) {
-        const fullCycle = logs.filter(l => l.packageId === pkgId).sort((a,b) => (a.sessionNumber||0) - (b.sessionNumber||0));
+        // Ambil data dalam siklus tersebut yang juga memenuhi syarat gaji
+        const fullCycle = logs.filter(l => 
+          l.packageId === pkgId && 
+          (l.earnings || 0) > 0
+        ).sort((a,b) => (a.sessionNumber||0) - (b.sessionNumber||0));
+
         const myEarningsInThisCycle = fullCycle
           .filter(l => l.teacherId === user.id)
           .reduce((sum, curr) => sum + (curr.earnings || 0), 0);
@@ -132,7 +142,12 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs }) => {
   }, [logs, user.id, selectedYear, searchTerm]);
 
   const unpaidTotal = useMemo(() => 
-    logs.filter(l => l.teacherId === user.id && l.paymentStatus === 'UNPAID' && l.date.startsWith(selectedYear)).reduce((acc, curr) => acc + (curr.earnings || 0), 0)
+    logs.filter(l => 
+      l.teacherId === user.id && 
+      l.paymentStatus === 'UNPAID' && 
+      l.date.startsWith(selectedYear) &&
+      (l.earnings || 0) > 0
+    ).reduce((acc, curr) => acc + (curr.earnings || 0), 0)
   , [logs, user.id, selectedYear]);
 
   return (
