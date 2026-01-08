@@ -1,0 +1,7 @@
+{
+  "name": "Management Sistem SANUR Akademi Inspirasi",
+  "description": "Sistem Manajemen Internal SANUR Akademi Inspirasi",
+  "requestFramePermissions": [
+    "camera"
+  ]
+}

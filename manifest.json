@@ -1,0 +1,21 @@
+
+{
+  "name": "SANUR Akademi Inspirasi",
+  "short_name": "Sanur",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/user-attachments/assets/080a8f94-67f7-49d7-84a7-897b2521c761",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/user-attachments/assets/080a8f94-67f7-49d7-84a7-897b2521c761",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
