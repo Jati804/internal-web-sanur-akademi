@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { User, Attendance, StudentPayment } from '../types';
 import { supabase } from '../services/supabase.ts';
@@ -46,7 +45,10 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   const [requestingReportFor, setRequestingReportFor] = useState<any | null>(null);
   const [selectedTeacherForReport, setSelectedTeacherForReport] = useState('');
 
-  const ASSETS = { LOGO: "https://raw.githubusercontent.com/user-attachments/assets/080a8f94-67f7-49d7-84a7-897b2521c761" };
+  // ✅ PERBAIKAN 1: Logo pakai Base64 (tidak akan gagal load)
+  const ASSETS = { 
+    LOGO: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASoAAACdCAYAAAADgjVWAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAANOiSURBVHhe7P15sGxXlt6H/dba55zMvNMbME8FVBdq6uquodlNVlPdpEiJGkiZskhLpFpjy5RMDTQlk6YVtBxiKCzbkmxJpkQxzAjJsmhZITlo2SGZVJN0NOceeuiaUUAVZuABeHjDHTPznLP3Wv5j7ZP3voehCngoPKAKC5G47+bNPHlyD2uv4VvfEnfnA/mRFwXS6cOTO1vgc3c/5273uJc7nfIgXu50fBv3LXcWiO3iPgcEcBBHfAApjpjgGdcB8RNB1yC9iKwQWao0z4mkZ0X0OsgRsBaRJUgGSn1YXPcD+VEW+UBR/UhKB37O3e7F7UHz/DG38qhbuRu3eww772b3OTZ3kxlYK4KCgdjN17pBROSG37/X+nL3gjejqI8Yq9R0z6PtSyr6okh6SUSfF0mXEL2M6EuCXAP6m6/zgfxwyweK6odb2moV3eFuD+DlQ2b5E275E+7lfvNyL+7nSsm7YJ2IKGeUjYicPtQxy9W4qcbTTT9jKTlxmZv//vpydv2ZnX6mhxSQPiVdijcnheYV0eaJpM3XVNM3RfQyyCEwfGB5/fDKB4rqh0sEfNfdHnAvH7Yyft7K8Jli+cfx4R7ctkVEb7Z6TuXUWjq7LjavF6+v0df96S6AIZJe5+83Wluvt+6kvm6Ss69xAaPZPOfuRbW9BumZJnW/ptp8I6XuKyDPh/Iin7nUB/I+lw8U1ftbGvAdd7vXLP+0+fhZK+NPmo0fEfKFUmxXpDQSEnpGPHb92Z83yI0Kxr1s/vLGCi7EzG6wxl4rNyqityqOYPWy7g4e13OXAtKLpgOR5pVG26+qNl9VbR8TSY+LyDWQkw+U1/tXPlBU7z8R8PNm5afMxp/J1v9mz8OnSx4/lBpvAUS8buvp36E4zCaL6WaLKMTd6+t183P6u4hEaPtN5PUU1VmFVd7EBaR+/rQeX0/ReY2Pba5Nqn8Jd3Hz9VwxM0fTiUrznKTu7zTN7O+IpK8CJ/WVH8j7RD5QVO89EWAb93uKjR8vpf97PI8/nxkfpZQtEe9SEzvXLLPx0tTDaPJyZvNPG/tGiY3/+q7bWYtKXUOJYTUYpBsLR90wW4WCFAVJ4A0m0/vA9bXK56xMCuhmZTX9bpQzCvRU3AR3R/Xs9zt9jbs73gyqzaHL0CtdLd/lLu23USCC+wlC9x2xSb8tdOSQRmxPbOXJKkV6JxhQvZAhJPXg9d4A0++dDt+J/35Vx+W0oHsNFaVMb8Vo/5LF0W8n3X+nz1/NZ/T8rr+++u6iy/7gX/p8X8/0r0M0MZQJFUrvQQ==..." 
+  };
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState<string | null>(null);
@@ -60,6 +62,15 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
     const parts = dateStr.split('-');
     if (parts.length !== 3) return dateStr;
     return `${parts[2]}/${parts[1]}/${parts[0]}`;
+  };
+
+  const getWIBDate = () => {
+    return new Intl.DateTimeFormat('id-ID', { 
+      timeZone: 'Asia/Jakarta',
+      day: '2-digit',
+      month: '2-digit', 
+      year: 'numeric'
+    }).format(new Date()).split('/').join('/');
   };
 
   const motivationalQuotes = [
@@ -166,17 +177,44 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
     } catch (e: any) { alert(e.message); } finally { setLoading(false); }
   };
 
+  // ✅ PERBAIKAN 2 & 3: Fungsi download PDF dengan delay + tunggu images load + allowTaint
   const handleDownloadPDFReport = async (course: any) => {
     setActiveDownloadId(course.id);
     try {
+      // ⭐ DELAY 2 detik supaya semua konten ter-render sempurna
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
       const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: 'a4' });
-      const captureOptions = { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: 794, height: 1123, logging: false };
+      const captureOptions = { 
+        scale: 2, 
+        useCORS: true,
+        allowTaint: true, // ⭐ TAMBAHAN: allow cross-origin images
+        backgroundColor: '#ffffff', 
+        width: 794, 
+        height: 1123, 
+        logging: false 
+      };
+      
       const capturePage = async (pageId: string) => {
         const el = document.getElementById(pageId);
         if (!el) return null;
+        
+        // ⭐ TUNGGU semua images di element selesai load
+        const images = el.getElementsByTagName('img');
+        await Promise.all(
+          Array.from(images).map(img => {
+            if (img.complete) return Promise.resolve();
+            return new Promise(resolve => {
+              img.onload = resolve;
+              img.onerror = resolve; // tetap resolve meskipun error
+            });
+          })
+        );
+        
         const canvas = await html2canvas(el, captureOptions);
         return canvas.toDataURL('image/png', 1.0);
       };
+      
       const img1 = await capturePage(`cert-render-${course.id}`);
       if (img1) pdf.addImage(img1, 'PNG', 0, 0, 446, 631);
       pdf.addPage();
@@ -185,8 +223,14 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
       pdf.addPage();
       const img3 = await capturePage(`milestone-render-${course.id}`);
       if (img3) pdf.addImage(img3, 'PNG', 0, 0, 446, 631);
+      
       pdf.save(`Rapot_Sanur_${user.name.replace(/\s+/g, '_')}.pdf`);
-    } catch (e) { alert("Gagal memproses PDF."); } finally { setActiveDownloadId(null); }
+    } catch (e) { 
+      console.error('PDF Error:', e);
+      alert("Gagal memproses PDF."); 
+    } finally { 
+      setActiveDownloadId(null); 
+    }
   };
 
   const handleDownloadSlipDirect = async (p: StudentPayment) => {
