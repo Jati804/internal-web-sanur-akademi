@@ -123,7 +123,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
         <div className="w-full max-w-4xl">
           {view === 'SELECTION' ? (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <RoleCard icon={UserCog} title="Pengurus" color="blue" desc="Admin & Keuangan" onClick={() => handleSelectRole('ADMIN')} />
+              <RoleCard icon={UserCog} title="Pengurus" color="blue" desc="Admin, Keuangan, Pengelolaan" onClick={() => handleSelectRole('ADMIN')} />
               <RoleCard icon={GraduationCap} title="Pengajar" color="orange" desc="Log Sesi Guru, Honor, Rapot" onClick={() => handleSelectRole('TEACHER')} />
               <RoleCard icon={Users} title="Siswa" color="emerald" desc="Pembayaran, Progres, Sertifikat" onClick={() => handleSelectRole('STUDENT')} />
               
