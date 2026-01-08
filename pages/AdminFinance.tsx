@@ -71,7 +71,16 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
 
   const payrollQueue = useMemo(() => {
     const items: Record<string, any> = {};
-    attendanceLogs.filter(l => (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG') && l.paymentStatus === 'UNPAID').forEach(log => {
+    
+    // FILTER: Hanya sesi mengajar asli (SESSION_LOG / SUB_LOG) 
+    // DAN bukan laporan mandiri siswa
+    // DAN yang memiliki nominal penghasilan (earnings > 0)
+    attendanceLogs.filter(l => 
+      (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG') && 
+      l.paymentStatus === 'UNPAID' && 
+      l.teacherId !== 'SISWA_MANDIRI' &&
+      (l.earnings || 0) > 0
+    ).forEach(log => {
       const key = `${log.packageId}-${log.teacherId}`;
       if (!items[key]) {
         items[key] = {
@@ -82,7 +91,12 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
           className: log.className, 
           amount: 0, 
           sessionCount: 0, 
-          fullPackageLogs: attendanceLogs.filter(all => all.packageId === log.packageId).sort((a,b) => (a.sessionNumber||0)-(b.sessionNumber||0)),
+          // Ambil full log paket yang HANYA dari laporan guru saja untuk visualisasi dompet
+          fullPackageLogs: attendanceLogs.filter(all => 
+            all.packageId === log.packageId && 
+            all.teacherId !== 'SISWA_MANDIRI' && 
+            (all.earnings || 0) > 0
+          ).sort((a,b) => (a.sessionNumber||0)-(b.sessionNumber||0)),
           category: log.sessionCategory || 'REGULER',
           studentName: log.studentsAttended?.[0] || 'UMUM'
         };
@@ -262,7 +276,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
          <div className="space-y-10 mx-4 animate-in fade-in">
             <div className="bg-blue-50 border-2 border-blue-100 p-6 rounded-[2.5rem] flex items-center gap-4 animate-pulse shadow-sm max-w-2xl mx-auto">
                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm shrink-0"><Info size={20}/></div>
-               <p className="text-[10px] font-black text-blue-800 uppercase italic">"Untuk jaga-jaga data hilang atau error, tolong export 1 bulan sekali ya Kak! ✨"</p>
+               <p className="text-[10px] font-black text-blue-800 uppercase italic">"Mencatat pengeluaran operasional di sini agar kas lembaga tetap seimbang Kak! ✨"</p>
             </div>
 
             <div className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl overflow-hidden">
@@ -365,7 +379,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
                                 bgColor = "bg-blue-600 text-white shadow-lg ring-4 ring-blue-50"; 
                                 label = "SESI ASLI"; 
                              } else if (isMeTeaching && !isOriginalOwner) { 
-                                bgColor = "bg-orange-500 text-white shadow-lg ring-4 ring-orange-50"; 
+                                bgColor = "bg-orange-50 text-white shadow-lg ring-4 ring-orange-50"; 
                                 label = "MENGGANTIKAN"; 
                                 subInfo = `Ganti: ${log.substituteFor?.split(' ')[0] || 'TEMAN'}`; 
                              } else if (log) { 
@@ -500,7 +514,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
          </div>
       )}
 
-      {/* MODAL EDIT TRANSAKSI (IDENTIK DENGAN TAMBAH) */}
+      {/* MODAL EDIT TRANSAKSI */}
       {editingTransaction && (
          <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
             <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 md:p-12 shadow-2xl relative overflow-hidden">
@@ -546,7 +560,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
          </div>
       )}
 
-      {/* MODAL PEMBAYARAN HONOR GURU (WITH IMAGE UPLOADER & FIX ALIGNMENT) */}
+      {/* MODAL PEMBAYARAN HONOR GURU */}
       {selectedPayout && (
         <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
            <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 md:p-12 shadow-2xl relative overflow-hidden">
