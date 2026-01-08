@@ -389,67 +389,88 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
             const themeColor = isPass ? 'text-blue-600' : 'text-orange-600';
             const themeBorder = isPass ? 'border-blue-900' : 'border-orange-600';
             const themeTitleColor = isPass ? 'text-blue-900' : 'text-orange-600';
-            const themeBg = isPass ? 'from-blue-900 to-slate-900' : 'from-orange-600 to-slate-900';
             const certTitle = isPass ? 'Sertifikat Kelulusan' : 'Capaian Pembelajaran';
 
             return (
               <div key={req.id} id={`pdf-group-${req.id}`}>
-                 <div id={`cert-render-${req.id}`} className={`w-[794px] h-[1123px] bg-white flex flex-col border-[25px] border-double ${themeBorder} box-border p-12 relative overflow-hidden`}>
-                    <div className="w-full h-full border-4 border-slate-100 flex flex-col items-center box-border relative z-10">
-                      {/* HEADER SECTION - INCREASED PT FOR NATURAL LOOK */}
-                      <div className="flex flex-col items-center justify-start pt-20 shrink-0 w-full">
-                        <div className="bg-white px-10 py-5 mb-4 flex items-center justify-center border border-slate-50 shadow-sm rounded-2xl"><img src={ASSETS.LOGO} className="h-24 w-auto object-contain" /></div>
-                        <h1 className="text-2xl font-black tracking-[0.25em] text-slate-800 uppercase leading-none">SANUR AKADEMI INSPIRASI</h1>
-                        <div className="w-56 h-0.5 bg-gradient-to-r from-transparent via-slate-200 to-transparent mt-4"></div>
+                 <div id={`cert-render-${req.id}`} style={{ width: '794px', height: '1123px', backgroundColor: 'white', display: 'flex', flexDirection: 'column', border: `25px double ${isPass ? '#1e3a8a' : '#ea580c'}`, boxSizing: 'border-box', position: 'relative', overflow: 'hidden' }}>
+                    <div style={{ width: '100%', height: '100%', border: '4px solid #f1f5f9', display: 'flex', flexDirection: 'column', alignItems: 'center', boxSizing: 'border-box', position: 'relative' }}>
+                      
+                      {/* HEADER - PIXEL LOCKED */}
+                      <div style={{ paddingTop: '80px', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', flexShrink: 0 }}>
+                        <div style={{ backgroundColor: 'white', padding: '10px 30px', marginBottom: '20px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid #f8fafc', borderRadius: '15px' }}>
+                           <img src={ASSETS.LOGO} style={{ height: '90px', width: 'auto' }} />
+                        </div>
+                        <h1 style={{ fontSize: '24px', fontWeight: '900', letterSpacing: '0.25em', color: '#1e293b', textTransform: 'uppercase', lineHeight: '1', margin: 0 }}>SANUR AKADEMI INSPIRASI</h1>
+                        <div style={{ width: '220px', height: '2px', backgroundColor: '#e2e8f0', marginTop: '15px' }}></div>
                       </div>
                       
-                      {/* CONTENT BLOCK - TIGHTENED SPACING FOR PROPORTIONAL LOOK */}
-                      <div className="flex-1 flex flex-col items-center justify-center text-center w-full px-12 shrink-0">
-                        {/* TITLE: DRASTICALLY REDUCED MARGIN */}
-                        <h2 className={`text-5xl font-serif italic ${themeTitleColor} mb-4 leading-tight tracking-wide`}>{certTitle}</h2>
+                      {/* MAIN CONTENT - PIXEL LOCKED */}
+                      <div style={{ marginTop: '50px', width: '100%', textAlign: 'center', boxSizing: 'border-box' }}>
                         
-                        {/* SUBTITLE: DRASTICALLY REDUCED MARGIN */}
-                        <p className="text-xl font-serif italic text-slate-500 mb-2 tracking-wider">Diberikan kepada:</p>
+                        {/* TITLE - Proportional Spacing (35px) */}
+                        <h2 style={{ fontSize: '52px', fontFamily: 'serif', fontStyle: 'italic', color: isPass ? '#1e3a8a' : '#ea580c', margin: '0 0 35px 0', lineHeight: '1' }}>{certTitle}</h2>
                         
-                        {/* NAME: ADJUSTED MB AND SCALE */}
-                        <div className="relative mb-8 w-full flex flex-col items-center">
-                          <h3 className={`text-5xl font-black ${themeColor} uppercase tracking-[0.08em] text-center px-6 leading-none drop-shadow-sm`}>{sName}</h3>
-                          <div className={`w-full h-1.5 ${isPass ? 'bg-blue-100' : 'bg-orange-100'} mt-5 rounded-full mx-auto max-w-[40%]`}></div>
+                        {/* SUBTITLE - Proportional Spacing (30px) */}
+                        <p style={{ fontSize: '20px', fontFamily: 'serif', fontStyle: 'italic', color: '#64748b', margin: '0 0 30px 0', letterSpacing: '0.05em' }}>Diberikan kepada:</p>
+                        
+                        {/* NAME - REVISED FONT SIZE (42px) & Proportional Spacing (45px) */}
+                        <div style={{ marginBottom: '45px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: '0 60px' }}>
+                          <h3 style={{ fontSize: '42px', fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0, lineHeight: '1.1' }}>{sName}</h3>
+                          <div style={{ width: '300px', height: '6px', backgroundColor: isPass ? '#dbeafe' : '#ffedd5', marginTop: '15px', borderRadius: '10px' }}></div>
                         </div>
 
-                        <p className="text-lg font-serif italic text-slate-600 px-20 leading-relaxed mb-8 tracking-wide text-center">
-                           {isPass 
-                             ? "Telah menunjukkan kompetensi luar biasa and berhasil menyelesaikan seluruh kurikulum pelatihan intensif dengan hasil memuaskan pada program:"
-                             : "Telah berpartisipasi aktif and menyelesaikan modul pelatihan intensif dengan dedikasi tinggi guna meningkatkan kompetensi pada program:"
-                           }
-                        </p>
+                        <div style={{ padding: '0 100px', marginBottom: '40px' }}>
+                          <p style={{ fontSize: '18px', fontFamily: 'serif', fontStyle: 'italic', color: '#475569', lineHeight: '1.6', margin: 0 }}>
+                            {isPass 
+                              ? "Telah menunjukkan kompetensi luar biasa dan berhasil menyelesaikan seluruh kurikulum pelatihan intensif dengan hasil memuaskan pada program:"
+                              : "Telah berpartisipasi aktif dan menyelesaikan modul pelatihan intensif dengan dedikasi tinggi guna meningkatkan kompetensi pada program:"
+                            }
+                          </p>
+                        </div>
 
-                        {/* SUBJECT BOX: LOCKED WIDTH (W-620) AND OVERFLOW VISIBLE */}
-                        <div className={`bg-gradient-to-br ${themeBg} px-14 py-10 rounded-[3.5rem] border-4 border-white shadow-2xl flex flex-col items-center justify-center w-[620px] shrink-0 overflow-visible relative`}>
-                           <p className="text-2xl font-black text-white uppercase italic tracking-[0.1em] text-center leading-tight whitespace-nowrap">{subject}</p>
-                           <p className={`${isPass ? 'text-blue-300' : 'text-orange-200'} text-[10px] font-black tracking-[0.7em] uppercase mt-4`}>LEVEL {level}</p>
+                        {/* SUBJECT BOX - PIXEL LOCKED WIDTH & PADDING */}
+                        <div style={{ 
+                           background: isPass ? 'linear-gradient(135deg, #1e3a8a, #0f172a)' : 'linear-gradient(135deg, #ea580c, #0f172a)',
+                           width: '620px',
+                           padding: '45px 20px',
+                           borderRadius: '50px',
+                           border: '4px solid white',
+                           boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
+                           margin: '0 auto',
+                           display: 'flex',
+                           flexDirection: 'column',
+                           alignItems: 'center',
+                           justifyContent: 'center'
+                        }}>
+                           <p style={{ fontSize: '26px', fontWeight: '900', color: 'white', textTransform: 'uppercase', fontStyle: 'italic', letterSpacing: '0.08em', margin: 0, lineHeight: '1.2' }}>{subject}</p>
+                           <p style={{ fontSize: '11px', fontWeight: '900', color: isPass ? '#93c5fd' : '#fed7aa', letterSpacing: '0.6em', textTransform: 'uppercase', marginTop: '15px', margin: '15px 0 0 0' }}>LEVEL {level}</p>
                         </div>
                       </div>
                       
-                      {/* FOOTER SECTION */}
-                      <div className="w-full flex flex-col items-center relative z-20 mt-auto shrink-0 pb-12">
-                        <div className="w-full px-20 flex justify-between items-center z-10 gap-10">
-                          <div className="flex-1 flex flex-col items-center text-center"><p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] italic mb-1">Tanggal Terbit:</p><p className="text-base font-black text-slate-900 uppercase tracking-tighter">{formatDateToDMY(req.date)}</p><div className="h-[22px]"></div></div>
-                          <div className={`flex-1 flex flex-col items-center justify-center opacity-30 shrink-0 ${isPass ? 'text-blue-900/10' : 'text-orange-900/10'}`}><div className="h-[10px]"></div><BookOpen size={60} /></div>
-                          <div className="flex-1 flex flex-col items-center text-center">
-                             <div className="h-[10px]"></div>
-                             <div className="p-3 border-4 border-slate-100 rounded-3xl bg-white shadow-sm flex items-center justify-center mx-auto">
-                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=VERIFIKASI%20${isPass ? 'KELULUSAN' : 'CAPAIAN'}%20SANUR%0AID:%20${req.id.substring(0,8).toUpperCase()}%0ANAMA:%20${sName}%0APROGRAM:%20${subject}%0ASTATUS:%20TERVERIFIKASI%20RESMI`} className="w-16 h-16" alt="QR" />
+                      {/* FOOTER - PIXEL LOCKED AT BOTTOM */}
+                      <div style={{ position: 'absolute', bottom: '60px', width: '100%', boxSizing: 'border-box' }}>
+                        <div style={{ padding: '0 80px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <div style={{ flex: 1, textAlign: 'center' }}>
+                            <p style={{ fontSize: '9px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.3em', fontStyle: 'italic', margin: '0 0 5px 0' }}>Tanggal Terbit:</p>
+                            <p style={{ fontSize: '16px', fontWeight: '900', color: '#0f172a', margin: 0 }}>{formatDateToDMY(req.date)}</p>
+                          </div>
+                          <div style={{ flex: 1, display: 'flex', justifyContent: 'center', opacity: 0.1, color: isPass ? '#1e3a8a' : '#ea580c' }}>
+                            <BookOpen size={70} />
+                          </div>
+                          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                             <div style={{ padding: '8px', border: '4px solid #f1f5f9', borderRadius: '20px', backgroundColor: 'white' }}>
+                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=VERIFIKASI%20${isPass ? 'KELULUSAN' : 'CAPAIAN'}%20SANUR%0AID:%20${req.id.substring(0,8).toUpperCase()}%0ANAMA:%20${sName}%0APROGRAM:%20${subject}%0ASTATUS:%20TERVERIFIKASI%20RESMI`} style={{ width: '60px', height: '60px' }} />
                              </div>
-                             <div className="w-full text-center mt-1.5"><p className="text-[7px] font-black text-slate-400 uppercase tracking-widest text-center">Verifikasi Digital</p><p className="text-[5px] font-bold text-slate-300 uppercase -mt-0.5 leading-none text-center">Catatan Resmi Sanur</p></div>
+                             <p style={{ fontSize: '7px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '8px', margin: '8px 0 0 0' }}>Verifikasi Digital Resmi Sanur</p>
                           </div>
                         </div>
-                        <div className="h-6 w-full shrink-0"></div>
                       </div>
+
                     </div>
                  </div>
 
-                 {/* TRANSCRIPT & MILESTONE RENDERS (UNMODIFIED FOR SPACING AS THEY WERE ALREADY GOOD) */}
+                 {/* PAGES 2 & 3 (KEEPING CONSISTENT) */}
                  <div id={`transcript-render-${req.id}`} className="w-[794px] h-[1123px] bg-white p-12 flex flex-col relative border-8 border-slate-100 box-border overflow-hidden">
                     <div className="flex justify-between items-start mb-6">
                       <div className="flex items-center gap-4"><div className={`w-14 h-14 ${isPass ? 'bg-blue-600' : 'bg-orange-600'} rounded-2xl flex items-center justify-center text-white shadow-lg`}><Layout size={28}/></div><div><h1 className={`text-3xl font-black italic ${themeColor} uppercase leading-none tracking-tighter`}>SANUR</h1><p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.4em] mt-1">Catatan Akademik Resmi</p></div></div>
