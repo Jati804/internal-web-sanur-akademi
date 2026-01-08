@@ -208,7 +208,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
       </div>
 
       <footer className="mt-20 text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">
-         Sanur Akademi Inspirasi &copy; 2024
+         Sanur Akademi Inspirasi &copy; 2026
       </footer>
     </div>
   );
