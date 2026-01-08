@@ -396,36 +396,36 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
               <div key={req.id} id={`pdf-group-${req.id}`}>
                  <div id={`cert-render-${req.id}`} className={`w-[794px] h-[1123px] bg-white flex flex-col border-[25px] border-double ${themeBorder} box-border p-12 relative overflow-hidden`}>
                     <div className="w-full h-full border-4 border-slate-100 flex flex-col items-center box-border relative z-10">
-                      {/* HEADER SECTION - PUSHED DOWN NATURALLY (PT-16) */}
-                      <div className="flex flex-col items-center justify-start pt-16 shrink-0 w-full">
-                        <div className="bg-white px-10 py-5 mb-4 flex items-center justify-center border border-slate-50 shadow-sm rounded-2xl"><img src={ASSETS.LOGO} className="h-20 w-auto object-contain" /></div>
+                      {/* HEADER SECTION - INCREASED PT FOR NATURAL LOOK */}
+                      <div className="flex flex-col items-center justify-start pt-20 shrink-0 w-full">
+                        <div className="bg-white px-10 py-5 mb-4 flex items-center justify-center border border-slate-50 shadow-sm rounded-2xl"><img src={ASSETS.LOGO} className="h-24 w-auto object-contain" /></div>
                         <h1 className="text-2xl font-black tracking-[0.25em] text-slate-800 uppercase leading-none">SANUR AKADEMI INSPIRASI</h1>
                         <div className="w-56 h-0.5 bg-gradient-to-r from-transparent via-slate-200 to-transparent mt-4"></div>
                       </div>
                       
-                      {/* CONTENT BLOCK - COMPRESSED SPACING FOR NATURAL FLOW */}
+                      {/* CONTENT BLOCK - TIGHTENED SPACING FOR PROPORTIONAL LOOK */}
                       <div className="flex-1 flex flex-col items-center justify-center text-center w-full px-12 shrink-0">
-                        {/* TITLE: MB-8 (TIGHTER) */}
-                        <h2 className={`text-5xl font-serif italic ${themeTitleColor} mb-8 leading-tight tracking-wide`}>{certTitle}</h2>
+                        {/* TITLE: DRASTICALLY REDUCED MARGIN */}
+                        <h2 className={`text-5xl font-serif italic ${themeTitleColor} mb-4 leading-tight tracking-wide`}>{certTitle}</h2>
                         
-                        {/* SUBTITLE: MB-6 (TIGHTER) */}
-                        <p className="text-xl font-serif italic text-slate-500 mb-6 tracking-wider">Diberikan kepada:</p>
+                        {/* SUBTITLE: DRASTICALLY REDUCED MARGIN */}
+                        <p className="text-xl font-serif italic text-slate-500 mb-2 tracking-wider">Diberikan kepada:</p>
                         
-                        {/* NAME: MB-10 (TIGHTER) */}
-                        <div className="relative mb-10 w-full flex flex-col items-center">
-                          <h3 className={`text-4xl font-black ${themeColor} uppercase tracking-[0.08em] text-center px-6 leading-none drop-shadow-sm`}>{sName}</h3>
-                          <div className={`w-full h-1.5 ${isPass ? 'bg-blue-100' : 'bg-orange-100'} mt-5 rounded-full mx-auto max-w-[50%]`}></div>
+                        {/* NAME: ADJUSTED MB AND SCALE */}
+                        <div className="relative mb-8 w-full flex flex-col items-center">
+                          <h3 className={`text-5xl font-black ${themeColor} uppercase tracking-[0.08em] text-center px-6 leading-none drop-shadow-sm`}>{sName}</h3>
+                          <div className={`w-full h-1.5 ${isPass ? 'bg-blue-100' : 'bg-orange-100'} mt-5 rounded-full mx-auto max-w-[40%]`}></div>
                         </div>
 
-                        <p className="text-lg font-serif italic text-slate-600 px-20 leading-relaxed mb-10 tracking-wide text-center">
+                        <p className="text-lg font-serif italic text-slate-600 px-20 leading-relaxed mb-8 tracking-wide text-center">
                            {isPass 
                              ? "Telah menunjukkan kompetensi luar biasa and berhasil menyelesaikan seluruh kurikulum pelatihan intensif dengan hasil memuaskan pada program:"
                              : "Telah berpartisipasi aktif and menyelesaikan modul pelatihan intensif dengan dedikasi tinggi guna meningkatkan kompetensi pada program:"
                            }
                         </p>
 
-                        {/* SUBJECT BOX: MAX-W-650 TO PREVENT CLIPPING, OVERFLOW VISIBLE */}
-                        <div className={`bg-gradient-to-br ${themeBg} px-14 py-10 rounded-[3.5rem] border-4 border-white shadow-2xl flex flex-col items-center justify-center max-w-[650px] min-w-[580px] shrink-0 overflow-visible relative`}>
+                        {/* SUBJECT BOX: LOCKED WIDTH (W-620) AND OVERFLOW VISIBLE */}
+                        <div className={`bg-gradient-to-br ${themeBg} px-14 py-10 rounded-[3.5rem] border-4 border-white shadow-2xl flex flex-col items-center justify-center w-[620px] shrink-0 overflow-visible relative`}>
                            <p className="text-2xl font-black text-white uppercase italic tracking-[0.1em] text-center leading-tight whitespace-nowrap">{subject}</p>
                            <p className={`${isPass ? 'text-blue-300' : 'text-orange-200'} text-[10px] font-black tracking-[0.7em] uppercase mt-4`}>LEVEL {level}</p>
                         </div>
@@ -449,7 +449,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
                     </div>
                  </div>
 
-                 {/* PAGES 2 & 3 (KEEPING CONSISTENT) */}
+                 {/* TRANSCRIPT & MILESTONE RENDERS (UNMODIFIED FOR SPACING AS THEY WERE ALREADY GOOD) */}
                  <div id={`transcript-render-${req.id}`} className="w-[794px] h-[1123px] bg-white p-12 flex flex-col relative border-8 border-slate-100 box-border overflow-hidden">
                     <div className="flex justify-between items-start mb-6">
                       <div className="flex items-center gap-4"><div className={`w-14 h-14 ${isPass ? 'bg-blue-600' : 'bg-orange-600'} rounded-2xl flex items-center justify-center text-white shadow-lg`}><Layout size={28}/></div><div><h1 className={`text-3xl font-black italic ${themeColor} uppercase leading-none tracking-tighter`}>SANUR</h1><p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.4em] mt-1">Catatan Akademik Resmi</p></div></div>
@@ -471,7 +471,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
                       </div>
                     </div>
                     <div className="mt-auto flex flex-col items-center pt-10 relative z-10 border-t-2 border-slate-100 opacity-60">
-                      <p className="text-sm font-black uppercase tracking-[0.8em] text-slate-400 text-center">Dokumen Resmi Sanur Akademi Inspirasi</p>
+                      <p className="text-sm font-black uppercase tracking-[0.8em] text-slate-400 text-center">Sanur Akademi Inspirasi</p>
                     </div>
                     <div className="h-20 w-full shrink-0"></div>
                  </div>
