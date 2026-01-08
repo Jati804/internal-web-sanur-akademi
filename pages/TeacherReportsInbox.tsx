@@ -69,6 +69,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
   const [activeStep, setActiveStep] = useState<'ANTREAN' | 'WORKSPACE' | 'HISTORY'>('ANTREAN');
   const [selectedPackage, setSelectedPackage] = useState<any | null>(null);
   const [activeDownloadId, setActiveDownloadId] = useState<string | null>(null);
+  const [downloadStep, setDownloadStep] = useState('');
   const [showMilestoneFor, setShowMilestoneFor] = useState<any | null>(null);
   const [confirmReject, setConfirmReject] = useState<any | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
@@ -89,7 +90,6 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
   const publishedReports = useMemo(() => {
     const baseReports = logs.filter(l => l.status === 'SESSION_LOG' && l.sessionNumber === 6 && l.teacherId === user.id && (l.reportNarrative || l.studentNarratives?.[l.studentsAttended?.[0] || '']));
     
-    // Sort newest first
     const sorted = [...baseReports].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
 
     if (!historySearchTerm.trim()) return sorted;
@@ -169,31 +169,62 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
 
   const handleDownloadPDF = async (req: any) => {
     setActiveDownloadId(req.id);
+    setDownloadStep('Menyiapkan Dokumen Sah...');
+    
+    await new Promise(r => setTimeout(r, 600));
+    setDownloadStep('Optimalisasi Visual Sertifikat...');
+    await new Promise(r => setTimeout(r, 600));
+
     try {
       const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: 'a4', hotfixes: ["px_rendering"] });
       const pw = pdf.internal.pageSize.getWidth();
       const ph = pdf.internal.pageSize.getHeight();
-      const captureOptions = { scale: 2, useCORS: true, backgroundColor: '#ffffff', width: 794, height: 1123, logging: false };
+      const captureOptions = { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: 794, height: 1123, logging: false };
+      
       const capturePage = async (pageId: string) => {
         const el = document.getElementById(pageId);
         if (!el) return null;
         const canvas = await html2canvas(el, captureOptions);
         return canvas.toDataURL('image/png', 1.0);
       };
+
+      setDownloadStep('Merender Halaman Utama...');
       const img1 = await capturePage(`cert-render-${req.id}`);
       if (img1) pdf.addImage(img1, 'PNG', 0, 0, pw, ph, undefined, 'FAST');
+      
+      setDownloadStep('Menyusun Transkrip Akademik...');
       pdf.addPage('a4', 'p');
       const img2 = await capturePage(`transcript-render-${req.id}`);
       if (img2) pdf.addImage(img2, 'PNG', 0, 0, pw, ph, undefined, 'FAST');
+      
+      setDownloadStep('Merekam Milestone Belajar...');
       pdf.addPage('a4', 'p');
       const img3 = await capturePage(`milestone-render-${req.id}`);
       if (img3) pdf.addImage(img3, 'PNG', 0, 0, pw, ph, undefined, 'FAST');
+      
+      setDownloadStep('Finalisasi File PDF...');
+      await new Promise(r => setTimeout(r, 500));
+      
       pdf.save(`Rapot_Sanur_${req.studentsAttended?.[0]}.pdf`);
-    } catch (e) { alert("Gagal proses PDF."); } finally { setActiveDownloadId(null); }
+    } catch (e) { alert("Gagal proses PDF."); } finally { setActiveDownloadId(null); setDownloadStep(''); }
   };
 
   return (
     <div className="max-w-7xl mx-auto space-y-12 pb-40 px-4 animate-in fade-in duration-700">
+      {/* ATMOSPHERIC DOWNLOAD OVERLAY */}
+      {activeDownloadId && (
+        <div className="fixed inset-0 z-[200000] bg-slate-900/90 backdrop-blur-2xl flex flex-col items-center justify-center text-white animate-in fade-in duration-500">
+           <div className="w-32 h-32 bg-white/10 rounded-[3rem] border-2 border-white/20 flex items-center justify-center shadow-2xl mb-10 relative">
+              <div className="absolute inset-0 border-4 border-emerald-500 rounded-[3rem] border-t-transparent animate-spin"></div>
+              <Printer size={56} className="text-white animate-pulse" />
+           </div>
+           <div className="text-center space-y-3">
+              <p className="text-xl font-black uppercase italic tracking-widest">{downloadStep}</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.5em] animate-pulse italic">SANUR HIGH-FIDELITY RENDER ✨</p>
+           </div>
+        </div>
+      )}
+
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-10 px-2">
         <div className="space-y-4">
            <h2 className="text-4xl font-black text-slate-800 tracking-tight leading-none uppercase italic">Portal <span className="text-orange-600">Rapot</span></h2>
@@ -206,10 +237,10 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
          <p className="text-[10px] font-black text-orange-800 uppercase italic">"Info: Jika rapot siswa sudah keluar, ingatkan mereka segera mengamankan filenya ya Kak! Karena akun akan dihapus pengurus setelah satu tahun lulus untuk meringankan sistem. ✨"</p>
       </div>
 
-      <div className="flex bg-slate-100 p-2 rounded-[2rem] w-full max-w-xl mx-auto shadow-inner">
-         <button onClick={() => setActiveStep('ANTREAN')} className={`flex-1 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeStep === 'ANTREAN' ? 'bg-white text-orange-600 shadow-md' : 'text-slate-400'}`}>Antrean ({reportRequests.length})</button>
-         <button onClick={() => setActiveStep('WORKSPACE')} disabled={!selectedPackage} className={`flex-1 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeStep === 'WORKSPACE' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-400 disabled:opacity-30'}`}>Workspace</button>
-         <button onClick={() => setActiveStep('HISTORY')} className={`flex-1 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeStep === 'HISTORY' ? 'bg-white text-emerald-600 shadow-md' : 'text-slate-400'}`}>Histori</button>
+      <div className="flex bg-slate-100 p-2 rounded-full w-full max-w-xl mx-auto shadow-inner border border-slate-100">
+         <button onClick={() => setActiveStep('ANTREAN')} className={`flex-1 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeStep === 'ANTREAN' ? 'bg-white text-orange-600 shadow-md' : 'text-slate-400'}`}>Antrean ({reportRequests.length})</button>
+         <button onClick={() => setActiveStep('WORKSPACE')} disabled={!selectedPackage} className={`flex-1 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeStep === 'WORKSPACE' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-400 disabled:opacity-30'}`}>Workspace</button>
+         <button onClick={() => setActiveStep('HISTORY')} className={`flex-1 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeStep === 'HISTORY' ? 'bg-white text-emerald-600 shadow-md' : 'text-slate-400'}`}>Histori</button>
       </div>
 
       {activeStep === 'HISTORY' && (
@@ -226,20 +257,21 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
       )}
 
       {activeStep === 'ANTREAN' && (
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             {reportRequests.map((req, i) => (
-              <div key={i} className="bg-white p-10 rounded-[3rem] shadow-xl border border-slate-100 flex flex-col justify-between hover:border-orange-500 transition-all">
+              <div key={i} className="bg-white p-12 md:p-14 rounded-[4rem] shadow-xl border border-slate-100 flex flex-col justify-between hover:border-orange-500 transition-all">
                  <div>
-                   <div className="flex justify-between items-start mb-6">
-                      <div className="w-14 h-14 bg-orange-50 text-orange-600 rounded-2xl flex items-center justify-center shadow-inner"><GraduationCap size={32}/></div>
-                      <span className="px-4 py-1.5 bg-orange-500 text-white rounded-full text-[8px] font-black uppercase tracking-widest shadow-md">KLAIM BARU</span>
+                   <div className="flex justify-between items-start mb-10">
+                      <div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-3xl flex items-center justify-center shadow-inner"><GraduationCap size={40}/></div>
+                      <span className="px-6 py-2 bg-orange-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-md">KLAIM BARU</span>
                    </div>
-                   <h4 className="text-xl font-black text-slate-800 uppercase italic mb-2 leading-tight">{req.studentsAttended?.[0]}</h4>
-                   <p className="text-[10px] font-bold text-blue-600 uppercase mb-8">{req.className}</p>
-                   <button onClick={() => setShowMilestoneFor(req)} className="w-full py-4 mb-4 bg-slate-50 text-slate-500 rounded-2xl font-black text-[9px] uppercase flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all border border-transparent shadow-sm"><History size={16}/> LIHAT MILESTONE</button>
+                   <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-2 leading-tight">{req.studentsAttended?.[0]}</h4>
+                   <p className="text-[11px] font-bold text-blue-600 uppercase mb-10 whitespace-normal leading-relaxed">{req.className}</p>
+                   <button onClick={() => setShowMilestoneFor(req)} className="w-full py-5 mb-5 bg-slate-50 text-slate-500 rounded-3xl font-black text-[10px] uppercase flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all border border-transparent shadow-sm"><History size={18}/> LIHAT MILESTONE</button>
                  </div>
-                 <div className="space-y-3">
-                    <button onClick={() => handleAcceptRequest(req)} className="w-full py-5 bg-slate-900 text-white rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest shadow-xl active:scale-95 transition-all hover:bg-black">ISI RAPOT ✍️</button>
+                 <div className="space-y-4">
+                    <button onClick={() => handleAcceptRequest(req)} className="w-full py-6 bg-slate-900 text-white rounded-[2rem] font-black text-[12px] uppercase tracking-widest shadow-xl active:scale-95 transition-all hover:bg-black">TERIMA & ISI RAPOT ✍️</button>
+                    <button onClick={() => setConfirmReject(req)} className="w-full py-5 bg-rose-50 text-rose-500 rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all border border-rose-100">TOLAK PERMINTAAN</button>
                  </div>
               </div>
             ))}
@@ -302,22 +334,30 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
       )}
 
       {activeStep === 'HISTORY' && (
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             {publishedReports.map((req, i) => {
                const sName = req.studentsAttended?.[0] || 'SISWA';
                const scores = (Array.isArray(req.studentScores?.[sName]) ? req.studentScores?.[sName] : Array(6).fill(90)) as number[];
                const avg = Math.round(scores.reduce((a:number,b:number)=>a+b,0)/6);
                const isPass = avg >= 80;
                return (
-                  <div key={i} className="bg-white p-10 rounded-[3.5rem] shadow-xl border border-slate-100 flex flex-col hover:border-emerald-500 transition-all">
-                     <div className="flex justify-between items-start mb-6">
-                        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center shadow-inner shrink-0 ${isPass ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'}`}>{isPass ? <BadgeCheck size={32}/> : <AlertCircle size={32}/>}</div>
-                        <div className="flex gap-2 items-center"><button onClick={() => handleOpenWorkspace(req, true)} className="p-3 bg-blue-50 text-blue-600 rounded-xl hover:bg-blue-600 hover:text-white transition-all shadow-sm"><FileEdit size={18}/></button><span className={`px-5 py-2 rounded-full text-[8px] font-black uppercase tracking-widest shadow-md flex items-center justify-center ${isPass ? 'bg-emerald-600 text-white' : 'bg-orange-500 text-white'}`}>{isPass ? 'LULUS' : 'REMEDIAL'}</span></div>
+                  <div key={i} className="bg-white p-12 md:p-14 rounded-[4rem] shadow-xl border border-slate-100 flex flex-col hover:border-emerald-500 transition-all">
+                     <div className="flex justify-between items-start mb-10">
+                        <div className={`w-16 h-16 rounded-3xl flex items-center justify-center shadow-inner shrink-0 ${isPass ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'}`}>{isPass ? <BadgeCheck size={40}/> : <AlertCircle size={40}/>}</div>
+                        <span className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-md flex items-center justify-center ${isPass ? 'bg-emerald-600 text-white' : 'bg-orange-500 text-white'}`}>{isPass ? 'LULUS' : 'REMEDIAL'}</span>
                      </div>
-                     <h4 className="text-xl font-black text-slate-800 uppercase italic mb-1 truncate">{sName}</h4>
-                     <p className="text-[10px] font-bold text-blue-600 uppercase mb-8 truncate">{req.className}</p>
-                     <div className="bg-slate-50 p-6 rounded-3xl mb-8 flex justify-between items-center"><div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Rerata</p><p className={`text-2xl font-black italic ${isPass ? 'text-emerald-600' : 'text-orange-600'}`}>{avg}</p></div><div className="text-right"><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Terbit</p><p className="text-[10px] font-black text-slate-800 uppercase tracking-normal">{formatDateToDMY(req.date)}</p></div></div>
-                     <button onClick={() => handleDownloadPDF(req)} disabled={activeDownloadId === req.id} className="w-full py-4 bg-slate-900 text-white rounded-2xl font-black text-[9px] uppercase flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-xl">{activeDownloadId === req.id ? <Loader2 className="animate-spin" /> : <Printer size={16}/>} CETAK PDF</button>
+                     <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-1 truncate">{sName}</h4>
+                     <p className="text-[11px] font-bold text-blue-600 uppercase mb-10 whitespace-normal leading-relaxed">{req.className}</p>
+                     <div className="bg-slate-50 p-8 rounded-[2.5rem] mb-10 flex justify-between items-center"><div><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Rerata</p><p className={`text-3xl font-black italic ${isPass ? 'text-emerald-600' : 'text-orange-600'}`}>{avg}</p></div><div className="text-right"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Terbit</p><p className="text-[11px] font-black text-slate-800 uppercase tracking-normal">{formatDateToDMY(req.date)}</p></div></div>
+                     
+                     <div className="space-y-4 mt-auto">
+                        <button onClick={() => handleOpenWorkspace(req, true)} className="w-full py-5 bg-blue-50 text-blue-600 rounded-[2rem] font-black text-[10px] uppercase flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                           <FileEdit size={18}/> EDIT DATA RAPOT
+                        </button>
+                        <button onClick={() => handleDownloadPDF(req)} disabled={activeDownloadId === req.id} className="w-full py-5 bg-slate-900 text-white rounded-[2rem] font-black text-[10px] uppercase flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-xl">
+                           {activeDownloadId === req.id ? <Loader2 className="animate-spin" /> : <Printer size={18}/>} CETAK PDF RAPOT
+                        </button>
+                     </div>
                   </div>
                );
             })}
@@ -330,6 +370,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
          </div>
       )}
 
+      {/* RENDER PDF HIDDEN (PRECISE A4 - 794x1123) */}
       <div className="fixed left-[-9999px] top-0 pointer-events-none">
          {publishedReports.map((req) => {
             const sName = (req.studentsAttended?.[0] || 'SISWA').toUpperCase();
@@ -345,66 +386,97 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
             const level = matpelMatch ? matpelMatch[2] : 'BASIC';
             const pkgLogs = logs.filter(l => l.packageId === req.packageId && l.status === 'SESSION_LOG' && l.studentsAttended?.some(s => s.toUpperCase().trim() === sName.toUpperCase().trim())).sort((a,b)=> (a.sessionNumber||0)-(b.sessionNumber||0));
 
-            if (isPass) {
-              return (
-                <div key={req.id} id={`pdf-group-${req.id}`}>
-                   <div id={`cert-render-${req.id}`} className="w-[794px] h-[1123px] bg-white flex flex-col border-[25px] border-double border-blue-900 box-border p-12 relative overflow-hidden">
-                      <div className="w-full h-full border-4 border-slate-100 flex flex-col items-center py-12 box-border relative z-10">
-                        <div className="flex flex-col items-center justify-start pt-14 mb-8">
-                          <div className="bg-white px-10 py-5 mb-6 flex items-center justify-center border border-slate-50 shadow-sm rounded-2xl"><img src={ASSETS.LOGO} className="h-20 w-auto object-contain" /></div>
-                          <h1 className="text-2xl font-black tracking-[0.25em] text-blue-900 uppercase leading-none">SANUR AKADEMI INSPIRASI</h1>
-                          <div className="w-56 h-0.5 bg-gradient-to-r from-transparent via-blue-900/10 to-transparent mt-3"></div>
+            const themeColor = isPass ? 'text-blue-600' : 'text-orange-600';
+            const themeBorder = isPass ? 'border-blue-900' : 'border-orange-600';
+            const themeTitleColor = isPass ? 'text-blue-900' : 'text-orange-600';
+            const themeBg = isPass ? 'from-blue-900 to-slate-900' : 'from-orange-600 to-slate-900';
+            const certTitle = isPass ? 'Sertifikat Kelulusan' : 'Capaian Pembelajaran';
+
+            return (
+              <div key={req.id} id={`pdf-group-${req.id}`}>
+                 <div id={`cert-render-${req.id}`} className={`w-[794px] h-[1123px] bg-white flex flex-col border-[25px] border-double ${themeBorder} box-border p-12 relative overflow-hidden`}>
+                    <div className="w-full h-full border-4 border-slate-100 flex flex-col items-center box-border relative z-10">
+                      {/* HEADER SECTION - PUSHED DOWN NATURALLY (PT-16) */}
+                      <div className="flex flex-col items-center justify-start pt-16 shrink-0 w-full">
+                        <div className="bg-white px-10 py-5 mb-4 flex items-center justify-center border border-slate-50 shadow-sm rounded-2xl"><img src={ASSETS.LOGO} className="h-20 w-auto object-contain" /></div>
+                        <h1 className="text-2xl font-black tracking-[0.25em] text-slate-800 uppercase leading-none">SANUR AKADEMI INSPIRASI</h1>
+                        <div className="w-56 h-0.5 bg-gradient-to-r from-transparent via-slate-200 to-transparent mt-4"></div>
+                      </div>
+                      
+                      {/* CONTENT BLOCK - COMPRESSED SPACING FOR NATURAL FLOW */}
+                      <div className="flex-1 flex flex-col items-center justify-center text-center w-full px-12 shrink-0">
+                        {/* TITLE: MB-8 (TIGHTER) */}
+                        <h2 className={`text-5xl font-serif italic ${themeTitleColor} mb-8 leading-tight tracking-wide`}>{certTitle}</h2>
+                        
+                        {/* SUBTITLE: MB-6 (TIGHTER) */}
+                        <p className="text-xl font-serif italic text-slate-500 mb-6 tracking-wider">Diberikan kepada:</p>
+                        
+                        {/* NAME: MB-10 (TIGHTER) */}
+                        <div className="relative mb-10 w-full flex flex-col items-center">
+                          <h3 className={`text-4xl font-black ${themeColor} uppercase tracking-[0.08em] text-center px-6 leading-none drop-shadow-sm`}>{sName}</h3>
+                          <div className={`w-full h-1.5 ${isPass ? 'bg-blue-100' : 'bg-orange-100'} mt-5 rounded-full mx-auto max-w-[50%]`}></div>
                         </div>
-                        <div className="flex flex-col items-center text-center w-full px-12 flex-1 justify-center -mt-32">
-                          <h2 className="text-5xl font-serif italic text-blue-900 mb-8 leading-tight tracking-wide">Sertifikat Kelulusan</h2>
-                          <p className="text-xl font-serif italic text-slate-500 mb-8 tracking-wider">Dengan bangga diberikan kepada:</p>
-                          <div className="relative mb-12 w-full">
-                            <h3 className="text-5xl font-black text-blue-600 uppercase tracking-[0.08em] text-center px-6 leading-none drop-shadow-sm">{sName}</h3>
-                            <div className="w-full h-1.5 bg-blue-100 mt-6 rounded-full mx-auto max-w-[60%]"></div>
-                          </div>
-                          <p className="text-lg font-serif italic text-slate-600 px-20 leading-relaxed mb-10 tracking-wide">Telah menunjukkan kompetensi luar biasa and berhasil menyelesaikan kurikulum pelatihan intensif dengan hasil memuaskan pada program:</p>
-                          <div className="bg-gradient-to-br from-blue-900 to-slate-900 px-16 py-8 rounded-[3rem] border-4 border-white shadow-2xl flex flex-col items-center justify-center min-w-[520px]"><p className="text-2xl font-black text-white uppercase italic tracking-[0.1em] text-center leading-tight">{subject}</p><p className="text-blue-300 text-[10px] font-black tracking-[0.7em] uppercase mt-3">LEVEL {level}</p></div>
-                        </div>
-                        <div className="w-full flex flex-col items-center relative z-20">
-                          <div className="w-full px-20 absolute bottom-[22px] left-0 flex justify-between items-center z-10 gap-10">
-                            <div className="flex-1 flex flex-col items-center text-center"><p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] italic mb-1">Tanggal Terbit:</p><p className="text-base font-black text-slate-900 uppercase tracking-tighter">{formatDateToDMY(req.date)}</p><div className="h-[22px]"></div></div>
-                            <div className="flex-1 flex flex-col items-center justify-center text-blue-900/10 opacity-40 shrink-0"><div className="h-[10px]"></div><BookOpen size={60} /><div className="flex gap-1.5 mt-1"><Star size={10} fill="currentColor"/><Star size={10} fill="currentColor"/><Star size={10} fill="currentColor"/></div></div>
-                            <div className="flex-1 flex flex-col items-center text-center"><div className="h-[10px]"></div><div className="p-3 border-4 border-slate-100 rounded-3xl bg-white shadow-sm flex items-center justify-center mx-auto"><img src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=VERIFIKASI%20SERTIFIKAT%20SANUR%0AID:%20${req.id.substring(0,8).toUpperCase()}%0ANAMA:%20${sName}%0APROGRAM:%20${subject}%0ASTATUS:%20TERVERIFIKASI%20RESMI`} className="w-16 h-16" alt="QR" /></div><div className="w-full text-center mt-1.5"><p className="text-[7px] font-black text-slate-400 uppercase tracking-widest text-center">Verifikasi Sertifikat</p><p className="text-[5px] font-bold text-slate-300 uppercase -mt-0.5 leading-none text-center">Catatan Resmi Sanur</p></div></div>
-                          </div>
+
+                        <p className="text-lg font-serif italic text-slate-600 px-20 leading-relaxed mb-10 tracking-wide text-center">
+                           {isPass 
+                             ? "Telah menunjukkan kompetensi luar biasa and berhasil menyelesaikan seluruh kurikulum pelatihan intensif dengan hasil memuaskan pada program:"
+                             : "Telah berpartisipasi aktif and menyelesaikan modul pelatihan intensif dengan dedikasi tinggi guna meningkatkan kompetensi pada program:"
+                           }
+                        </p>
+
+                        {/* SUBJECT BOX: MAX-W-650 TO PREVENT CLIPPING, OVERFLOW VISIBLE */}
+                        <div className={`bg-gradient-to-br ${themeBg} px-14 py-10 rounded-[3.5rem] border-4 border-white shadow-2xl flex flex-col items-center justify-center max-w-[650px] min-w-[580px] shrink-0 overflow-visible relative`}>
+                           <p className="text-2xl font-black text-white uppercase italic tracking-[0.1em] text-center leading-tight whitespace-nowrap">{subject}</p>
+                           <p className={`${isPass ? 'text-blue-300' : 'text-orange-200'} text-[10px] font-black tracking-[0.7em] uppercase mt-4`}>LEVEL {level}</p>
                         </div>
                       </div>
-                   </div>
-                   <div id={`transcript-render-${req.id}`} className="w-[794px] h-[1123px] bg-white p-12 flex flex-col relative border-8 border-slate-100 box-border overflow-hidden">
-                      <div className="flex justify-between items-start mb-6">
-                        <div className="flex items-center gap-4"><div className="w-14 h-14 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-lg"><Layout size={28}/></div><div><h1 className="text-3xl font-black italic text-blue-600 uppercase leading-none tracking-tighter">SANUR</h1><p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.4em] mt-1">Catatan Akademik Resmi</p></div></div>
-                        <div className="text-right"><p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Kode Referensi</p><p className="text-base font-black text-slate-800">SN/TR/{req.id.substring(0,8).toUpperCase()}</p></div>
+                      
+                      {/* FOOTER SECTION */}
+                      <div className="w-full flex flex-col items-center relative z-20 mt-auto shrink-0 pb-12">
+                        <div className="w-full px-20 flex justify-between items-center z-10 gap-10">
+                          <div className="flex-1 flex flex-col items-center text-center"><p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] italic mb-1">Tanggal Terbit:</p><p className="text-base font-black text-slate-900 uppercase tracking-tighter">{formatDateToDMY(req.date)}</p><div className="h-[22px]"></div></div>
+                          <div className={`flex-1 flex flex-col items-center justify-center opacity-30 shrink-0 ${isPass ? 'text-blue-900/10' : 'text-orange-900/10'}`}><div className="h-[10px]"></div><BookOpen size={60} /></div>
+                          <div className="flex-1 flex flex-col items-center text-center">
+                             <div className="h-[10px]"></div>
+                             <div className="p-3 border-4 border-slate-100 rounded-3xl bg-white shadow-sm flex items-center justify-center mx-auto">
+                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=VERIFIKASI%20${isPass ? 'KELULUSAN' : 'CAPAIAN'}%20SANUR%0AID:%20${req.id.substring(0,8).toUpperCase()}%0ANAMA:%20${sName}%0APROGRAM:%20${subject}%0ASTATUS:%20TERVERIFIKASI%20RESMI`} className="w-16 h-16" alt="QR" />
+                             </div>
+                             <div className="w-full text-center mt-1.5"><p className="text-[7px] font-black text-slate-400 uppercase tracking-widest text-center">Verifikasi Digital</p><p className="text-[5px] font-bold text-slate-300 uppercase -mt-0.5 leading-none text-center">Catatan Resmi Sanur</p></div>
+                          </div>
+                        </div>
+                        <div className="h-6 w-full shrink-0"></div>
                       </div>
-                      <div className="grid grid-cols-2 gap-6 mb-6 bg-slate-50 p-6 rounded-[2rem] border border-slate-200"><div className="border-r border-slate-300"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Nama Siswa</p><p className="text-xl font-black text-slate-800 uppercase italic leading-none">{sName}</p></div><div className="pl-5"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Program Akademik</p><p className="text-xl font-black text-blue-600 uppercase italic leading-tight">{subject}</p></div></div>
-                      <div className="h-auto rounded-[2.5rem] border-2 border-slate-300 overflow-hidden mb-6 bg-white"><table className="w-full table-fixed border-collapse bg-white"><thead><tr className="bg-slate-900 text-white"><th className="p-4 text-center text-[10px] font-black uppercase tracking-widest border-r border-white/10 w-24">Sesi</th><th className="p-4 text-left text-[10px] font-black uppercase tracking-widest">Materi & Modul Kurikulum</th><th className="p-4 text-center text-[10px] font-black uppercase tracking-widest w-32">Nilai</th></tr></thead><tbody className="bg-white">{[1,2,3,4,5,6].map((num, i) => (<tr key={i} className="bg-white border-b border-slate-100 last:border-none"><td className="w-24 border-r border-slate-200 p-0 h-[100px]"><div className="h-full flex items-center justify-center"><span className="font-black text-slate-200 text-3xl italic">0{num}</span></div></td><td className="p-0 h-[100px]"><div className="h-full flex items-center px-10"><span className="font-black text-slate-800 text-[18px] uppercase italic tracking-tight">{topics[i] || "MATERI PEMBELAJARAN"}</span></div></td><td className="w-32 p-0 h-[100px]"><div className="h-full flex items-center justify-center"><div className="flex items-baseline gap-1"><span className="font-black text-blue-600 text-4xl italic">{scores[i] || 0}</span><span className="text-slate-300 font-bold text-sm uppercase">/100</span></div></div></td></tr>))}</tbody></table></div>
-                      <div className="p-10 bg-slate-900 rounded-[3rem] text-white flex justify-between items-center shadow-2xl relative overflow-hidden mb-2"><div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div><div className="space-y-0 relative z-10 flex flex-col justify-center"><p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.5em] mb-0">Evaluasi Kumulatif</p><div className="flex items-baseline gap-4 -mt-14"><p className="text-[18px] font-black text-white/40 uppercase tracking-widest">RATA-RATA:</p><h4 className="text-7xl font-black italic tracking-tighter text-white leading-tight">{avg}</h4><span className="text-2xl text-white/30 font-black italic uppercase tracking-widest leading-none">/ 100</span></div></div><div className="bg-white/10 p-6 rounded-[1.8rem] border border-white/20 text-center backdrop-blur-md relative z-10 min-w-[200px] overflow-hidden"><p className="text-[10px] font-black uppercase mb-1.5 tracking-widest text-blue-300">Status Capaian</p><p className="text-xl font-black italic tracking-tighter uppercase text-white mb-2">KOMPETEN ✨</p><div className="absolute bottom-0 left-0 h-1.5 bg-emerald-500 w-full shadow-[0_0_12px_rgba(16,185,129,0.8)]"></div></div></div>
-                   </div>
-                   <div id={`milestone-render-${req.id}`} className="w-[794px] h-[1123px] bg-white p-20 pb-40 flex flex-col border relative overflow-hidden box-border">
-                      <div className="absolute top-0 left-0 w-[400px] h-[400px] bg-blue-50 rounded-full -ml-48 -mt-48 opacity-50"></div>
-                      <div className="flex items-center gap-4 mb-10 relative z-10"><div className="w-14 h-14 bg-blue-900 text-white rounded-[1.2rem] flex items-center justify-center shadow-2xl rotate-6"><Zap size={28}/></div><h1 className="text-4xl font-black italic text-slate-800 uppercase leading-none tracking-tighter">Langkah <span className="text-blue-600">Pembelajaran</span></h1></div>
-                      <div className="space-y-8 mb-12 relative z-10"><div className="flex items-center gap-5 text-blue-600 border-b-4 border-blue-50 pb-3"><ClipboardList size={24}/><h3 className="text-base font-black uppercase tracking-[0.5em]">Log Pelaksanaan Sesi</h3></div><div className="space-y-4">{[1,2,3,4,5,6].map((num, i) => { const l = pkgLogs.find(x => x.sessionNumber === num); return (<div key={i} className="flex items-center gap-12 px-12 py-3 border-b border-slate-50 last:border-none group"><div className={`font-black text-xl uppercase italic w-24 shrink-0 ${SESSION_COLORS[i] || 'text-slate-400'}`}>SESI {num}</div><div className="flex-1 flex items-center justify-between"><p className="text-[13px] font-black text-slate-400 uppercase tracking-widest">{l ? formatDateToDMY(l.date) : "—"}</p><p className="text-[14px] font-black text-slate-800 uppercase italic">Durasi: 2 JAM / 120 MENIT</p></div></div>); })}</div></div>
-                      <div className="space-y-6 relative z-10 flex-1 flex flex-col mb-16"><div className="flex items-center gap-5 text-orange-500 border-b-4 border-orange-50 pb-3"><Quote size={24}/><h3 className="text-base font-black uppercase tracking-[0.5em]">Ulasan Pengajar</h3></div><div className="flex-1 bg-gradient-to-br from-blue-50/50 to-white rounded-[3rem] border-4 border-slate-100 p-10 flex flex-col items-center justify-center text-center relative overflow-hidden"><div className="absolute top-10 left-10 text-blue-100 opacity-60"><Star size={40} fill="currentColor"/></div><div className="absolute bottom-10 right-10 text-orange-100 opacity-60 animate-pulse"><Star size={40} fill="currentColor"/></div><p className="text-lg font-serif italic text-slate-700 leading-relaxed px-8 relative z-10 drop-shadow-sm break-words whitespace-normal overflow-wrap-anywhere max-w-full">"{nar}"</p></div></div>
-                      <div className="mt-auto flex flex-col items-center opacity-30 pt-10 relative z-10 border-t-2 border-slate-100 pb-28"><div className="w-14 h-14 bg-blue-900 text-white rounded-[1rem] flex items-center justify-center mb-3"><BadgeCheck size={28}/></div><p className="text-sm font-black uppercase tracking-[0.8em] text-slate-400">Dokumen Resmi Sanur Akademi</p></div>
-                   </div>
-                </div>
-              );
-            } else {
-              const themeColor = 'text-orange-600';
-              const themeBorder = 'border-orange-600';
-              const themeGradient = 'from-orange-600 to-slate-900';
-              const certTitle = 'Laporan Capaian Belajar';
-              return (
-                <div key={req.id} id={`pdf-group-${req.id}`}>
-                   <div id={`cert-render-${req.id}`} className={`w-[794px] h-[1123px] bg-white flex flex-col border-[25px] border-double ${themeBorder} box-border p-12 relative overflow-hidden`}><div className="w-full h-full border-4 border-slate-100 flex flex-col items-center py-12 box-border relative z-10"><div className="flex flex-col items-center justify-start pt-14 mb-8"><div className="bg-white px-10 py-5 mb-6 flex items-center justify-center border border-slate-50 shadow-sm rounded-2xl"><img src={ASSETS.LOGO} className="h-20 w-auto object-contain" /></div><h1 className="text-2xl font-black tracking-[0.25em] text-orange-900 uppercase leading-none">SANUR AKADEMI INSPIRASI</h1><div className="w-56 h-0.5 bg-gradient-to-r from-transparent via-orange-900/10 to-transparent mt-3"></div></div><div className="flex flex-col items-center text-center w-full px-12 flex-1 justify-center -mt-32"><h2 className="text-5xl font-serif italic text-orange-900 mb-8 leading-tight tracking-wide">{certTitle}</h2><p className="text-xl font-serif italic text-slate-500 mb-8 tracking-wider">Diberikan kepada:</p><div className="relative mb-12 w-full"><h3 className={`text-5xl font-black ${themeColor} uppercase tracking-[0.08em] text-center px-6 leading-none drop-shadow-sm`}>{sName}</h3><div className="w-full h-1.5 bg-orange-100 mt-6 rounded-full mx-auto max-w-[60%]"></div></div><p className="text-lg font-serif italic text-slate-600 px-20 leading-relaxed mb-10 tracking-wide">Telah berpartisipasi aktif and menyelesaikan seluruh modul kurikulum pelatihan intensif dengan dedikasi tinggi pada program:</p><div className={`bg-gradient-to-br ${themeGradient} px-16 py-8 rounded-[3rem] border-4 border-white shadow-2xl flex flex-col items-center justify-center min-w-[520px]`}><p className="text-2xl font-black text-white uppercase italic tracking-[0.1em] text-center leading-tight">{subject}</p><p className="text-orange-200 text-[10px] font-black tracking-[0.7em] uppercase mt-3">LEVEL {level}</p></div></div><div className="w-full flex flex-col items-center relative z-20"><div className="w-full px-20 absolute bottom-[22px] left-0 flex justify-between items-center z-10 gap-10"><div className="flex-1 flex flex-col items-center text-center"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic mb-1">Tanggal Terbit:</p><p className="text-base font-black text-slate-900 uppercase tracking-tighter">{formatDateToDMY(req.date)}</p></div><div className="flex-1 flex flex-col items-center justify-center text-orange-900/10 opacity-40 shrink-0"><BookOpen size={60} /><div className="flex gap-1.5 mt-1"><Star size={10} fill="currentColor"/><Star size={10} fill="currentColor"/><Star size={10} fill="currentColor"/></div></div><div className="flex-1 flex flex-col items-center text-center"><div className="p-3 border-4 border-slate-100 rounded-3xl bg-white shadow-sm flex items-center justify-center mx-auto"><img src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=VERIFIKASI%20SERTIFIKAT%20SANUR%0AID:%20${req.id.substring(0,8).toUpperCase()}%0ANAMA:%20${sName}%0APROGRAM:%20${subject}%0ASTATUS:%20KETERANGAN%20BELAJAR`} className="w-16 h-16" alt="QR" /></div><div className="w-full text-center mt-1.5"><p className="text-[7px] font-black text-slate-400 uppercase tracking-widest text-center">Verifikasi Sertifikat</p><p className="text-[5px] font-bold text-slate-300 uppercase -mt-0.5 leading-none text-center">Catatan Resmi Sanur</p></div></div></div></div></div></div>
-                   <div id={`transcript-render-${req.id}`} className="w-[794px] h-[1123px] bg-white p-12 flex flex-col relative border-8 border-slate-100 box-border overflow-hidden"><div className="flex justify-between items-start mb-6"><div className="flex items-center gap-4"><div className="w-14 h-14 bg-orange-600 rounded-2xl flex items-center justify-center text-white shadow-lg"><Layout size={28}/></div><div><h1 className="text-3xl font-black italic text-orange-600 uppercase leading-none tracking-tighter">SANUR</h1><p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.4em] mt-1">Catatan Akademik Resmi</p></div></div><div className="text-right"><p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Kode Referensi</p><p className="text-base font-black text-slate-800">SN/TR/{req.id.substring(0,8).toUpperCase()}</p></div></div><div className="grid grid-cols-2 gap-6 mb-6 bg-slate-50 p-6 rounded-[2rem] border border-slate-200"><div className="border-r border-slate-300"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Nama Siswa</p><p className="text-xl font-black text-slate-800 uppercase italic leading-none">{sName}</p></div><div className="pl-5"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Program Akademik</p><p className={`text-xl font-black ${themeColor} uppercase italic leading-tight`}>{subject}</p></div></div><div className="h-auto rounded-[2.5rem] border-2 border-slate-300 overflow-hidden mb-6 bg-white"><table className="w-full table-fixed border-collapse bg-white"><thead><tr className="bg-slate-900 text-white"><th className="p-4 text-center text-[10px] font-black uppercase tracking-widest border-r border-white/10 w-24">Sesi</th><th className="p-4 text-left text-[10px] font-black uppercase tracking-widest">Materi & Modul Kurikulum</th><th className="p-4 text-center text-[10px] font-black uppercase tracking-widest w-32">Nilai</th></tr></thead><tbody className="bg-white">{[1,2,3,4,5,6].map((num, idx) => (<tr key={idx} className="bg-white border-b border-slate-100 last:border-none"><td className="w-24 border-r border-slate-200 p-0 h-[100px]"><div className="h-full flex items-center justify-center"><span className="font-black text-slate-200 text-3xl italic">0{num}</span></div></td><td className="p-0 h-[100px]"><div className="h-full flex items-center px-10"><span className="font-black text-slate-800 text-[18px] uppercase italic tracking-tight">{topics[idx] || "MATERI PEMBELAJARAN"}</span></div></td><td className="w-32 p-0 h-[100px]"><div className="h-full flex items-center justify-center"><div className="flex items-baseline gap-1"><span className="font-black text-orange-600 text-4xl italic">{scores[idx] || 0}</span><span className="text-slate-300 font-bold text-sm uppercase">/100</span></div></div></td></tr>))}</tbody></table></div><div className="p-10 bg-slate-900 rounded-[3rem] text-white flex justify-between items-center shadow-2xl relative overflow-hidden mb-2"><div className="space-y-0 relative z-10 flex flex-col justify-center"><p className="text-[10px] font-black text-orange-400 uppercase tracking-[0.5em] mb-0">Evaluasi Kumulatif</p><div className="flex items-baseline gap-4 -mt-14"><p className="text-[18px] font-black text-white/40 uppercase tracking-widest">RATA-RATA:</p><h4 className="text-7xl font-black italic tracking-tighter text-white leading-tight">{avg}</h4><span className="text-2xl text-white/30 font-black italic uppercase tracking-widest leading-none">/ 100</span></div></div><div className="bg-white/10 p-6 rounded-[1.8rem] border border-white/20 text-center backdrop-blur-md relative z-10 min-w-[200px] overflow-hidden"><p className="text-[10px] font-black uppercase mb-1.5 tracking-widest text-orange-300">Status Capaian</p><p className="text-xl font-black italic tracking-tighter uppercase text-white mb-2">REMEDIAL</p><div className="absolute bottom-0 left-0 h-1.5 bg-orange-500 w-full shadow-[0_0_12px_rgba(249,115,22,0.8)]"></div></div></div></div>
-                   <div id={`milestone-render-${req.id}`} className="w-[794px] h-[1123px] bg-white p-20 pb-40 flex flex-col border relative overflow-hidden box-border"><div className="absolute top-0 left-0 w-[400px] h-[400px] bg-orange-50 rounded-full -ml-48 -mt-48 opacity-50"></div><div className="flex items-center gap-4 mb-10 relative z-10"><div className="w-14 h-14 bg-orange-900 text-white rounded-[1.2rem] flex items-center justify-center shadow-2xl rotate-6"><Zap size={28}/></div><h1 className="text-4xl font-black italic text-slate-800 uppercase leading-none tracking-tighter">Langkah <span className={themeColor}>Pembelajaran</span></h1></div><div className="space-y-8 mb-12 relative z-10"><div className={`flex items-center gap-5 ${themeColor} border-b-4 border-orange-50 pb-3`}><ClipboardList size={24}/><h3 className="text-base font-black uppercase tracking-[0.5em]">Log Pelaksanaan Sesi</h3></div><div className="space-y-4">{[1,2,3,4,5,6].map((num, idx) => { const l = pkgLogs.find(x => x.sessionNumber === num); return (<div key={idx} className="flex items-center gap-12 px-12 py-3 border-b border-slate-50 last:border-none group"><div className="font-black text-xl uppercase italic w-24 shrink-0 text-slate-400">SESI {num}</div><div className="flex-1 flex items-center justify-between"><p className="text-[13px] font-black text-slate-400 uppercase tracking-widest">{l ? formatDateToDMY(l.date) : "—"}</p><p className="text-[14px] font-black text-slate-800 uppercase italic">Durasi: 2 JAM / 120 MENIT</p></div></div>); })}</div></div><div className="space-y-6 relative z-10 flex-1 flex flex-col mb-16"><div className={`flex items-center gap-5 ${themeColor} border-b-4 border-orange-50 pb-3`}><Quote size={24}/><h3 className="text-base font-black uppercase tracking-[0.5em]">Ulasan Pengajar</h3></div><div className="flex-1 bg-gradient-to-br from-orange-50/50 to-white rounded-[3rem] border-4 border-slate-100 p-10 flex flex-col items-center justify-center text-center relative overflow-hidden"><p className="text-lg font-serif italic text-slate-700 leading-relaxed px-8 relative z-10 drop-shadow-sm break-words whitespace-normal overflow-wrap-anywhere max-w-full">"{nar}"</p></div></div><div className="mt-auto flex flex-col items-center opacity-30 pt-10 relative z-10 border-t-2 border-slate-100 pb-28"><div className={`w-14 h-14 ${isPass ? 'bg-blue-900' : 'bg-orange-900'} text-white rounded-[1rem] flex items-center justify-center mb-3`}><BadgeCheck size={28}/></div><p className="text-sm font-black uppercase tracking-widest text-slate-400">DOKUMEN RESMI SANUR AKADEMI</p></div></div>
-                </div>
-              );
-            }
+                    </div>
+                 </div>
+
+                 {/* PAGES 2 & 3 (KEEPING CONSISTENT) */}
+                 <div id={`transcript-render-${req.id}`} className="w-[794px] h-[1123px] bg-white p-12 flex flex-col relative border-8 border-slate-100 box-border overflow-hidden">
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="flex items-center gap-4"><div className={`w-14 h-14 ${isPass ? 'bg-blue-600' : 'bg-orange-600'} rounded-2xl flex items-center justify-center text-white shadow-lg`}><Layout size={28}/></div><div><h1 className={`text-3xl font-black italic ${themeColor} uppercase leading-none tracking-tighter`}>SANUR</h1><p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.4em] mt-1">Catatan Akademik Resmi</p></div></div>
+                      <div className="text-right"><p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Kode Referensi</p><p className="text-base font-black text-slate-800">SN/TR/{req.id.substring(0,8).toUpperCase()}</p></div>
+                    </div>
+                    <div className="grid grid-cols-2 gap-6 mb-6 bg-slate-50 p-6 rounded-[2rem] border border-slate-200"><div className="border-r border-slate-300"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Nama Siswa</p><p className="text-xl font-black text-slate-800 uppercase italic leading-none">{sName}</p></div><div className="pl-5"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Program Akademik</p><p className={`text-xl font-black ${themeColor} uppercase italic leading-tight`}>{subject}</p></div></div>
+                    <div className="h-auto rounded-[2.5rem] border-2 border-slate-300 overflow-hidden mb-6 bg-white"><table className="w-full table-fixed border-collapse bg-white"><thead><tr className="bg-slate-900 text-white"><th className="p-4 text-center text-[10px] font-black uppercase tracking-widest border-r border-white/10 w-24">Sesi</th><th className="p-4 text-left text-[10px] font-black uppercase tracking-widest">Materi & Modul Kurikulum</th><th className="p-4 text-center text-[10px] font-black uppercase tracking-widest w-32">Nilai</th></tr></thead><tbody className="bg-white">{[1,2,3,4,5,6].map((num, i) => (<tr key={i} className="bg-white border-b border-slate-100 last:border-none"><td className="w-24 border-r border-slate-200 p-0 h-[100px]"><div className="h-full flex items-center justify-center"><span className="font-black text-slate-200 text-3xl italic">0{num}</span></div></td><td className="p-0 h-[100px]"><div className="h-full flex items-center px-10"><span className="font-black text-slate-800 text-[18px] uppercase italic tracking-tight">{topics[i] || "MATERI PEMBELAJARAN"}</span></div></td><td className="w-32 p-0 h-[100px]"><div className="h-full flex items-center justify-center"><div className="flex items-baseline gap-1"><span className={`font-black ${themeColor} text-4xl italic`}>{scores[i] || 0}</span><span className="text-slate-300 font-bold text-sm uppercase">/100</span></div></div></td></tr>))}</tbody></table></div>
+                    <div className="p-10 bg-slate-900 rounded-[3rem] text-white flex justify-between items-center shadow-2xl relative overflow-hidden mb-2"><div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div><div className="space-y-0 relative z-10 flex flex-col justify-center"><p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.5em] mb-0">Evaluasi Kumulatif</p><div className="flex items-baseline gap-4 -mt-14"><p className="text-[18px] font-black text-white/40 uppercase tracking-widest">RATA-RATA:</p><h4 className="text-7xl font-black italic tracking-tighter text-white leading-tight">{avg}</h4><span className="text-2xl text-white/30 font-black italic uppercase tracking-widest leading-none">/ 100</span></div></div><div className="bg-white/10 p-6 rounded-[1.8rem] border border-white/20 text-center backdrop-blur-md relative z-10 min-w-[200px] overflow-hidden"><p className="text-[10px] font-black uppercase mb-1.5 tracking-widest text-blue-300">Status Capaian</p><p className="text-xl font-black italic tracking-tighter uppercase text-white mb-2">{isPass ? 'KOMPETEN ✨' : 'REMEDIAL'}</p><div className={`absolute bottom-0 left-0 h-1.5 ${isPass ? 'bg-emerald-500' : 'bg-orange-500'} w-full`}></div></div></div>
+                 </div>
+
+                 <div id={`milestone-render-${req.id}`} className="w-[794px] h-[1123px] bg-white p-20 pb-40 flex flex-col border relative overflow-hidden box-border">
+                    <div className={`absolute top-0 left-0 w-[400px] h-[400px] ${isPass ? 'bg-blue-50' : 'bg-orange-50'} rounded-full -ml-48 -mt-48 opacity-50`}></div>
+                    <div className="flex items-center gap-4 mb-10 relative z-10"><div className={`w-14 h-14 ${isPass ? 'bg-blue-900' : 'bg-orange-900'} text-white rounded-[1.2rem] flex items-center justify-center shadow-2xl rotate-6`}><Zap size={28}/></div><h1 className="text-4xl font-black italic text-slate-800 uppercase leading-none tracking-tighter">Langkah <span className={themeColor}>Pembelajaran</span></h1></div>
+                    <div className="space-y-8 mb-12 relative z-10"><div className={`flex items-center gap-5 ${themeColor} border-b-4 border-slate-50 pb-3`}><ClipboardList size={24}/><h3 className="text-base font-black uppercase tracking-[0.5em]">Log Pelaksanaan Sesi</h3></div><div className="space-y-4">{[1,2,3,4,5,6].map((num, idx) => { const l = pkgLogs.find(x => x.sessionNumber === num); return (<div key={idx} className="flex items-center gap-12 px-12 py-3 border-b border-slate-50 last:border-none group"><div className={`font-black text-xl uppercase italic w-24 shrink-0 ${SESSION_COLORS[idx] || 'text-slate-400'}`}>SESI {num}</div><div className="flex-1 flex items-center justify-between"><p className="text-[13px] font-black text-slate-400 uppercase tracking-widest">{l ? formatDateToDMY(l.date) : "—"}</p><p className="text-[14px] font-black text-slate-800 uppercase italic">Durasi: 2 JAM / 120 MENIT</p></div></div>); })}</div></div>
+                    <div className="space-y-6 relative z-10 flex-1 flex flex-col mb-16">
+                      <div className={`flex items-center gap-5 ${isPass ? 'text-blue-600' : 'text-orange-500'} border-b-4 border-slate-50 pb-3`}><Quote size={24}/><h3 className="text-base font-black uppercase tracking-[0.5em]">Ulasan Pengajar</h3></div>
+                      <div className="flex-1 bg-gradient-to-br from-blue-50/50 to-white rounded-[3rem] border-4 border-slate-100 p-10 flex flex-col items-center justify-center text-center relative overflow-hidden">
+                         <p className="text-lg font-serif italic text-slate-700 leading-relaxed px-8 relative z-10 drop-shadow-sm break-words whitespace-normal overflow-wrap-anywhere max-w-full">"{nar}"</p>
+                      </div>
+                    </div>
+                    <div className="mt-auto flex flex-col items-center pt-10 relative z-10 border-t-2 border-slate-100 opacity-60">
+                      <p className="text-sm font-black uppercase tracking-[0.8em] text-slate-400 text-center">Dokumen Resmi Sanur Akademi Inspirasi</p>
+                    </div>
+                    <div className="h-20 w-full shrink-0"></div>
+                 </div>
+              </div>
+            );
          })}
       </div>
 
