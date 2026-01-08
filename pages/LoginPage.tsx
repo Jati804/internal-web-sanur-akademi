@@ -106,8 +106,8 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
            <div className="inline-flex items-center gap-3 px-6 py-3 bg-white border border-slate-100 rounded-2xl shadow-xl">
               <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg rotate-3"><Database size={20} /></div>
               <div className="text-left">
-                 <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">SANUR AKADEMI</h1>
-                 <p className="text-[8px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1">Smart Management</p>
+                 <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">SANUR Akademi Inspirasi</h1>
+                 <p className="text-[8px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1">Internal Management System</p>
               </div>
            </div>
            
@@ -130,7 +130,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
               <div className="md:col-span-3 bg-white p-8 rounded-[2.5rem] border border-slate-100 flex items-center gap-6 text-slate-600 shadow-xl shadow-slate-200/50">
                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center shrink-0"><Info size={24}/></div>
                  <p className="text-[11px] font-bold uppercase tracking-wide leading-relaxed">
-                   Halo Kak! Selamat datang di Portal Sanur. Silakan <span className="text-blue-600 font-black">pilih peran Kakak</span> di atas untuk melanjutkan ke halaman login.
+                   Halo Kak! Selamat datang di Portal Sanur. Silakan <span className="text-blue-600 font-black">pilih peran</span> di atas untuk melanjutkan ke halaman login.
                  </p>
               </div>
             </div>
@@ -151,7 +151,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
                  <form onSubmit={handleSubmit} className="space-y-10">
                     <div className="space-y-4">
                        <h2 className="text-4xl font-black text-slate-800 tracking-tight uppercase italic leading-none">SELAMAT <span className={currentTheme.text}>DATANG</span></h2>
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Silakan masukkan identitas Kakak untuk masuk.</p>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Silakan masukkan identitas untuk masuk.</p>
                     </div>
 
                     <div className="space-y-6">
@@ -163,7 +163,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
                                type="text" 
                                value={username} 
                                onChange={(e) => setUsername(e.target.value)} 
-                               placeholder="USERNAME KAKAK..." 
+                               placeholder="ISI USERNAME..." 
                                className={`w-full pl-16 pr-8 py-6 bg-slate-50 border-2 border-transparent rounded-[2rem] outline-none font-black text-xs uppercase transition-all focus:bg-white focus:${currentTheme.border}`} 
                              />
                           </div>
