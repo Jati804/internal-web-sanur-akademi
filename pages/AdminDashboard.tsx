@@ -35,8 +35,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs }) => {
 
   const followUpList = useMemo(() => {
     const statusMap: Record<string, any> = {};
+    
+    // HANYA TRACKING DARI PORTAL SISWA (SISWA_MANDIRI)
     [...attendanceLogs]
-      .filter(l => l.status === 'SESSION_LOG' || l.status === 'SUB_LOG')
+      .filter(l => l.teacherId === 'SISWA_MANDIRI')
       .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())
       .forEach(log => {
         log.studentsAttended?.forEach(s => {
@@ -44,7 +46,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs }) => {
           const cName = (log.className || 'UMUM').toUpperCase();
           const key = `${sKey}|||${cName}`;
           statusMap[key] = { 
-            lastSess: log.studentSessions?.[s] || log.sessionNumber, 
+            lastSess: log.sessionNumber || 0, 
             student: s, 
             lastDate: log.date, 
             fullClass: log.className 
@@ -103,8 +105,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs }) => {
          <div className="bg-white p-10 rounded-[4rem] border border-slate-100 shadow-2xl flex flex-col min-h-[400px]">
             <div className="flex justify-between items-center mb-8">
                <div className="space-y-1">
-                  <h3 className="font-black text-slate-800 flex items-center gap-3 italic uppercase text-lg"><PhoneForwarded size={20} className="text-orange-500" /> Follow-Up Belajar</h3>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">Siswa mendekati kelulusan paket 6 sesi (WIB)</p>
+                  <h3 className="font-black text-slate-800 flex items-center gap-3 italic uppercase text-lg"><PhoneForwarded size={20} className="text-orange-500" /> Follow-Up (MANDIRI SISWA)</h3>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">Siswa lapor mandiri mendekati sesi 6</p>
                </div>
                <div className="bg-orange-50 text-orange-600 px-5 py-2 rounded-2xl font-black text-[9px] uppercase border border-orange-100">{followUpList.length} SISWA</div>
             </div>
@@ -118,13 +120,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs }) => {
                         </div>
                      </div>
                      <div className={`mt-6 inline-flex items-center gap-2 px-4 py-2 rounded-full text-[8px] font-black uppercase tracking-widest border ${s.lastSess >= 6 ? 'bg-white/10 border-white/20 text-white' : 'bg-orange-50 border-orange-100 text-orange-600'}`}>
-                        {s.lastSess >= 6 ? 'LULUS HARI INI ✨' : `PROG: SESI ${s.lastSess} / 6`}
+                        {s.lastSess >= 6 ? 'KLAIM RAPOT HARI INI ✨' : `PROGRESS SISWA: SESI ${s.lastSess} / 6`}
                      </div>
                   </div>
                )) : (
                   <div className="col-span-full py-20 flex flex-col items-center justify-center opacity-20 text-center gap-4">
                      <UserCheck size={48} className="text-slate-300" />
-                     <p className="font-black text-[11px] uppercase tracking-[0.4em]">Database Bersih. Belum ada antrean follow-up.</p>
+                     <p className="font-black text-[11px] uppercase tracking-[0.4em]">Belum ada siswa yang lapor sesi mandiri ke-5/6.</p>
                   </div>
                )}
             </div>
