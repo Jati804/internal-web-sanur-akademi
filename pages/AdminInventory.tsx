@@ -204,26 +204,31 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
                <h2 className="text-4xl md:text-5xl font-black text-slate-800 uppercase italic tracking-tighter leading-none">BUKU INDUK <span className="text-blue-600">& DATABASE</span></h2>
             </div>
             
-            <div className="flex items-center gap-3 flex-wrap sm:flex-nowrap justify-start lg:justify-end">
+            {/* TATA LETAK BERTINGKAT (DUA BARIS) PADA SISI KANAN */}
+            <div className="flex flex-col items-stretch sm:items-end gap-3 w-full lg:w-auto">
+               {/* Baris Atas: Utilitas */}
+               <div className="flex gap-3 w-full lg:w-auto">
+                  <button 
+                    onClick={() => setShowImportModal(true)}
+                    className="flex-1 lg:flex-none h-[56px] px-6 bg-[#0F172A] text-white rounded-[1.8rem] text-[9px] font-black uppercase shadow-lg hover:opacity-90 flex items-center justify-center gap-3 transition-all active:scale-95 shrink-0"
+                  >
+                    <Upload size={16} /> IMPORT BOX
+                  </button>
+
+                  <button 
+                    onClick={handleExportExcel}
+                    className="flex-1 lg:flex-none h-[56px] px-6 bg-emerald-600 text-white rounded-[1.8rem] text-[9px] font-black uppercase shadow-lg hover:bg-emerald-700 flex items-center justify-center gap-3 transition-all active:scale-95 shrink-0"
+                  >
+                    <FileText size={16} /> EXPORT EXCEL
+                  </button>
+               </div>
+
+               {/* Baris Bawah: Aksi Utama */}
                <button 
                  onClick={() => { setFormData({ status: 'SISWA_SANUR', name: '', dob: '', institution: '', personalPhone: '', parentPhone: '', enrolledClass: '', notes: '' }); setShowModal('ADD'); }} 
-                 className="h-[64px] px-10 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase shadow-2xl hover:bg-blue-700 flex items-center justify-center gap-3 transition-all active:scale-95 shrink-0"
+                 className="h-[64px] px-10 bg-blue-600 text-white rounded-[2rem] text-[10px] font-black uppercase shadow-2xl hover:bg-blue-700 flex items-center justify-center gap-3 transition-all active:scale-95 w-full lg:w-auto"
                >
-                 <UserPlus size={20} /> TAMBAH SISWA
-               </button>
-
-               <button 
-                 onClick={() => setShowImportModal(true)}
-                 className="h-[64px] px-8 bg-[#0F172A] text-white rounded-full text-[10px] font-black uppercase shadow-lg hover:opacity-90 flex items-center justify-center gap-3 transition-all active:scale-95 shrink-0"
-               >
-                 <Upload size={18} /> IMPORT BOX
-               </button>
-
-               <button 
-                 onClick={handleExportExcel}
-                 className="h-[64px] px-8 bg-emerald-600 text-white rounded-full text-[10px] font-black uppercase shadow-lg hover:bg-emerald-700 flex items-center justify-center gap-3 transition-all active:scale-95 shrink-0"
-               >
-                 <FileText size={18} /> EXPORT EXCEL
+                 <UserPlus size={20} /> TAMBAH SISWA BARU ✨
                </button>
             </div>
          </div>
