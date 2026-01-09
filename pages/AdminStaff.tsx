@@ -24,7 +24,7 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
   const [showModal, setShowModal] = useState<'ADD' | 'EDIT' | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<User | null>(null);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [formData, setFormData] = useState({ name: '', username: '', pin: '4488' });
+  const [formData, setFormData] = useState({ name: '', username: '', pin: '224488' });
   const [isLocalSyncing, setIsLocalSyncing] = useState(false);
 
   const roleTheme = {
@@ -51,14 +51,19 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
   }, [currentList, searchTerm]);
 
   const handleOpenAdd = () => {
-    const defaultPin = activeTab === 'STUDENTS' ? '1234' : '4488';
+    // Standard PIN 6 Digit Baru
+    const defaultPin = activeTab === 'STUDENTS' ? '123456' : '224488';
     setFormData({ name: '', username: '', pin: defaultPin });
     setShowModal('ADD');
   };
 
   const handleOpenEdit = (u: User) => {
     setEditingUser(u);
-    setFormData({ name: u.name, username: u.username.toUpperCase(), pin: u.pin || (activeTab === 'STUDENTS' ? '1234' : '4488') });
+    setFormData({ 
+      name: u.name, 
+      username: u.username.toUpperCase(), 
+      pin: u.pin || (activeTab === 'STUDENTS' ? '123456' : '224488') 
+    });
     setShowModal('EDIT');
   };
 
@@ -180,7 +185,7 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
                     </div>
                     <div className="bg-slate-50 px-4 py-1.5 rounded-xl border border-slate-100 flex items-center gap-2">
                        <Key size={10} className="text-slate-400"/>
-                       <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">PIN: <span className={roleTheme.text}>{u.pin || '****'}</span></span>
+                       <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">PIN: <span className={roleTheme.text}>{u.pin || '******'}</span></span>
                     </div>
                  </div>
                  <div className="flex-1 flex justify-end gap-3">
@@ -219,8 +224,8 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
                     <input type="text" placeholder="MISAL: BUDI_SANUR" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
                  </div>
                  <div className="space-y-2 text-left">
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">PIN 4-6 DIGIT</label>
-                    <input type="text" placeholder="MISAL: 4488" value={formData.pin} onChange={e => setFormData({...formData, pin: e.target.value.replace(/\D/g, '')})} maxLength={6} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+                    <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">PIN 6 DIGIT KEAMANAN</label>
+                    <input type="text" placeholder="MISAL: 224488" value={formData.pin} onChange={e => setFormData({...formData, pin: e.target.value.replace(/\D/g, '')})} maxLength={6} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
                  </div>
                  <button onClick={handleSave} disabled={isLocalSyncing} className={`w-full py-6 ${roleTheme.bg} text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3`}>
                     {isLocalSyncing ? <Loader2 size={18} className="animate-spin" /> : <ShieldAlert size={18}/>} UPDATE AKSES ✨
