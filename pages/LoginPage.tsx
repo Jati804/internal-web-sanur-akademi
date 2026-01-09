@@ -76,11 +76,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
       }
 
       if (foundUser) {
-        const userPin = foundUser.pin || (role === 'STUDENT' ? '1234' : '4488');
+        // Gunakan PIN 6 Digit Baru sebagai fallback
+        const userPin = foundUser.pin || (role === 'STUDENT' ? '123456' : '224488');
         if (pin === userPin) {
           onLogin(foundUser);
         } else {
-          setError('PIN Salah. Cek kembali digit PIN Anda.');
+          setError('PIN Salah. Cek kembali 6 digit PIN Anda.');
         }
       } else {
         setError('Username tidak terdaftar. Hubungi Admin.');
