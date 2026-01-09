@@ -49,8 +49,8 @@ const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }
         <Icon size={18} />
         {label}
       </div>
-      {badge ? (
-        <span className="bg-rose-500 text-white text-[8px] px-2 py-1 rounded-full animate-pulse">{badge}</span>
+      {badge && badge > 0 ? (
+        <span className="bg-rose-500 text-white text-[9px] px-2 py-1 min-w-[20px] text-center rounded-full animate-pulse shadow-lg shadow-rose-200">{badge}</span>
       ) : null}
     </Link>
   );
@@ -83,7 +83,7 @@ const GuideModal = ({ role, onClose }: { role: string, onClose: () => void }) =>
       text: 'text-emerald-600',
       steps: [
         { title: 'Lapor Bayar', desc: 'Upload bukti transfer di menu "Pembayaran" agar Admin bisa mengaktifkan paket belajarmu.' },
-        { title: 'Presensi Mandiri', desc: 'Isi kehadiranmu secara mandiri, kamu bisa klik nomor sesi di "Kelas Saya" untuk lapor progres.' },
+        { title: 'Presensi Mandiri', desc: 'Presensi dilakukan secara mandiri, kamu bisa klik nomor sesi di "Kelas Saya" untuk lapor progres.' },
         { title: 'Klaim Rapot', desc: 'Tombol Klaim muncul saat progres 6/6. Pilih guru pembimbingmu untuk meminta penilaian.' },
         { title: 'Unduh Rapot', desc: 'Sertifikat & Rapot PDF bisa diunduh di tab "Kelas Saya" setelah guru selesai menilai.' }
       ]
@@ -140,6 +140,14 @@ const AppContent = ({
     navigate('/', { replace: true });
   };
 
+  // Menghitung antrean rapot khusus untuk guru yang login
+  const pendingReportsCount = user && user.role === 'TEACHER' 
+    ? attendanceLogs.filter((l: Attendance) => 
+        (l.status === 'REPORT_REQUEST' || l.status === 'REPORT_PROCESSING') && 
+        l.teacherId === user.id
+      ).length 
+    : 0;
+
   if (location.pathname === '/verify') return <VerifyCertificate />;
   
   if (!user) return (
@@ -194,7 +202,7 @@ const AppContent = ({
               <>
                 <NavItem to="/teacher" icon={ClipboardCheck} label="Lapor Presensi" onClick={closeSidebar} />
                 <NavItem to="/teacher/honor" icon={Wallet} label="Honor Saya" activeColor="blue" onClick={closeSidebar} />
-                <NavItem to="/teacher/reports" icon={GraduationCap} label="Rapot Siswa" activeColor="orange" onClick={closeSidebar} />
+                <NavItem to="/teacher/reports" icon={GraduationCap} label="Rapot Siswa" activeColor="orange" onClick={closeSidebar} badge={pendingReportsCount} />
               </>
             )}
             {user.role === 'STUDENT' && (
