@@ -211,12 +211,11 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs }) => {
                         </div>
                      </div>
                   </div>
-                  <div className="flex items-center gap-8 bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100">
-                     <div className="text-right pr-6 border-r border-slate-200 min-w-[140px]">
-                        <p className="text-[9px] font-black text-slate-400 uppercase mb-1 italic">Diterima Kakak</p>
-                        <p className="text-3xl font-black italic tracking-tighter text-blue-600">Rp {pkg.myTotalPaid.toLocaleString()}</p>
-                     </div>
-                     <div className="p-4 bg-white rounded-2xl text-blue-600"><ArrowRight size={24}/></div>
+                  
+                  {/* KOTAK NOMINAL SEDERHANA */}
+                  <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 min-w-[200px] text-center shadow-inner">
+                     <p className="text-[10px] font-black text-slate-400 uppercase mb-1 italic">Diterima</p>
+                     <p className="text-3xl font-black italic tracking-tighter text-blue-600 whitespace-nowrap">Rp {pkg.myTotalPaid.toLocaleString()}</p>
                   </div>
                </div>
                
