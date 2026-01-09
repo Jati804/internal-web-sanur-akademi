@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
 const { HashRouter, Routes, Route, Navigate, Link, useLocation, useNavigate } = ReactRouterDOM as any;
@@ -8,7 +7,7 @@ import {
   LayoutDashboard, Receipt, Menu, CreditCard, BookOpen, Book, UserCog, 
   ClipboardCheck, Wallet, GraduationCap, Power, 
   Settings as SettingsIcon, Database, X,
-  FileBadge, Sparkles, ChevronRight, HelpCircle, Info, CheckCircle2, AlertCircle
+  Sparkles, HelpCircle, Info
 } from 'lucide-react';
 
 import { supabase, isSupabaseConfigured } from './services/supabase.ts';
@@ -25,7 +24,6 @@ import TeacherHistory from './pages/TeacherHistory.tsx';
 import TeacherHonor from './pages/TeacherHonor.tsx';
 import TeacherReportsInbox from './pages/TeacherReportsInbox.tsx';
 import StudentPortal from './pages/StudentPortal.tsx';
-// Fix: Removed .tsx from the import name to resolve syntax error
 import VerifyCertificate from './pages/VerifyCertificate.tsx';
 
 import { User, Attendance, Transaction, StudentProfile, StudentPayment } from './types.ts';
@@ -83,7 +81,7 @@ const GuideModal = ({ role, onClose }: { role: string, onClose: () => void }) =>
       text: 'text-emerald-600',
       steps: [
         { title: 'Lapor Bayar', desc: 'Upload bukti transfer di menu "Pembayaran" agar Admin bisa mengaktifkan paket belajarmu.' },
-        { title: 'Presensi Mandiri', desc: 'Presensi dilakukan secara mandiri, kamu bisa klik nomor sesi di "Kelas Saya" untuk lapor progres.' },
+        { title: 'Presensi Mandiri', desc: 'Mengisi presensi secara mandiri, kamu bisa klik nomor sesi di "Kelas Saya" untuk lapor progres.' },
         { title: 'Klaim Rapot', desc: 'Tombol Klaim muncul saat progres 6/6. Pilih guru pembimbingmu untuk meminta penilaian.' },
         { title: 'Unduh Rapot', desc: 'Sertifikat & Rapot PDF bisa diunduh di tab "Kelas Saya" setelah guru selesai menilai.' }
       ]
@@ -140,7 +138,6 @@ const AppContent = ({
     navigate('/', { replace: true });
   };
 
-  // Menghitung antrean rapot khusus untuk guru yang login
   const pendingReportsCount = user && user.role === 'TEACHER' 
     ? attendanceLogs.filter((l: Attendance) => 
         (l.status === 'REPORT_REQUEST' || l.status === 'REPORT_PROCESSING') && 
@@ -236,7 +233,7 @@ const AppContent = ({
             <Routes>
               <Route path="/admin" element={<AdminDashboard user={user} attendanceLogs={attendanceLogs} setAttendanceLogs={setAttendanceLogs} teachers={teachers} transactions={transactions} studentProfiles={studentProfiles} />} />
               <Route path="/admin/finance" element={<AdminFinance attendanceLogs={attendanceLogs} transactions={transactions} studentPayments={studentPayments} refreshAllData={refreshAllData} />} />
-              <Route path="/admin/buku-induk" element={<AdminInventory studentProfiles={studentProfiles} setStudentProfiles={setStudentProfiles} />} />
+              <Route path="/admin/buku-induk" element={<AdminInventory studentProfiles={studentProfiles} setStudentProfiles={setStudentProfiles} refreshAllData={refreshAllData} />} />
               <Route path="/admin/staff" element={<AdminStaff user={user} teachers={teachers} setTeachers={setTeachers} studentAccounts={studentAccounts} setStudentAccounts={setStudentAccounts} />} />
               <Route path="/admin/academic" element={<AdminAcademic subjects={subjects} setSubjects={setSubjects} classes={classes} setClasses={setClasses} levels={levels} setLevels={setLevels} scheduleData={masterSchedule} setScheduleData={setMasterSchedule} salaryConfig={salaryConfig} setSalaryConfig={setSalaryConfig} />} />
               <Route path="/admin/maintenance" element={<AdminMaintenance attendanceLogs={attendanceLogs} setAttendanceLogs={setAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} />} />
@@ -257,9 +254,12 @@ const AppContent = ({
 const App = () => {
   const [user, setUser] = useState<User | null>(() => {
     const saved = localStorage.getItem('sanur_user');
-    return saved ? JSON.parse(saved) : null;
+    try {
+      return saved ? JSON.parse(saved) : null;
+    } catch {
+      return null;
+    }
   });
-  
   const [attendanceLogs, setAttendanceLogs] = useState<Attendance[]>([]);
   const [teachers, setTeachers] = useState<User[]>([]);
   const [studentAccounts, setStudentAccounts] = useState<User[]>([]);
@@ -268,10 +268,9 @@ const App = () => {
   const [studentProfiles, setStudentProfiles] = useState<StudentProfile[]>([]);
   const [subjects, setSubjects] = useState<string[]>(INITIAL_SUBJECTS);
   const [classes, setClasses] = useState<string[]>(CLASS_ROOM_OPTIONS);
-  const [levels, setLevels] = useState<string[]>(["BASIC", "INTERMEDIATE", "ADVANCED"]);
+  const [levels, setLevels] = useState<string[]>(['BASIC', 'INTERMEDIATE', 'ADVANCED']);
   const [masterSchedule, setMasterSchedule] = useState<Record<string, string>>({});
-  const [salaryConfig, setSalaryConfig] = useState({ regulerRate: 25000, privateRate: 50000 });
-  
+  const [salaryConfig, setSalaryConfig] = useState({ regulerRate: 15000, privateRate: 25000 });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [connectionError, setConnectionError] = useState(false);
@@ -280,64 +279,70 @@ const App = () => {
     if (!isSupabaseConfigured()) return;
     setIsSyncing(true);
     try {
-      const [att, teach, stud, trans, pays, profs, sets] = await Promise.all([
+      const [att, pays, txs, profs, teach, sets, studs] = await Promise.all([
         supabase.from('attendance').select('*'),
-        supabase.from('teachers').select('*'),
-        supabase.from('student_accounts').select('*'),
-        supabase.from('transactions').select('*'),
         supabase.from('student_payments').select('*'),
+        supabase.from('transactions').select('*'),
         supabase.from('student_profiles').select('*'),
-        supabase.from('settings').select('*')
+        supabase.from('teachers').select('*'),
+        supabase.from('settings').select('*'),
+        supabase.from('student_accounts').select('*')
       ]);
 
-      if (att.data) setAttendanceLogs(att.data.map((x: any) => ({
-        ...x,
-        id: x.id,
-        teacherId: x.teacherid,
-        teacherName: x.teachername,
-        clockIn: x.clockin,
-        className: x.classname,
-        sessionCategory: x.sessioncategory, 
-        paymentStatus: x.paymentstatus,
-        receiptData: x.receiptdata,
-        packageId: x.packageid,
-        sessionNumber: x.sessionnumber,
-        studentSessions: x.studentsessions,
-        studentScores: x.studentscores,
-        studentTopics: x.studenttopics,
-        studentNarratives: x.studentnarratives,
-        reportNarrative: x.reportnarrative,
-        studentsAttended: x.studentsattended,
-        substituteFor: x.substitutefor,
-        originalTeacherId: x.originalteacherid
+      if (att.data) setAttendanceLogs(att.data.map((l: any) => ({
+        ...l,
+        teacherId: l.teacherid,
+        teacherName: l.teachername,
+        clockIn: l.clockin,
+        className: l.classname,
+        sessionCategory: l.sessioncategory,
+        studentsAttended: l.studentsattended,
+        studentSessions: l.studentsessions,
+        studentScores: l.studentscores,
+        studentTopics: l.studenttopics,
+        studentNarratives: l.studentnarratives,
+        paymentStatus: l.paymentstatus,
+        receiptUrl: l.receipturl,
+        receiptData: l.receiptdata,
+        packageId: l.packageid,
+        sessionNumber: l.sessionnumber,
+        totalPackageSessions: l.totalpackagesessions,
+        reportNarrative: l.reportnarrative,
+        substituteFor: l.substitutefor,
+        originalTeacherId: l.originalteacherid
       })));
-      if (teach.data) setTeachers(teach.data);
-      if (stud.data) setStudentAccounts(stud.data);
-      if (trans.data) setTransactions(trans.data);
-      if (pays.data) setStudentPayments(pays.data.map((x: any) => ({
-        ...x,
-        studentName: x.studentname,
-        className: x.classname,
-        receiptData: x.receiptdata
+      
+      if (pays.data) setStudentPayments(pays.data.map((p: any) => ({
+        ...p,
+        studentName: p.studentname,
+        className: p.classname,
+        receiptData: p.receiptdata
       })));
-      if (profs.data) setStudentProfiles(profs.data.map((x: any) => ({
-        ...x,
-        personalPhone: x.personalphone,
-        parentPhone: x.parentphone,
-        enrolledClass: x.enrolledclass
+      
+      if (txs.data) setTransactions(txs.data);
+
+      // FIX: Mapping Student Profiles agar kolom personalphone & parentphone terdeteksi aplikasi
+      if (profs.data) setStudentProfiles(profs.data.map((p: any) => ({
+        ...p,
+        personalPhone: p.personalphone,
+        parentPhone: p.parentphone,
+        enrolledClass: p.enrolledclass
       })));
 
+      if (teach.data) setTeachers(teach.data);
+      if (studs.data) setStudentAccounts(studs.data);
+      
       if (sets.data) {
-        const acad = sets.data.find(s => s.key === 'academic_config')?.value;
-        if (acad) {
-          if (acad.subjects) setSubjects(acad.subjects);
-          if (acad.classes) setClasses(acad.classes);
-          if (acad.levels) setLevels(acad.levels);
+        const academic = sets.data.find(s => s.key === 'academic_config')?.value;
+        if (academic) {
+          if (academic.subjects) setSubjects(academic.subjects);
+          if (academic.levels) setLevels(academic.levels);
+          if (academic.classes) setClasses(academic.classes);
         }
-        const sched = sets.data.find(s => s.key === 'master_schedule')?.value;
-        if (sched) setMasterSchedule(sched);
-        const sal = sets.data.find(s => s.key === 'salary_config')?.value;
-        if (sal) setSalaryConfig(sal);
+        const schedule = sets.data.find(s => s.key === 'master_schedule')?.value;
+        if (schedule) setMasterSchedule(schedule);
+        const salary = sets.data.find(s => s.key === 'salary_config')?.value;
+        if (salary) setSalaryConfig(salary);
       }
       setConnectionError(false);
     } catch (e) {
@@ -368,7 +373,8 @@ const App = () => {
         masterSchedule={masterSchedule} setMasterSchedule={setMasterSchedule}
         salaryConfig={salaryConfig} setSalaryConfig={setSalaryConfig}
         isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}
-        isSyncing={isSyncing} connectionError={connectionError}
+        isSyncing={isSyncing}
+        connectionError={connectionError}
         refreshAllData={refreshAllData}
       />
     </Router>
