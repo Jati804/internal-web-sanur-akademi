@@ -260,9 +260,27 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
       <div className="bg-[#0F172A] p-12 md:p-16 rounded-[4rem] text-white shadow-2xl relative overflow-hidden flex flex-col items-center">
         <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter mb-12 relative z-10">KAS <span className="text-blue-500">SANUR</span></h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full relative z-10 max-w-5xl">
-          <div className="bg-white/5 backdrop-blur-xl p-10 rounded-[3rem] border border-white/10 text-center"><p className="text-[10px] font-black uppercase text-blue-300 tracking-[0.4em] mb-2">Kas Bersih</p><p className="text-5xl font-black italic tracking-tighter">Rp {stats.balance.toLocaleString()}</p></div>
-          <div className="bg-emerald-50/10 p-10 rounded-[3rem] border border-emerald-500/20 text-center"><div className="flex items-center gap-3 text-emerald-400 mb-4 justify-center"><ArrowUpCircle size={16}/><p className="text-[10px] font-black uppercase">Masuk</p></div><p className="text-3xl font-black italic">Rp {stats.income.toLocaleString()}</p></div>
-          <div className="bg-rose-50/10 p-10 rounded-[3rem] border border-rose-500/20 text-center"><div className="flex items-center gap-3 text-rose-400 mb-4 justify-center"><ArrowDownCircle size={16}/><p className="text-[10px] font-black uppercase">Keluar</p></div><p className="text-3xl font-black italic">Rp {stats.expense.toLocaleString()}</p></div>
+          {/* KAS BERSIH */}
+          <div className="bg-white/5 backdrop-blur-xl p-10 rounded-[3rem] border border-white/10 text-center flex flex-col justify-center min-h-[180px]">
+             <p className="text-[10px] font-black uppercase text-blue-300 tracking-[0.4em] mb-3">Kas Bersih</p>
+             <p className="text-2xl font-black italic tracking-tighter leading-none">Rp {stats.balance.toLocaleString()}</p>
+          </div>
+          {/* MASUK */}
+          <div className="bg-emerald-50/10 p-10 rounded-[3rem] border border-emerald-500/20 text-center flex flex-col justify-center min-h-[180px]">
+             <div className="flex items-center gap-3 text-emerald-400 mb-4 justify-center">
+                <ArrowUpCircle size={16}/>
+                <p className="text-[10px] font-black uppercase">Masuk</p>
+             </div>
+             <p className="text-2xl font-black italic tracking-tighter leading-none">Rp {stats.income.toLocaleString()}</p>
+          </div>
+          {/* KELUAR */}
+          <div className="bg-rose-50/10 p-10 rounded-[3rem] border border-rose-500/20 text-center flex flex-col justify-center min-h-[180px]">
+             <div className="flex items-center gap-3 text-rose-400 mb-4 justify-center">
+                <ArrowDownCircle size={16}/>
+                <p className="text-[10px] font-black uppercase">Keluar</p>
+             </div>
+             <p className="text-2xl font-black italic tracking-tighter leading-none">Rp {stats.expense.toLocaleString()}</p>
+          </div>
         </div>
       </div>
 
@@ -349,12 +367,19 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
                              </div>
                           </div>
                        </div>
-                       <div className="flex items-center gap-8 bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100">
-                          <div className="text-right pr-6 border-r border-slate-200 min-w-[140px]">
+                       
+                       {/* VERTIKAL LAYOUT: NOMINAL & TOMBOL */}
+                       <div className="flex flex-col items-center gap-4 bg-slate-50 p-8 rounded-[3rem] border border-slate-100 min-w-[240px] lg:w-64">
+                          <div className="text-center w-full pb-4 border-b border-slate-200/60">
                              <p className="text-[9px] font-black text-slate-400 uppercase mb-1 italic">Total Cairkan</p>
                              <p className="text-3xl font-black italic tracking-tighter text-blue-600 whitespace-nowrap">Rp {item.amount.toLocaleString()}</p>
                           </div>
-                          <button onClick={() => setSelectedPayout(item)} className="px-10 py-5 bg-slate-900 text-white rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest shadow-xl hover:bg-emerald-600 active:scale-95 transition-all">BAYAR SEKARANG</button>
+                          <button 
+                            onClick={() => setSelectedPayout(item)} 
+                            className="w-full py-5 bg-slate-900 text-white rounded-[1.5rem] font-black text-[11px] uppercase tracking-widest shadow-xl hover:bg-emerald-600 active:scale-95 transition-all"
+                          >
+                            BAYAR SEKARANG
+                          </button>
                        </div>
                     </div>
                     
@@ -416,7 +441,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
 
       {activeTab === 'STUDENT_ACC' && (
         <div className="space-y-12 px-4">
-           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
               {studentPayments.filter(p => p.status === 'PENDING').map((p) => (
                  <div key={p.id} className="bg-white p-10 rounded-[4rem] border border-slate-100 shadow-2xl flex flex-col justify-between hover:border-emerald-500 transition-all group">
                     <div>
@@ -517,7 +542,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
       {/* MODAL EDIT TRANSAKSI */}
       {editingTransaction && (
          <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-            <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 md:p-12 shadow-2xl relative overflow-hidden">
+            <div className="bg-white w-full max-sm rounded-[3.5rem] p-10 md:p-12 shadow-2xl relative overflow-hidden">
                <button onClick={() => setEditingTransaction(null)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all"><X size={20}/></button>
                <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-8 tracking-tighter">Edit <span className="text-blue-600">Transaksi</span></h4>
                <form onSubmit={handleUpdateTx} className="space-y-6">
