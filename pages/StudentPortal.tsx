@@ -389,7 +389,8 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
                       
                       {/* HEADER - TETAP PADA POSISI KAKAK */}
                       <div style={{ height: '280px', paddingTop: '110px', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', flexShrink: 0 }}>
-                        <div style={{ backgroundColor: 'white', width: '220px', height: '80px', marginBottom: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #f1f5f9', borderRadius: '20px', boxShadow: '0 4px 6px -1px rgba(0,0,0,0.05)', padding: '10px' }}>
+                        <div style={{ backgroundColor: 'transparent', width: '220px', height: '80px', marginBottom: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', padding: '10px' }}>
+   <img src={ASSETS.LOGO} style={{ maxWidth: '180px', maxHeight: '60px', width: 'auto', height: 'auto', objectFit: 'contain' }} />
                            <img src={ASSETS.LOGO} style={{ maxWidth: '180px', maxHeight: '60px', width: 'auto', height: 'auto', objectFit: 'contain' }} />
                         </div>
                         <h1 style={{ fontSize: '18px', fontWeight: '900', letterSpacing: '0.2em', color: '#1e293b', textTransform: 'uppercase', lineHeight: '1', margin: 0 }}>SANUR AKADEMI INSPIRASI</h1>
