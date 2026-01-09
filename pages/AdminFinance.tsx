@@ -318,7 +318,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
                               <td className="px-12 py-8 min-w-[300px]">
                                  <p className="text-[9px] font-black text-slate-300 uppercase mb-1">{formatDate(t.date)}</p>
                                  <p className="text-[14px] font-black text-slate-800 uppercase italic leading-tight">{t.description}</p>
-                                 <span className="text-[8px] font-black text-blue-500 bg-blue-50 px-3 py-1 rounded-lg uppercase tracking-widest mt-3 inline-block">{t.category || 'UMUM'}</span>
+                                 <span className="text-[8px] font-black text-blue-500 bg-blue-50 px-3 py-1 rounded-lg uppercase tracking-widest mt-3 italic">{t.category || 'UMUM'}</span>
                               </td>
                               <td className="px-12 py-8 text-right min-w-[200px]">
                                  <div className={`flex items-baseline justify-end gap-1.5 font-black italic whitespace-nowrap flex-nowrap ${t.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'}`}>
@@ -360,7 +360,6 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
                                 <span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${item.category === 'PRIVATE' ? 'bg-orange-500 text-white' : 'bg-blue-900 text-white'}`}>{item.category}</span>
                              </div>
                              
-                             {/* UPDATE: Nama Siswa Muncul Jika Private */}
                              {item.category === 'PRIVATE' && (
                                 <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-2 italic flex items-center gap-2">
                                    <Users size={12} className="text-blue-500" /> Siswa: {item.studentName}
@@ -416,6 +415,8 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
                              } else if (log) { 
                                 bgColor = "bg-slate-200 text-slate-400 opacity-50"; 
                                 label = "GURU LAIN"; 
+                                // UPDATE: Tambahkan info siapa yang mengajar agar Admin gampang nyocokin
+                                subInfo = `Oleh: ${log.teacherName?.split(' ')[0] || 'TEMAN'}`;
                              }
 
                              return (
@@ -603,7 +604,6 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
                  <h4 className="text-xl font-black text-slate-800 uppercase italic leading-tight">Konfirmasi Bayar Honor</h4>
                  <p className="text-[10px] font-bold text-blue-600 uppercase mt-2">{selectedPayout.teacherName}</p>
                  
-                 {/* UPDATE: Nama Siswa Di Modal */}
                  {selectedPayout.category === 'PRIVATE' && (
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 italic">Siswa: {selectedPayout.studentName}</p>
                  )}
