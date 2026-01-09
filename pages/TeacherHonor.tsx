@@ -208,7 +208,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
       <div className="flex flex-col lg:flex-row items-start justify-center gap-10 px-4 relative">
         <div className="hidden lg:block lg:flex-1"></div>
         <div className="flex bg-white p-2 rounded-[2.5rem] border border-slate-100 shadow-xl w-full lg:w-[400px] shrink-0">
-           <Link to="/teacher" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase transition-all text-center flex items-center justify-center gap-3 text-slate-400 hover:text-blue-600"><ClipboardCheck size={16}/> Presensi</Link>
+           <Link to="/teacher" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center gap-3 text-slate-400 hover:text-blue-600"><ClipboardCheck size={16}/> Presensi</Link>
            <Link to="/teacher/honor" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase transition-all text-center flex items-center justify-center gap-3 bg-blue-600 text-white shadow-lg shadow-blue-200"><Wallet size={16}/> Honor</Link>
         </div>
         <div className="flex flex-col gap-4 w-full lg:w-72 lg:flex-1 items-center lg:items-end">
@@ -229,7 +229,6 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
          {cycleGroups.length > 0 ? cycleGroups.map((pkg) => (
             <div id={pkg.id} key={pkg.id} className="bg-white rounded-[4rem] border-2 border-slate-50 shadow-2xl overflow-hidden group hover:border-blue-200 transition-all duration-500 relative">
                
-               {/* UPDATE: TOMBOL HAPUS (X) HANYA UNTUK PEMILIK SIKLUS ASLI (GURU ASLI) */}
                {pkg.status === 'ANTREAN' && pkg.isCycleOwner && (
                   <button 
                     onClick={() => setConfirmDeletePkg(pkg)}
@@ -281,7 +280,6 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                         const isMeSubstituting = log && log.teacherId === user.id && log.originalTeacherId && log.originalTeacherId !== user.id;
                         const isMeDelegated = log && log.originalTeacherId === user.id && log.teacherId !== user.id;
                         
-                        // UPDATE: TOMBOL EDIT HANYA UNTUK PEMILIK SIKLUS (GURU ASLI)
                         const canEdit = isCycleOwner && log.paymentStatus === 'UNPAID';
                         
                         let bgColor = "bg-white text-slate-200 border-dashed border-2 border-slate-100";
@@ -294,17 +292,19 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                            bgColor = "bg-blue-600 text-white shadow-lg ring-4 ring-blue-50"; 
                            label = "SESI ANDA"; 
                         } else if (isMeSubstituting) { 
-                           // Warna Orange Kereng tetap terjaga
                            bgColor = "bg-orange-600 text-white shadow-lg ring-4 ring-orange-100"; 
                            label = "MENGGANTIKAN"; 
                            subInfo = `Ganti: ${log.substituteFor?.split(' ')[0] || 'TEMAN'}`; 
                         } else if (isMeDelegated) { 
                            bgColor = "bg-slate-300 text-slate-500 shadow-sm border-slate-400"; 
                            label = "DIGANTIKAN"; 
-                           subInfo = `Oleh: ${log.teacherName?.split(' ')[0]}`; 
+                           // UPDATE: Tampilkan siapa yang mengajar agar Admin & Guru gampang cocokin data
+                           subInfo = `Oleh: ${log.teacherName?.split(' ')[0] || 'TEMAN'}`; 
                         } else if (log) { 
                            bgColor = "bg-slate-200 text-slate-400 opacity-50"; 
                            label = "GURU LAIN"; 
+                           // UPDATE: Tambahkan info nama pengajar untuk transparansi Admin
+                           subInfo = `Oleh: ${log.teacherName?.split(' ')[0] || 'TEMAN'}`;
                         }
 
                         return (
@@ -405,7 +405,6 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Ruangan Kelas:</p>
                    <p className="text-[13px] font-bold text-slate-800 uppercase leading-tight">{pkg.fullClassName}</p>
                    
-                   {/* Nama Siswa Private di Slip */}
                    {pkg.category === 'PRIVATE' && (
                      <div className="mt-2">
                         <p className="text-[7px] font-black text-blue-400 uppercase tracking-widest">Siswa Private:</p>
