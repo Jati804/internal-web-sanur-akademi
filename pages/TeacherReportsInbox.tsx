@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { User, Attendance } from '../types';
 import { supabase } from '../services/supabase.ts';
 import { 
@@ -68,6 +68,7 @@ const MilestoneView = ({ logs, studentName, packageId }: { logs: Attendance[], s
 const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, studentAccounts, refreshAllData }) => {
   const [activeStep, setActiveStep] = useState<'ANTREAN' | 'WORKSPACE' | 'HISTORY'>('ANTREAN');
   const [selectedPackage, setSelectedPackage] = useState<any | null>(null);
+  const [lastActionedId, setLastActionedId] = useState<string | null>(null);
   const [activeDownloadId, setActiveDownloadId] = useState<string | null>(null);
   const [downloadStep, setDownloadStep] = useState('');
   const [showMilestoneFor, setShowMilestoneFor] = useState<any | null>(null);
@@ -77,7 +78,25 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
   const [loading, setLoading] = useState(false);
   const [historySearchTerm, setHistorySearchTerm] = useState('');
 
-  const ASSETS = { LOGO: "https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png" };
+  const ASSETS = { LOGO: "https://raw.githubusercontent.com/user-attachments/assets/080a8f94-67f7-49d7-84a7-897b2521c761" };
+
+  // Effect for Auto-Scroll and Highlight
+  useEffect(() => {
+    if (activeStep === 'HISTORY' && lastActionedId) {
+      setTimeout(() => {
+        const element = document.getElementById(`history-card-${lastActionedId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          // Highlight effect
+          element.classList.add('ring-4', 'ring-emerald-500', 'ring-offset-4', 'scale-[1.02]', 'duration-700');
+          setTimeout(() => {
+            element.classList.remove('ring-4', 'ring-emerald-500', 'ring-offset-4', 'scale-[1.02]');
+          }, 4000);
+        }
+        setLastActionedId(null); // Reset after action
+      }, 300);
+    }
+  }, [activeStep, lastActionedId]);
 
   const reportRequests = useMemo(() => {
     const requests = logs.filter(l => (l.status === 'REPORT_REQUEST' || l.status === 'REPORT_PROCESSING') && l.teacherId === user.id);
@@ -162,6 +181,9 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
       const payload = { status: 'SESSION_LOG', sessionnumber: 6, studenttopics: { [sName]: topics }, studentscores: { [sName]: scores }, studentnarratives: { [sName]: reportForm.narrative }, reportnarrative: reportForm.narrative, date: isEditMode ? selectedPackage.date : new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()) };
       await supabase.from('attendance').update(payload).eq('id', selectedPackage.id);
       await refreshAllData();
+      
+      // Set the ID for auto-scroll and switch to history
+      setLastActionedId(selectedPackage.id);
       setSelectedPackage(null);
       setActiveStep('HISTORY');
     } catch (e: any) { alert(e.message); } finally { setLoading(false); }
@@ -341,7 +363,11 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
                const avg = Math.round(scores.reduce((a:number,b:number)=>a+b,0)/6);
                const isPass = avg >= 80;
                return (
-                  <div key={i} className="bg-white p-12 md:p-14 rounded-[4rem] shadow-xl border border-slate-100 flex flex-col hover:border-emerald-500 transition-all">
+                  <div 
+                    key={i} 
+                    id={`history-card-${req.id}`}
+                    className="bg-white p-12 md:p-14 rounded-[4rem] shadow-xl border border-slate-100 flex flex-col hover:border-emerald-500 transition-all"
+                  >
                      <div className="flex justify-between items-start mb-10">
                         <div className={`w-16 h-16 rounded-3xl flex items-center justify-center shadow-inner shrink-0 ${isPass ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'}`}>{isPass ? <BadgeCheck size={40}/> : <AlertCircle size={40}/>}</div>
                         <span className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-md flex items-center justify-center ${isPass ? 'bg-emerald-600 text-white' : 'bg-orange-500 text-white'}`}>{isPass ? 'LULUS' : 'REMEDIAL'}</span>
@@ -402,7 +428,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
                            <img src={ASSETS.LOGO} style={{ maxWidth: '180px', maxHeight: '60px', width: 'auto', height: 'auto', objectFit: 'contain' }} />
                         </div>
                         <h1 style={{ fontSize: '18px', fontWeight: '900', letterSpacing: '0.2em', color: '#1e293b', textTransform: 'uppercase', lineHeight: '1', margin: 0 }}>SANUR AKADEMI INSPIRASI</h1>
-                        <div style={{ width: '350px', height: '2px', backgroundColor: '#e2e8f0', marginTop: '12px' }}></div>
+                        <div style={{ width: '440px', height: '2px', backgroundColor: '#e2e8f0', marginTop: '12px' }}></div>
                       </div>
                       
                       {/* MAIN CONTENT - TERKUNCI DI TENGAH DENGAN PADDING BOTTOM YANG LEBIH BESAR (320px) UNTUK MENAIKKAN POSISI */}
@@ -473,7 +499,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
                     </div>
                     <div className="grid grid-cols-2 gap-6 mb-6 bg-slate-50 p-6 rounded-[2rem] border border-slate-200"><div className="border-r border-slate-300"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Nama Siswa</p><p className="text-xl font-black text-slate-800 uppercase italic leading-none">{sName}</p></div><div className="pl-5"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Program Akademik</p><p className={`text-xl font-black ${themeColor} uppercase italic leading-tight`}>{subject}</p></div></div>
                     <div className="h-auto rounded-[2.5rem] border-2 border-slate-300 overflow-hidden mb-6 bg-white"><table className="w-full table-fixed border-collapse bg-white"><thead><tr className="bg-slate-900 text-white"><th className="p-4 text-center text-[10px] font-black uppercase tracking-widest border-r border-white/10 w-24">Sesi</th><th className="p-4 text-left text-[10px] font-black uppercase tracking-widest">Materi & Modul Kurikulum</th><th className="p-4 text-center text-[10px] font-black uppercase tracking-widest w-32">Nilai</th></tr></thead><tbody className="bg-white">{[1,2,3,4,5,6].map((num, i) => (<tr key={i} className="bg-white border-b border-slate-100 last:border-none"><td className="w-24 border-r border-slate-200 p-0 h-[100px]"><div className="h-full flex items-center justify-center"><span className="font-black text-slate-200 text-3xl italic">0{num}</span></div></td><td className="p-0 h-[100px]"><div className="h-full flex items-center px-10"><span className="font-black text-slate-800 text-[18px] uppercase italic tracking-tight">{topics[i] || "MATERI PEMBELAJARAN"}</span></div></td><td className="w-32 p-0 h-[100px]"><div className="h-full flex items-center justify-center"><div className="flex items-baseline gap-1"><span className={`font-black ${themeColor} text-4xl italic`}>{scores[i] || 0}</span><span className="text-slate-300 font-bold text-sm uppercase">/100</span></div></div></td></tr>))}</tbody></table></div>
-                    <div className="p-10 bg-slate-900 rounded-[3rem] text-white flex justify-between items-center shadow-2xl relative overflow-hidden mb-2"><div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div><div className="space-y-0 relative z-10 flex flex-col justify-center"><p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.5em] mb-0">Evaluasi Kumulatif</p><div className="flex items-baseline gap-4 -mt-14"><p className="text-[18px] font-black text-white/40 uppercase tracking-widest">RATA-RATA:</p><h4 className="text-7xl font-black italic tracking-tighter text-white leading-tight">{avg}</h4><span className="text-2xl text-white/30 font-black italic uppercase tracking-widest leading-none">/ 100</span></div></div><div className="bg-white/10 p-6 rounded-[1.8rem] border border-white/20 text-center backdrop-blur-md relative z-10 min-w-[200px] overflow-hidden"><p className="text-[10px] font-black uppercase mb-1.5 tracking-widest text-blue-300">Status Capaian</p><p className="text-xl font-black italic tracking-tighter uppercase text-white mb-2">{isPass ? 'KOMPETEN' : 'REMEDIAL'}</p><div className={`absolute bottom-0 left-0 h-1.5 ${isPass ? 'bg-emerald-500' : 'bg-orange-500'} w-full`}></div></div></div>
+                    <div className="p-10 bg-slate-900 rounded-[3rem] text-white flex justify-between items-center shadow-2xl relative overflow-hidden mb-2"><div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div><div className="space-y-0 relative z-10 flex flex-col justify-center"><p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.5em] mb-0">Evaluasi Kumulatif</p><div className="flex items-baseline gap-4 -mt-14"><p className="text-[18px] font-black text-white/40 uppercase tracking-widest">RATA-RATA:</p><h4 className="text-7xl font-black italic tracking-tighter text-white leading-tight">{avg}</h4><span className="text-2xl text-white/30 font-black italic uppercase tracking-widest leading-none">/ 100</span></div></div><div className="bg-white/10 p-6 rounded-[1.8rem] border border-white/20 text-center backdrop-blur-md relative z-10 min-w-[200px] overflow-hidden"><p className="text-[10px] font-black uppercase mb-1.5 tracking-widest text-blue-300">Status Capaian</p><p className="text-xl font-black italic tracking-tighter uppercase text-white mb-2">{isPass ? 'KOMPETEN ✨' : 'REMEDIAL'}</p><div className={`absolute bottom-0 left-0 h-1.5 ${isPass ? 'bg-emerald-500' : 'bg-orange-500'} w-full`}></div></div></div>
                  </div>
 
                  <div id={`milestone-render-${req.id}`} className="w-[794px] h-[1123px] bg-white p-20 pb-40 flex flex-col border relative overflow-hidden box-border">
@@ -487,7 +513,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
                       </div>
                     </div>
                     <div className="mt-auto flex flex-col items-center pt-10 relative z-10 border-t-2 border-slate-100 opacity-60">
-                      <p className="text-sm font-black uppercase tracking-[0.8em] text-slate-400 text-center">Sanur Akademi Inspirasi</p>
+                      <p className="text-sm font-black uppercase tracking-[0.8em] text-slate-400 text-center">Dokumen Resmi Sanur Akademi Inspirasi</p>
                     </div>
                     <div className="h-20 w-full shrink-0"></div>
                  </div>
