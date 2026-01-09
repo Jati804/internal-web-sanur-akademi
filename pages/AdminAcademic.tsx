@@ -19,7 +19,6 @@ import {
   Banknote,
   DollarSign,
   Check,
-  // Added missing Loader2 import
   Loader2
 } from 'lucide-react';
 import { supabase } from '../services/supabase.ts';
@@ -190,7 +189,7 @@ const AdminAcademic: React.FC<AdminAcademicProps> = ({
       </div>
 
       {activeTab === 'CONFIG' && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
           <section className="bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-2xl space-y-8 flex flex-col group hover:border-blue-200 transition-all duration-500">
             <div className="flex items-center gap-4">
               <div className="p-4 bg-blue-50 text-blue-600 rounded-2xl shadow-inner group-hover:scale-110 transition-transform"><BookOpen size={28}/></div>
@@ -398,8 +397,10 @@ const AdminAcademic: React.FC<AdminAcademicProps> = ({
                     <input type="text" placeholder="MISAL: WORD BASIC..." className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner" value={editMatpel} onChange={e => setEditMatpel(e.target.value)} />
                  </div>
                  <div className="pt-6 flex gap-4">
-                    <button onClick={() => setEditingCell(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-[1.8rem] font-black text-[11px] uppercase tracking-widest">Batal</button>
-                    <button onClick={handleSaveEdit} className="flex-[1.5] py-5 bg-blue-600 text-white rounded-[1.8rem] font-black text-[11px] uppercase shadow-xl shadow-blue-100 flex items-center justify-center gap-3 active:scale-95 transition-all"><Save size={18}/> SIMPAN PERUBAHAN</button>
+                    <button onClick={() => setEditingCell(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all">Batal</button>
+                    <button onClick={handleSaveEdit} className="flex-[1.5] py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2">
+                       {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} SIMPAN PERUBAHAN
+                    </button>
                  </div>
               </div>
               <p className="mt-8 text-[9px] font-bold text-slate-300 uppercase tracking-widest text-center italic">Perubahan akan langsung muncul di HP guru Kak ✨</p>
