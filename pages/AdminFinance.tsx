@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useRef } from 'react';
 import { Attendance, Transaction, StudentPayment } from '../types';
 import { supabase } from '../services/supabase.ts';
@@ -6,7 +5,7 @@ import {
   X, Search, Banknote, Loader2, ArrowUpCircle, ArrowDownCircle, Upload, CheckCircle2, 
   Crown, Zap, History, ShieldCheck, Eye, Check, BadgeCheck,
   Trash2, Download, FileSpreadsheet, Edit3, AlertTriangle, 
-  Plus, Info, AlertCircle, Package, UserCheck, Repeat, Heart, Calendar, Clock, ImageIcon, FileText
+  Plus, Info, AlertCircle, Package, UserCheck, Repeat, Heart, Calendar, Clock, ImageIcon, FileText, Users
 } from 'lucide-react';
 
 interface AdminFinanceProps {
@@ -360,15 +359,22 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
                                 <h4 className="text-xl md:text-2xl font-black text-slate-800 uppercase italic leading-tight">{item.className}</h4>
                                 <span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${item.category === 'PRIVATE' ? 'bg-orange-500 text-white' : 'bg-blue-900 text-white'}`}>{item.category}</span>
                              </div>
-                             <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mt-2 italic">Guru Penerima: {item.teacherName}</p>
-                             <div className="flex items-center gap-4 mt-2">
+                             
+                             {/* UPDATE: Nama Siswa Muncul Jika Private */}
+                             {item.category === 'PRIVATE' && (
+                                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-2 italic flex items-center gap-2">
+                                   <Users size={12} className="text-blue-500" /> Siswa: {item.studentName}
+                                </p>
+                             )}
+                             
+                             <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1 italic">Guru Penerima: {item.teacherName}</p>
+                             <div className="flex items-center gap-4 mt-3">
                                 <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Calendar size={12}/> Update: {formatDate(item.fullPackageLogs[item.fullPackageLogs.length-1]?.date || '')}</span>
                                 <span className="px-4 py-1 bg-orange-50 text-orange-600 border border-orange-100 rounded-full text-[8px] font-black uppercase tracking-widest">SIAP CAIR ({item.sessionCount} SESI)</span>
                              </div>
                           </div>
                        </div>
                        
-                       {/* VERTIKAL LAYOUT: NOMINAL & TOMBOL */}
                        <div className="flex flex-col items-center gap-4 bg-slate-50 p-8 rounded-[3rem] border border-slate-100 min-w-[240px] lg:w-64">
                           <div className="text-center w-full pb-4 border-b border-slate-200/60">
                              <p className="text-[9px] font-black text-slate-400 uppercase mb-1 italic">Total Cairkan</p>
@@ -387,7 +393,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
                        <div className="mb-4 flex items-center gap-2">
                          <div className="w-3 h-3 bg-blue-600 rounded-full"></div>
                          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Sesi Asli Guru Tersebut</p>
-                         <div className="w-3 h-3 bg-orange-500 rounded-full ml-4"></div>
+                         <div className="w-3 h-3 bg-orange-600 rounded-full ml-4"></div>
                          <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Guru Tersebut Menggantikan</p>
                        </div>
                        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4 p-8 bg-slate-50 rounded-[3rem] border border-slate-100 shadow-inner">
@@ -404,7 +410,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
                                 bgColor = "bg-blue-600 text-white shadow-lg ring-4 ring-blue-50"; 
                                 label = "SESI ASLI"; 
                              } else if (isMeTeaching && !isOriginalOwner) { 
-                                bgColor = "bg-orange-50 text-white shadow-lg ring-4 ring-orange-50"; 
+                                bgColor = "bg-orange-600 text-white shadow-xl ring-4 ring-orange-100 scale-105 z-10"; 
                                 label = "MENGGANTIKAN"; 
                                 subInfo = `Ganti: ${log.substituteFor?.split(' ')[0] || 'TEMAN'}`; 
                              } else if (log) { 
@@ -414,13 +420,13 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
 
                              return (
                                <div key={num} className={`relative p-5 py-8 rounded-[2.5rem] flex flex-col items-center justify-center text-center gap-2 transition-all ${bgColor}`}>
-                                  <p className="text-[9px] font-black uppercase tracking-widest opacity-60">Sesi {num}</p>
+                                  <p className={`text-[9px] font-black uppercase tracking-widest ${isMeTeaching && !isOriginalOwner ? 'opacity-90' : 'opacity-60'}`}>Sesi {num}</p>
                                   {isMeTeaching && isOriginalOwner ? <UserCheck size={24}/> : (isMeTeaching && !isOriginalOwner) ? <Repeat size={24}/> : <Zap size={24}/>}
                                   <p className="text-[7px] font-black uppercase tracking-widest leading-none mt-1">{label}</p>
                                   {subInfo && <p className="text-[6px] font-black uppercase opacity-90 mt-1">{subInfo}</p>}
                                   {log && (
-                                     <div className="mt-2 pt-2 border-t border-white/20 w-full">
-                                        <p className="text-[8px] font-black tracking-widest opacity-80">{formatDate(log.date)}</p>
+                                     <div className={`mt-2 pt-2 border-t w-full ${isMeTeaching && !isOriginalOwner ? 'border-white/40' : 'border-white/20'}`}>
+                                        <p className={`text-[8px] font-black tracking-widest ${isMeTeaching && !isOriginalOwner ? 'opacity-100' : 'opacity-80'}`}>{formatDate(log.date)}</p>
                                      </div>
                                   )}
                                </div>
@@ -596,6 +602,11 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
                  <div className="w-20 h-20 bg-emerald-100 text-emerald-600 rounded-[2.5rem] flex items-center justify-center mx-auto mb-6 shadow-lg rotate-3"><Banknote size={40} /></div>
                  <h4 className="text-xl font-black text-slate-800 uppercase italic leading-tight">Konfirmasi Bayar Honor</h4>
                  <p className="text-[10px] font-bold text-blue-600 uppercase mt-2">{selectedPayout.teacherName}</p>
+                 
+                 {/* UPDATE: Nama Siswa Di Modal */}
+                 {selectedPayout.category === 'PRIVATE' && (
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.2em] mt-1 italic">Siswa: {selectedPayout.studentName}</p>
+                 )}
               </div>
 
               <div className="bg-slate-50 p-6 rounded-3xl mb-8 space-y-4 border border-slate-100 relative z-10">
