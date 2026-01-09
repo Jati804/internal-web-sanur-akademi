@@ -1,21 +1,25 @@
 
 {
-  "name": "SANUR Akademi Inspirasi",
-  "short_name": "Sanur",
-  "start_url": ".",
+  "name": "SANUR Internal System",
+  "short_name": "SANUR",
+  "description": "Sistem Manajemen Internal SANUR Akademi Inspirasi",
+  "start_url": "/#/",
   "display": "standalone",
-  "background_color": "#ffffff",
+  "background_color": "#F8FAFC",
   "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "https://raw.githubusercontent.com/user-attachments/assets/080a8f94-67f7-49d7-84a7-897b2521c761",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     },
     {
       "src": "https://raw.githubusercontent.com/user-attachments/assets/080a8f94-67f7-49d7-84a7-897b2521c761",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     }
   ]
 }
