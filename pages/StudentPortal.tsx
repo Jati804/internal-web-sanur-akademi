@@ -477,7 +477,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
                       </div>
                     </div>
                     <div className="mt-auto flex flex-col items-center pt-10 relative z-10 border-t-2 border-slate-100 opacity-60">
-                      <p className="text-sm font-black uppercase tracking-[0.8em] text-slate-400 text-center">Dokumen Resmi Sanur Akademi Inspirasi</p>
+                      <p className="text-sm font-black uppercase tracking-[0.8em] text-slate-400 text-center">Sanur Akademi Inspirasi</p>
                     </div>
                     <div className="h-20 w-full shrink-0"></div>
                  </div>
