@@ -77,7 +77,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
   const [loading, setLoading] = useState(false);
   const [historySearchTerm, setHistorySearchTerm] = useState('');
 
-  const ASSETS = { LOGO: "https://raw.githubusercontent.com/user-attachments/assets/080a8f94-67f7-49d7-84a7-897b2521c761" };
+  const ASSETS = { LOGO: "https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png" };
 
   const reportRequests = useMemo(() => {
     const requests = logs.filter(l => (l.status === 'REPORT_REQUEST' || l.status === 'REPORT_PROCESSING') && l.teacherId === user.id);
