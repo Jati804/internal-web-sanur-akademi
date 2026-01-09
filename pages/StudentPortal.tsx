@@ -393,7 +393,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
                            <img src={ASSETS.LOGO} style={{ maxWidth: '180px', maxHeight: '60px', width: 'auto', height: 'auto', objectFit: 'contain' }} />
                         </div>
                         <h1 style={{ fontSize: '18px', fontWeight: '900', letterSpacing: '0.2em', color: '#1e293b', textTransform: 'uppercase', lineHeight: '1', margin: 0 }}>SANUR AKADEMI INSPIRASI</h1>
-                        <div style={{ width: '160px', height: '2px', backgroundColor: '#e2e8f0', marginTop: '12px' }}></div>
+                        <div style={{ width: '370px', height: '2px', backgroundColor: '#e2e8f0', marginTop: '12px' }}></div>
                       </div>
                       
                       {/* MAIN CONTENT - TERKUNCI DI TENGAH DENGAN PADDING BOTTOM YANG LEBIH BESAR (320px) UNTUK MENAIKKAN POSISI */}
