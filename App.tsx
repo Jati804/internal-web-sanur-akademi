@@ -83,7 +83,7 @@ const GuideModal = ({ role, onClose }: { role: string, onClose: () => void }) =>
       text: 'text-emerald-600',
       steps: [
         { title: 'Lapor Bayar', desc: 'Upload bukti transfer di menu "Pembayaran" agar Admin bisa mengaktifkan paket belajarmu.' },
-        { title: 'Absen Mandiri', desc: 'Jika belajar sendiri, kamu bisa klik nomor sesi di "Kelas Saya" untuk lapor progres.' },
+        { title: 'Presensi Mandiri', desc: 'Isi kehadiranmu secara mandiri, kamu bisa klik nomor sesi di "Kelas Saya" untuk lapor progres.' },
         { title: 'Klaim Rapot', desc: 'Tombol Klaim muncul saat progres 6/6. Pilih guru pembimbingmu untuk meminta penilaian.' },
         { title: 'Unduh Rapot', desc: 'Sertifikat & Rapot PDF bisa diunduh di tab "Kelas Saya" setelah guru selesai menilai.' }
       ]
