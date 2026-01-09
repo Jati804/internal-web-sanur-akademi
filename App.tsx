@@ -81,7 +81,7 @@ const GuideModal = ({ role, onClose }: { role: string, onClose: () => void }) =>
       text: 'text-emerald-600',
       steps: [
         { title: 'Lapor Bayar', desc: 'Upload bukti transfer di menu "Pembayaran" agar Admin bisa mengaktifkan paket belajarmu.' },
-        { title: 'Presensi Mandiri', desc: 'Mengisi presensi secara mandiri, kamu bisa klik nomor sesi di "Kelas Saya" untuk lapor progres.' },
+        { title: 'Presensi Mandiri', desc: 'Presensi dilakukan secara mandiri, kamu bisa klik nomor sesi di "Kelas Saya" untuk lapor progres.' },
         { title: 'Klaim Rapot', desc: 'Tombol Klaim muncul saat progres 6/6. Pilih guru pembimbingmu untuk meminta penilaian.' },
         { title: 'Unduh Rapot', desc: 'Sertifikat & Rapot PDF bisa diunduh di tab "Kelas Saya" setelah guru selesai menilai.' }
       ]
@@ -235,10 +235,11 @@ const AppContent = ({
               <Route path="/admin/finance" element={<AdminFinance attendanceLogs={attendanceLogs} transactions={transactions} studentPayments={studentPayments} refreshAllData={refreshAllData} />} />
               <Route path="/admin/buku-induk" element={<AdminInventory studentProfiles={studentProfiles} setStudentProfiles={setStudentProfiles} refreshAllData={refreshAllData} />} />
               <Route path="/admin/staff" element={<AdminStaff user={user} teachers={teachers} setTeachers={setTeachers} studentAccounts={studentAccounts} setStudentAccounts={setStudentAccounts} />} />
+              {/* FIX: Correctly pass setScheduleData prop which maps to setMasterSchedule state */}
               <Route path="/admin/academic" element={<AdminAcademic subjects={subjects} setSubjects={setSubjects} classes={classes} setClasses={setClasses} levels={levels} setLevels={setLevels} scheduleData={masterSchedule} setScheduleData={setMasterSchedule} salaryConfig={salaryConfig} setSalaryConfig={setSalaryConfig} />} />
               <Route path="/admin/maintenance" element={<AdminMaintenance attendanceLogs={attendanceLogs} setAttendanceLogs={setAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} />} />
               <Route path="/teacher" element={<TeacherDashboard user={user} logs={attendanceLogs} studentAccounts={studentAccounts} subjects={subjects} classes={classes} levels={levels} salaryConfig={salaryConfig} teachers={teachers} refreshAllData={refreshAllData} />} />
-              <Route path="/teacher/honor" element={<TeacherHonor user={user} logs={attendanceLogs} />} />
+              <Route path="/teacher/honor" element={<TeacherHonor user={user} logs={attendanceLogs} refreshAllData={refreshAllData} />} />
               <Route path="/teacher/reports" element={<TeacherReportsInbox user={user} logs={attendanceLogs} studentAccounts={studentAccounts} refreshAllData={refreshAllData} />} />
               <Route path="/student" element={<StudentPortal user={user} attendanceLogs={attendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} subjects={subjects} levels={levels} classes={classes} teachers={teachers} initialView="PROGRESS" refreshAllData={refreshAllData} />} />
               <Route path="/student/payments" element={<StudentPortal user={user} attendanceLogs={attendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} subjects={subjects} levels={levels} classes={classes} teachers={teachers} initialView="PAYMENTS" refreshAllData={refreshAllData} />} />
