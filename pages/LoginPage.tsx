@@ -18,7 +18,9 @@ import {
   Loader2,
   Info,
   CheckCircle2,
-  Database
+  Database,
+  Eye,
+  EyeOff
 } from 'lucide-react';
 
 interface LoginPageProps {
@@ -36,6 +38,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
   const [role, setRole] = useState<Role>('ADMIN');
   const [username, setUsername] = useState('');
   const [pin, setPin] = useState('');
+  const [showPin, setShowPin] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -44,6 +47,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
     setView('LOGIN');
     setUsername('');
     setPin('');
+    setShowPin(false);
     setError('');
   };
 
@@ -151,7 +155,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
                  <form onSubmit={handleSubmit} className="space-y-10">
                     <div className="space-y-4">
                        <h2 className="text-4xl font-black text-slate-800 tracking-tight uppercase italic leading-none">SELAMAT <span className={currentTheme.text}>DATANG</span></h2>
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Silakan masukkan identitas untuk masuk.</p>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Silakan masukkan identitas untuk masuk</p>
                     </div>
 
                     <div className="space-y-6">
@@ -174,13 +178,20 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
                           <div className="relative group">
                              <div className={`absolute left-6 top-1/2 -translate-y-1/2 ${currentTheme.text} opacity-30 group-focus-within:opacity-100 transition-opacity`}><Lock size={24}/></div>
                              <input 
-                               type="password" 
+                               type={showPin ? "text" : "password"} 
                                maxLength={6}
                                value={pin} 
                                onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} 
-                               placeholder="****" 
-                               className={`w-full pl-16 pr-8 py-6 bg-slate-50 border-2 border-transparent rounded-[2rem] outline-none font-black text-2xl tracking-[0.5em] text-center transition-all focus:bg-white focus:${currentTheme.border}`} 
+                               placeholder="******" 
+                               className={`w-full pl-16 pr-16 py-6 bg-slate-50 border-2 border-transparent rounded-[2rem] outline-none font-black text-2xl tracking-[0.5em] text-center transition-all focus:bg-white focus:${currentTheme.border}`} 
                              />
+                             <button 
+                               type="button"
+                               onClick={() => setShowPin(!showPin)}
+                               className={`absolute right-6 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-white/50 hover:bg-white transition-all ${currentTheme.text}`}
+                             >
+                               {showPin ? <EyeOff size={22} /> : <Eye size={22} />}
+                             </button>
                           </div>
                        </div>
                     </div>
@@ -198,7 +209,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
                       className={`w-full py-7 ${currentTheme.bg} text-white rounded-[2.5rem] font-black text-xs uppercase tracking-[0.3em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-4 disabled:opacity-50`}
                     >
                       {loading ? <Loader2 size={24} className="animate-spin" /> : <UserCheck size={24} />}
-                      {loading ? 'MEMVERIFIKASI...' : 'MASUK SEKARANG ✨'}
+                      {loading ? 'MEMVERIFIKASI...' : 'MASUK SEKARANG'}
                     </button>
                  </form>
               </div>
