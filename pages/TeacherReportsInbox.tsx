@@ -393,7 +393,8 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
 
             return (
               <div key={req.id} id={`pdf-group-${req.id}`}>
-                 <div id={`cert-render-${req.id}`} style={{ width: '794px', height: '1123px', backgroundColor: 'white', display: 'flex', flexDirection: 'column', border: `25px double ${isPass ? '#1e3a8a' : '#ea580c'}`, boxSizing: 'border-box', position: 'relative', overflow: 'hidden' }}>
+                 <div style={{ backgroundColor: 'transparent', width: '220px', height: '80px', marginBottom: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', padding: '10px' }}>
+   <img src={ASSETS.LOGO} style={{ maxWidth: '180px', maxHeight: '60px', width: 'auto', height: 'auto', objectFit: 'contain' }} />
                     <div style={{ width: '100%', height: '100%', border: '4px solid #f1f5f9', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', position: 'relative' }}>
                       
                       {/* HEADER - TETAP PADA POSISI KAKAK */}
