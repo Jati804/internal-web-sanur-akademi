@@ -52,7 +52,7 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
 
   const handleOpenAdd = () => {
     // Standard PIN 6 Digit Baru
-    const defaultPin = activeTab === 'STUDENTS' ? '123456' : '224488';
+    const defaultPin = activeTab === 'STUDENTS' ? '051020' : '224488';
     setFormData({ name: '', username: '', pin: defaultPin });
     setShowModal('ADD');
   };
@@ -62,7 +62,7 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
     setFormData({ 
       name: u.name, 
       username: u.username.toUpperCase(), 
-      pin: u.pin || (activeTab === 'STUDENTS' ? '123456' : '224488') 
+      pin: u.pin || (activeTab === 'STUDENTS' ? '051020' : '224488') 
     });
     setShowModal('EDIT');
   };
