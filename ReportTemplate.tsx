@@ -236,7 +236,7 @@ const ReportTemplate: React.FC<ReportTemplateProps> = ({ reportLog, allLogs, stu
         </div>
       </div>
 
-      {/* HALAMAN 3: MILESTONE (LOCKED) */}
+      {/* HALAMAN 3: MILESTONE (LOCKED & WRAPPING FIXED) */}
       <div id={`milestone-render-${reportLog.id}`} style={{ ...PAGE_STYLE, padding: '70px 80px' }}>
         <div style={{ position: 'absolute', top: 0, left: 0, width: '350px', height: '350px', backgroundColor: isPass ? '#eff6ff' : '#fff7ed', borderRadius: '999px', marginLeft: '-175px', marginTop: '-175px', opacity: 0.5 }}></div>
         
@@ -276,7 +276,20 @@ const ReportTemplate: React.FC<ReportTemplateProps> = ({ reportLog, allLogs, stu
             <h3 style={{ fontSize: '15px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.4em' }}>Ulasan Pengajar</h3>
           </div>
           <div style={{ flex: 1, backgroundColor: '#f0f9ff', borderRadius: '42px', border: '4px solid #f1f5f9', padding: '35px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-             <p style={{ fontSize: '17px', fontFamily: 'serif', fontStyle: 'italic', color: '#334155', lineHeight: '1.6', padding: '0 32px' }}>"{nar}"</p>
+             {/* WRAPPING FIX APPLIED HERE */}
+             <p style={{ 
+               fontSize: '17px', 
+               fontFamily: 'serif', 
+               fontStyle: 'italic', 
+               color: '#334155', 
+               lineHeight: '1.6', 
+               padding: '0 32px',
+               wordBreak: 'break-word',
+               overflowWrap: 'anywhere',
+               whiteSpace: 'pre-wrap',
+               maxWidth: '100%',
+               boxSizing: 'border-box'
+             }}>"{nar}"</p>
           </div>
         </div>
         
