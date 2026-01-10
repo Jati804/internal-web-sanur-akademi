@@ -107,7 +107,7 @@ const ReportTemplate: React.FC<ReportTemplateProps> = ({ reportLog, allLogs, stu
               {studentName.toUpperCase()}
             </h3>
             
-            <div style={{ width: '220px', height: '5px', backgroundColor: isPass ? '#dbeafe' : '#ffedd5', marginTop: '12px', borderRadius: '10px', marginBottom: '45px' }}></div>
+            <div style={{ width: `${Math.min(Math.max(studentName.length * 15, 180), 500)}px`, height: '5px', backgroundColor: isPass ? '#dbeafe' : '#ffedd5', marginTop: '12px', borderRadius: '10px', marginBottom: '45px' }}></div>
             
             <p style={{ fontSize: '14px', fontFamily: 'serif', fontStyle: 'italic', color: '#475569', lineHeight: '1.8', margin: '0 0 45px 0', padding: '0 60px' }}>
               {isPass 
