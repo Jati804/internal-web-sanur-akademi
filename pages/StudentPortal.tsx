@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { User, Attendance, StudentPayment } from '../types';
 import { supabase } from '../services/supabase.ts';
@@ -8,7 +7,7 @@ import {
   GraduationCap, BadgeCheck, FileText, Upload, Receipt, History, AlertCircle, 
   CreditCard, Eye, Trash2, Printer, Smile, Heart, Target, Edit3, Save, ChevronRight,
   ClipboardList, Download, ShieldCheck, PartyPopper, UserCog, AlertTriangle, Zap, Star, Quote,
-  Layout, Info, FileDown, FileCheck, ImageIcon, Calendar
+  Layout, Info, FileDown, FileCheck, ImageIcon, Calendar, CheckCircle2
 } from 'lucide-react';
 
 import html2canvas from 'html2canvas';
@@ -47,6 +46,8 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   const [selectedTeacherForReport, setSelectedTeacherForReport] = useState('');
   
   const [confirmDeletePayment, setConfirmDeletePayment] = useState<StudentPayment | null>(null);
+  const [showEditDateModal, setShowEditDateModal] = useState<any | null>(null);
+  const [editDateValue, setEditDateValue] = useState('');
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState<string | null>(null);
@@ -172,6 +173,18 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
     } catch (e: any) { alert(e.message); } finally { setLoading(false); }
   };
 
+  const executeUpdateSessionDate = async () => {
+    if (!showEditDateModal || !editDateValue) return;
+    setLoading(true);
+    try {
+      await supabase.from('attendance').update({ date: editDateValue }).eq('id', showEditDateModal.id);
+      if (refreshAllData) await refreshAllData();
+      setShowEditDateModal(null);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+    } catch (e: any) { alert("Gagal update tanggal: " + e.message); } finally { setLoading(false); }
+  };
+
   const handleRequestReport = async () => {
     if (!selectedTeacherForReport || !requestingReportFor) return alert("Pilih Guru Pembimbing dulu ya! ✨");
     setLoading(true);
@@ -268,6 +281,13 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
                 </div>
               )}
            </div>
+        </div>
+      )}
+
+      {/* FLOATING SUCCESS MESSAGE */}
+      {showSuccess && (
+        <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[300000] px-10 py-6 bg-emerald-600 text-white rounded-[2.5rem] font-black text-xs uppercase tracking-widest shadow-2xl flex items-center gap-4 animate-in slide-in-from-top-4 border-4 border-white/20">
+           <CheckCircle2 size={28} /> DATA DIPERBARUI! ✨
         </div>
       )}
 
@@ -459,9 +479,17 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
         <section className="space-y-10">
            {verifiedCourses.map((course, idx) => {
               const courseLogs = myLogs.filter(l => l.className === course.className);
-              const completedSessions = courseLogs.filter(l => (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG')).map(l => ({ num: l.sessionNumber || 0, date: l.date }));
+              
+              // Detail Sesi Selesai (Termasuk ID untuk fitur edit)
+              const completedSessions = courseLogs
+                .filter(l => (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG'))
+                .map(l => ({ id: l.id, num: l.sessionNumber || 0, date: l.date }));
+              
               const maxSess = new Set(completedSessions.map(s => s.num)).size;
               
+              // Deteksi Sesi Terakhir (Hanya sesi ini yang boleh diedit tanggalnya)
+              const lastSessionReported = completedSessions.length > 0 ? Math.max(...completedSessions.map(s => s.num)) : 0;
+
               const reportLog = findOfficialReportLog(course);
               const scoresRaw = reportLog?.studentScores ? Object.values(reportLog.studentScores)[0] : [];
               const scoresArr = Array.isArray(scoresRaw) ? scoresRaw : [];
@@ -546,23 +574,37 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
                              <div className="grid grid-cols-6 gap-2">
                                 {[1, 2, 3, 4, 5, 6].map(sNum => {
                                    const doneLog = completedSessions.find(s => s.num === sNum);
+                                   const isLastReported = sNum === lastSessionReported;
+
                                    return (
-                                     <button 
-                                       key={sNum} 
-                                       onClick={() => setConfirmingAbsen({ course, sessionNum: sNum })}
-                                       disabled={!!doneLog || (sNum !== maxSess + 1)} 
-                                       className={`p-2 h-20 md:h-24 rounded-2xl font-black transition-all border-2 flex flex-col items-center justify-center gap-1.5 ${!!doneLog ? 'bg-white border-emerald-500 text-emerald-600' : (sNum === maxSess + 1) ? 'bg-blue-50 border-blue-500 text-blue-600 animate-pulse active:scale-95' : 'bg-slate-50 border-transparent text-slate-200 opacity-60'}`}
-                                     >
-                                        {!!doneLog ? (
-                                           <>
-                                              <p className="text-[7px] font-black text-emerald-500 mb-1 leading-none">{formatDateToDMY(doneLog.date)}</p>
-                                              <Check size={16} strokeWidth={4}/>
-                                           </>
-                                        ) : (
-                                           <span className="text-xl">{sNum}</span>
-                                        )}
-                                        <p className="text-[6px] md:text-[7px] font-black uppercase">{doneLog ? 'DONE' : `SESI ${sNum}`}</p>
-                                     </button>
+                                     <div key={sNum} className="relative group/box">
+                                       <button 
+                                         onClick={() => setConfirmingAbsen({ course, sessionNum: sNum })}
+                                         disabled={!!doneLog || (sNum !== maxSess + 1)} 
+                                         className={`w-full p-2 h-20 md:h-24 rounded-2xl font-black transition-all border-2 flex flex-col items-center justify-center gap-1.5 ${!!doneLog ? 'bg-white border-emerald-500 text-emerald-600' : (sNum === maxSess + 1) ? 'bg-blue-50 border-blue-500 text-blue-600 animate-pulse active:scale-95' : 'bg-slate-50 border-transparent text-slate-200 opacity-60'}`}
+                                       >
+                                          {!!doneLog ? (
+                                             <>
+                                                <p className="text-[7px] font-black text-emerald-500 mb-1 leading-none">{formatDateToDMY(doneLog.date)}</p>
+                                                <Check size={16} strokeWidth={4}/>
+                                             </>
+                                          ) : (
+                                             <span className="text-xl">{sNum}</span>
+                                          )}
+                                          <p className="text-[6px] md:text-[7px] font-black uppercase">{doneLog ? 'DONE' : `SESI ${sNum}`}</p>
+                                       </button>
+
+                                       {/* TOMBOL EDIT TANGGAL - HANYA UNTUK SESI TERAKHIR */}
+                                       {!!doneLog && isLastReported && !isRequesting && !isProcessing && (
+                                         <button 
+                                           onClick={(e) => { e.stopPropagation(); setShowEditDateModal(doneLog); setEditDateValue(doneLog.date); }}
+                                           className="absolute -top-1.5 -right-1.5 p-1.5 bg-white text-blue-500 rounded-full shadow-lg border border-blue-50 hover:bg-blue-50 transition-all z-20"
+                                           title="Ubah Tanggal"
+                                         >
+                                           <Edit3 size={10} strokeWidth={3} />
+                                         </button>
+                                       )}
+                                     </div>
                                    );
                                 })}
                              </div>
@@ -585,6 +627,37 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
              </div>
            )}
         </section>
+      )}
+
+      {/* MODAL EDIT TANGGAL SESI TERAKHIR - DESIGN NATURAL */}
+      {showEditDateModal && (
+        <div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in">
+           <div className="bg-white w-full max-w-[340px] rounded-[2.5rem] p-8 shadow-2xl text-center space-y-6 relative border-t-4 border-blue-500">
+              <button onClick={() => setShowEditDateModal(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
+              <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
+                <Calendar size={28} />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Koreksi Tanggal</h4>
+                <p className="text-[8px] font-black text-blue-600 uppercase tracking-widest">Sesi {showEditDateModal.num} Terakhir ✨</p>
+              </div>
+              <div className="space-y-2 text-left">
+                <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Pilih Tanggal Baru:</label>
+                <input 
+                  type="date" 
+                  value={editDateValue} 
+                  onChange={e => setEditDateValue(e.target.value)} 
+                  className="w-full px-4 py-3 bg-slate-50 rounded-xl font-black text-xs outline-none border-2 border-blue-50 shadow-inner" 
+                />
+              </div>
+              <div className="flex gap-3">
+                 <button onClick={() => setShowEditDateModal(null)} className="flex-1 py-4 bg-slate-50 text-slate-400 rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">BATAL</button>
+                 <button onClick={executeUpdateSessionDate} disabled={loading} className="flex-[2] py-4 bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">
+                    {loading ? <Loader2 size={14} className="animate-spin" /> : <><Save size={14}/> SIMPAN PERUBAHAN ✨</>}
+                 </button>
+              </div>
+           </div>
+        </div>
       )}
 
       {/* MODAL HAPUS PEMBAYARAN - LEBIH RAMPING */}
