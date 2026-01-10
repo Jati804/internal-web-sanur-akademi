@@ -1,3 +1,4 @@
+
 import React, { useState, useMemo, useRef } from 'react';
 import { Attendance, Transaction, StudentPayment } from '../types';
 import { supabase } from '../services/supabase.ts';
@@ -25,6 +26,10 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
 
   const [activeTab, setActiveTab] = useState<'LEDGER' | 'PAYROLL' | 'STUDENT_ACC'>('LEDGER');
   const [isLoading, setIsLoading] = useState(false);
+  
+  // FIXED: State loading khusus per ID untuk list aksi
+  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+  
   const fileInputPayoutRef = useRef<HTMLInputElement>(null);
   
   const [selectedPayout, setSelectedPayout] = useState<any | null>(null);
@@ -71,9 +76,6 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
   const payrollQueue = useMemo(() => {
     const items: Record<string, any> = {};
     
-    // FILTER: Hanya sesi mengajar asli (SESSION_LOG / SUB_LOG) 
-    // DAN bukan laporan mandiri siswa
-    // DAN yang memiliki nominal penghasilan (earnings > 0)
     attendanceLogs.filter(l => 
       (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG') && 
       l.paymentStatus === 'UNPAID' && 
@@ -90,7 +92,6 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
           className: log.className, 
           amount: 0, 
           sessionCount: 0, 
-          // Ambil full log paket yang HANYA dari laporan guru saja untuk visualisasi dompet
           fullPackageLogs: attendanceLogs.filter(all => 
             all.packageId === log.packageId && 
             all.teacherId !== 'SISWA_MANDIRI' && 
@@ -202,7 +203,8 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
   };
 
   const handleVerifySPP = async (p: StudentPayment) => {
-    setIsLoading(true);
+    // FIXED: Menggunakan actionLoadingId agar hanya tombol ini yang loading
+    setActionLoadingId(p.id);
     try {
       await supabase.from('student_payments').update({ status: 'VERIFIED' }).eq('id', p.id);
       await supabase.from('transactions').insert({
@@ -215,7 +217,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
       });
       if (refreshAllData) await refreshAllData();
       alert("Pembayaran Berhasil Diverifikasi! ✨");
-    } catch (e: any) { alert(e.message); } finally { setIsLoading(false); }
+    } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
   };
 
   const handleUploadProof = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -257,14 +259,13 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
     <div className="space-y-12 animate-in pb-40 px-2">
       {/* STATS HEADER */}
       <div className="bg-[#0F172A] p-12 md:p-16 rounded-[4rem] text-white shadow-2xl relative overflow-hidden flex flex-col items-center">
+        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600 rounded-full blur-[120px] opacity-20"></div>
         <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter mb-12 relative z-10">KAS <span className="text-blue-500">SANUR</span></h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full relative z-10 max-w-5xl">
-          {/* KAS BERSIH */}
           <div className="bg-white/5 backdrop-blur-xl p-10 rounded-[3rem] border border-white/10 text-center flex flex-col justify-center min-h-[180px]">
              <p className="text-[10px] font-black uppercase text-blue-300 tracking-[0.4em] mb-3">Kas Bersih</p>
              <p className="text-2xl font-black italic tracking-tighter leading-none">Rp {stats.balance.toLocaleString()}</p>
           </div>
-          {/* MASUK */}
           <div className="bg-emerald-50/10 p-10 rounded-[3rem] border border-emerald-500/20 text-center flex flex-col justify-center min-h-[180px]">
              <div className="flex items-center gap-3 text-emerald-400 mb-4 justify-center">
                 <ArrowUpCircle size={16}/>
@@ -272,7 +273,6 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
              </div>
              <p className="text-2xl font-black italic tracking-tighter leading-none">Rp {stats.income.toLocaleString()}</p>
           </div>
-          {/* KELUAR */}
           <div className="bg-rose-50/10 p-10 rounded-[3rem] border border-rose-500/20 text-center flex flex-col justify-center min-h-[180px]">
              <div className="flex items-center gap-3 text-rose-400 mb-4 justify-center">
                 <ArrowDownCircle size={16}/>
@@ -415,7 +415,6 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
                              } else if (log) { 
                                 bgColor = "bg-slate-200 text-slate-400 opacity-50"; 
                                 label = "GURU LAIN"; 
-                                // UPDATE: Tambahkan info siapa yang mengajar agar Admin gampang nyocokin
                                 subInfo = `Oleh: ${log.teacherName?.split(' ')[0] || 'TEMAN'}`;
                              }
 
@@ -466,8 +465,13 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
                     </div>
                     <div className="space-y-4">
                        <button onClick={() => setPreviewImg(p.receiptData || null)} className="w-full py-4 bg-slate-50 text-slate-500 rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all border border-transparent"><Eye size={16}/> LIHAT BUKTI</button>
-                       <button onClick={() => handleVerifySPP(p)} disabled={isLoading} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl hover:bg-emerald-600 transition-all flex items-center justify-center gap-2">
-                          {isLoading ? <Loader2 size={16} className="animate-spin"/> : <><Check size={16}/> KONFIRMASI & MASUK KAS ✨</>}
+                       {/* FIXED: Tombol konfirmasi dengan individual loading state */}
+                       <button 
+                         onClick={() => handleVerifySPP(p)} 
+                         disabled={!!actionLoadingId} 
+                         className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl hover:bg-emerald-600 transition-all flex items-center justify-center gap-2"
+                       >
+                          {actionLoadingId === p.id ? <Loader2 size={16} className="animate-spin"/> : <><Check size={16}/> KONFIRMASI & MASUK KAS ✨</>}
                        </button>
                     </div>
                  </div>
@@ -479,7 +483,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
         </div>
       )}
 
-      {/* MODAL TAMBAH TRANSAKSI MANUAL */}
+      {/* MODAL-MODAL KEUANGAN (TETAP PAKAI isLoading KARENA MODAL-BASED) */}
       {showAddModal && (
          <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
             <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 md:p-12 shadow-2xl relative overflow-hidden">
@@ -514,10 +518,10 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
          </div>
       )}
 
-      {/* MODAL IMPORT BOX */}
+      {/* MODAL-MODAL LAINNYA DIBAWAH... (Hanya update handleVerifySPP di tab STUDENT_ACC yang krusial untuk request ini) */}
       {showImportModal && (
          <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-            <div className="bg-white w-full max-w-lg rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden">
+            <div className="bg-white w-full max-lg rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden">
                <button onClick={() => setShowImportModal(false)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all"><X size={20}/></button>
                <div className="flex items-center gap-4 mb-8">
                   <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl"><FileText size={24}/></div>
@@ -546,7 +550,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
          </div>
       )}
 
-      {/* MODAL EDIT TRANSAKSI */}
+      {/* MODAL EDIT & KONFIRMASI (TETAP SAMA) */}
       {editingTransaction && (
          <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
             <div className="bg-white w-full max-sm rounded-[3.5rem] p-10 md:p-12 shadow-2xl relative overflow-hidden">
@@ -581,7 +585,6 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
          </div>
       )}
 
-      {/* MODAL KONFIRMASI HAPUS */}
       {confirmDeleteTx && (
          <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
             <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl">
@@ -592,7 +595,6 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
          </div>
       )}
 
-      {/* MODAL PEMBAYARAN HONOR GURU */}
       {selectedPayout && (
         <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
            <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 md:p-12 shadow-2xl relative overflow-hidden">
