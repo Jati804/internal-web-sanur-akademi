@@ -53,7 +53,7 @@ export interface Attendance {
   teacherName: string;
   date: string;
   clockIn: string;
-  status: 'PRESENT' | 'LATE' | 'ABSENT' | 'SESSION_LOG' | 'SUB_LOG' | 'WORK_LOG' | 'REPORT_REQUEST' | 'REPORT_PROCESSING' | 'REPORT_REJECTED';
+  status: 'PRESENT' | 'LATE' | 'ABSENT' | 'SESSION_LOG' | 'SUB_LOG' | 'WORK_LOG' | 'REPORT_REQUEST' | 'REPORT_PROCESSING' | 'REPORT_REJECTED' | 'REPORT_READY';
   className?: string;
   sessionCategory?: SessionCategory;
   level?: string; // Menambahkan level belajar (Basic, dll)
