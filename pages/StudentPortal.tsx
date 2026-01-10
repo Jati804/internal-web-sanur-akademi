@@ -8,7 +8,7 @@ import {
   GraduationCap, BadgeCheck, FileText, Upload, Receipt, History, AlertCircle, 
   CreditCard, Eye, Trash2, Printer, Smile, Heart, Target, Edit3, Save, ChevronRight,
   ClipboardList, Download, ShieldCheck, PartyPopper, UserCog, AlertTriangle, Zap, Star, Quote,
-  Layout, Info, FileDown, FileCheck, ImageIcon
+  Layout, Info, FileDown, FileCheck, ImageIcon, Calendar
 } from 'lucide-react';
 
 import html2canvas from 'html2canvas';
@@ -73,14 +73,24 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
     if (!Array.isArray(studentPayments)) return [];
     return [...studentPayments]
       .filter(p => (p.studentName || '').toUpperCase().trim() === normalizedUserName && p.status === 'VERIFIED')
-      .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
+      .sort((a, b) => {
+        const dateA = new Date(a.date || 0).getTime();
+        const dateB = new Date(b.date || 0).getTime();
+        if (dateB !== dateA) return dateB - dateA;
+        return b.id.localeCompare(a.id);
+      });
   }, [studentPayments, normalizedUserName]);
 
   const myPayments = useMemo(() => {
     if (!Array.isArray(studentPayments)) return [];
     return [...studentPayments]
       .filter(p => (p.studentName || '').toUpperCase().trim() === normalizedUserName)
-      .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
+      .sort((a, b) => {
+        const dateA = new Date(a.date || 0).getTime();
+        const dateB = new Date(b.date || 0).getTime();
+        if (dateB !== dateA) return dateB - dateA;
+        return b.id.localeCompare(a.id);
+      });
   }, [studentPayments, normalizedUserName]);
 
   const myLogs = useMemo(() => {
@@ -91,9 +101,9 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
     );
   }, [attendanceLogs, normalizedUserName]);
 
-  const findOfficialReportLog = (courseId: string) => {
-    const courseLogs = myLogs.filter(l => l.packageId === courseId);
-    const possibleReports = [...courseLogs].filter(l => 
+  const findOfficialReportLog = (course: any) => {
+    const possibleReports = myLogs.filter(l => 
+      l.className === course.className &&
       (l.status === 'SESSION_LOG' || l.status === 'REPORT_READY') && 
       l.sessionNumber === 6 &&
       l.teacherId !== 'SISWA_MANDIRI' && 
@@ -169,7 +179,6 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
       const teacher = teachers.find(t => t.id === selectedTeacherForReport);
       const payload = { id: `REQ-${Date.now()}`, teacherid: selectedTeacherForReport, teachername: (teacher?.name || 'GURU').toUpperCase(), date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), status: 'REPORT_REQUEST', classname: requestingReportFor.className.toUpperCase(), packageid: requestingReportFor.id, studentsattended: [normalizedUserName], paymentstatus: 'PAID' };
       
-      // Hapus jika ada permintaan lama (misal dari status REJECTED)
       await supabase.from('attendance').delete().eq('packageid', requestingReportFor.id).eq('status', 'REPORT_REJECTED');
       
       await supabase.from('attendance').insert([payload]);
@@ -182,7 +191,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   };
 
   const handleDownloadPDFReport = async (course: any) => {
-    const reportLog = findOfficialReportLog(course.id);
+    const reportLog = findOfficialReportLog(course);
     if (!reportLog) return alert("Rapot belum siap diunduh Kak! Tunggu Guru selesai input nilai ya. ✨");
     setDownloadProgress(5);
     setActiveDownloadId(course.id);
@@ -239,22 +248,22 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
       {/* GLOBAL LOADING / PROGRESS */}
       {(activeDownloadId || loading) && (
         <div className="fixed inset-0 z-[300000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in">
-           <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-12 shadow-2xl flex flex-col items-center text-center space-y-8 animate-in zoom-in duration-300">
-              <div className="w-20 h-20 bg-emerald-600 text-white rounded-[2.2rem] flex items-center justify-center shadow-xl animate-bounce">
-                {activeDownloadId ? <FileDown size={40} /> : <Loader2 size={40} className="animate-spin" />}
+           <div className="bg-white w-full max-w-[320px] rounded-[2rem] p-10 shadow-2xl flex flex-col items-center text-center space-y-6 animate-in zoom-in duration-300">
+              <div className="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center shadow-xl animate-bounce">
+                {activeDownloadId ? <FileDown size={32} /> : <Loader2 size={32} className="animate-spin" />}
               </div>
-              <div className="space-y-3">
-                <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">{activeDownloadId ? 'Memproses Rapot' : 'Memproses Data'}</h4>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-relaxed px-4">Tunggu sebentar ya Kak... ✨</p>
+              <div className="space-y-2">
+                <h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">{activeDownloadId ? 'Memproses PDF' : 'Memproses Data'}</h4>
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">Tunggu sebentar ya... ✨</p>
               </div>
               {activeDownloadId && (
-                <div className="w-full space-y-3">
+                <div className="w-full space-y-2">
                   <div className="flex justify-between items-center px-1">
-                    <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Progress</span>
-                    <span className="text-[11px] font-black text-emerald-600 italic">{downloadProgress}%</span>
+                    <span className="text-[8px] font-black text-emerald-600 uppercase tracking-widest">Progress</span>
+                    <span className="text-[10px] font-black text-emerald-600 italic">{downloadProgress}%</span>
                   </div>
-                  <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 shadow-inner">
-                    <div className="h-full bg-emerald-500 rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" style={{ width: `${downloadProgress}%` }}></div>
+                  <div className="w-full h-2 bg-slate-100 rounded-full overflow-hidden p-0.5 shadow-inner">
+                    <div className="h-full bg-emerald-500 rounded-full transition-all duration-500" style={{ width: `${downloadProgress}%` }}></div>
                   </div>
                 </div>
               )}
@@ -270,7 +279,6 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
                <h1 className="text-5xl md:text-7xl font-black uppercase italic tracking-normal Kalimat leading-none">{isPaymentView ? "RIWAYAT BAYAR " : "RUANG BELAJAR "} <br/><span className="text-yellow-300">{firstName} ✨</span></h1>
                <div className="min-h-[60px] flex items-center justify-center md:justify-start"><p className="text-sm font-bold italic text-emerald-50 Kalimat leading-relaxed max-w-xl">"{motivationalQuotes[quoteIndex]}"</p></div>
             </div>
-            {/* ICON HEADER DENGAN ANIMASI INTERAKTIF */}
             <div className="w-44 h-44 bg-white/10 backdrop-blur-xl rounded-[3.5rem] flex items-center justify-center shadow-2xl shrink-0 group/icon cursor-pointer active:scale-90 transition-all duration-300">
                {isPaymentView ? (
                  <Rocket size={90} className="text-orange-400 group-hover/icon:-translate-y-4 group-hover/icon:translate-x-4 group-hover/icon:scale-125 group-hover/icon:rotate-12 transition-all duration-500" />
@@ -291,7 +299,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
               <div className="flex items-center justify-center md:justify-start gap-2">
                  <Sparkles size={14} className="text-emerald-400" />
                  <p className="text-[11px] font-black text-emerald-700 uppercase tracking-widest leading-relaxed">
-                    "Sertif & Rapot segera disimpan ya Kak! Setelah <span className="bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg">1 tahun lulus</span> akun akan dihapus pengurus demi kelancaran sistem."
+                    "Sertif & Rapot segera disimpan ya! Setelah <span className="bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg">1 tahun lulus</span> akun akan dihapus pengurus demi kelancaran sistem."
                  </p>
               </div>
            </div>
@@ -308,7 +316,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
               <div className="flex items-center justify-center md:justify-start gap-2">
                  <Sparkles size={14} className="text-orange-400" />
                  <p className="text-[11px] font-black text-orange-800 uppercase tracking-widest leading-relaxed">
-                    "Lapor bayar di sini ya Kak! ✨ Setelah kirim, status akan <span className="bg-orange-200 text-orange-800 px-2 py-0.5 rounded-lg">PENDING</span> (sedang dicek Admin). Jika sudah <span className="bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded-lg">BERHASIL</span>, silakan unduh Kuitansi resmi dan kelas Kakak otomatis aktif di menu Kelas Saya! 🚀"
+                    "Lapor bayar di sini ya Kak! ✨ Setelah kirim, status akan <span className="bg-orange-200 text-orange-800 px-2 py-0.5 rounded-lg">PENDING</span> (sedang dicek Admin). Jika sudah <span className="bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded-lg">BERHASIL</span>, silakan unduh Kuitansi resmi dan kelas Kakak otomatis aktif di menu "Kelas Saya"! 🚀"
                  </p>
               </div>
            </div>
@@ -400,7 +408,6 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
                  {myPayments.map((p, i) => (
                     <div key={p.id || i} className="bg-white p-8 md:p-10 rounded-[3.5rem] border border-slate-100 shadow-xl flex flex-col md:flex-row items-center justify-between group hover:border-emerald-500 transition-all gap-8 relative overflow-hidden">
                        
-                       {/* TOMBOL X MERAH DI POJOK MATI (TIDAK NABRAK IKON BAWAH) */}
                        {p.status === 'PENDING' && (
                          <button 
                            onClick={() => setConfirmDeletePayment(p)}
@@ -451,10 +458,11 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
       ) : (
         <section className="space-y-10">
            {verifiedCourses.map((course, idx) => {
-              const courseLogs = myLogs.filter(l => l.packageId === course.id);
+              const courseLogs = myLogs.filter(l => l.className === course.className);
               const completedSessions = courseLogs.filter(l => (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG')).map(l => ({ num: l.sessionNumber || 0, date: l.date }));
               const maxSess = new Set(completedSessions.map(s => s.num)).size;
-              const reportLog = findOfficialReportLog(course.id);
+              
+              const reportLog = findOfficialReportLog(course);
               const scoresRaw = reportLog?.studentScores ? Object.values(reportLog.studentScores)[0] : [];
               const scoresArr = Array.isArray(scoresRaw) ? scoresRaw : [];
               const avg = scoresArr.length > 0 ? Math.round(scoresArr.reduce((a, b) => a + b, 0) / 6) : 0;
@@ -539,7 +547,12 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
                                 {[1, 2, 3, 4, 5, 6].map(sNum => {
                                    const doneLog = completedSessions.find(s => s.num === sNum);
                                    return (
-                                     <button key={sNum} disabled={!!doneLog || (sNum !== maxSess + 1)} className={`p-2 h-20 md:h-24 rounded-2xl font-black transition-all border-2 flex flex-col items-center justify-center gap-1.5 ${!!doneLog ? 'bg-white border-emerald-500 text-emerald-600' : (sNum === maxSess + 1) ? 'bg-blue-50 border-blue-500 text-blue-600 animate-pulse' : 'bg-slate-50 border-transparent text-slate-200 opacity-60'}`}>
+                                     <button 
+                                       key={sNum} 
+                                       onClick={() => setConfirmingAbsen({ course, sessionNum: sNum })}
+                                       disabled={!!doneLog || (sNum !== maxSess + 1)} 
+                                       className={`p-2 h-20 md:h-24 rounded-2xl font-black transition-all border-2 flex flex-col items-center justify-center gap-1.5 ${!!doneLog ? 'bg-white border-emerald-500 text-emerald-600' : (sNum === maxSess + 1) ? 'bg-blue-50 border-blue-500 text-blue-600 animate-pulse active:scale-95' : 'bg-slate-50 border-transparent text-slate-200 opacity-60'}`}
+                                     >
                                         {!!doneLog ? (
                                            <>
                                               <p className="text-[7px] font-black text-emerald-500 mb-1 leading-none">{formatDateToDMY(doneLog.date)}</p>
@@ -574,24 +587,24 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
         </section>
       )}
 
-      {/* RENDER MODAL-MODAL */}
+      {/* MODAL HAPUS PEMBAYARAN - LEBIH RAMPING */}
       {confirmDeletePayment && (
         <div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in">
-           <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-500">
-              <button onClick={() => setConfirmDeletePayment(null)} className="absolute top-8 right-8 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={24}/></button>
-              <div className="w-24 h-24 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm animate-bounce">
-                <AlertTriangle size={48} />
+           <div className="bg-white w-full max-w-[340px] rounded-[2rem] p-8 text-center space-y-6 shadow-2xl relative border-t-4 border-rose-500">
+              <button onClick={() => setConfirmDeletePayment(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
+              <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm animate-bounce">
+                <AlertTriangle size={32} />
               </div>
               <div className="space-y-2">
-                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Hapus Laporan?</h4>
-                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4">
-                    Data laporan bayar <span className="text-slate-800 font-black underline">{confirmDeletePayment.className}</span> akan dihapus permanen.
+                 <h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Hapus Laporan?</h4>
+                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4">
+                    Data laporan bayar <span className="text-slate-800 font-black underline">{confirmDeletePayment.className}</span> akan dihapus permanen Kak.
                  </p>
               </div>
-              <div className="flex gap-4">
-                 <button onClick={() => setConfirmDeletePayment(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase active:scale-95 transition-all">BATAL</button>
-                 <button onClick={executeDeletePayment} disabled={loading} className="flex-1 py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2">
-                    {loading ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />} IYA, HAPUS
+              <div className="flex gap-3">
+                 <button onClick={() => setConfirmDeletePayment(null)} className="flex-1 py-4 bg-slate-50 text-slate-400 rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">BATAL</button>
+                 <button onClick={executeDeletePayment} disabled={loading} className="flex-1 py-4 bg-rose-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">
+                    {loading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} HAPUS
                  </button>
               </div>
            </div>
@@ -599,15 +612,78 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
       )}
 
       {previewModal && (<div className="fixed inset-0 z-[300000] flex items-center justify-center p-6 bg-slate-900/95" onClick={() => setPreviewModal(null)}><div className="relative max-w-4xl w-full flex flex-col items-center"><button className="absolute -top-14 right-0 p-4 text-white hover:text-rose-500 transition-colors" onClick={() => setPreviewModal(null)}><X size={40}/></button><img src={previewModal} className="max-w-full max-h-[75vh] rounded-[3rem] shadow-2xl border-4 border-white/20 object-contain animate-in zoom-in" alt="Preview" /><div className="mt-8 text-center"><p className="text-[10px] font-black text-white/40 uppercase tracking-[0.8em] italic">Sanur Payment Verification ✨</p></div></div></div>)}
-      {confirmingAbsen && (<div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in"><div className="bg-white w-full max-sm rounded-[4rem] p-12 shadow-2xl text-center space-y-8 relative overflow-hidden"><button onClick={() => setConfirmingAbsen(null)} className="absolute top-8 right-8 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button><div className="w-20 h-20 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto animate-bounce relative z-10 shadow-xl"><Check size={40} strokeWidth={4} /></div><div className="space-y-2 relative z-10"><h4 className="text-2xl font-black text-slate-800 uppercase italic">Konfirmasi Sesi</h4><p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{confirmingAbsen.course.className} - SESI {confirmingAbsen.sessionNum}</p></div><div className="space-y-4 text-left relative z-10"><label className="text-[10px] font-black text-slate-400 uppercase ml-4">Kapan kamu belajarnya?</label><input type="date" value={selectedAbsenDate} onChange={e => setSelectedAbsenDate(e.target.value)} className="w-full px-8 py-5 bg-slate-50 rounded-[2rem] font-black text-[14px] outline-none border-2 border-emerald-50 shadow-inner" /></div><button onClick={handleConfirmAbsen} disabled={loading} className="w-full py-6 bg-emerald-600 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-[0.3em] shadow-2xl relative z-10 active:scale-95 transition-all flex items-center justify-center gap-3">{loading ? <Loader2 size={20} className="animate-spin" /> : 'SAYA SUDAH BELAJAR! ✨'}</button></div></div>)}
-      {requestingReportFor && (<div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in"><div className="bg-white w-full max-w-md rounded-[4rem] p-12 md:p-14 shadow-2xl text-center space-y-10 relative overflow-hidden"><button onClick={() => setRequestingReportFor(null)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button><div className="space-y-6 relative z-10"><div className="w-20 h-20 bg-blue-600 text-white rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl rotate-3"><GraduationCap size={40} /></div><div><h4 className="text-3xl font-black text-slate-800 uppercase italic leading-none">Klaim Rapot</h4><p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-2">{requestingReportFor.className}</p></div></div><div className="bg-slate-50 p-8 rounded-[2.5rem] text-left space-y-6 border border-slate-100 relative z-10"><p className="text-[11px] font-bold text-slate-600 Kalimat Kalimat">"Silakan pilih Guru Pembimbing Kakak di bawah ini untuk mengirim data belajarmu ke antrean Rapot & Sertifikat. ✨"</p><div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><UserCog size={12}/> Pilih Guru Pembimbing</label><select value={selectedTeacherForReport} onChange={e => setSelectedTeacherForReport(e.target.value)} className="w-full px-8 py-5 bg-white rounded-[1.8rem] font-black text-[12px] uppercase italic outline-none border-2 border-blue-50 shadow-sm h-[60px] appearance-none"><option value="">-- PILIH GURU PEMBIMBING --</option>{teachers.filter(t => t.role === 'TEACHER').map(t => <option key={t.id} value={t.id}>{t.name.toUpperCase()}</option>)}</select></div></div><button onClick={handleRequestReport} disabled={!selectedTeacherForReport || loading} className="w-full py-7 bg-blue-600 text-white rounded-[2.5rem] font-black text-[11px] uppercase tracking-[0.3em] shadow-2xl relative Kalimat active:scale-95 transition-all flex items-center justify-center gap-3">{loading ? <Loader2 size={20} className="animate-spin" /> : <><Sparkles size={20} /> AJUKAN PERMINTAAN SEKARANG ✨</>}</button></div></div>)}
       
-      {/* HIDDEN SLIP GENERATOR (DENGAN DESAIN RESMI) */}
+      {/* MODAL KONFIRMASI ABSEN - LEBIH RAMPING */}
+      {confirmingAbsen && (
+        <div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in">
+           <div className="bg-white w-full max-w-[340px] rounded-[2rem] p-8 shadow-2xl text-center space-y-6 relative overflow-hidden">
+              <button onClick={() => setConfirmingAbsen(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
+              <div className="w-14 h-14 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto animate-bounce shadow-lg">
+                <Check size={28} strokeWidth={4} />
+              </div>
+              <div className="space-y-1">
+                <h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Konfirmasi Sesi</h4>
+                <p className="text-[8px] font-black text-blue-600 uppercase tracking-widest">{confirmingAbsen.course.className} - SESI {confirmingAbsen.sessionNum}</p>
+              </div>
+              <div className="space-y-2 text-left">
+                <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Kapan kamu belajarnya?</label>
+                <input type="date" value={selectedAbsenDate} onChange={e => setSelectedAbsenDate(e.target.value)} className="w-full px-4 py-3 bg-slate-50 rounded-xl font-black text-xs outline-none border-2 border-emerald-50 shadow-inner" />
+              </div>
+              <button onClick={handleConfirmAbsen} disabled={loading} className="w-full py-4 bg-emerald-600 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">
+                 {loading ? <Loader2 size={14} className="animate-spin" /> : 'SAYA SUDAH BELAJAR! ✨'}
+              </button>
+           </div>
+        </div>
+      )}
+
+      {/* MODAL KLAIM RAPOT - LEBIH RAMPING */}
+      {requestingReportFor && (
+        <div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in">
+           <div className="bg-white w-full max-w-[360px] rounded-[2rem] p-8 shadow-2xl text-center space-y-6 relative overflow-hidden">
+              <button onClick={() => setRequestingReportFor(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
+              <div className="space-y-3">
+                 <div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto shadow-xl rotate-3">
+                    <GraduationCap size={28} />
+                 </div>
+                 <div>
+                    <h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Klaim Rapot</h4>
+                    <p className="text-[8px] font-black text-blue-600 uppercase tracking-widest mt-1 truncate">{requestingReportFor.className}</p>
+                 </div>
+              </div>
+              <div className="bg-slate-50 p-5 rounded-2xl text-left space-y-3 border border-slate-100">
+                 <p className="text-[9px] font-bold text-slate-600 leading-tight">"Pilih Guru Pembimbing Kakak untuk mengirim data ke antrean Rapot & Sertifikat."</p>
+                 <div className="space-y-1.5">
+                    <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest flex items-center gap-1.5"><UserCog size={10}/> Pilih Guru Pembimbing</label>
+                    <select value={selectedTeacherForReport} onChange={e => setSelectedTeacherForReport(e.target.value)} className="w-full px-4 py-3 bg-white rounded-xl font-black text-[10px] uppercase italic outline-none border-2 border-blue-50 shadow-sm appearance-none">
+                       <option value="">-- PILIH GURU --</option>
+                       {teachers.filter(t => t.role === 'TEACHER').map(t => <option key={t.id} value={t.id}>{t.name.toUpperCase()}</option>)}
+                    </select>
+                 </div>
+              </div>
+              <button onClick={handleRequestReport} disabled={!selectedTeacherForReport || loading} className="w-full py-4 bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.1em] shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">
+                 {loading ? <Loader2 size={14} className="animate-spin" /> : <><Sparkles size={14} /> AJUKAN SEKARANG ✨</>}
+              </button>
+           </div>
+        </div>
+      )}
+      
+      {/* RENDERING TEMPLATE RAPOT TERSEMBUNYI UNTUK DOWNLOAD PDF */}
       <div className="fixed left-[-9999px] top-0 pointer-events-none">
+         {verifiedCourses.map((course) => {
+            const reportLog = findOfficialReportLog(course);
+            return reportLog ? (
+              <ReportTemplate 
+                key={reportLog.id} 
+                reportLog={reportLog} 
+                allLogs={attendanceLogs} 
+                studentName={normalizedUserName} 
+              />
+            ) : null;
+         })}
+
+         {/* HIDDEN SLIP GENERATOR */}
          {myPayments.map((p) => (
             <div id={`slip-digital-${p.id}`} ref={p.id === showDigitalSlip?.id ? slipRef : null} key={p.id} className="bg-white p-12 md:p-20 space-y-10 w-[700px] mx-auto overflow-hidden text-slate-900 border-8 border-double border-slate-100">
-               
-               {/* HEADER - Logo & Judul */}
                <div className="flex justify-between items-start border-b-2 border-slate-900 pb-10">
                   <div className="min-w-0 text-left">
                      <h1 className="text-3xl font-black italic tracking-tighter text-slate-900 leading-none">SANUR</h1>
@@ -618,8 +694,6 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
                      <p className="text-[10px] font-black text-slate-800 uppercase tracking-widest mt-2 whitespace-nowrap">ID: {p.id.toUpperCase()}</p>
                   </div>
                </div>
-
-               {/* INFO SISWA & TANGGAL */}
                <div className="grid grid-cols-12 gap-10">
                   <div className="col-span-8 pr-6 border-r border-slate-50 text-left">
                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Diterima Dari:</p>
@@ -630,20 +704,16 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
                      <p className="text-base font-black text-slate-800 uppercase italic Kalimat">{formatDateToDMY(p.date)}</p>
                   </div>
                </div>
-
-               {/* RINCIAN PAKET */}
                <div className="space-y-6">
                   <div className="flex items-center gap-3 text-slate-400 border-b-2 border-slate-50 pb-2">
                      <ClipboardList size={14} />
                      <p className="text-[10px] font-black uppercase tracking-[0.3em]">Rincian Paket Pembelajaran</p>
                   </div>
-                  
                   <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 flex flex-col gap-6">
                      <div className="text-left">
                         <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Nama Program/Kelas:</p>
                         <p className="text-[13px] font-black text-slate-800 uppercase Kalimat text-left">{p.className}</p>
                      </div>
-                     
                      <div className="grid grid-cols-2 gap-8 pt-6 border-t border-slate-200/60">
                         <div className="text-left">
                            <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Total Sesi Paket:</p>
@@ -656,8 +726,6 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
                      </div>
                   </div>
                </div>
-
-               {/* NOMINAL PEMBAYARAN */}
                <div className="pt-8 border-t-2 border-slate-900">
                   <div className="flex justify-between items-start h-[32px]">
                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">VERIFIKASI SISTEM:</p>
@@ -668,8 +736,6 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
                   </div>
                   <p className="text-5xl font-black text-emerald-600 italic leading-none mt-4 text-left">Rp {p.amount.toLocaleString()}</p>
                </div>
-
-               {/* FOOTER */}
                <div className="pt-10 border-t border-slate-100 flex justify-between items-end gap-10">
                   <div className="max-w-xs text-left">
                      <p className="text-[10px] font-bold text-slate-400 italic Kalimat text-left">"Terima kasih atas kepercayaannya bergabung di Sanur Akademi Inspirasi. Pembayaran ini sah diverifikasi sistem internal."</p>
@@ -688,4 +754,3 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
 };
 
 export default StudentPortal;
-
