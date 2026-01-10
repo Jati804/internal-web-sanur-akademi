@@ -81,7 +81,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
         if (pin === userPin) {
           onLogin(foundUser);
         } else {
-          setError('PIN Salah. Cek kembali 6 digit PIN Anda.');
+          setError('PIN Salah. Cek kembali digit PIN Anda.');
         }
       } else {
         setError('Username tidak terdaftar. Hubungi Admin.');
