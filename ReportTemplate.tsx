@@ -88,7 +88,7 @@ const ReportTemplate: React.FC<ReportTemplateProps> = ({ reportLog, allLogs, stu
           
           {/* AREA ATAS: HEADER */}
           <div style={{ height: '260px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', paddingBottom: '40px', borderBottom: '1px solid white' }}>
-            <img src={ASSETS.LOGO} style={{ maxWidth: '170px', maxHeight: '50px', objectFit: 'contain', marginBottom: '10px' }} />
+            <img src={ASSETS.LOGO} style={{ maxWidth: '260px', maxHeight: '80px', objectFit: 'contain', marginBottom: '15px' }} />
             <h1 style={{ fontSize: '15px', fontWeight: '900', letterSpacing: '0.2em', color: '#1e293b', textTransform: 'uppercase', margin: 0 }}>SANUR AKADEMI INSPIRASI</h1>
             <div style={{ width: '300px', height: '2px', backgroundColor: '#e2e8f0', marginTop: '8px' }}></div>
           </div>
@@ -124,10 +124,10 @@ const ReportTemplate: React.FC<ReportTemplateProps> = ({ reportLog, allLogs, stu
           {/* AREA BAWAH: FOOTER (DITURUNIN DIKIT AGAR TIDAK NABRAK BOX TENGAH) */}
           <div style={{ position: 'absolute', bottom: '20px', height: '293px', width: '100%', borderTop: '1px solid white', display: 'flex', alignItems: 'center' }}>
             <div style={{ width: '100%', padding: '0 100px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ flex: 1, textAlign: 'center' }}>
-                <p style={{ fontSize: '9px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.3em', margin: '0 0 5px 0' }}>Tanggal Terbit:</p>
-                <p style={{ fontSize: '15px', fontWeight: '900', color: '#0f172a', margin: 0 }}>{formatDateToDMY(reportLog.date)}</p>
-              </div>
+              <div style={{ flex: 1, textAlign: 'center', marginTop: '-15px' }}>
+ 		<p style={{ fontSize: '9px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.3em', margin: '0 0 5px 0' }}>Tanggal Terbit:</p>
+		<p style={{ fontSize: '15px', fontWeight: '900', color: '#0f172a', margin: 0 }}>{formatDateToDMY(reportLog.date)}</p>
+	      </div>
               <div style={{ flex: 1, display: 'flex', justifyContent: 'center', opacity: 0.12, color: isPass ? '#1e3a8a' : '#ea580c' }}>
                 <GraduationCap size={75} />
               </div>
@@ -275,7 +275,7 @@ const ReportTemplate: React.FC<ReportTemplateProps> = ({ reportLog, allLogs, stu
             <Quote size={22}/>
             <h3 style={{ fontSize: '15px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.4em' }}>Ulasan Pengajar</h3>
           </div>
-          <div style={{ flex: 1, backgroundColor: '#f0f9ff', borderRadius: '42px', border: '4px solid #f1f5f9', padding: '35px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ flex: 1, backgroundColor: isPass ? '#f0f9ff' : '#fff7ed', borderRadius: '42px', border: '4px solid #f1f5f9', padding: '35px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
              {/* WRAPPING FIX APPLIED HERE */}
              <p style={{ 
                fontSize: '17px', 
