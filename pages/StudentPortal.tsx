@@ -2,12 +2,13 @@
 import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { User, Attendance, StudentPayment } from '../types';
 import { supabase } from '../services/supabase.ts';
+import ReportTemplate, { formatDateToDMY } from '../ReportTemplate.tsx';
 import { 
   BookOpen, Clock, Loader2, Sparkles, Check, X, Rocket, Trophy, Stars, 
   GraduationCap, BadgeCheck, FileText, Upload, Receipt, History, AlertCircle, 
   CreditCard, Eye, Trash2, Printer, Smile, Heart, Target, Edit3, Save, ChevronRight,
   ClipboardList, Download, ShieldCheck, PartyPopper, UserCog, AlertTriangle, Zap, Star, Quote,
-  Layout, Info
+  Layout, Info, FileDown, FileCheck, ImageIcon
 } from 'lucide-react';
 
 import html2canvas from 'html2canvas';
@@ -26,8 +27,6 @@ interface StudentPortalProps {
   refreshAllData?: () => Promise<void>;
 }
 
-const SESSION_COLORS = ['text-blue-500', 'text-emerald-500', 'text-orange-500', 'text-rose-500', 'text-purple-500', 'text-amber-500'];
-
 const StudentPortal: React.FC<StudentPortalProps> = ({ 
   user, attendanceLogs, studentPayments, setStudentPayments, teachers, initialView, refreshAllData, classes, subjects, levels 
 }) => {
@@ -36,6 +35,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   const [showSuccess, setShowSuccess] = useState(false);
   const [quoteIndex, setQuoteIndex] = useState(0);
   const [activeDownloadId, setActiveDownloadId] = useState<string | null>(null);
+  const [downloadProgress, setDownloadProgress] = useState(0);
   const [previewModal, setPreviewModal] = useState<string | null>(null);
   const [showDigitalSlip, setShowDigitalSlip] = useState<StudentPayment | null>(null);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -45,38 +45,27 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   const [selectedAbsenDate, setSelectedAbsenDate] = useState(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()));
   const [requestingReportFor, setRequestingReportFor] = useState<any | null>(null);
   const [selectedTeacherForReport, setSelectedTeacherForReport] = useState('');
-
-  const ASSETS = { LOGO: "https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png" };
+  
+  const [confirmDeletePayment, setConfirmDeletePayment] = useState<StudentPayment | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState<string | null>(null);
+  const [showErrors, setShowErrors] = useState(false);
   const [payForm, setPayForm] = useState({ subject: '', level: 'BASIC', room: '', amount: 0, date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), receiptData: '' });
 
   const normalizedUserName = (user?.name || '').toUpperCase().trim();
   const firstName = (user?.name || 'Siswa').split(' ')[0].toUpperCase();
 
-  const formatDateToDMY = (dateStr: string) => {
-    if (!dateStr || !dateStr.includes('-')) return dateStr;
-    const parts = dateStr.split('-');
-    if (parts.length !== 3) return dateStr;
-    return `${parts[2]}/${parts[1]}/${parts[0]}`;
-  };
-
   const motivationalQuotes = [
     "Setiap langkah kecil belajarmu adalah pondasi kesuksesan di masa depan. Semangat! ✨",
-    "Fokuslah pada proses, hasil yang luar biasa akan mengikuti usahamu. 💪",
     "Belajar mandiri melatih kemandirianmu untuk menjadi pribadi yang hebat. 🚀",
-    "Jangan takut mencoba hal baru, ilmu adalah harta yang takkan pernah habis. 🌈",
     "Kesuksesan hari esok ditentukan oleh seberapa giat kamu belajar hari ini. ⭐",
     "Jadilah versi terbaik dirimu setiap hari melalui ilmu yang bermanfaat. 🔥",
-    "Tidak ada kata terlambat untuk memulai hal yang hebat. Ayo lanjut! 🎯",
-    "Pikiran yang terbuka adalah kunci untuk menyerap ilmu tanpa batas. 🧠",
-    "Dedikasimu hari ini adalah hadiah untuk masa depanmu nanti. 🎁",
-    "Tetap rendah hati saat berilmu, tetap semangat saat belajar. 🥰"
+    "Tidak ada kata terlambat untuk memulai hal yang hebat. Ayo lanjut! 🎯"
   ];
 
   useEffect(() => {
-    const interval = setInterval(() => setQuoteIndex((p) => (p + 1) % 10), 60000); 
+    const interval = setInterval(() => setQuoteIndex((p) => (p + 1) % 5), 60000); 
     return () => clearInterval(interval);
   }, []);
 
@@ -84,22 +73,14 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
     if (!Array.isArray(studentPayments)) return [];
     return [...studentPayments]
       .filter(p => (p.studentName || '').toUpperCase().trim() === normalizedUserName && p.status === 'VERIFIED')
-      .sort((a, b) => {
-        const dateDiff = new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime();
-        if (dateDiff !== 0) return dateDiff;
-        return (b.id || '').localeCompare(a.id || '');
-      });
+      .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
   }, [studentPayments, normalizedUserName]);
 
   const myPayments = useMemo(() => {
     if (!Array.isArray(studentPayments)) return [];
     return [...studentPayments]
       .filter(p => (p.studentName || '').toUpperCase().trim() === normalizedUserName)
-      .sort((a, b) => {
-        const dateDiff = new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime();
-        if (dateDiff !== 0) return dateDiff;
-        return (b.id || '').localeCompare(a.id || '');
-      });
+      .sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime());
   }, [studentPayments, normalizedUserName]);
 
   const myLogs = useMemo(() => {
@@ -110,8 +91,24 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
     );
   }, [attendanceLogs, normalizedUserName]);
 
+  const findOfficialReportLog = (courseId: string) => {
+    const courseLogs = myLogs.filter(l => l.packageId === courseId);
+    const possibleReports = [...courseLogs].filter(l => 
+      (l.status === 'SESSION_LOG' || l.status === 'REPORT_READY') && 
+      l.sessionNumber === 6 &&
+      l.teacherId !== 'SISWA_MANDIRI' && 
+      l.studentScores && 
+      Object.keys(l.studentScores).length > 0
+    );
+    return possibleReports.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+  };
+
   const handleLaporBayar = async () => {
-    if (!payForm.subject || !payForm.room || !payForm.amount || !payForm.receiptData) return alert("Lengkapi semua data dan bukti transfer ya Kak! ✨");
+    if (!payForm.subject || !payForm.room || !payForm.amount || !payForm.receiptData) {
+      setShowErrors(true);
+      return alert("Waduh Kak! Tolong lengkapi kolom yang warna merah dulu yaa ✨");
+    }
+
     setLoading(true);
     try {
       const fullClassName = `${payForm.subject} (${payForm.level}) - ${payForm.room}`.toUpperCase();
@@ -128,14 +125,28 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   const resetForm = () => {
     setPayForm({ subject: '', level: 'BASIC', room: '', amount: 0, date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), receiptData: '' });
     setIsEditing(null);
+    setShowErrors(false);
   };
 
   const handleEditPending = (p: StudentPayment) => {
     setIsEditing(p.id);
+    setShowErrors(false);
     const match = p.className.match(/(.*) \((.*)\) - (.*)/);
     if (match) { setPayForm({ subject: match[1], level: match[2], room: match[3], amount: p.amount, date: p.date, receiptData: p.receiptData || '' }); }
     else { setPayForm({ ...payForm, subject: p.className, amount: p.amount, date: p.date, receiptData: p.receiptData || '' }); }
     setTimeout(() => { const formEl = document.getElementById('form-bayar'); if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'start' }); }, 100);
+  };
+
+  const executeDeletePayment = async () => {
+    if (!confirmDeletePayment) return;
+    setLoading(true);
+    try {
+      await supabase.from('student_payments').delete().eq('id', confirmDeletePayment.id);
+      if (refreshAllData) await refreshAllData();
+      setConfirmDeletePayment(null);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 2000);
+    } catch (e: any) { alert("Gagal menghapus laporan: " + e.message); } finally { setLoading(false); }
   };
 
   const handleConfirmAbsen = async () => {
@@ -157,6 +168,10 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
     try {
       const teacher = teachers.find(t => t.id === selectedTeacherForReport);
       const payload = { id: `REQ-${Date.now()}`, teacherid: selectedTeacherForReport, teachername: (teacher?.name || 'GURU').toUpperCase(), date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), status: 'REPORT_REQUEST', classname: requestingReportFor.className.toUpperCase(), packageid: requestingReportFor.id, studentsattended: [normalizedUserName], paymentstatus: 'PAID' };
+      
+      // Hapus jika ada permintaan lama (misal dari status REJECTED)
+      await supabase.from('attendance').delete().eq('packageid', requestingReportFor.id).eq('status', 'REPORT_REJECTED');
+      
       await supabase.from('attendance').insert([payload]);
       if (refreshAllData) await refreshAllData();
       setRequestingReportFor(null);
@@ -167,33 +182,37 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   };
 
   const handleDownloadPDFReport = async (course: any) => {
+    const reportLog = findOfficialReportLog(course.id);
+    if (!reportLog) return alert("Rapot belum siap diunduh Kak! Tunggu Guru selesai input nilai ya. ✨");
+    setDownloadProgress(5);
     setActiveDownloadId(course.id);
     try {
       const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: 'a4', hotfixes: ["px_rendering"] });
       const pw = pdf.internal.pageSize.getWidth();
       const ph = pdf.internal.pageSize.getHeight();
       const captureOptions = { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: 794, height: 1123, logging: false };
-      
       const capturePage = async (pageId: string) => {
         const el = document.getElementById(pageId);
         if (!el) return null;
         const canvas = await html2canvas(el, captureOptions);
         return canvas.toDataURL('image/png', 1.0);
       };
-
-      const img1 = await capturePage(`cert-render-${course.id}`);
+      setDownloadProgress(20);
+      const img1 = await capturePage(`cert-render-${reportLog.id}`);
       if (img1) pdf.addImage(img1, 'PNG', 0, 0, pw, ph, undefined, 'FAST');
-      
+      setDownloadProgress(45);
       pdf.addPage('a4', 'p');
-      const img2 = await capturePage(`transcript-render-${course.id}`);
+      const img2 = await capturePage(`transcript-render-${reportLog.id}`);
       if (img2) pdf.addImage(img2, 'PNG', 0, 0, pw, ph, undefined, 'FAST');
-      
+      setDownloadProgress(75);
       pdf.addPage('a4', 'p');
-      const img3 = await capturePage(`milestone-render-${course.id}`);
+      const img3 = await capturePage(`milestone-render-${reportLog.id}`);
       if (img3) pdf.addImage(img3, 'PNG', 0, 0, pw, ph, undefined, 'FAST');
-      
-      pdf.save(`Rapot_Sanur_${user.name.replace(/\s+/g, '_')}.pdf`);
-    } catch (e) { alert("Gagal memproses PDF."); } finally { setActiveDownloadId(null); }
+      setDownloadProgress(95);
+      pdf.save(`Rapot_Sanur_${user.name.toUpperCase().replace(/\s+/g, '_')}.pdf`);
+      setDownloadProgress(100);
+      await new Promise(r => setTimeout(r, 500));
+    } catch (e) { alert("Gagal memproses PDF."); } finally { setActiveDownloadId(null); setDownloadProgress(0); }
   };
 
   const handleDownloadSlipDirect = async (p: StudentPayment) => {
@@ -211,47 +230,221 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
     }, 500);
   };
 
+  const getDisplayAmount = (amt: number) => {
+    return amt > 0 ? `Rp ${amt}` : 'Rp ';
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-40 px-4 animate-in fade-in duration-700">
-      {/* HEADER SECTION */}
+      {/* GLOBAL LOADING / PROGRESS */}
+      {(activeDownloadId || loading) && (
+        <div className="fixed inset-0 z-[300000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in">
+           <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-12 shadow-2xl flex flex-col items-center text-center space-y-8 animate-in zoom-in duration-300">
+              <div className="w-20 h-20 bg-emerald-600 text-white rounded-[2.2rem] flex items-center justify-center shadow-xl animate-bounce">
+                {activeDownloadId ? <FileDown size={40} /> : <Loader2 size={40} className="animate-spin" />}
+              </div>
+              <div className="space-y-3">
+                <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">{activeDownloadId ? 'Memproses Rapot' : 'Memproses Data'}</h4>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-relaxed px-4">Tunggu sebentar ya Kak... ✨</p>
+              </div>
+              {activeDownloadId && (
+                <div className="w-full space-y-3">
+                  <div className="flex justify-between items-center px-1">
+                    <span className="text-[9px] font-black text-emerald-600 uppercase tracking-widest">Progress</span>
+                    <span className="text-[11px] font-black text-emerald-600 italic">{downloadProgress}%</span>
+                  </div>
+                  <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 shadow-inner">
+                    <div className="h-full bg-emerald-500 rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(16,185,129,0.3)]" style={{ width: `${downloadProgress}%` }}></div>
+                  </div>
+                </div>
+              )}
+           </div>
+        </div>
+      )}
+
       <header className="relative py-16 px-12 bg-emerald-600 rounded-[4rem] text-white shadow-2xl overflow-hidden group">
          <div className="absolute top-0 right-0 w-80 h-80 bg-white/10 rounded-full blur-3xl -mr-40 -mt-40"></div>
          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-10">
             <div className="space-y-6 text-center md:text-left flex-1">
                <div className="inline-flex items-center gap-3 px-6 py-2 bg-white/20 backdrop-blur-md rounded-full border border-white/30"><Stars size={18} className="text-yellow-300" /><span className="text-[10px] font-black uppercase tracking-[0.2em]">Sanur Student Portal</span></div>
                <h1 className="text-5xl md:text-7xl font-black uppercase italic tracking-normal Kalimat leading-none">{isPaymentView ? "RIWAYAT BAYAR " : "RUANG BELAJAR "} <br/><span className="text-yellow-300">{firstName} ✨</span></h1>
-               <div className="min-h-[60px] flex items-center justify-center md:justify-start"><p className="text-sm font-bold italic text-emerald-50 Kalimat leading-relaxed max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-1000">"{motivationalQuotes[quoteIndex]}"</p></div>
+               <div className="min-h-[60px] flex items-center justify-center md:justify-start"><p className="text-sm font-bold italic text-emerald-50 Kalimat leading-relaxed max-w-xl">"{motivationalQuotes[quoteIndex]}"</p></div>
             </div>
-            <div className="w-44 h-44 bg-white/10 backdrop-blur-xl rounded-[3.5rem] flex items-center justify-center shadow-2xl shrink-0 hover:scale-110 hover:rotate-12 transition-all duration-500 cursor-pointer group/icon">
-               {isPaymentView ? <Rocket size={90} className="text-orange-400 group-hover/icon:animate-bounce" /> : <Trophy size={90} className="text-yellow-400 group-hover/icon:animate-pulse" />}
+            {/* ICON HEADER DENGAN ANIMASI INTERAKTIF */}
+            <div className="w-44 h-44 bg-white/10 backdrop-blur-xl rounded-[3.5rem] flex items-center justify-center shadow-2xl shrink-0 group/icon cursor-pointer active:scale-90 transition-all duration-300">
+               {isPaymentView ? (
+                 <Rocket size={90} className="text-orange-400 group-hover/icon:-translate-y-4 group-hover/icon:translate-x-4 group-hover/icon:scale-125 group-hover/icon:rotate-12 transition-all duration-500" />
+               ) : (
+                 <Trophy size={90} className="text-yellow-400 group-hover/icon:scale-125 group-hover/icon:rotate-[360deg] transition-all duration-1000" />
+               )}
             </div>
          </div>
       </header>
 
-      {/* BANNER REMINDER */}
-      <div className="bg-orange-50 p-6 rounded-[2.5rem] border border-orange-100 flex items-center gap-4 animate-pulse shadow-sm max-w-4xl mx-auto">
-         <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-orange-600 shadow-sm shrink-0 border border-orange-100"><Info size={24}/></div>
-         <p className="text-[11px] font-black text-orange-800 uppercase italic leading-relaxed">"Segera amankan/unduh rapotmu ya Kak jika sudah keluar! Akun akan dihapus pengurus setelah satu tahun selesai kelas demi meringankan sistem. ✨"</p>
-      </div>
+      {/* PENGUMUMAN HALAMAN KELAS SAYA */}
+      {!isPaymentView && (
+        <div className="mx-2 bg-emerald-50/60 backdrop-blur-sm border-2 border-dashed border-emerald-200/60 rounded-[3rem] p-8 shadow-sm flex flex-col md:flex-row items-center gap-6 animate-in slide-in-from-top-4 group">
+           <div className="w-14 h-14 bg-white text-emerald-500 rounded-full flex items-center justify-center shrink-0 shadow-sm border border-emerald-100 animate-pulse transition-all">
+              <Info size={28} />
+           </div>
+           <div className="text-center md:text-left flex-1">
+              <div className="flex items-center justify-center md:justify-start gap-2">
+                 <Sparkles size={14} className="text-emerald-400" />
+                 <p className="text-[11px] font-black text-emerald-700 uppercase tracking-widest leading-relaxed">
+                    "Sertif & Rapot segera disimpan ya Kak! Setelah <span className="bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg">1 tahun lulus</span> akun akan dihapus pengurus demi kelancaran sistem." ✨
+                 </p>
+              </div>
+           </div>
+        </div>
+      )}
+
+      {/* PENGUMUMAN PANDUAN HALAMAN PEMBAYARAN */}
+      {isPaymentView && (
+        <div className="mx-2 bg-orange-50/60 backdrop-blur-sm border-2 border-dashed border-orange-200/60 rounded-[3rem] p-8 shadow-sm flex flex-col md:flex-row items-center gap-6 animate-in slide-in-from-top-4 group">
+           <div className="w-14 h-14 bg-white text-orange-500 rounded-full flex items-center justify-center shrink-0 shadow-sm border border-orange-100 animate-pulse transition-all">
+              <Zap size={28} />
+           </div>
+           <div className="text-center md:text-left flex-1">
+              <div className="flex items-center justify-center md:justify-start gap-2">
+                 <Sparkles size={14} className="text-orange-400" />
+                 <p className="text-[11px] font-black text-orange-800 uppercase tracking-widest leading-relaxed">
+                    "Lapor bayar di sini ya Kak! ✨ Setelah kirim, status akan <span className="bg-orange-200 text-orange-800 px-2 py-0.5 rounded-lg">PENDING</span> (sedang dicek Admin). Jika sudah <span className="bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded-lg">BERHASIL</span>, silakan unduh Kuitansi resmi dan kelas Kakak otomatis aktif di menu Kelas Saya! 🚀"
+                 </p>
+              </div>
+           </div>
+        </div>
+      )}
 
       {isPaymentView ? (
         <section className="space-y-12">
-           {/* FORM LAPOR BAYAR */}
            <div id="form-bayar" className="bg-white p-12 md:p-16 rounded-[4rem] border-2 border-slate-50 shadow-2xl space-y-12 relative overflow-hidden scroll-mt-32">
               <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50 rounded-full blur-[100px] -mr-32 -mt-32 opacity-50"></div>
-              <div className="flex items-center gap-8 relative z-10"><div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-3xl flex items-center justify-center shadow-inner shrink-0"><Receipt size={36} /></div><div><h3 className="text-3xl font-black text-slate-800 uppercase italic leading-none">{isEditing ? 'Update Laporan Bayar' : 'Lapor Pembayaran Baru'}</h3><p className="text-[10px] font-bold text-slate-400 uppercase Kalimat tracking-widest mt-2 italic">Pastikan data sudah benar sebelum dikirim ya Kak ✨</p></div>{isEditing && <button onClick={resetForm} className="ml-auto p-4 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>}</div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10"><div className="space-y-3"><label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><BookOpen size={12}/> Mata Pelajaran</label><select value={payForm.subject} onChange={e => setPayForm({...payForm, subject: e.target.value})} className="w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-black text-xs uppercase italic outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 transition-all shadow-inner appearance-none h-[72px]"><option value="">-- PILIH MATPEL --</option>{subjects.map(s => <option key={s} value={s}>{s}</option>)}</select></div><div className="space-y-3"><label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><Smile size={12}/> Level Belajar</label><select value={payForm.level} onChange={e => setPayForm({...payForm, level: e.target.value})} className="w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-black text-xs uppercase italic outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 transition-all shadow-inner appearance-none h-[72px]">{levels.map(l => <option key={l} value={l}>{l}</option>)}</select></div><div className="space-y-3"><label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><Target size={12}/> Ruangan / Tipe</label><select value={payForm.room} onChange={e => setPayForm({...payForm, room: e.target.value})} className="w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-black text-xs uppercase italic outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 transition-all shadow-inner appearance-none h-[72px]"><option value="">-- PILIH RUANGAN --</option>{classes.map(c => <option key={c} value={c}>{c}</option>)}</select></div><div className="space-y-3"><label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><CreditCard size={12}/> Nominal Transfer (Rp)</label><div className="relative h-[72px]"><span className="absolute left-8 top-1/2 -translate-y-1/2 font-black text-slate-300 italic text-lg">Rp</span><input type="number" placeholder="720000" value={payForm.amount || ''} onChange={e => setPayForm({...payForm, amount: Number(e.target.value)})} className="w-full h-full pl-16 pr-8 py-6 bg-slate-50 rounded-[2rem] font-black text-xl italic outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 transition-all shadow-inner" /></div></div><div className="space-y-3"><label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><Clock size={12}/> Tanggal Transfer</label><input type="date" value={payForm.date} onChange={e => setPayForm({...payForm, date: e.target.value})} className="w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-black text-xs italic outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 transition-all shadow-inner h-[72px]" /></div><div className="space-y-3"><label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><Upload size={12}/> Bukti Transfer (Gambar)</label><div className="flex gap-2">{payForm.receiptData ? (<div className="flex-1 flex gap-2 h-[72px]"><button onClick={() => setPreviewModal(payForm.receiptData)} className="flex-1 py-4 bg-emerald-50 text-emerald-600 rounded-[2rem] font-black text-[10px] uppercase border-2 border-emerald-100 flex items-center justify-center gap-2 hover:bg-emerald-100 transition-all shadow-sm"><Eye size={18}/> PREVIEW</button><button onClick={() => setPayForm({...payForm, receiptData: ''})} className="w-16 h-full bg-rose-50 text-rose-500 rounded-[1.5rem] border-2 border-rose-100 flex items-center justify-center hover:bg-rose-100 transition-all shadow-sm"><Trash2 size={20}/></button></div>) : (<><input type="file" ref={fileInputRef} onChange={e => { const f = e.target.files?.[0]; if(f) { const r = new FileReader(); r.onloadend = () => setPayForm({...payForm, receiptData: r.result as string}); r.readAsDataURL(f); } }} className="hidden" accept="image/*" /><button onClick={() => fileInputRef.current?.click()} className="w-full py-6 bg-orange-50 text-orange-600 rounded-[2rem] font-black text-[10px] uppercase shadow-inner flex items-center justify-center gap-3 border-2 border-dashed border-orange-200 hover:bg-orange-100 transition-all h-[72px]"><Upload size={18}/> UPLOAD BUKTI</button></>)}</div></div></div><button onClick={handleLaporBayar} disabled={loading} className="w-full py-8 bg-emerald-600 text-white rounded-[3rem] font-black text-xs uppercase tracking-[0.3em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-4 group">{loading ? <Loader2 size={24} className="animate-spin" /> : <><Rocket size={24} className="group-hover:translate-x-1 group-hover:-translate-y-1 transition-transform" /> {isEditing ? 'UPDATE LAPORAN PEMBAYARAN ✨' : 'KIRIM LAPORAN PEMBAYARAN ✨'}</>}</button>
+              <div className="flex items-center gap-8 relative z-10"><div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-3xl flex items-center justify-center shadow-inner shrink-0"><Receipt size={36} /></div><div><h3 className="text-3xl font-black text-slate-800 uppercase italic leading-none">{isEditing ? 'Update Laporan' : 'Lapor Bayar'}</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Pastikan bukti transfer jelas ya Kak ✨</p></div>{isEditing && <button onClick={resetForm} className="ml-auto p-4 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>}</div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Mata Pelajaran</label>
+                  <select 
+                    value={payForm.subject} 
+                    onChange={e => { setPayForm({...payForm, subject: e.target.value}); setShowErrors(false); }} 
+                    className={`w-full px-8 py-6 rounded-[2rem] font-black text-xs uppercase outline-none transition-all shadow-inner h-[72px] border-2 ${showErrors && !payForm.subject ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-slate-50 focus:bg-white focus:border-orange-500'}`}
+                  >
+                    <option value="">-- PILIH MATPEL --</option>
+                    {subjects.map(s => <option key={s} value={s}>{s}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Level Belajar</label>
+                  <select value={payForm.level} onChange={e => setPayForm({...payForm, level: e.target.value})} className="w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 h-[72px]">{levels.map(l => <option key={l} value={l}>{l}</option>)}</select>
+                </div>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Ruangan</label>
+                  <select 
+                    value={payForm.room} 
+                    onChange={e => { setPayForm({...payForm, room: e.target.value}); setShowErrors(false); }} 
+                    className={`w-full px-8 py-6 rounded-[2rem] font-black text-xs uppercase outline-none transition-all shadow-inner h-[72px] border-2 ${showErrors && !payForm.room ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-slate-50 focus:bg-white focus:border-orange-500'}`}
+                  >
+                    <option value="">-- PILIH RUANGAN --</option>
+                    {classes.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Nominal Transfer (Rp)</label>
+                  <input 
+                    type="text" 
+                    placeholder="Rp 720000" 
+                    value={getDisplayAmount(payForm.amount)} 
+                    onChange={e => {
+                      const raw = e.target.value.replace(/\D/g, ''); 
+                      setPayForm({...payForm, amount: parseInt(raw) || 0});
+                      setShowErrors(false);
+                    }} 
+                    className={`w-full h-[72px] px-8 py-6 rounded-[2rem] font-black text-xl italic outline-none transition-all shadow-inner border-2 ${showErrors && !payForm.amount ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-slate-50 focus:bg-white focus:border-orange-500'}`} 
+                  />
+                </div>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Tanggal</label>
+                  <input type="date" value={payForm.date} onChange={e => setPayForm({...payForm, date: e.target.value})} className="w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-black text-xs outline-none h-[72px]" />
+                </div>
+                <div className="space-y-3">
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Bukti Transfer</label>
+                  <div className="flex gap-2">
+                    {payForm.receiptData ? (
+                      <div className="flex-1 flex gap-2 h-[72px]">
+                        <button onClick={() => setPreviewModal(payForm.receiptData)} className="flex-1 py-4 bg-emerald-50 text-emerald-600 rounded-[2rem] font-black text-[10px] uppercase border-2 border-emerald-100 flex items-center justify-center gap-3 hover:bg-emerald-100 transition-all shadow-sm">
+                          <Eye size={18}/> PREVIEW
+                        </button>
+                        <button onClick={() => setPayForm({...payForm, receiptData: ''})} className="w-16 h-full bg-rose-50 text-rose-500 rounded-[1.5rem] flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm">
+                          <Trash2 size={20}/>
+                        </button>
+                      </div>
+                    ) : (
+                      <>
+                        <input type="file" ref={fileInputRef} onChange={e => { const f = e.target.files?.[0]; if(f) { const r = new FileReader(); r.onloadend = () => { setPayForm({...payForm, receiptData: r.result as string}); setShowErrors(false); }; r.readAsDataURL(f); } }} className="hidden" accept="image/*" />
+                        <button 
+                          onClick={() => fileInputRef.current?.click()} 
+                          className={`w-full py-6 rounded-[2rem] font-black text-[10px] uppercase shadow-inner border-2 border-dashed h-[72px] transition-all ${showErrors && !payForm.receiptData ? 'border-rose-500 bg-rose-50' : 'border-orange-200 bg-orange-50 text-orange-600'}`}
+                        >
+                          UPLOAD BUKTI
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              </div>
+              <button onClick={handleLaporBayar} disabled={loading} className="w-full py-8 bg-emerald-600 text-white rounded-[3rem] font-black text-xs uppercase tracking-[0.3em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-4">{loading ? <Loader2 size={24} className="animate-spin" /> : <><Rocket size={24} /> {isEditing ? 'UPDATE LAPORAN ✨' : 'KIRIM LAPORAN ✨'}</>}</button>
            </div>
-           {/* RIWAYAT TRANSAKSI */}
+
            <div className="space-y-8">
-              <div className="flex items-center gap-4 px-6"><div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl"><History size={24}/></div><h3 className="text-2xl font-black text-slate-800 uppercase italic">Riwayat Pembayaran Anda</h3></div>
+              <div className="flex items-center gap-4 px-6"><div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl"><History size={24}/></div><h3 className="text-2xl font-black text-slate-800 uppercase italic">Riwayat Pembayaran</h3></div>
               <div className="grid grid-cols-1 gap-6">
                  {myPayments.map((p, i) => (
-                    <div key={p.id || i} className="bg-white p-8 md:p-10 rounded-[3.5rem] border border-slate-100 shadow-xl flex flex-col md:flex-row items-center justify-between group hover:border-emerald-500 transition-all gap-8">
-                       <div className="flex-1 flex items-center gap-8 min-w-0"><div className={`w-20 h-20 rounded-[2rem] flex items-center justify-center shadow-inner shrink-0 ${p.status === 'VERIFIED' ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'}`}>{p.status === 'VERIFIED' ? <BadgeCheck size={40} /> : <Clock size={40} />}</div><div className="min-w-0 flex-1"><p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">{formatDateToDMY(p.date)}</p><h4 className="font-black text-slate-800 text-lg md:text-xl uppercase italic leading-tight whitespace-normal break-words pr-4">{p.className}</h4><div className="flex items-center gap-4 mt-3"><span className={`px-5 py-2 rounded-full text-[8px] font-black uppercase tracking-widest shadow-sm ${p.status === 'VERIFIED' ? 'bg-emerald-600 text-white' : 'bg-[#EA580C] text-white'}`}>{p.status === 'VERIFIED' ? 'BERHASIL' : 'PENDING'}</span></div></div></div>
-                       <div className="flex flex-col md:flex-row items-center gap-10"><div className="text-center md:text-right"><p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">NOMINAL</p><p className={`text-2xl font-black italic ${p.status === 'VERIFIED' ? 'text-emerald-600' : 'text-slate-800'}`}>Rp {p.amount.toLocaleString()}</p></div><div className="flex gap-3"><button onClick={() => setPreviewModal(p.receiptData || null)} className="p-4 bg-slate-50 text-slate-400 hover:text-emerald-600 rounded-2xl shadow-sm border border-slate-100 transition-all active:scale-90"><Eye size={24}/></button>{p.status === 'PENDING' ? (<button onClick={() => handleEditPending(p)} className="p-4 bg-slate-50 text-slate-400 hover:text-orange-600 rounded-2xl shadow-sm border border-slate-100 transition-all active:scale-90"><Edit3 size={24}/></button>) : (<button onClick={() => handleDownloadSlipDirect(p)} disabled={isDownloading && showDigitalSlip?.id === p.id} className="p-5 bg-slate-900 text-white rounded-2xl shadow-xl hover:bg-emerald-600 transition-all active:scale-90 flex items-center justify-center gap-2">{isDownloading && showDigitalSlip?.id === p.id ? <Loader2 size={24} className="animate-spin" /> : <Printer size={24}/>}</button>)}</div></div>
+                    <div key={p.id || i} className="bg-white p-8 md:p-10 rounded-[3.5rem] border border-slate-100 shadow-xl flex flex-col md:flex-row items-center justify-between group hover:border-emerald-500 transition-all gap-8 relative overflow-hidden">
+                       
+                       {/* TOMBOL X MERAH DI POJOK MATI (TIDAK NABRAK IKON BAWAH) */}
+                       {p.status === 'PENDING' && (
+                         <button 
+                           onClick={() => setConfirmDeletePayment(p)}
+                           className="absolute top-0 right-0 p-5 md:p-6 bg-rose-600 text-white rounded-bl-[2.5rem] hover:bg-rose-700 transition-all shadow-xl z-20 flex items-center justify-center group/del"
+                           title="Hapus Laporan"
+                         >
+                           <X size={22} strokeWidth={4} className="group-hover/del:scale-125 transition-transform" />
+                         </button>
+                       )}
+
+                       <div className="flex-1 flex items-center gap-8 min-w-0">
+                         <div className={`w-20 h-20 rounded-[2rem] flex items-center justify-center shadow-inner shrink-0 ${p.status === 'VERIFIED' ? 'bg-emerald-50 text-emerald-600' : 'bg-[#FFF5F2] text-[#FF4500]'}`}>
+                           {p.status === 'VERIFIED' ? <BadgeCheck size={40} /> : <Clock size={40} />}
+                         </div>
+                         <div className="min-w-0 flex-1">
+                           <p className="text-[10px] font-black text-slate-300 uppercase tracking-widest mb-1">{formatDateToDMY(p.date)}</p>
+                           <h4 className="font-black text-slate-800 text-lg uppercase italic leading-tight pr-14 md:pr-0">{p.className}</h4>
+                           <div className="flex items-center gap-4 mt-3">
+                             <span className={`px-5 py-2 rounded-full text-[8px] font-black uppercase tracking-widest shadow-md ${p.status === 'VERIFIED' ? 'bg-emerald-600 text-white' : 'bg-[#FF4500] text-white'}`}>
+                               {p.status === 'VERIFIED' ? 'BERHASIL' : 'PENDING'}
+                             </span>
+                           </div>
+                         </div>
+                       </div>
+
+                       <div className="flex flex-col md:flex-row items-center gap-10">
+                         <div className="text-center md:text-right">
+                           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">NOMINAL</p>
+                           <p className={`text-2xl font-black italic ${p.status === 'VERIFIED' ? 'text-emerald-600' : 'text-slate-800'}`}>Rp {p.amount.toLocaleString()}</p>
+                         </div>
+                         <div className="flex gap-3">
+                           <button onClick={() => setPreviewModal(p.receiptData || null)} className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-blue-600 hover:text-white transition-all"><Eye size={24}/></button>
+                           {p.status === 'PENDING' ? (
+                             <button onClick={() => handleEditPending(p)} className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-orange-500 hover:text-white transition-all"><Edit3 size={24}/></button>
+                           ) : (
+                             <button onClick={() => handleDownloadSlipDirect(p)} className="p-5 bg-slate-900 text-white rounded-2xl shadow-xl hover:bg-emerald-600 transition-all"><Printer size={24}/></button>
+                           )}
+                         </div>
+                       </div>
                     </div>
                  ))}
+                 {myPayments.length === 0 && (
+                   <div className="py-20 text-center bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 opacity-20"><History size={48} className="mx-auto mb-4" /><p className="text-[11px] font-black uppercase tracking-[0.3em]">Belum ada riwayat pembayaran.</p></div>
+                 )}
               </div>
            </div>
         </section>
@@ -259,93 +452,110 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
         <section className="space-y-10">
            {verifiedCourses.map((course, idx) => {
               const courseLogs = myLogs.filter(l => l.packageId === course.id);
-              const completedSessions = courseLogs.filter(l => l.status === 'SESSION_LOG').map(l => ({ num: l.sessionNumber || 0, date: l.date }));
+              const completedSessions = courseLogs.filter(l => (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG')).map(l => ({ num: l.sessionNumber || 0, date: l.date }));
               const maxSess = new Set(completedSessions.map(s => s.num)).size;
-              const reportLog = courseLogs.find(l => l.status === 'SESSION_LOG' && l.sessionNumber === 6 && (l.studentNarratives?.[normalizedUserName] || l.reportNarrative));
-              const isReportPublished = !!reportLog;
-              const isProcessing = courseLogs.some(l => l.status === 'REPORT_REQUEST' || l.status === 'REPORT_PROCESSING');
-              const isRejected = courseLogs.some(l => l.status === 'REPORT_REJECTED') && !isProcessing && !isReportPublished;
-              const progressPercent = Math.min((maxSess / 6) * 100, 100);
-              const rawScoresData = reportLog ? reportLog.studentScores?.[normalizedUserName] : undefined;
-              const scores: number[] = Array.isArray(rawScoresData) ? rawScoresData : (typeof rawScoresData === 'number' ? [rawScoresData] : Array(6).fill(90));
-              const avg = scores.length > 0 ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / 6) : 0;
-              const isPass = avg >= 80;
+              const reportLog = findOfficialReportLog(course.id);
+              const scoresRaw = reportLog?.studentScores ? Object.values(reportLog.studentScores)[0] : [];
+              const scoresArr = Array.isArray(scoresRaw) ? scoresRaw : [];
+              const avg = scoresArr.length > 0 ? Math.round(scoresArr.reduce((a, b) => a + b, 0) / 6) : 0;
+              const isRemedial = !!reportLog && avg < 80;
+              const isReportPublished = !!reportLog && reportLog.status === 'SESSION_LOG';
+              const isWaitingRelease = !!reportLog && reportLog.status === 'REPORT_READY';
+              
+              const isRequesting = courseLogs.some(l => l.status === 'REPORT_REQUEST');
+              const isProcessing = courseLogs.some(l => l.status === 'REPORT_PROCESSING');
+              const isRejected = courseLogs.some(l => l.status === 'REPORT_REJECTED');
 
+              const progressPercent = Math.min((maxSess / 6) * 100, 100);
               return (
                 <div key={course.id || idx} className="bg-white rounded-[3rem] border-2 border-slate-50 shadow-2xl hover:border-emerald-500 transition-all duration-500 overflow-hidden">
                    <div className="p-8 md:p-12 flex flex-col lg:flex-row items-center gap-10">
-                      {/* Bagian Kiri: Info Matpel */}
                       <div className="flex-1 space-y-6 text-center lg:text-left w-full lg:w-auto">
                         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                           <div className={`w-16 h-16 mx-auto lg:mx-0 ${isReportPublished ? (isPass ? 'bg-emerald-600' : 'bg-orange-600') : isRejected ? 'bg-rose-600' : 'bg-blue-600'} text-white rounded-2xl flex items-center justify-center shadow-lg`}>
-                              {isReportPublished ? <BadgeCheck size={32} /> : isRejected ? <AlertTriangle size={32} /> : <BookOpen size={32} />}
+                           <div className={`w-16 h-16 mx-auto lg:mx-0 ${isReportPublished ? (isRemedial ? 'bg-orange-500' : 'bg-emerald-600') : isWaitingRelease ? 'bg-amber-500' : isProcessing ? 'bg-orange-500' : isRequesting ? 'bg-amber-500' : isRejected ? 'bg-rose-500' : 'bg-blue-600'} text-white rounded-2xl flex items-center justify-center shadow-lg`}>
+                              {isReportPublished ? (isRemedial ? <Zap size={32} /> : <BadgeCheck size={32} />) : isWaitingRelease ? <Clock size={32} /> : isRequesting ? <Clock size={32} /> : isProcessing ? <Edit3 size={32} /> : isRejected ? <AlertTriangle size={32} /> : <BookOpen size={32} />}
                            </div>
-                           <span className={`inline-flex px-5 py-1.5 mx-auto lg:mx-0 ${isReportPublished ? (isPass ? 'bg-emerald-600' : 'bg-orange-600') : isRejected ? 'bg-rose-600' : isProcessing ? 'bg-orange-500' : 'bg-blue-600'} text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-md`}>
-                              {isReportPublished ? (isPass ? 'LULUS 🎓' : 'SELESAI ✨') : isRejected ? 'DITOLAK GURU' : isProcessing ? 'PROSES RAPOT' : 'PAKET AKTIF ✨'}
+                           <span className={`inline-flex px-5 py-1.5 mx-auto lg:mx-0 ${isReportPublished ? (isRemedial ? 'bg-orange-500' : 'bg-emerald-600') : isWaitingRelease ? 'bg-amber-500' : isProcessing ? 'bg-orange-500' : isRequesting ? 'bg-amber-500' : isRejected ? 'bg-rose-500' : 'bg-blue-600'} text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-md`}>
+                              {isReportPublished ? (isRemedial ? 'REMEDIAL ⚡' : 'LULUS 🎓') : isWaitingRelease ? 'SIAP TERBIT' : isProcessing ? 'SEDANG DI PROSES' : isRequesting ? 'MENUNGGU PERSETUJUAN' : isRejected ? 'DI TOLAK' : 'PAKET AKTIF ✨'}
                            </span>
                         </div>
                         <div>
                            <h3 className="text-2xl font-black text-slate-800 uppercase italic tracking-tight leading-tight">{course.className}</h3>
-                           <p className="text-[9px] font-bold text-slate-400 uppercase Kalimat tracking-widest italic mt-1">Lifetime Access Certificate</p>
+                           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Life-long Certificate Access</p>
                         </div>
                         <div className="space-y-2">
                            <div className="h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 shadow-inner">
                               <div className="h-full bg-blue-600 rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(37,99,235,0.4)]" style={{ width: `${progressPercent}%` }}></div>
                            </div>
-                           <p className="text-[9px] font-black uppercase text-slate-400 text-center lg:text-left">{maxSess}/6 SESI SELESAI</p>
+                           <p className="text-[9px] font-black uppercase text-slate-400 text-center lg:text-left">{maxSess}/6 SESI</p>
                         </div>
                       </div>
-
-                      {/* Bagian Kanan: Kotak Absen & Rapot */}
                       <div className="flex-[1.5] w-full lg:w-auto">
                         {isReportPublished ? (
-                          <div className={`${isPass ? 'bg-emerald-600' : 'bg-orange-600'} p-8 rounded-[2.5rem] text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl`}>
+                          <div className={`${isRemedial ? 'bg-orange-500' : 'bg-emerald-600'} p-8 rounded-[2.5rem] text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl`}>
                              <div className="flex items-center gap-5 text-left">
-                                <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center shrink-0">{isPass ? <PartyPopper size={28}/> : <Star size={28}/>}</div>
+                                <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center shrink-0">
+                                   {isRemedial ? <Zap size={28}/> : <PartyPopper size={28}/>}
+                                </div>
                                 <div>
-                                   <h4 className="text-xl font-black uppercase italic leading-none">{isPass ? 'KAMU LULUS!' : 'PAKET SELESAI!'}</h4>
-                                   <p className="text-[9px] font-bold uppercase tracking-widest opacity-80 mt-1">Selamat atas pencapaianmu Kak! ✨</p>
+                                   <h4 className="text-xl font-black uppercase italic leading-none">{isRemedial ? 'PENILAIAN SELESAI!' : 'KAMU LULUS!'}</h4>
+                                   <p className="text-[9px] font-bold uppercase tracking-widest opacity-80 mt-1">{isRemedial ? 'Evaluasi sudah terbit Kak! ✨' : 'Selamat Kak! ✨'}</p>
                                 </div>
                              </div>
-                             <button onClick={() => handleDownloadPDFReport(course)} disabled={activeDownloadId === course.id} className={`px-8 py-4 bg-white ${isPass ? 'text-emerald-600' : 'text-orange-600'} rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-all`}>
+                             <button onClick={() => handleDownloadPDFReport(course)} disabled={!!activeDownloadId} className={`px-8 py-4 bg-white ${isRemedial ? 'text-orange-600' : 'text-emerald-600'} rounded-2xl font-black text-[10px] uppercase shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-all`}>
                                 {activeDownloadId === course.id ? <Loader2 className="animate-spin" size={16} /> : <Download size={18}/>} UNDUH RAPOT
                              </button>
                           </div>
+                        ) : isWaitingRelease ? (
+                           <div className="bg-amber-50 p-8 rounded-[2.5rem] border border-amber-100 flex flex-col items-center justify-center text-center gap-4 animate-pulse">
+                              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-amber-600"><Zap size={24}/></div>
+                              <div><p className="text-[11px] font-black text-amber-800 uppercase italic">Penilaian Selesai!</p><p className="text-[9px] font-bold text-amber-600 uppercase mt-2">Tunggu Guru Mengirimkan Rapotmu Ke Sini ✨</p></div>
+                           </div>
+                        ) : isRequesting ? (
+                           <div className="bg-amber-50 p-8 rounded-[2.5rem] border border-amber-100 flex flex-col items-center justify-center text-center gap-4 animate-pulse">
+                              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-amber-600"><Clock size={24}/></div>
+                              <div><p className="text-[11px] font-black text-amber-800 uppercase italic leading-none">Sedang Meminta Persetujuan Guru</p><p className="text-[9px] font-bold text-amber-600 uppercase mt-2">Tunggu Guru Menerima Permintaanmu Ya ✨</p></div>
+                           </div>
+                        ) : isProcessing ? (
+                           <div className="bg-orange-50 p-8 rounded-[2.5rem] border border-orange-100 flex flex-col items-center justify-center text-center gap-4 animate-pulse">
+                              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-orange-600"><Edit3 size={24}/></div>
+                              <div><p className="text-[11px] font-black text-orange-800 uppercase italic leading-none">Sedang Di Proses</p><p className="text-[9px] font-bold text-orange-600 uppercase mt-2">Sertifikat & Rapotmu Sedang Diisi Oleh Guru ✨</p></div>
+                           </div>
+                        ) : isRejected ? (
+                           <div className="space-y-6">
+                              <div className="bg-rose-50 p-6 rounded-[2rem] border border-rose-100 flex items-center gap-4 shadow-sm animate-in shake">
+                                 <AlertCircle className="text-rose-600" size={24}/>
+                                 <p className="text-[10px] font-black text-rose-800 uppercase italic leading-relaxed">
+                                    "Di tolak, pilih guru lain ya Kak! ✨ Permintaanmu ditolak guru tersebut, silakan ajukan ke pembimbing lainnya."
+                                 </p>
+                              </div>
+                              <button onClick={() => setRequestingReportFor(course)} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all">
+                                 <GraduationCap size={20}/> KLAIM ULANG RAPOT 🎓
+                              </button>
+                           </div>
                         ) : (
                           <div className="space-y-6">
-                             {isRejected && (
-                                <div className="bg-rose-50 p-4 rounded-2xl border border-rose-100 flex items-center gap-4 text-rose-600">
-                                   <AlertCircle size={20} className="shrink-0"/>
-                                   <p className="text-[9px] font-black uppercase italic leading-tight">"Permintaan rapotmu ditolak pengajar sebelumnya, silakan klaim lagi & pilih Guru Pembimbing lain ya! ✨"</p>
-                                </div>
-                             )}
-                             <div className="grid grid-cols-6 gap-2 md:gap-3">
+                             <div className="grid grid-cols-6 gap-2">
                                 {[1, 2, 3, 4, 5, 6].map(sNum => {
                                    const doneLog = completedSessions.find(s => s.num === sNum);
                                    return (
-                                     <button key={sNum} disabled={!!doneLog || (sNum !== maxSess + 1) || isProcessing} onClick={() => setConfirmingAbsen({course, sessionNum: sNum})} className={`p-2 md:p-3 h-20 md:h-24 rounded-2xl font-black transition-all border-2 flex flex-col items-center justify-center gap-1.5 ${!!doneLog ? 'bg-white border-emerald-500 shadow-xl shadow-emerald-50 text-emerald-600' : (sNum === maxSess + 1 && !isProcessing) ? 'bg-blue-50 border-blue-500 text-blue-600 shadow-md animate-pulse scale-105' : 'bg-slate-50 border-transparent text-slate-200 opacity-60'}`}>
-                                        <div className="flex flex-col items-center gap-1">
-                                           {!!doneLog ? (
-                                              <>
-                                                 <div className="w-6 h-6 md:w-8 md:h-8 bg-emerald-500 text-white rounded-full flex items-center justify-center shadow-md"><Check size={16} strokeWidth={4}/></div>
-                                                 <p className="text-[7px] md:text-[8px] font-black text-slate-800 uppercase Kalimat tracking-tighter">{formatDateToDMY(doneLog.date)}</p>
-                                                 <span className="text-[6px] md:text-[7px] font-black text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-md uppercase tracking-widest mt-0.5">SELESAI</span>
-                                              </>
-                                           ) : (
-                                              <>
-                                                 <span className="text-sm md:text-xl text-slate-300">{sNum}</span>
-                                                 <p className="text-[7px] md:text-[8px] font-black text-slate-400 uppercase tracking-widest">SESI {sNum}</p>
-                                                 {(sNum === maxSess + 1 && !isProcessing) && <span className="text-[6px] md:text-[7px] font-black text-blue-500 animate-bounce">KLIK</span>}
-                                              </>
-                                           )}
-                                        </div>
+                                     <button key={sNum} disabled={!!doneLog || (sNum !== maxSess + 1)} className={`p-2 h-20 md:h-24 rounded-2xl font-black transition-all border-2 flex flex-col items-center justify-center gap-1.5 ${!!doneLog ? 'bg-white border-emerald-500 text-emerald-600' : (sNum === maxSess + 1) ? 'bg-blue-50 border-blue-500 text-blue-600 animate-pulse' : 'bg-slate-50 border-transparent text-slate-200 opacity-60'}`}>
+                                        {!!doneLog ? (
+                                           <>
+                                              <p className="text-[7px] font-black text-emerald-500 mb-1 leading-none">{formatDateToDMY(doneLog.date)}</p>
+                                              <Check size={16} strokeWidth={4}/>
+                                           </>
+                                        ) : (
+                                           <span className="text-xl">{sNum}</span>
+                                        )}
+                                        <p className="text-[6px] md:text-[7px] font-black uppercase">{doneLog ? 'DONE' : `SESI ${sNum}`}</p>
                                      </button>
                                    );
                                 })}
                              </div>
-                             {maxSess >= 6 && !isProcessing && !isReportPublished && (
-                                <button onClick={() => setRequestingReportFor(course)} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.3em] shadow-xl hover:bg-black transition-all flex items-center justify-center gap-3 active:scale-95 animate-bounce">
-                                   <GraduationCap size={20}/> {isRejected ? 'PILIH GURU LAIN ✨' : 'KLAIM RAPOT SEKARANG! 🎓'}
+                             {maxSess >= 6 && (
+                                <button onClick={() => setRequestingReportFor(course)} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl animate-bounce flex items-center justify-center gap-3">
+                                   <GraduationCap size={20}/> KLAIM RAPOT SEKARANG! 🎓
                                 </button>
                              )}
                           </div>
@@ -355,153 +565,124 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
                 </div>
               );
            })}
+           {verifiedCourses.length === 0 && (
+             <div className="py-40 text-center bg-white rounded-[4rem] border-2 border-dashed border-slate-100 opacity-20">
+               <BookOpen size={64} className="mx-auto mb-6 text-slate-300" />
+               <p className="font-black text-[11px] uppercase tracking-[0.4em] italic leading-relaxed text-center">Belum ada paket aktif. ✨</p>
+             </div>
+           )}
         </section>
       )}
 
-      {/* RENDER PDF HIDDEN (PRECISE A4 - 794x1123) */}
-      <div className="fixed left-[-9999px] top-0 pointer-events-none">
-         {verifiedCourses.map((course) => {
-            const courseLogs = myLogs.filter(l => l.packageId === course.id);
-            const reportLog = courseLogs.find(l => l.status === 'SESSION_LOG' && l.sessionNumber === 6);
-            if (!reportLog) return null;
-            
-            const rawScores = reportLog.studentScores?.[normalizedUserName];
-            const scores: number[] = Array.isArray(rawScores) ? rawScores : (typeof rawScores === 'number' ? [rawScores] : Array(6).fill(90));
-            const rawTopics = reportLog.studentTopics?.[normalizedUserName];
-            const topics: string[] = Array.isArray(rawTopics) ? rawTopics : (typeof rawTopics === 'string' ? [rawTopics] : Array(6).fill("MATERI PEMBELAJARAN"));
-            const nar = reportLog.studentNarratives?.[normalizedUserName] || reportLog.reportNarrative || "";
-            const avg = Math.round(scores.reduce((a:number,b:number)=>a+b,0)/6);
-            const isPass = avg >= 80;
-            const matpelMatch = course.className?.match(/(.*) \((.*)\) - (.*)/);
-            const subject = matpelMatch ? matpelMatch[1] : course.className;
-            const level = matpelMatch ? matpelMatch[2] : 'BASIC';
-            const pkgLogs = courseLogs.filter(l => l.status === 'SESSION_LOG').sort((a,b)=> (a.sessionNumber||0)-(b.sessionNumber||0));
-
-            const themeColor = isPass ? '#2563eb' : '#ea580c';
-            const themeBorder = isPass ? '#1e3a8a' : '#ea580c';
-            const themeTitleColor = isPass ? '#1e3a8a' : '#ea580c';
-            const certTitle = isPass ? 'Sertifikat Kelulusan' : 'Capaian Pembelajaran';
-
-            return (
-              <div key={course.id} id={`pdf-group-${course.id}`}>
-                 <div id={`cert-render-${course.id}`} style={{ width: '794px', height: '1123px', backgroundColor: 'white', display: 'flex', flexDirection: 'column', border: `25px double ${themeBorder}`, boxSizing: 'border-box', position: 'relative', overflow: 'hidden' }}>
-                    <div style={{ width: '100%', height: '100%', border: '4px solid #f1f5f9', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', position: 'relative' }}>
-                      
-                      {/* HEADER - TETAP PADA POSISI KAKAK */}
-                      <div style={{ height: '280px', paddingTop: '110px', display: 'flex', flexDirection: 'column', alignItems: 'center', width: '100%', flexShrink: 0 }}>
-                        <div style={{ backgroundColor: 'transparent', width: '220px', height: '80px', marginBottom: '15px', display: 'flex', alignItems: 'center', justifyContent: 'center', border: 'none', padding: '10px' }}>
-                           <img src={ASSETS.LOGO} style={{ maxWidth: '180px', maxHeight: '60px', width: 'auto', height: 'auto', objectFit: 'contain' }} />
-                        </div>
-                        <h1 style={{ fontSize: '18px', fontWeight: '900', letterSpacing: '0.2em', color: '#1e293b', textTransform: 'uppercase', lineHeight: '1', margin: 0 }}>SANUR AKADEMI INSPIRASI</h1>
-                        <div style={{ width: '350px', height: '2px', backgroundColor: '#e2e8f0', marginTop: '12px' }}></div>
-                      </div>
-                      
-                      {/* MAIN CONTENT - TERKUNCI DI TENGAH DENGAN PADDING BOTTOM YANG LEBIH BESAR (320px) UNTUK MENAIKKAN POSISI */}
-                      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', width: '100%', textAlign: 'center', padding: '0 60px 320px 60px' }}>
-                        
-                        <h2 style={{ fontSize: '46px', fontFamily: 'serif', fontStyle: 'italic', color: themeTitleColor, margin: '0 0 25px 0', lineHeight: '1' }}>{certTitle}</h2>
-                        
-                        <p style={{ fontSize: '18px', fontFamily: 'serif', fontStyle: 'italic', color: '#64748b', margin: '0 0 20px 0', letterSpacing: '0.05em' }}>Diberikan kepada:</p>
-                        
-                        <div style={{ marginBottom: '30px', width: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                          <h3 style={{ fontSize: '42px', fontWeight: '900', color: themeColor, textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0, lineHeight: '1.1' }}>{normalizedUserName}</h3>
-                          <div style={{ width: '280px', height: '5px', backgroundColor: isPass ? '#dbeafe' : '#ffedd5', marginTop: '12px', borderRadius: '10px' }}></div>
-                        </div>
-
-                        <div style={{ padding: '0 40px', marginBottom: '40px' }}>
-                          <p style={{ fontSize: '16px', fontFamily: 'serif', fontStyle: 'italic', color: '#475569', lineHeight: '1.6', margin: 0 }}>
-                            {isPass 
-                              ? "Telah menunjukkan kompetensi luar biasa dan berhasil menyelesaikan seluruh kurikulum pelatihan intensif dengan hasil memuaskan pada program:"
-                              : "Telah berpartisipasi aktif and menyelesaikan modul pelatihan intensif dengan dedikasi tinggi guna meningkatkan kompetensi pada program:"
-                            }
-                          </p>
-                        </div>
-
-                        <div style={{ 
-                           background: isPass ? 'linear-gradient(135deg, #1e3a8a, #0f172a)' : 'linear-gradient(135deg, #ea580c, #0f172a)',
-                           width: '600px',
-                           padding: '40px 25px',
-                           borderRadius: '45px',
-                           border: '4px solid white',
-                           boxShadow: '0 20px 30px -5px rgba(0, 0, 0, 0.15)',
-                           display: 'flex',
-                           flexDirection: 'column',
-                           alignItems: 'center',
-                           justifyContent: 'center'
-                        }}>
-                           <p style={{ fontSize: '26px', fontWeight: '900', color: 'white', textTransform: 'uppercase', fontStyle: 'italic', letterSpacing: '0.08em', margin: 0, lineHeight: '1.2' }}>{subject}</p>
-                           <p style={{ fontSize: '10px', fontWeight: '900', color: isPass ? '#93c5fd' : '#fed7aa', letterSpacing: '0.6em', textTransform: 'uppercase', marginTop: '15px' }}>LEVEL {level}</p>
-                        </div>
-                      </div>
-                      
-                      {/* FOOTER - TETAP PADA POSISI KAKAK (BOTTOM 160) */}
-                      <div style={{ position: 'absolute', bottom: '160px', width: '100%', boxSizing: 'border-box', flexShrink: 0 }}>
-                        <div style={{ padding: '0 80px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <div style={{ flex: 1, textAlign: 'center' }}>
-                            <p style={{ fontSize: '9px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.3em', fontStyle: 'italic', margin: '0 0 5px 0' }}>Tanggal Terbit:</p>
-                            <p style={{ fontSize: '15px', fontWeight: '900', color: '#0f172a', margin: 0 }}>{formatDateToDMY(reportLog.date)}</p>
-                          </div>
-                          <div style={{ flex: 1, display: 'flex', justifyContent: 'center', opacity: 0.1, color: isPass ? '#1e3a8a' : '#ea580c' }}>
-                            <BookOpen size={60} />
-                          </div>
-                          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                             <div style={{ padding: '6px', border: '3px solid #f1f5f9', borderRadius: '15px', backgroundColor: 'white' }}>
-                                <img src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=VERIFIKASI%20${isPass ? 'KELULUSAN' : 'CAPAIAN'}%20SANUR%0AID:%20${reportLog.id.substring(0,8).toUpperCase()}%0ANAMA:%20${normalizedUserName}%0APROGRAM:%20${subject}%0ASTATUS:%20TERVERIFIKASI%20RESMI`} style={{ width: '55px', height: '55px' }} />
-                             </div>
-                             <p style={{ fontSize: '7px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em', marginTop: '8px' }}>Verifikasi Digital Resmi Sanur</p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                 </div>
-
-                 {/* PAGES 2 & 3 (UNCHANGED) */}
-                 <div id={`transcript-render-${course.id}`} className="w-[794px] h-[1123px] bg-white p-12 flex flex-col relative border-8 border-slate-100 box-border overflow-hidden">
-                    <div className="flex justify-between items-start mb-6">
-                      <div className="flex items-center gap-4"><div className={`w-14 h-14 ${isPass ? 'bg-blue-600' : 'bg-orange-600'} rounded-2xl flex items-center justify-center text-white shadow-lg`}><Layout size={28}/></div><div><h1 className={`text-3xl font-black italic ${isPass ? 'text-blue-600' : 'text-orange-600'} uppercase Kalimat leading-none tracking-tighter`}>SANUR</h1><p className="text-[9px] font-black uppercase text-slate-400 tracking-[0.4em] mt-1">Catatan Akademik Resmi</p></div></div>
-                      <div className="text-right"><p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Kode Referensi</p><p className="text-base font-black text-slate-800">SN/TR/{reportLog.id.substring(0,8).toUpperCase()}</p></div>
-                    </div>
-                    <div className="grid grid-cols-2 gap-6 mb-6 bg-slate-50 p-6 rounded-[2rem] border border-slate-200"><div className="border-r border-slate-300"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Nama Siswa</p><p className="text-xl font-black text-slate-800 uppercase italic leading-none">{normalizedUserName}</p></div><div className="pl-5"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Program Akademik</p><p className={`text-xl font-black ${isPass ? 'text-blue-600' : 'text-orange-600'} uppercase italic leading-tight`}>{subject}</p></div></div>
-                    <div className="h-auto rounded-[2.5rem] border-2 border-slate-300 overflow-hidden mb-6 bg-white"><table className="w-full table-fixed border-collapse bg-white"><thead><tr className="bg-slate-900 text-white"><th className="p-4 text-center text-[10px] font-black uppercase tracking-widest border-r border-white/10 w-24">Sesi</th><th className="p-4 text-left text-[10px] font-black uppercase tracking-widest">Materi & Modul Kurikulum</th><th className="p-4 text-center text-[10px] font-black uppercase tracking-widest w-32">Nilai</th></tr></thead><tbody className="bg-white">{[1,2,3,4,5,6].map((num, i) => (<tr key={i} className="bg-white border-b border-slate-100 last:border-none"><td className="w-24 border-r border-slate-200 p-0 h-[100px]"><div className="h-full flex items-center justify-center"><span className="font-black text-slate-200 text-3xl italic">0{num}</span></div></td><td className="p-0 h-[100px]"><div className="h-full flex items-center px-10"><span className="font-black text-slate-800 text-[18px] uppercase italic tracking-tight">{topics[i] || "MATERI PEMBELAJARAN"}</span></div></td><td className="w-32 p-0 h-[100px]"><div className="h-full flex items-center justify-center"><div className="flex items-baseline gap-1"><span className={`font-black ${isPass ? 'text-blue-600' : 'text-orange-600'} text-4xl italic`}>{scores[i] || 0}</span><span className="text-slate-300 font-bold text-sm uppercase">/100</span></div></div></td></tr>))}</tbody></table></div>
-                    <div className="p-10 bg-slate-900 rounded-[3rem] text-white flex justify-between items-center shadow-2xl relative overflow-hidden mb-2"><div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div><div className="space-y-0 relative z-10 flex flex-col justify-center"><p className="text-[10px] font-black text-blue-400 uppercase tracking-[0.5em] mb-0">Evaluasi Kumulatif</p><div className="flex items-baseline gap-4 -mt-14"><p className="text-[18px] font-black text-white/40 uppercase tracking-widest">RATA-RATA:</p><h4 className="text-7xl font-black italic tracking-tighter text-white leading-tight">{avg}</h4><span className="text-2xl text-white/30 font-black italic uppercase tracking-widest leading-none">/ 100</span></div></div><div className="bg-white/10 p-6 rounded-[1.8rem] border border-white/20 text-center backdrop-blur-md relative z-10 min-w-[200px] overflow-hidden"><p className="text-[10px] font-black uppercase mb-1.5 tracking-widest text-blue-300">Status Capaian</p><p className="text-xl font-black italic tracking-tighter uppercase text-white mb-2">{isPass ? 'KOMPETEN' : 'REMEDIAL'}</p><div className={`absolute bottom-0 left-0 h-1.5 ${isPass ? 'bg-emerald-500' : 'bg-orange-500'} w-full`}></div></div></div>
-                 </div>
-
-                 <div id={`milestone-render-${course.id}`} className="w-[794px] h-[1123px] bg-white p-20 pb-40 flex flex-col border relative overflow-hidden box-border">
-                    <div className={`absolute top-0 left-0 w-[400px] h-[400px] ${isPass ? 'bg-blue-50' : 'bg-orange-50'} rounded-full -ml-48 -mt-48 opacity-50`}></div>
-                    <div className="flex items-center gap-4 mb-10 relative z-10"><div className={`w-14 h-14 ${isPass ? 'bg-blue-900' : 'bg-orange-900'} text-white rounded-[1.2rem] flex items-center justify-center shadow-2xl rotate-6`}><Zap size={28}/></div><h1 className="text-4xl font-black italic text-slate-800 uppercase Kalimat tracking-tighter">Langkah <span className={isPass ? 'text-blue-600' : 'text-orange-600'}>Pembelajaran</span></h1></div>
-                    <div className="space-y-8 mb-12 relative z-10"><div className={`flex items-center gap-5 ${isPass ? 'text-blue-600' : 'text-orange-600'} border-b-4 border-slate-50 pb-3`}><ClipboardList size={24}/><h3 className="text-base font-black uppercase tracking-[0.5em]">Log Pelaksanaan Sesi</h3></div><div className="space-y-4">{[1,2,3,4,5,6].map((num, idx) => { const l = pkgLogs.find(x => x.sessionNumber === num); return (<div key={idx} className="flex items-center gap-12 px-12 py-3 border-b border-slate-50 last:border-none group"><div className={`font-black text-xl uppercase italic w-24 shrink-0 ${SESSION_COLORS[idx] || 'text-slate-400'}`}>SESI {num}</div><div className="flex-1 flex items-center justify-between"><p className="text-[13px] font-black text-slate-400 uppercase tracking-widest">{l ? formatDateToDMY(l.date) : "—"}</p><p className="text-[14px] font-black text-slate-800 uppercase italic">Durasi: 2 JAM / 120 MENIT</p></div></div>); })}</div></div>
-                    <div className="space-y-6 relative z-10 flex-1 flex flex-col mb-16">
-                      <div className={`flex items-center gap-5 ${isPass ? 'text-blue-600' : 'text-orange-500'} border-b-4 border-slate-50 pb-3`}><Quote size={24}/><h3 className="text-base font-black uppercase tracking-[0.5em]">Ulasan Pengajar</h3></div>
-                      <div className="flex-1 bg-gradient-to-br from-blue-50/50 to-white rounded-[3rem] border-4 border-slate-100 p-10 flex flex-col items-center justify-center text-center relative overflow-hidden">
-                         <p className="text-lg font-serif italic text-slate-700 Kalimat px-8 relative z-10 drop-shadow-sm break-words whitespace-normal overflow-wrap-anywhere max-w-full">"{nar}"</p>
-                      </div>
-                    </div>
-                    <div className="mt-auto flex flex-col items-center pt-10 relative z-10 border-t-2 border-slate-100 opacity-60">
-                      <p className="text-sm font-black uppercase tracking-[0.8em] text-slate-400 text-center">Sanur Akademi Inspirasi</p>
-                    </div>
-                    <div className="h-20 w-full shrink-0"></div>
-                 </div>
+      {/* RENDER MODAL-MODAL */}
+      {confirmDeletePayment && (
+        <div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in">
+           <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-500">
+              <button onClick={() => setConfirmDeletePayment(null)} className="absolute top-8 right-8 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={24}/></button>
+              <div className="w-24 h-24 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm animate-bounce">
+                <AlertTriangle size={48} />
               </div>
-            );
-         })}
-      </div>
-
-      {/* SLIP GENERATOR (UNCHANGED) */}
-      {showDigitalSlip && (
-         <div className="fixed left-[-9999px] top-0 pointer-events-none">
-            <div ref={slipRef} className="bg-white p-12 md:p-20 space-y-10 w-[700px] mx-auto overflow-hidden text-slate-900">
-               <div className="flex justify-between items-start border-b-2 border-slate-900 pb-10"><div className="min-w-0 text-left"><h1 className="text-3xl font-black italic tracking-tighter text-slate-900 leading-none">SANUR</h1><p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1 text-left">Akademi Inspirasi</p></div><div className="text-right flex flex-col items-end"><h2 className="text-xl font-black uppercase italic text-slate-800 leading-none">KUITANSI RESMI</h2><p className="text-[10px] font-black text-slate-800 uppercase tracking-widest mt-2 whitespace-nowrap">ID: {showDigitalSlip.id}</p></div></div>
-               <div className="grid grid-cols-12 gap-10"><div className="col-span-8 pr-6 border-r border-slate-50 text-left"><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Diterima Dari:</p><p className="text-lg font-black text-slate-900 uppercase italic Kalimat text-left">{showDigitalSlip.studentName}</p></div><div className="col-span-4 text-right"><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Tanggal Bayar:</p><p className="text-base font-black text-slate-800 uppercase italic Kalimat">{formatDateToDMY(showDigitalSlip.date)}</p></div></div>
-               <div className="space-y-6"><div className="flex items-center gap-3 text-slate-400 border-b-2 border-slate-50 pb-2"><ClipboardList size={14} /><p className="text-[10px] font-black uppercase tracking-[0.3em]">Rincian Paket Pembelajaran</p></div><div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 flex flex-col gap-6"><div className="text-left"><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Nama Program/Kelas:</p><p className="text-[13px] font-black text-slate-800 uppercase Kalimat text-left">{showDigitalSlip.className}</p></div><div className="grid grid-cols-2 gap-8 pt-6 border-t border-slate-200/60"><div className="text-left"><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Total Sesi Paket:</p><p className="text-[12px] font-black text-slate-800 uppercase tracking-tight text-left">6 Sesi</p></div><div className="text-right"><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Durasi Sesi:</p><p className="text-[12px] font-black text-slate-800 uppercase tracking-tight">2 Jam / 180 Menit</p></div></div></div></div>
-               <div className="pt-8 border-t-2 border-slate-900"><div className="flex justify-between items-start h-[32px]"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">VERIFIKASI SISTEM:</p><div className="text-right flex flex-col items-end"><p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] italic">Terverifikasi Digital</p><p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-1">Status: LUNAS</p></div></div><p className="text-5xl font-black text-emerald-600 italic leading-none mt-4 text-left">Rp {showDigitalSlip.amount.toLocaleString()}</p></div>
-               <div className="pt-10 border-t border-slate-100 flex justify-between items-end gap-10"><div className="max-w-xs text-left"><p className="text-[10px] font-bold text-slate-400 italic Kalimat text-left">"Terima kasih atas kepercayaannya bergabung di Sanur Akademi Inspirasi. Pembayaran ini sah diverifikasi sistem internal."</p></div><div className="text-center flex flex-col items-center shrink-0"><ShieldCheck size={44} className="text-slate-900 opacity-20 mb-2" /><p className="text-[13px] font-black uppercase text-slate-900 tracking-tight leading-none">Admin Sanur</p><p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1.5">Official Receipt</p></div></div>
-            </div>
-         </div>
+              <div className="space-y-2">
+                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Hapus Laporan?</h4>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4">
+                    Data laporan bayar <span className="text-slate-800 font-black underline">{confirmDeletePayment.className}</span> akan dihapus permanen Kak.
+                 </p>
+              </div>
+              <div className="flex gap-4">
+                 <button onClick={() => setConfirmDeletePayment(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase active:scale-95 transition-all">BATAL</button>
+                 <button onClick={executeDeletePayment} disabled={loading} className="flex-1 py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2">
+                    {loading ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />} IYA, HAPUS
+                 </button>
+              </div>
+           </div>
+        </div>
       )}
 
-      {previewModal && (<div className="fixed inset-0 z-[300000] flex flex-col items-center justify-center p-6 bg-slate-900/95 backdrop-blur-2xl" onClick={() => setPreviewModal(null)}><div className="relative max-w-4xl w-full max-h-[80vh] flex flex-col items-center"><button className="absolute -top-6 -right-6 p-4 bg-white text-rose-500 rounded-full shadow-2xl z-20" onClick={(e) => { e.stopPropagation(); setPreviewModal(null); }}><X size={24}/></button><img src={previewModal} className="max-w-full max-h-full rounded-[3rem] shadow-2xl border-4 border-white/20 object-contain animate-in zoom-in duration-300" /></div></div>)}
-      {confirmingAbsen && (<div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in"><div className="bg-white w-full max-w-sm rounded-[4rem] p-12 shadow-2xl text-center space-y-8 relative overflow-hidden"><button onClick={() => setConfirmingAbsen(null)} className="absolute top-8 right-8 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button><div className="w-20 h-20 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto animate-bounce relative z-10 shadow-xl"><Check size={40} strokeWidth={4} /></div><div className="space-y-2 relative z-10"><h4 className="text-2xl font-black text-slate-800 uppercase italic">Konfirmasi Sesi</h4><p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{confirmingAbsen.course.className} - SESI {confirmingAbsen.sessionNum}</p></div><div className="space-y-4 text-left relative z-10"><label className="text-[10px] font-black text-slate-400 uppercase ml-4">Kapan kamu belajarnya?</label><input type="date" value={selectedAbsenDate} onChange={e => setSelectedAbsenDate(e.target.value)} className="w-full px-8 py-5 bg-slate-50 rounded-[2rem] font-black text-[14px] outline-none border-2 border-emerald-50 shadow-inner" /></div><button onClick={handleConfirmAbsen} disabled={loading} className="w-full py-6 bg-emerald-600 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-[0.3em] shadow-2xl relative z-10 active:scale-95 transition-all flex items-center justify-center gap-3">{loading ? <Loader2 size={20} className="animate-spin" /> : 'SAYA SUDAH BELAJAR! ✨'}</button></div></div>)}
+      {previewModal && (<div className="fixed inset-0 z-[300000] flex items-center justify-center p-6 bg-slate-900/95" onClick={() => setPreviewModal(null)}><div className="relative max-w-4xl w-full flex flex-col items-center"><button className="absolute -top-14 right-0 p-4 text-white hover:text-rose-500 transition-colors" onClick={() => setPreviewModal(null)}><X size={40}/></button><img src={previewModal} className="max-w-full max-h-[75vh] rounded-[3rem] shadow-2xl border-4 border-white/20 object-contain animate-in zoom-in" alt="Preview" /><div className="mt-8 text-center"><p className="text-[10px] font-black text-white/40 uppercase tracking-[0.8em] italic">Sanur Payment Verification ✨</p></div></div></div>)}
+      {confirmingAbsen && (<div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in"><div className="bg-white w-full max-sm rounded-[4rem] p-12 shadow-2xl text-center space-y-8 relative overflow-hidden"><button onClick={() => setConfirmingAbsen(null)} className="absolute top-8 right-8 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button><div className="w-20 h-20 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto animate-bounce relative z-10 shadow-xl"><Check size={40} strokeWidth={4} /></div><div className="space-y-2 relative z-10"><h4 className="text-2xl font-black text-slate-800 uppercase italic">Konfirmasi Sesi</h4><p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{confirmingAbsen.course.className} - SESI {confirmingAbsen.sessionNum}</p></div><div className="space-y-4 text-left relative z-10"><label className="text-[10px] font-black text-slate-400 uppercase ml-4">Kapan kamu belajarnya?</label><input type="date" value={selectedAbsenDate} onChange={e => setSelectedAbsenDate(e.target.value)} className="w-full px-8 py-5 bg-slate-50 rounded-[2rem] font-black text-[14px] outline-none border-2 border-emerald-50 shadow-inner" /></div><button onClick={handleConfirmAbsen} disabled={loading} className="w-full py-6 bg-emerald-600 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-[0.3em] shadow-2xl relative z-10 active:scale-95 transition-all flex items-center justify-center gap-3">{loading ? <Loader2 size={20} className="animate-spin" /> : 'SAYA SUDAH BELAJAR! ✨'}</button></div></div>)}
       {requestingReportFor && (<div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in"><div className="bg-white w-full max-w-md rounded-[4rem] p-12 md:p-14 shadow-2xl text-center space-y-10 relative overflow-hidden"><button onClick={() => setRequestingReportFor(null)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button><div className="space-y-6 relative z-10"><div className="w-20 h-20 bg-blue-600 text-white rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl rotate-3"><GraduationCap size={40} /></div><div><h4 className="text-3xl font-black text-slate-800 uppercase italic leading-none">Klaim Rapot</h4><p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-2">{requestingReportFor.className}</p></div></div><div className="bg-slate-50 p-8 rounded-[2.5rem] text-left space-y-6 border border-slate-100 relative z-10"><p className="text-[11px] font-bold text-slate-600 Kalimat Kalimat">"Silakan pilih Guru Pembimbing Kakak di bawah ini untuk mengirim data belajarmu ke antrean Rapot & Sertifikat. ✨"</p><div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><UserCog size={12}/> Pilih Guru Pembimbing</label><select value={selectedTeacherForReport} onChange={e => setSelectedTeacherForReport(e.target.value)} className="w-full px-8 py-5 bg-white rounded-[1.8rem] font-black text-[12px] uppercase italic outline-none border-2 border-blue-50 shadow-sm h-[60px] appearance-none"><option value="">-- PILIH GURU PEMBIMBING --</option>{teachers.filter(t => t.role === 'TEACHER').map(t => <option key={t.id} value={t.id}>{t.name.toUpperCase()}</option>)}</select></div></div><button onClick={handleRequestReport} disabled={!selectedTeacherForReport || loading} className="w-full py-7 bg-blue-600 text-white rounded-[2.5rem] font-black text-[11px] uppercase tracking-[0.3em] shadow-2xl relative Kalimat active:scale-95 transition-all flex items-center justify-center gap-3">{loading ? <Loader2 size={20} className="animate-spin" /> : <><Sparkles size={20} /> AJUKAN PERMINTAAN SEKARANG ✨</>}</button></div></div>)}
+      
+      {/* HIDDEN SLIP GENERATOR (DENGAN DESAIN RESMI) */}
+      <div className="fixed left-[-9999px] top-0 pointer-events-none">
+         {myPayments.map((p) => (
+            <div id={`slip-digital-${p.id}`} ref={p.id === showDigitalSlip?.id ? slipRef : null} key={p.id} className="bg-white p-12 md:p-20 space-y-10 w-[700px] mx-auto overflow-hidden text-slate-900 border-8 border-double border-slate-100">
+               
+               {/* HEADER - Logo & Judul */}
+               <div className="flex justify-between items-start border-b-2 border-slate-900 pb-10">
+                  <div className="min-w-0 text-left">
+                     <h1 className="text-3xl font-black italic tracking-tighter text-slate-900 leading-none">SANUR</h1>
+                     <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1 text-left">Akademi Inspirasi</p>
+                  </div>
+                  <div className="text-right flex flex-col items-end">
+                     <h2 className="text-xl font-black uppercase italic text-slate-800 leading-none">KUITANSI RESMI</h2>
+                     <p className="text-[10px] font-black text-slate-800 uppercase tracking-widest mt-2 whitespace-nowrap">ID: {p.id.toUpperCase()}</p>
+                  </div>
+               </div>
+
+               {/* INFO SISWA & TANGGAL */}
+               <div className="grid grid-cols-12 gap-10">
+                  <div className="col-span-8 pr-6 border-r border-slate-50 text-left">
+                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Diterima Dari:</p>
+                     <p className="text-lg font-black text-slate-900 uppercase italic Kalimat text-left">{p.studentName}</p>
+                  </div>
+                  <div className="col-span-4 text-right">
+                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Tanggal Bayar:</p>
+                     <p className="text-base font-black text-slate-800 uppercase italic Kalimat">{formatDateToDMY(p.date)}</p>
+                  </div>
+               </div>
+
+               {/* RINCIAN PAKET */}
+               <div className="space-y-6">
+                  <div className="flex items-center gap-3 text-slate-400 border-b-2 border-slate-50 pb-2">
+                     <ClipboardList size={14} />
+                     <p className="text-[10px] font-black uppercase tracking-[0.3em]">Rincian Paket Pembelajaran</p>
+                  </div>
+                  
+                  <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 flex flex-col gap-6">
+                     <div className="text-left">
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Nama Program/Kelas:</p>
+                        <p className="text-[13px] font-black text-slate-800 uppercase Kalimat text-left">{p.className}</p>
+                     </div>
+                     
+                     <div className="grid grid-cols-2 gap-8 pt-6 border-t border-slate-200/60">
+                        <div className="text-left">
+                           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Total Sesi Paket:</p>
+                           <p className="text-[12px] font-black text-slate-800 uppercase tracking-tight text-left">6 Sesi</p>
+                        </div>
+                        <div className="text-right">
+                           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Durasi Sesi:</p>
+                           <p className="text-[12px] font-black text-slate-800 uppercase tracking-tight">2 Jam / 120 Menit</p>
+                        </div>
+                     </div>
+                  </div>
+               </div>
+
+               {/* NOMINAL PEMBAYARAN */}
+               <div className="pt-8 border-t-2 border-slate-900">
+                  <div className="flex justify-between items-start h-[32px]">
+                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">VERIFIKASI SISTEM:</p>
+                     <div className="text-right flex flex-col items-end">
+                        <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] italic">Terverifikasi Digital</p>
+                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-1">Status: LUNAS</p>
+                     </div>
+                  </div>
+                  <p className="text-5xl font-black text-emerald-600 italic leading-none mt-4 text-left">Rp {p.amount.toLocaleString()}</p>
+               </div>
+
+               {/* FOOTER */}
+               <div className="pt-10 border-t border-slate-100 flex justify-between items-end gap-10">
+                  <div className="max-w-xs text-left">
+                     <p className="text-[10px] font-bold text-slate-400 italic Kalimat text-left">"Terima kasih atas kepercayaannya bergabung di Sanur Akademi Inspirasi. Pembayaran ini sah diverifikasi sistem internal."</p>
+                  </div>
+                  <div className="text-center flex flex-col items-center shrink-0">
+                     <ShieldCheck size={44} className="text-slate-900 opacity-20 mb-2" />
+                     <p className="text-[13px] font-black uppercase text-slate-900 tracking-tight leading-none">Admin Sanur</p>
+                     <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1.5">Official Receipt</p>
+                  </div>
+               </div>
+            </div>
+         ))}
+      </div>
     </div>
   );
 };
