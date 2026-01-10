@@ -293,7 +293,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
          <div className="space-y-10 mx-4 animate-in fade-in">
             <div className="bg-blue-50 border-2 border-blue-100 p-6 rounded-[2.5rem] flex items-center gap-4 animate-pulse shadow-sm max-w-2xl mx-auto">
                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm shrink-0"><Info size={20}/></div>
-               <p className="text-[10px] font-black text-blue-800 uppercase italic">"Mencatat pengeluaran operasional di sini agar kas lembaga tetap seimbang Kak! ✨"</p>
+               <p className="text-[10px] font-black text-blue-800 uppercase italic">"Jangan lupa untuk export excel setiap bulan yaa Kak, sebagai back up jika terjadi error pada sistem!"</p>
             </div>
 
             <div className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl overflow-hidden">
