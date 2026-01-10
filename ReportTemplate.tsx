@@ -90,7 +90,7 @@ const ReportTemplate: React.FC<ReportTemplateProps> = ({ reportLog, allLogs, stu
           <div style={{ height: '260px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'flex-end', paddingBottom: '40px', borderBottom: '1px solid white' }}>
             <img src={ASSETS.LOGO} style={{ maxWidth: '260px', maxHeight: '80px', objectFit: 'contain', marginBottom: '15px' }} />
             <h1 style={{ fontSize: '15px', fontWeight: '900', letterSpacing: '0.2em', color: '#1e293b', textTransform: 'uppercase', margin: 0 }}>SANUR AKADEMI INSPIRASI</h1>
-            <div style={{ width: '300px', height: '2px', backgroundColor: '#e2e8f0', marginTop: '8px' }}></div>
+            <div style={{ width: '280px', height: '2px', backgroundColor: '#e2e8f0', marginTop: '8px' }}></div>
           </div>
 
           {/* AREA TENGAH: KONTEN UTAMA */}
@@ -103,11 +103,15 @@ const ReportTemplate: React.FC<ReportTemplateProps> = ({ reportLog, allLogs, stu
               Diberikan kepada:
             </p>
             
-            <h3 style={{ fontSize: '38px', fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0, lineHeight: 1.1 }}>
-              {studentName.toUpperCase()}
-            </h3>
-            
-            <div style={{ width: `${Math.min(Math.max(studentName.length * 15, 180), 500)}px`, height: '5px', backgroundColor: isPass ? '#dbeafe' : '#ffedd5', marginTop: '12px', borderRadius: '10px', marginBottom: '45px' }}></div>
+            <div style={{ display: 'inline-block' }}>
+  <h3 style={{ fontSize: '38px', fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0, lineHeight: 1.1 }}>
+    {studentName.toUpperCase()}
+  </h3>
+  
+  <div style={{ width: '100%', height: '5px', backgroundColor: isPass ? '#dbeafe' : '#ffedd5', marginTop: '12px', borderRadius: '10px' }}></div>
+</div>
+
+<div style={{ height: '45px' }}></div>
             
             <p style={{ fontSize: '14px', fontFamily: 'serif', fontStyle: 'italic', color: '#475569', lineHeight: '1.8', margin: '0 0 45px 0', padding: '0 60px' }}>
               {isPass 
