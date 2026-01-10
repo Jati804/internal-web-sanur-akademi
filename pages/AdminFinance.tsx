@@ -6,7 +6,7 @@ import {
   X, Search, Banknote, Loader2, ArrowUpCircle, ArrowDownCircle, Upload, CheckCircle2, 
   Crown, Zap, History, ShieldCheck, Eye, Check, BadgeCheck,
   Trash2, Download, FileSpreadsheet, Edit3, AlertTriangle, 
-  Plus, Info, AlertCircle, Package, UserCheck, Repeat, Heart, Calendar, Clock, ImageIcon, FileText, Users
+  Plus, Info, AlertCircle, Package, UserCheck, Repeat, Heart, Calendar, Clock, ImageIcon, FileText, Users, ClipboardList
 } from 'lucide-react';
 
 interface AdminFinanceProps {
@@ -27,7 +27,6 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
   const [activeTab, setActiveTab] = useState<'LEDGER' | 'PAYROLL' | 'STUDENT_ACC'>('LEDGER');
   const [isLoading, setIsLoading] = useState(false);
   
-  // FIXED: State loading khusus per ID untuk list aksi
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   
   const fileInputPayoutRef = useRef<HTMLInputElement>(null);
@@ -37,7 +36,6 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
   const [payrollSearch, setPayrollSearch] = useState('');
   const [ledgerSearch, setLedgerSearch] = useState('');
   
-  // States for Ledger Actions
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
   const [importText, setImportText] = useState('');
@@ -153,31 +151,52 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
     if (!importText.trim()) return;
     setIsLoading(true);
     try {
-      const lines = importText.trim().split('\n');
+      const lines = importText.trim().split(/\r?\n/);
       const payload = lines.map(line => {
-        const parts = line.split(',');
+        if (!line.trim()) return null;
+
+        // SMART DELIMITER DETECTION
+        let delimiter = ',';
+        if (line.includes('\t')) delimiter = '\t';
+        else if (line.includes(';')) delimiter = ';';
+
+        const parts = line.split(delimiter).map(p => 
+          p.trim().replace(/^["']|["']$/g, '')
+        );
+
         if (parts.length < 5) return null;
-        const [date, description, category, type, amount] = parts;
+
+        // Urutan: TANGGAL, DESKRIPSI, KATEGORI, TIPE, NOMINAL
+        const [date, desc, cat, type, amt] = parts;
+        
+        // Pembersihan nominal (hapus titik, koma, Rp)
+        const cleanAmount = parseInt(amt.replace(/[^\d]/g, '')) || 0;
+        if (cleanAmount === 0 && amt !== '0') return null;
+
         return {
-          id: `TX-IMP-${Math.random().toString(36).substring(7)}`,
+          id: `TX-IMP-${Date.now()}-${Math.random().toString(36).substring(7)}`,
           date: date.trim(),
-          description: description.trim().toUpperCase(),
-          category: category.trim().toUpperCase(),
-          type: (type.trim().toUpperCase() === 'INCOME' ? 'INCOME' : 'EXPENSE') as 'INCOME' | 'EXPENSE',
-          amount: parseInt(amount.replace(/\D/g, '')) || 0
+          description: desc.trim().toUpperCase(),
+          category: (cat.trim() || 'UMUM').toUpperCase(),
+          type: (type.trim().toUpperCase().includes('INCOME') || type.trim().toUpperCase().includes('MASUK')) ? 'INCOME' : 'EXPENSE',
+          amount: cleanAmount
         };
       }).filter(x => x !== null);
 
-      if (payload.length === 0) throw new Error("Format teks tidak dikenali.");
+      if (payload.length === 0) throw new Error("Format data tidak terbaca. Pastikan urutan kolom sesuai.");
 
       const { error } = await supabase.from('transactions').insert(payload);
       if (error) throw error;
+      
       if (refreshAllData) await refreshAllData();
       setShowImportModal(false);
       setImportText('');
-      alert(`Berhasil mengimpor ${payload.length} transaksi! ✨`);
-    } catch (e: any) { alert("Format salah: Pastikan gunakan koma.\nContoh: 2026-01-20,BAYAR LISTRIK,UTILITAS,EXPENSE,50000"); }
-    finally { setIsLoading(false); }
+      alert(`Berhasil mengimpor ${payload.length} transaksi keuangan! ✨`);
+    } catch (e: any) { 
+      alert("Gagal Impor: " + e.message); 
+    } finally { 
+      setIsLoading(false); 
+    }
   };
 
   const handleDeleteTx = async () => {
@@ -192,18 +211,23 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
   };
 
   const handleExportExcel = () => {
-    const headers = ["TANGGAL", "DESKRIPSI", "KATEGORI", "TIPE", "NOMINAL"];
-    const rows = filteredLedger.map(t => [t.date, t.description, t.category, t.type, t.amount]);
-    const csvContent = "data:text/csv;charset=utf-8," + headers.join(",") + "\n" + rows.map(e => e.join(",")).join("\n");
-    const link = document.createElement("a");
-    link.setAttribute("href", encodeURI(csvContent));
-    link.setAttribute("download", `LAPORAN_KAS_SANUR_${new Date().toLocaleDateString()}.csv`);
+    const headers = "TANGGAL,DESKRIPSI,KATEGORI,TIPE,NOMINAL\n";
+    const rows = filteredLedger.map(t => {
+      return `"${t.date}","${t.description}","${t.category}","${t.type}","${t.amount}"`;
+    }).join("\n");
+
+    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `LAPORAN_KAS_SANUR_${new Date().toISOString().split('T')[0]}.csv`;
     document.body.appendChild(link);
     link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
   };
 
   const handleVerifySPP = async (p: StudentPayment) => {
-    // FIXED: Menggunakan actionLoadingId agar hanya tombol ini yang loading
     setActionLoadingId(p.id);
     try {
       await supabase.from('student_payments').update({ status: 'VERIFIED' }).eq('id', p.id);
@@ -293,16 +317,16 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
          <div className="space-y-10 mx-4 animate-in fade-in">
             <div className="bg-blue-50 border-2 border-blue-100 p-6 rounded-[2.5rem] flex items-center gap-4 animate-pulse shadow-sm max-w-2xl mx-auto">
                <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-blue-600 shadow-sm shrink-0"><Info size={20}/></div>
-               <p className="text-[10px] font-black text-blue-800 uppercase italic">"Jangan lupa untuk export excel setiap bulan yaa Kak, sebagai back up jika terjadi error pada sistem!"</p>
+               <p className="text-[10px] font-black text-blue-800 uppercase italic">"Disarankan untuk setiap bulan melakukan export excel, agar data keuangan tetap aman ketika terjadi eror pada sistem."</p>
             </div>
 
             <div className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl overflow-hidden">
                <div className="p-10 bg-slate-50 border-b flex flex-col md:flex-row justify-between items-center gap-6">
                   <h3 className="text-[11px] font-black uppercase tracking-widest flex items-center gap-3"><History size={20}/> BUKU KAS BESAR</h3>
                   <div className="flex flex-wrap gap-3">
-                     <button onClick={() => setShowAddModal(true)} className="px-6 py-4 bg-blue-600 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-200"><Plus size={14}/> Tambah</button>
-                     <button onClick={() => setShowImportModal(true)} className="px-6 py-4 bg-slate-900 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:bg-black transition-all shadow-xl"><Upload size={14}/> Import</button>
-                     <button onClick={handleExportExcel} className="px-6 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-200"><FileSpreadsheet size={14}/> Export Excel</button>
+                     <button onClick={() => setShowAddModal(true)} className="px-6 py-4 bg-blue-600 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-200"><Plus size={14}/> TAMBAH</button>
+                     <button onClick={() => setShowImportModal(true)} className="px-6 py-4 bg-slate-900 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:bg-black transition-all shadow-xl"><Upload size={14}/> IMPORT</button>
+                     <button onClick={handleExportExcel} className="px-6 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-200"><FileSpreadsheet size={14}/> EXPORT EXCEL</button>
                   </div>
                </div>
                <div className="p-8 border-b border-slate-100 relative group">
@@ -368,7 +392,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
                              
                              <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mt-1 italic">Guru Penerima: {item.teacherName}</p>
                              <div className="flex items-center gap-4 mt-3">
-                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Calendar size={12}/> Update: {formatDate(item.fullPackageLogs[item.fullPackageLogs.length-1]?.date || '')}</span>
+                                <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Calendar size={12}/> UPDATE: {formatDate(item.fullPackageLogs[item.fullPackageLogs.length-1]?.date || '')}</span>
                                 <span className="px-4 py-1 bg-orange-50 text-orange-600 border border-orange-100 rounded-full text-[8px] font-black uppercase tracking-widest">SIAP CAIR ({item.sessionCount} SESI)</span>
                              </div>
                           </div>
@@ -438,7 +462,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
               )) : (
                  <div className="py-40 text-center bg-white rounded-[4rem] border-2 border-dashed border-slate-100 opacity-30 mx-4">
                     <CheckCircle2 size={64} className="mx-auto mb-6 text-slate-300" />
-                    <p className="font-black text-[11px] uppercase tracking-[0.4em] italic leading-relaxed text-center">Antrean Honor Bersih. ✨</p>
+                    <p className="font-black text-[11px] uppercase tracking-[0.4em] italic leading-relaxed text-center">ANTREAN HONOR BERSIH. ✨</p>
                  </div>
               )}
            </div>
@@ -465,7 +489,6 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
                     </div>
                     <div className="space-y-4">
                        <button onClick={() => setPreviewImg(p.receiptData || null)} className="w-full py-4 bg-slate-50 text-slate-500 rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all border border-transparent"><Eye size={16}/> LIHAT BUKTI</button>
-                       {/* FIXED: Tombol konfirmasi dengan individual loading state */}
                        <button 
                          onClick={() => handleVerifySPP(p)} 
                          disabled={!!actionLoadingId} 
@@ -483,7 +506,6 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
         </div>
       )}
 
-      {/* MODAL-MODAL KEUANGAN (TETAP PAKAI isLoading KARENA MODAL-BASED) */}
       {showAddModal && (
          <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
             <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 md:p-12 shadow-2xl relative overflow-hidden">
@@ -518,39 +540,43 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
          </div>
       )}
 
-      {/* MODAL-MODAL LAINNYA DIBAWAH... (Hanya update handleVerifySPP di tab STUDENT_ACC yang krusial untuk request ini) */}
       {showImportModal && (
          <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-            <div className="bg-white w-full max-lg rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden">
+            <div className="bg-white w-full max-w-lg rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden">
                <button onClick={() => setShowImportModal(false)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all"><X size={20}/></button>
                <div className="flex items-center gap-4 mb-8">
-                  <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl"><FileText size={24}/></div>
+                  <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl"><ClipboardList size={24}/></div>
                   <div>
-                    <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Import Box</h4>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2 italic">Format: tgl,deskripsi,kategori,tipe,nominal</p>
+                    <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Smart Import Box</h4>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2 italic">Format: TGL, DESKRIPSI, KATEGORI, TIPE, NOMINAL ✨</p>
                   </div>
                </div>
                <div className="space-y-6">
                   <div className="p-6 bg-blue-50 rounded-[2rem] border border-blue-100">
-                    <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-3">Contoh Format Satu Baris:</p>
-                    <code className="text-[10px] font-mono font-bold text-slate-500 block bg-white p-3 rounded-xl border border-blue-50">2026-01-20,BAYAR LISTRIK,UTILITAS,EXPENSE,50000</code>
+                    <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-3 text-center">Urutan Kolom Harus Sesuai:</p>
+                    <code className="text-[9px] font-mono font-bold text-slate-500 block bg-white p-4 rounded-xl border border-blue-50 leading-relaxed text-center uppercase">
+                      TANGGAL, DESKRIPSI, KATEGORI, TIPE, NOMINAL
+                    </code>
                   </div>
                   <textarea 
                     value={importText}
                     onChange={e => setImportText(e.target.value)}
-                    placeholder="TEMPEL DATA DISINI (KOMPAS BERBARIS BARU)..."
+                    placeholder="TEMPEL DATA DARI EXCEL DI SINI (COPY SELURUH TABEL)..."
                     rows={8}
                     className="w-full p-8 bg-slate-50 rounded-[2rem] font-mono text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all shadow-inner"
                   />
-                  <button onClick={handleImportCSV} disabled={isLoading || !importText.trim()} className="w-full py-7 bg-blue-600 text-white rounded-[2.5rem] font-black text-[10px] uppercase shadow-2xl flex items-center justify-center gap-3">
-                     {isLoading ? <Loader2 size={24} className="animate-spin"/> : <><Zap size={20}/> PROSES IMPORT MASSAL ✨</>}
+                  <div className="flex items-center gap-3 bg-orange-50 p-4 rounded-2xl border border-orange-100">
+                    <Zap size={16} className="text-orange-500 shrink-0" />
+                    <p className="text-[8px] font-bold text-orange-800 uppercase italic">Tips: Tipe bisa berisi "INCOME" atau "EXPENSE" ✨</p>
+                  </div>
+                  <button onClick={handleImportCSV} disabled={isLoading || !importText.trim()} className="w-full py-7 bg-blue-600 text-white rounded-[2.5rem] font-black text-[10px] uppercase shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">
+                     {isLoading ? <Loader2 size={24} className="animate-spin"/> : <><Check size={20}/> PROSES IMPORT MASSAL ✨</>}
                   </button>
                </div>
             </div>
          </div>
       )}
 
-      {/* MODAL EDIT & KONFIRMASI (TETAP SAMA) */}
       {editingTransaction && (
          <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
             <div className="bg-white w-full max-sm rounded-[3.5rem] p-10 md:p-12 shadow-2xl relative overflow-hidden">
