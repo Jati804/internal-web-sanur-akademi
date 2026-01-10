@@ -1,3 +1,4 @@
+
 import React, { useMemo, useState, useRef } from 'react';
 import { StudentProfile } from '../types';
 import { supabase } from '../services/supabase.ts';
@@ -39,7 +40,9 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
 
   const filteredProfiles = useMemo(() => {
     const term = searchTerm.toLowerCase();
-    return studentProfiles.filter(p => {
+    
+    // FILTERING
+    const filtered = studentProfiles.filter(p => {
       const isSiswa = p.notes?.includes('[SISWA SANUR]');
       const statusLabel = isSiswa ? 'siswa aktif' : 'prospek marketing';
       
@@ -53,13 +56,19 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
         statusLabel.includes(term)
       );
     });
+
+    // SORTING: Newest First (Berdasarkan ID yang mengandung timestamp)
+    return filtered.sort((a, b) => {
+      // Karena ID kita formatnya p-timestamp atau p-imp-timestamp, 
+      // kita urutkan secara terbalik (descending) agar yang besar/baru di atas.
+      return b.id.localeCompare(a.id, undefined, { numeric: true, sensitivity: 'base' });
+    });
   }, [studentProfiles, searchTerm]);
 
   const handleOpenEdit = (profile: any) => {
     setEditingId(profile.id);
     const isSiswa = (profile.notes || '').includes('[SISWA SANUR]');
     
-    // Support baik camelCase (hasil mapping) maupun lowercase (mentah dari DB)
     setFormData({
       name: profile.name, 
       dob: profile.dob, 
@@ -78,7 +87,6 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
     setIsLoading(true);
     const processedNotes = `${formData.status === 'SISWA_SANUR' ? '[SISWA SANUR]' : '[PROSPEK MARKETING]'} ${formData.notes || ''}`;
     
-    // Mengirim ke DB dengan key lowercase agar Supabase mengenalinya
     const payload = { 
       name: formData.name!.toUpperCase(), 
       dob: (formData.dob || '').toUpperCase(),
@@ -97,9 +105,7 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
         await supabase.from('student_profiles').update(payload).eq('id', editingId);
       }
       
-      if (refreshAllData) {
-        await refreshAllData();
-      }
+      if (refreshAllData) await refreshAllData();
       setShowModal(null);
     } catch (e: any) { 
       alert(e.message); 
@@ -123,11 +129,13 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
       alert("Tidak ada data untuk dieksport Kak! ✨");
       return;
     }
-    const headers = "NAMA,TANGGAL LAHIR,INSTANSI,HP SISWA,HP ORTU,KELAS,CATATAN,STATUS\n";
+    // FORMAT HEADERS SESUAI PERMINTAAN KAKAK
+    const headers = "NAMA,TANGGAL LAHIR,HP SISWA,HP ORTU,INSTANSI,CATATAN,STATUS\n";
     const rows = studentProfiles.map(p => {
       const isSiswa = p.notes?.includes('[SISWA SANUR]');
       const cleanNotes = p.notes?.replace(/\[.*?\]/g, '').trim() || '-';
-      return `"${p.name}","${p.dob}","${p.institution}","${p.personalPhone}","${p.parentPhone}","${p.enrolledClass}","${cleanNotes}","${isSiswa ? 'SISWA' : 'PROSPEK'}"`;
+      // MAP DATA KE URUTAN KOLOM YANG BARU
+      return `"${p.name}","${p.dob}","${p.personalPhone}","${p.parentPhone}","${p.institution}","${cleanNotes}","${isSiswa ? 'SISWA' : 'PROSPEK'}"`;
     }).join("\n");
 
     const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
@@ -135,7 +143,7 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
     const link = document.createElement('a');
     link.href = url;
     const dateStamp = new Date().toISOString().split('T')[0];
-    link.download = `DATABASE_SISWA_SANUR_${dateStamp}.csv`;
+    link.download = `DB_SISWA_SANUR_${dateStamp}.csv`;
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -147,29 +155,46 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
     
     setIsLoading(true);
     try {
-      const lines = importText.trim().split('\n');
-      const payload = lines.map(line => {
+      const lines = importText.trim().split(/\r?\n/);
+      const payload = lines.map((line, index) => {
         if (!line.trim()) return null;
-        const parts = line.split(',');
-        if (parts.length < 5) return null;
+
+        let delimiter = ',';
+        if (line.includes('\t')) delimiter = '\t';
+        else if (line.includes(';')) delimiter = ';';
+
+        const parts = line.split(delimiter).map(p => 
+          p.trim().replace(/^["']|["']$/g, '') || '-'
+        );
         
-        const [name, dob, inst, hpS, hpO, kls, nts, stat] = parts.map(p => p?.trim() || '-');
+        if (parts.length < 1 || parts[0] === '-') return null;
+        
+        // MAPPING BARU (HAPUS KELAS):
+        // 0: Nama, 1: Tgl Lahir, 2: HP Siswa, 3: HP Ortu, 4: Instansi, 5: Catatan, 6: Status
+        const name = parts[0] || '-';
+        const dob = parts[1] || '-';
+        const hpS = parts[2] || '-';
+        const hpO = parts[3] || '-';
+        const inst = parts[4] || '-';
+        const nts = parts[5] || '';
+        const stat = parts[6] || 'SISWA';
+
         const isSiswa = (stat || '').toUpperCase().includes('SISWA');
         const finalNotes = `${isSiswa ? '[SISWA SANUR]' : '[PROSPEK MARKETING]'} ${nts === '-' ? '' : nts}`.toUpperCase();
 
         return {
-          id: `p-imp-${Math.random().toString(36).substring(7)}`,
+          id: `p-imp-${Date.now()}-${index}`,
           name: name.toUpperCase(),
           dob: dob.toUpperCase(),
           institution: inst.toUpperCase(),
           personalphone: hpS,
           parentphone: hpO,
-          enrolledclass: kls.toUpperCase(),
+          enrolledclass: '-', // Set default dash karena kolom kelas dihapus
           notes: finalNotes
         };
       }).filter(x => x !== null);
 
-      if (payload.length === 0) throw new Error("Format teks tidak valid. Gunakan koma untuk pemisah.");
+      if (payload.length === 0) throw new Error("Format teks tidak terbaca. Pastikan data tidak kosong.");
 
       const { error } = await supabase.from('student_profiles').upsert(payload);
       if (error) throw error;
@@ -204,9 +229,7 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
                <h2 className="text-4xl md:text-5xl font-black text-slate-800 uppercase italic tracking-tighter leading-none">BUKU INDUK <span className="text-blue-600">& DATABASE</span></h2>
             </div>
             
-            {/* TATA LETAK BERTINGKAT (DUA BARIS) PADA SISI KANAN */}
             <div className="flex flex-col items-stretch sm:items-end gap-3 w-full lg:w-auto">
-               {/* Baris Atas: Utilitas */}
                <div className="flex gap-3 w-full lg:w-auto">
                   <button 
                     onClick={() => setShowImportModal(true)}
@@ -223,7 +246,6 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
                   </button>
                </div>
 
-               {/* Baris Bawah: Aksi Utama */}
                <button 
                  onClick={() => { setFormData({ status: 'SISWA_SANUR', name: '', dob: '', institution: '', personalPhone: '', parentPhone: '', enrolledClass: '', notes: '' }); setShowModal('ADD'); }} 
                  className="h-[64px] px-10 bg-blue-600 text-white rounded-[2rem] text-[10px] font-black uppercase shadow-2xl hover:bg-blue-700 flex items-center justify-center gap-3 transition-all active:scale-95 w-full lg:w-auto"
@@ -355,26 +377,30 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
                <div className="flex items-center gap-4 mb-8">
                   <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl"><ClipboardList size={24}/></div>
                   <div>
-                    <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Import Box</h4>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2 italic">Urutan: nama, tgl lahir, instansi, hp siswa, hp ortu, kelas, catatan, status</p>
+                    <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Import Box (v2.2)</h4>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2 italic">Format: NAMA, LAHIR, HP SISWA, HP ORTU, INSTANSI, CATATAN, STATUS ✨</p>
                   </div>
                </div>
                <div className="space-y-6">
                   <div className="p-6 bg-blue-50 rounded-[2rem] border border-blue-100">
-                    <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-3 text-center">Urutan Format (CSV):</p>
+                    <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-3 text-center">Urutan Kolom Harus Sesuai:</p>
                     <code className="text-[8px] font-mono font-bold text-slate-500 block bg-white p-4 rounded-xl border border-blue-50 leading-relaxed text-center">
-                      NAMA, TGL LAHIR, INSTANSI, HP SISWA, HP ORTU, KELAS, CATATAN, STATUS (SISWA/PROSPEK)
+                      NAMA, TGL LAHIR, HP SISWA, HP ORTU, INSTANSI, CATATAN, STATUS
                     </code>
                   </div>
                   <textarea 
                     value={importText}
                     onChange={e => setImportText(e.target.value)}
-                    placeholder="TEMPEL DATA SISWA DISINI..."
+                    placeholder="TEMPEL DATA DARI EXCEL DI SINI..."
                     rows={8}
                     className="w-full p-8 bg-slate-50 rounded-[2rem] font-mono text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all shadow-inner"
                   />
+                  <div className="flex items-center gap-3 bg-orange-50 p-4 rounded-2xl border border-orange-100">
+                    <Zap size={16} className="text-orange-500 shrink-0" />
+                    <p className="text-[8px] font-bold text-orange-800 uppercase italic">Tips: Format file Export sama dengan format Import ini! ✨</p>
+                  </div>
                   <button onClick={handleProcessImportBox} disabled={isLoading || !importText.trim()} className="w-full py-7 bg-blue-600 text-white rounded-[2.5rem] font-black text-[10px] uppercase shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">
-                     {isLoading ? <Loader2 size={24} className="animate-spin"/> : <><Zap size={20}/> PROSES IMPORT MASSAL ✨</>}
+                     {isLoading ? <Loader2 size={24} className="animate-spin"/> : <><Check size={20}/> PROSES IMPORT MASSAL ✨</>}
                   </button>
                </div>
             </div>
