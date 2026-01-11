@@ -66,9 +66,52 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   ];
 
   useEffect(() => {
-    const interval = setInterval(() => setQuoteIndex((p) => (p + 1) % 5), 60000); 
+    const interval = setInterval(() => setQuoteIndex((p) => (p + 1) % motivationalQuotes.length), 60000); 
     return () => clearInterval(interval);
   }, []);
+
+  const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = (event) => {
+        const img = new Image();
+        img.src = event.target?.result as string;
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+          const maxDim = 800;
+          if (width > height) {
+            if (width > maxDim) { height *= maxDim / width; width = maxDim; }
+          } else {
+            if (height > maxDim) { width *= maxDim / height; height = maxDim; }
+          }
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.6));
+        };
+      };
+      reader.onerror = (err) => reject(err);
+    });
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLoading(true);
+    try {
+      const compressedBase64 = await compressImage(file);
+      setPayForm({ ...payForm, receiptData: compressedBase64 });
+      setShowErrors(false);
+    } catch (err) {
+      alert("Gagal memproses gambar. Coba lagi ya Kak!");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const verifiedCourses = useMemo(() => {
     if (!Array.isArray(studentPayments)) return [];
@@ -102,9 +145,10 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
     );
   }, [attendanceLogs, normalizedUserName]);
 
+  // FIXED: Logic deteksi rapot sekarang WAJIB berdasarkan packageId (ID Pembayaran)
   const findOfficialReportLog = (course: any) => {
     const possibleReports = myLogs.filter(l => 
-      l.className === course.className &&
+      (l.packageId === course.id) && // STICT MATCH: Harus sama dengan ID Pembayaran
       (l.status === 'SESSION_LOG' || l.status === 'REPORT_READY') && 
       l.sessionNumber === 6 &&
       l.teacherId !== 'SISWA_MANDIRI' && 
@@ -119,7 +163,6 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
       setShowErrors(true);
       return alert("Waduh Kak! Tolong lengkapi kolom yang warna merah dulu yaa ✨");
     }
-
     setLoading(true);
     try {
       const fullClassName = `${payForm.subject} (${payForm.level}) - ${payForm.room}`.toUpperCase();
@@ -164,7 +207,21 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
     if (!confirmingAbsen) return;
     setLoading(true);
     try {
-      const payload = { id: `LOG-${Date.now()}`, teacherid: 'SISWA_MANDIRI', teachername: 'BELAJAR MANDIRI', date: selectedAbsenDate, clockin: new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' }).format(new Date()), status: 'SESSION_LOG', classname: confirmingAbsen.course.className.toUpperCase(), packageid: confirmingAbsen.course.id, sessionnumber: confirmingAbsen.sessionNum, studentsattended: [normalizedUserName], studentsessions: { [normalizedUserName]: confirmingAbsen.sessionNum }, paymentstatus: 'PAID' };
+      // FIXED: Gunakan confirmingAbsen.course.id sebagai packageid agar sinkron dengan pembayaran spesifik ini
+      const payload = { 
+        id: `LOG-${Date.now()}`, 
+        teacherid: 'SISWA_MANDIRI', 
+        teachername: 'BELAJAR MANDIRI', 
+        date: selectedAbsenDate, 
+        clockin: new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' }).format(new Date()), 
+        status: 'SESSION_LOG', 
+        classname: confirmingAbsen.course.className.toUpperCase(), 
+        packageid: confirmingAbsen.course.id, // ID PEMBAYARAN KAK!
+        sessionnumber: confirmingAbsen.sessionNum, 
+        studentsattended: [normalizedUserName], 
+        studentsessions: { [normalizedUserName]: confirmingAbsen.sessionNum }, 
+        paymentstatus: 'PAID' 
+      };
       await supabase.from('attendance').insert([payload]);
       if (refreshAllData) await refreshAllData();
       setConfirmingAbsen(null);
@@ -190,10 +247,18 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
     setLoading(true);
     try {
       const teacher = teachers.find(t => t.id === selectedTeacherForReport);
-      const payload = { id: `REQ-${Date.now()}`, teacherid: selectedTeacherForReport, teachername: (teacher?.name || 'GURU').toUpperCase(), date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), status: 'REPORT_REQUEST', classname: requestingReportFor.className.toUpperCase(), packageid: requestingReportFor.id, studentsattended: [normalizedUserName], paymentstatus: 'PAID' };
-      
+      const payload = { 
+        id: `REQ-${Date.now()}`, 
+        teacherid: selectedTeacherForReport, 
+        teachername: (teacher?.name || 'GURU').toUpperCase(), 
+        date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), 
+        status: 'REPORT_REQUEST', 
+        classname: requestingReportFor.className.toUpperCase(), 
+        packageid: requestingReportFor.id, 
+        studentsattended: [normalizedUserName], 
+        paymentstatus: 'PAID' 
+      };
       await supabase.from('attendance').delete().eq('packageid', requestingReportFor.id).eq('status', 'REPORT_REJECTED');
-      
       await supabase.from('attendance').insert([payload]);
       if (refreshAllData) await refreshAllData();
       setRequestingReportFor(null);
@@ -256,9 +321,18 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
     return amt > 0 ? `Rp ${amt}` : 'Rp ';
   };
 
+  const handleFetchReceiptPreview = async (payId: string) => {
+    setLoading(true);
+    try {
+      const { data, error } = await supabase.from('student_payments').select('receiptdata').eq('id', payId).single();
+      if (error) throw error;
+      if (data?.receiptdata) setPreviewModal(data.receiptdata);
+      else alert("Foto tidak ditemukan.");
+    } catch (e: any) { alert(e.message); } finally { setLoading(false); }
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-40 px-4 animate-in fade-in duration-700">
-      {/* GLOBAL LOADING / PROGRESS */}
       {(activeDownloadId || loading) && (
         <div className="fixed inset-0 z-[300000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in">
            <div className="bg-white w-full max-w-[320px] rounded-[2rem] p-10 shadow-2xl flex flex-col items-center text-center space-y-6 animate-in zoom-in duration-300">
@@ -284,7 +358,6 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
         </div>
       )}
 
-      {/* FLOATING SUCCESS MESSAGE */}
       {showSuccess && (
         <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[300000] px-10 py-6 bg-emerald-600 text-white rounded-[2.5rem] font-black text-xs uppercase tracking-widest shadow-2xl flex items-center gap-4 animate-in slide-in-from-top-4 border-4 border-white/20">
            <CheckCircle2 size={28} /> DATA DIPERBARUI! ✨
@@ -309,7 +382,6 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
          </div>
       </header>
 
-      {/* PENGUMUMAN HALAMAN KELAS SAYA */}
       {!isPaymentView && (
         <div className="mx-2 bg-emerald-50/60 backdrop-blur-sm border-2 border-dashed border-emerald-200/60 rounded-[3rem] p-8 shadow-sm flex flex-col md:flex-row items-center gap-6 animate-in slide-in-from-top-4 group">
            <div className="w-14 h-14 bg-white text-emerald-500 rounded-full flex items-center justify-center shrink-0 shadow-sm border border-emerald-100 animate-pulse transition-all">
@@ -326,7 +398,6 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
         </div>
       )}
 
-      {/* PENGUMUMAN PANDUAN HALAMAN PEMBAYARAN */}
       {isPaymentView && (
         <div className="mx-2 bg-orange-50/60 backdrop-blur-sm border-2 border-dashed border-orange-200/60 rounded-[3rem] p-8 shadow-sm flex flex-col md:flex-row items-center gap-6 animate-in slide-in-from-top-4 group">
            <div className="w-14 h-14 bg-white text-orange-500 rounded-full flex items-center justify-center shrink-0 shadow-sm border border-orange-100 animate-pulse transition-all">
@@ -407,12 +478,12 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
                       </div>
                     ) : (
                       <>
-                        <input type="file" ref={fileInputRef} onChange={e => { const f = e.target.files?.[0]; if(f) { const r = new FileReader(); r.onloadend = () => { setPayForm({...payForm, receiptData: r.result as string}); setShowErrors(false); }; r.readAsDataURL(f); } }} className="hidden" accept="image/*" />
+                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
                         <button 
                           onClick={() => fileInputRef.current?.click()} 
                           className={`w-full py-6 rounded-[2rem] font-black text-[10px] uppercase shadow-inner border-2 border-dashed h-[72px] transition-all ${showErrors && !payForm.receiptData ? 'border-rose-500 bg-rose-50' : 'border-orange-200 bg-orange-50 text-orange-600'}`}
                         >
-                          UPLOAD BUKTI
+                          {loading ? 'COMPRESSING...' : 'UPLOAD BUKTI'}
                         </button>
                       </>
                     )}
@@ -458,12 +529,22 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">NOMINAL</p>
                            <p className={`text-2xl font-black italic ${p.status === 'VERIFIED' ? 'text-emerald-600' : 'text-slate-800'}`}>Rp {p.amount.toLocaleString()}</p>
                          </div>
+                         
                          <div className="flex gap-3">
-                           <button onClick={() => setPreviewModal(p.receiptData || null)} className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-blue-600 hover:text-white transition-all"><Eye size={24}/></button>
                            {p.status === 'PENDING' ? (
-                             <button onClick={() => handleEditPending(p)} className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-orange-500 hover:text-white transition-all"><Edit3 size={24}/></button>
+                             <>
+                               <button onClick={() => handleFetchReceiptPreview(p.id)} className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-blue-600 hover:text-white transition-all"><Eye size={24}/></button>
+                               <button onClick={() => handleEditPending(p)} className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-orange-500 hover:text-white transition-all"><Edit3 size={24}/></button>
+                             </>
                            ) : (
-                             <button onClick={() => handleDownloadSlipDirect(p)} className="p-5 bg-slate-900 text-white rounded-2xl shadow-xl hover:bg-emerald-600 transition-all"><Printer size={24}/></button>
+                             <button 
+                               onClick={() => handleDownloadSlipDirect(p)} 
+                               disabled={isDownloading}
+                               className="px-8 py-5 bg-slate-900 text-white rounded-[2rem] shadow-xl hover:bg-emerald-600 transition-all flex items-center gap-3 active:scale-95 group"
+                             >
+                               <Printer size={24} className="group-hover:scale-110 transition-transform" /> 
+                               <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">CETAK KUITANSI RESMI</span>
+                             </button>
                            )}
                          </div>
                        </div>
@@ -478,67 +559,86 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
       ) : (
         <section className="space-y-10">
            {verifiedCourses.map((course, idx) => {
-              const courseLogs = myLogs.filter(l => l.className === course.className);
+              // FIXED: Filter log progres hanya yang packageId-nya cocok dengan ID pembayaran spesifik ini
+              const courseLogs = myLogs.filter(l => l.packageId === course.id);
               
-              // Detail Sesi Selesai (Termasuk ID untuk fitur edit)
               const completedSessions = courseLogs
                 .filter(l => (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG'))
                 .map(l => ({ id: l.id, num: l.sessionNumber || 0, date: l.date }));
               
+              const reportLog = findOfficialReportLog(course);
+              
+              // LOGIKA KELULUSAN TERKINI
+              const sName = normalizedUserName;
+              const scores = reportLog ? (reportLog.studentScores?.[sName] as number[] || []) : [];
+              const avg = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / 6) : 0;
+              const isPass = avg >= 80;
+
               const maxSess = new Set(completedSessions.map(s => s.num)).size;
               
-              // Deteksi Sesi Terakhir (Hanya sesi ini yang boleh diedit tanggalnya)
-              const lastSessionReported = completedSessions.length > 0 ? Math.max(...completedSessions.map(s => s.num)) : 0;
-
-              const reportLog = findOfficialReportLog(course);
-              const scoresRaw = reportLog?.studentScores ? Object.values(reportLog.studentScores)[0] : [];
-              const scoresArr = Array.isArray(scoresRaw) ? scoresRaw : [];
-              const avg = scoresArr.length > 0 ? Math.round(scoresArr.reduce((a, b) => a + b, 0) / 6) : 0;
-              const isRemedial = !!reportLog && avg < 80;
               const isReportPublished = !!reportLog && reportLog.status === 'SESSION_LOG';
               const isWaitingRelease = !!reportLog && reportLog.status === 'REPORT_READY';
-              
               const isRequesting = courseLogs.some(l => l.status === 'REPORT_REQUEST');
               const isProcessing = courseLogs.some(l => l.status === 'REPORT_PROCESSING');
               const isRejected = courseLogs.some(l => l.status === 'REPORT_REJECTED');
+              const displayMaxSess = (isReportPublished || isWaitingRelease) ? 6 : maxSess;
+              const progressPercent = Math.min((displayMaxSess / 6) * 100, 100);
 
-              const progressPercent = Math.min((maxSess / 6) * 100, 100);
+              // THEME LOGIC
+              const themeColorClass = isReportPublished 
+                ? (isPass ? 'bg-emerald-600' : 'bg-orange-600')
+                : isWaitingRelease ? 'bg-amber-500' 
+                : isProcessing ? 'bg-orange-500' 
+                : isRequesting ? 'bg-amber-500' 
+                : isRejected ? 'bg-rose-500' 
+                : 'bg-blue-600';
+
+              const badgeText = isReportPublished 
+                ? (isPass ? 'LULUS 🎓' : 'REMEDIAL 📜') 
+                : isWaitingRelease ? 'SIAP TERBIT' 
+                : isProcessing ? 'SEDANG DI PROSES' 
+                : isRequesting ? 'MENUNGGU PERSETUJUAN' 
+                : isRejected ? 'DI TOLAK' 
+                : 'PAKET AKTIF ✨';
+
               return (
-                <div key={course.id || idx} className="bg-white rounded-[3rem] border-2 border-slate-50 shadow-2xl hover:border-emerald-500 transition-all duration-500 overflow-hidden">
+                <div key={course.id || idx} className={`bg-white rounded-[3rem] border-2 border-slate-50 shadow-2xl transition-all duration-500 overflow-hidden ${isReportPublished ? (isPass ? 'hover:border-emerald-500' : 'hover:border-orange-500') : 'hover:border-blue-500'}`}>
                    <div className="p-8 md:p-12 flex flex-col lg:flex-row items-center gap-10">
                       <div className="flex-1 space-y-6 text-center lg:text-left w-full lg:w-auto">
                         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                           <div className={`w-16 h-16 mx-auto lg:mx-0 ${isReportPublished ? (isRemedial ? 'bg-orange-500' : 'bg-emerald-600') : isWaitingRelease ? 'bg-amber-500' : isProcessing ? 'bg-orange-500' : isRequesting ? 'bg-amber-500' : isRejected ? 'bg-rose-500' : 'bg-blue-600'} text-white rounded-2xl flex items-center justify-center shadow-lg`}>
-                              {isReportPublished ? (isRemedial ? <Zap size={32} /> : <BadgeCheck size={32} />) : isWaitingRelease ? <Clock size={32} /> : isRequesting ? <Clock size={32} /> : isProcessing ? <Edit3 size={32} /> : isRejected ? <AlertTriangle size={32} /> : <BookOpen size={32} />}
+                           <div className={`w-16 h-16 mx-auto lg:mx-0 ${themeColorClass} text-white rounded-2xl flex items-center justify-center shadow-lg transition-colors`}>
+                              {isReportPublished ? (isPass ? <BadgeCheck size={32} /> : <AlertTriangle size={32} />) : isWaitingRelease ? <Clock size={32} /> : isRequesting ? <Clock size={32} /> : isProcessing ? <Edit3 size={32} /> : isRejected ? <AlertTriangle size={32} /> : <BookOpen size={32} />}
                            </div>
-                           <span className={`inline-flex px-5 py-1.5 mx-auto lg:mx-0 ${isReportPublished ? (isRemedial ? 'bg-orange-500' : 'bg-emerald-600') : isWaitingRelease ? 'bg-amber-500' : isProcessing ? 'bg-orange-500' : isRequesting ? 'bg-amber-500' : isRejected ? 'bg-rose-500' : 'bg-blue-600'} text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-md`}>
-                              {isReportPublished ? (isRemedial ? 'REMEDIAL ⚡' : 'LULUS 🎓') : isWaitingRelease ? 'SIAP TERBIT' : isProcessing ? 'SEDANG DI PROSES' : isRequesting ? 'MENUNGGU PERSETUJUAN' : isRejected ? 'DI TOLAK' : 'PAKET AKTIF ✨'}
+                           <span className={`inline-flex px-5 py-1.5 mx-auto lg:mx-0 ${themeColorClass} text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-md transition-colors`}>
+                              {badgeText}
                            </span>
                         </div>
                         <div>
                            <h3 className="text-2xl font-black text-slate-800 uppercase italic tracking-tight leading-tight">{course.className}</h3>
-                           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Life-long Certificate Access</p>
+                           <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">ID PAKET: {course.id}</p>
                         </div>
                         <div className="space-y-2">
                            <div className="h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 shadow-inner">
-                              <div className="h-full bg-blue-600 rounded-full transition-all duration-1000 shadow-[0_0_10px_rgba(37,99,235,0.4)]" style={{ width: `${progressPercent}%` }}></div>
+                              <div className={`h-full rounded-full transition-all duration-1000 ${isReportPublished ? (isPass ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]') : 'bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.4)]'}`} style={{ width: `${progressPercent}%` }}></div>
                            </div>
-                           <p className="text-[9px] font-black uppercase text-slate-400 text-center lg:text-left">{maxSess}/6 SESI</p>
+                           <p className="text-[9px] font-black uppercase text-slate-400 text-center lg:text-left">{displayMaxSess}/6 SESI</p>
                         </div>
                       </div>
                       <div className="flex-[1.5] w-full lg:w-auto">
                         {isReportPublished ? (
-                          <div className={`${isRemedial ? 'bg-orange-500' : 'bg-emerald-600'} p-8 rounded-[2.5rem] text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl`}>
+                          <div className={`${isPass ? 'bg-emerald-600' : 'bg-orange-600'} p-8 rounded-[2.5rem] text-white flex flex-col md:flex-row items-center justify-between gap-6 shadow-xl transition-colors`}>
                              <div className="flex items-center gap-5 text-left">
                                 <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center shrink-0">
-                                   {isRemedial ? <Zap size={28}/> : <PartyPopper size={28}/>}
+                                   {isPass ? <PartyPopper size={28}/> : <Zap size={28}/>}
                                 </div>
                                 <div>
-                                   <h4 className="text-xl font-black uppercase italic leading-none">{isRemedial ? 'PENILAIAN SELESAI!' : 'KAMU LULUS!'}</h4>
-                                   <p className="text-[9px] font-bold uppercase tracking-widest opacity-80 mt-1">{isRemedial ? 'Evaluasi sudah terbit Kak! ✨' : 'Selamat Kak! ✨'}</p>
+                                   <h4 className="text-xl font-black uppercase italic leading-none">{isPass ? 'KAMU LULUS!' : 'SESI SELESAI!'}</h4>
+                                   <p className="text-[9px] font-bold uppercase tracking-widest opacity-80 mt-1">
+                                     {isPass ? 'Selamat kamu lulus! Sertifikat & Rapotmu sudah terbit ✨' : 'Kamu hebat sudah mengikuti pelatihan sampai akhir! Unduh Sertifikat & Rapotmu. ✨'}
+                                   </p>
                                 </div>
                              </div>
-                             <button onClick={() => handleDownloadPDFReport(course)} disabled={!!activeDownloadId} className={`px-8 py-4 bg-white ${isRemedial ? 'text-orange-600' : 'text-emerald-600'} rounded-2xl font-black text-[10px] uppercase shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-all`}>
+                             <button onClick={() => handleDownloadPDFReport(course)} disabled={!!activeDownloadId} className={`px-8 py-4 bg-white ${isPass ? 'text-emerald-600' : 'text-orange-600'} rounded-2xl font-black text-[10px] uppercase shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-all`}>
                                 {activeDownloadId === course.id ? <Loader2 className="animate-spin" size={16} /> : <Download size={18}/>} UNDUH RAPOT
                              </button>
                           </div>
@@ -574,8 +674,6 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
                              <div className="grid grid-cols-6 gap-2">
                                 {[1, 2, 3, 4, 5, 6].map(sNum => {
                                    const doneLog = completedSessions.find(s => s.num === sNum);
-                                   const isLastReported = sNum === lastSessionReported;
-
                                    return (
                                      <div key={sNum} className="relative group/box">
                                        <button 
@@ -593,16 +691,8 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
                                           )}
                                           <p className="text-[6px] md:text-[7px] font-black uppercase">{doneLog ? 'DONE' : `SESI ${sNum}`}</p>
                                        </button>
-
-                                       {/* TOMBOL EDIT TANGGAL - HANYA UNTUK SESI TERAKHIR */}
-                                       {!!doneLog && isLastReported && !isRequesting && !isProcessing && (
-                                         <button 
-                                           onClick={(e) => { e.stopPropagation(); setShowEditDateModal(doneLog); setEditDateValue(doneLog.date); }}
-                                           className="absolute -top-1.5 -right-1.5 p-1.5 bg-white text-blue-500 rounded-full shadow-lg border border-blue-50 hover:bg-blue-50 transition-all z-20"
-                                           title="Ubah Tanggal"
-                                         >
-                                           <Edit3 size={10} strokeWidth={3} />
-                                         </button>
+                                       {!!doneLog && sNum === Math.max(...completedSessions.map(s => s.num)) && !isRequesting && !isProcessing && (
+                                         <button onClick={(e) => { e.stopPropagation(); setShowEditDateModal(doneLog); setEditDateValue(doneLog.date); }} className="absolute -top-1.5 -right-1.5 p-1.5 bg-white text-blue-500 rounded-full shadow-lg border border-blue-50 hover:bg-blue-50 transition-all z-20" title="Ubah Tanggal"><Edit3 size={10} strokeWidth={3} /></button>
                                        )}
                                      </div>
                                    );
@@ -629,196 +719,63 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
         </section>
       )}
 
-      {/* MODAL EDIT TANGGAL SESI TERAKHIR - DESIGN NATURAL */}
       {showEditDateModal && (
         <div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in">
            <div className="bg-white w-full max-w-[340px] rounded-[2.5rem] p-8 shadow-2xl text-center space-y-6 relative border-t-4 border-blue-500">
               <button onClick={() => setShowEditDateModal(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
-              <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm">
-                <Calendar size={28} />
-              </div>
-              <div className="space-y-1">
-                <h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Koreksi Tanggal</h4>
-                <p className="text-[8px] font-black text-blue-600 uppercase tracking-widest">Sesi {showEditDateModal.num} Terakhir ✨</p>
-              </div>
-              <div className="space-y-2 text-left">
-                <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Pilih Tanggal Baru:</label>
-                <input 
-                  type="date" 
-                  value={editDateValue} 
-                  onChange={e => setEditDateValue(e.target.value)} 
-                  className="w-full px-4 py-3 bg-slate-50 rounded-xl font-black text-xs outline-none border-2 border-blue-50 shadow-inner" 
-                />
-              </div>
-              <div className="flex gap-3">
-                 <button onClick={() => setShowEditDateModal(null)} className="flex-1 py-4 bg-slate-50 text-slate-400 rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">BATAL</button>
-                 <button onClick={executeUpdateSessionDate} disabled={loading} className="flex-[2] py-4 bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">
-                    {loading ? <Loader2 size={14} className="animate-spin" /> : <><Save size={14}/> SIMPAN PERUBAHAN ✨</>}
-                 </button>
-              </div>
+              <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm"><Calendar size={28} /></div>
+              <div className="space-y-1"><h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Koreksi Tanggal</h4><p className="text-[8px] font-black text-blue-600 uppercase tracking-widest">Sesi {showEditDateModal.num} Terakhir ✨</p></div>
+              <div className="space-y-2 text-left"><label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Pilih Tanggal Baru:</label><input type="date" value={editDateValue} onChange={e => setEditDateValue(e.target.value)} className="w-full px-4 py-3 bg-slate-50 rounded-xl font-black text-xs outline-none border-2 border-blue-50 shadow-inner" /></div>
+              <div className="flex gap-3"><button onClick={() => setShowEditDateModal(null)} className="flex-1 py-4 bg-slate-50 text-slate-400 rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">BATAL</button><button onClick={executeUpdateSessionDate} disabled={loading} className="flex-[2] py-4 bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 flex items-center justify-center gap-2">{loading ? <Loader2 size={14} className="animate-spin" /> : <><Save size={14}/> SIMPAN PERUBAHAN ✨</>}</button></div>
            </div>
         </div>
       )}
 
-      {/* MODAL HAPUS PEMBAYARAN - LEBIH RAMPING */}
       {confirmDeletePayment && (
         <div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in">
            <div className="bg-white w-full max-w-[340px] rounded-[2rem] p-8 text-center space-y-6 shadow-2xl relative border-t-4 border-rose-500">
               <button onClick={() => setConfirmDeletePayment(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
-              <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm animate-bounce">
-                <AlertTriangle size={32} />
-              </div>
-              <div className="space-y-2">
-                 <h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Hapus Laporan?</h4>
-                 <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4">
-                    Data laporan bayar <span className="text-slate-800 font-black underline">{confirmDeletePayment.className}</span> akan dihapus permanen Kak.
-                 </p>
-              </div>
-              <div className="flex gap-3">
-                 <button onClick={() => setConfirmDeletePayment(null)} className="flex-1 py-4 bg-slate-50 text-slate-400 rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">BATAL</button>
-                 <button onClick={executeDeletePayment} disabled={loading} className="flex-1 py-4 bg-rose-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">
-                    {loading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} HAPUS
-                 </button>
-              </div>
+              <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mx-auto shadow-sm animate-bounce"><AlertTriangle size={32} /></div>
+              <div className="space-y-2"><h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Hapus Laporan?</h4><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4">Data laporan bayar <span className="text-slate-800 font-black underline">{confirmDeletePayment.className}</span> akan dihapus permanen Kak.</p></div>
+              <div className="flex gap-3"><button onClick={() => setConfirmDeletePayment(null)} className="flex-1 py-4 bg-slate-50 text-slate-400 rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">BATAL</button><button onClick={executeDeletePayment} disabled={loading} className="flex-1 py-4 bg-rose-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 flex items-center justify-center gap-2">{loading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} HAPUS</button></div>
            </div>
         </div>
       )}
 
-      {previewModal && (<div className="fixed inset-0 z-[300000] flex items-center justify-center p-6 bg-slate-900/95" onClick={() => setPreviewModal(null)}><div className="relative max-w-4xl w-full flex flex-col items-center"><button className="absolute -top-14 right-0 p-4 text-white hover:text-rose-500 transition-colors" onClick={() => setPreviewModal(null)}><X size={40}/></button><img src={previewModal} className="max-w-full max-h-[75vh] rounded-[3rem] shadow-2xl border-4 border-white/20 object-contain animate-in zoom-in" alt="Preview" /><div className="mt-8 text-center"><p className="text-[10px] font-black text-white/40 uppercase tracking-[0.8em] italic">Sanur Payment Verification ✨</p></div></div></div>)}
+      {previewModal && (<div className="fixed inset-0 z-[300000] flex items-center justify-center p-6 bg-slate-900/95" onClick={() => setPreviewModal(null)}><div className="relative max-w-4xl w-full flex flex-col items-center"><button className="absolute -top-14 right-0 p-4 text-white hover:text-rose-500 transition-colors" onClick={() => setPreviewModal(null)}><X size={40}/></button><img src={previewModal} className="max-w-full max-h-[75vh] rounded-[3rem] shadow-2xl border-4 border-white/10 object-contain animate-in zoom-in" alt="Preview" /><div className="mt-8 text-center"><p className="text-[10px] font-black text-white/40 uppercase tracking-[0.8em] italic">Sanur Payment Verification ✨</p></div></div></div>)}
       
-      {/* MODAL KONFIRMASI ABSEN - LEBIH RAMPING */}
       {confirmingAbsen && (
         <div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in">
            <div className="bg-white w-full max-w-[340px] rounded-[2rem] p-8 shadow-2xl text-center space-y-6 relative overflow-hidden">
               <button onClick={() => setConfirmingAbsen(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
-              <div className="w-14 h-14 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto animate-bounce shadow-lg">
-                <Check size={28} strokeWidth={4} />
-              </div>
-              <div className="space-y-1">
-                <h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Konfirmasi Sesi</h4>
-                <p className="text-[8px] font-black text-blue-600 uppercase tracking-widest">{confirmingAbsen.course.className} - SESI {confirmingAbsen.sessionNum}</p>
-              </div>
-              <div className="space-y-2 text-left">
-                <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Kapan kamu belajarnya?</label>
-                <input type="date" value={selectedAbsenDate} onChange={e => setSelectedAbsenDate(e.target.value)} className="w-full px-4 py-3 bg-slate-50 rounded-xl font-black text-xs outline-none border-2 border-emerald-50 shadow-inner" />
-              </div>
-              <button onClick={handleConfirmAbsen} disabled={loading} className="w-full py-4 bg-emerald-600 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">
-                 {loading ? <Loader2 size={14} className="animate-spin" /> : 'SAYA SUDAH BELAJAR! ✨'}
-              </button>
+              <div className="w-14 h-14 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto animate-bounce shadow-lg"><Check size={28} strokeWidth={4} /></div>
+              <div className="space-y-1"><h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Konfirmasi Sesi</h4><p className="text-[8px] font-black text-blue-600 uppercase tracking-widest">{confirmingAbsen.course.className} - SESI {confirmingAbsen.sessionNum}</p></div>
+              <div className="space-y-2 text-left"><label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Kapan kamu belajarnya?</label><input type="date" value={selectedAbsenDate} onChange={e => setSelectedAbsenDate(e.target.value)} className="w-full px-4 py-3 bg-slate-50 rounded-xl font-black text-xs outline-none border-2 border-emerald-50 shadow-inner" /></div>
+              <button onClick={handleConfirmAbsen} disabled={loading} className="w-full py-4 bg-emerald-600 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">{loading ? <Loader2 size={14} className="animate-spin" /> : 'SAYA SUDAH BELAJAR! ✨'}</button>
            </div>
         </div>
       )}
 
-      {/* MODAL KLAIM RAPOT - LEBIH RAMPING */}
       {requestingReportFor && (
         <div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in">
            <div className="bg-white w-full max-w-[360px] rounded-[2rem] p-8 shadow-2xl text-center space-y-6 relative overflow-hidden">
               <button onClick={() => setRequestingReportFor(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
-              <div className="space-y-3">
-                 <div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto shadow-xl rotate-3">
-                    <GraduationCap size={28} />
-                 </div>
-                 <div>
-                    <h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Klaim Rapot</h4>
-                    <p className="text-[8px] font-black text-blue-600 uppercase tracking-widest mt-1 truncate">{requestingReportFor.className}</p>
-                 </div>
-              </div>
-              <div className="bg-slate-50 p-5 rounded-2xl text-left space-y-3 border border-slate-100">
-                 <p className="text-[9px] font-bold text-slate-600 leading-tight">"Pilih Guru Pembimbing Kakak untuk mengirim data ke antrean Rapot & Sertifikat."</p>
-                 <div className="space-y-1.5">
-                    <label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest flex items-center gap-1.5"><UserCog size={10}/> Pilih Guru Pembimbing</label>
-                    <select value={selectedTeacherForReport} onChange={e => setSelectedTeacherForReport(e.target.value)} className="w-full px-4 py-3 bg-white rounded-xl font-black text-[10px] uppercase italic outline-none border-2 border-blue-50 shadow-sm appearance-none">
-                       <option value="">-- PILIH GURU --</option>
-                       {teachers.filter(t => t.role === 'TEACHER').map(t => <option key={t.id} value={t.id}>{t.name.toUpperCase()}</option>)}
-                    </select>
-                 </div>
-              </div>
-              <button onClick={handleRequestReport} disabled={!selectedTeacherForReport || loading} className="w-full py-4 bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.1em] shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">
-                 {loading ? <Loader2 size={14} className="animate-spin" /> : <><Sparkles size={14} /> AJUKAN SEKARANG ✨</>}
-              </button>
+              <div className="space-y-3"><div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto shadow-xl rotate-3"><GraduationCap size={28} /></div><div><h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Klaim Rapot</h4><p className="text-[8px] font-black text-blue-600 uppercase tracking-widest mt-1 truncate">{requestingReportFor.className}</p></div></div>
+              <div className="bg-slate-50 p-5 rounded-2xl text-left space-y-3 border border-slate-100"><p className="text-[9px] font-bold text-slate-600 leading-tight">"Pilih Guru Pembimbing Kakak untuk mengirim data ke antrean Rapot & Sertifikat."</p><div className="space-y-1.5"><label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest flex items-center gap-1.5"><UserCog size={10}/> Pilih Guru Pembimbing</label><select value={selectedTeacherForReport} onChange={e => setSelectedTeacherForReport(e.target.value)} className="w-full px-4 py-3 bg-white rounded-xl font-black text-[10px] uppercase italic outline-none border-2 border-blue-50 shadow-sm appearance-none"><option value="">-- PILIH GURU --</option>{teachers.filter(t => t.role === 'TEACHER').map(t => <option key={t.id} value={t.id}>{t.name.toUpperCase()}</option>)}</select></div></div>
+              <button onClick={handleRequestReport} disabled={!selectedTeacherForReport || loading} className="w-full py-4 bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.1em] shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">{loading ? <Loader2 size={14} className="animate-spin" /> : <><Sparkles size={14} /> AJUKAN SEKARANG ✨</>}</button>
            </div>
         </div>
       )}
       
-      {/* RENDERING TEMPLATE RAPOT TERSEMBUNYI UNTUK DOWNLOAD PDF */}
       <div className="fixed left-[-9999px] top-0 pointer-events-none">
-         {verifiedCourses.map((course) => {
-            const reportLog = findOfficialReportLog(course);
-            return reportLog ? (
-              <ReportTemplate 
-                key={reportLog.id} 
-                reportLog={reportLog} 
-                allLogs={attendanceLogs} 
-                studentName={normalizedUserName} 
-              />
-            ) : null;
-         })}
-
-         {/* HIDDEN SLIP GENERATOR */}
+         {verifiedCourses.map((course) => { const reportLog = findOfficialReportLog(course); return reportLog ? ( <ReportTemplate key={reportLog.id} reportLog={reportLog} allLogs={attendanceLogs} studentName={normalizedUserName} /> ) : null; })}
          {myPayments.map((p) => (
             <div id={`slip-digital-${p.id}`} ref={p.id === showDigitalSlip?.id ? slipRef : null} key={p.id} className="bg-white p-12 md:p-20 space-y-10 w-[700px] mx-auto overflow-hidden text-slate-900 border-8 border-double border-slate-100">
-               <div className="flex justify-between items-start border-b-2 border-slate-900 pb-10">
-                  <div className="min-w-0 text-left">
-                     <h1 className="text-3xl font-black italic tracking-tighter text-slate-900 leading-none">SANUR</h1>
-                     <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1 text-left">Akademi Inspirasi</p>
-                  </div>
-                  <div className="text-right flex flex-col items-end">
-                     <h2 className="text-xl font-black uppercase italic text-slate-800 leading-none">KUITANSI RESMI</h2>
-                     <p className="text-[10px] font-black text-slate-800 uppercase tracking-widest mt-2 whitespace-nowrap">ID: {p.id.toUpperCase()}</p>
-                  </div>
-               </div>
-               <div className="grid grid-cols-12 gap-10">
-                  <div className="col-span-8 pr-6 border-r border-slate-50 text-left">
-                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Diterima Dari:</p>
-                     <p className="text-lg font-black text-slate-900 uppercase italic Kalimat text-left">{p.studentName}</p>
-                  </div>
-                  <div className="col-span-4 text-right">
-                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Tanggal Bayar:</p>
-                     <p className="text-base font-black text-slate-800 uppercase italic Kalimat">{formatDateToDMY(p.date)}</p>
-                  </div>
-               </div>
-               <div className="space-y-6">
-                  <div className="flex items-center gap-3 text-slate-400 border-b-2 border-slate-50 pb-2">
-                     <ClipboardList size={14} />
-                     <p className="text-[10px] font-black uppercase tracking-[0.3em]">Rincian Paket Pembelajaran</p>
-                  </div>
-                  <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 flex flex-col gap-6">
-                     <div className="text-left">
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Nama Program/Kelas:</p>
-                        <p className="text-[13px] font-black text-slate-800 uppercase Kalimat text-left">{p.className}</p>
-                     </div>
-                     <div className="grid grid-cols-2 gap-8 pt-6 border-t border-slate-200/60">
-                        <div className="text-left">
-                           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Total Sesi Paket:</p>
-                           <p className="text-[12px] font-black text-slate-800 uppercase tracking-tight text-left">6 Sesi</p>
-                        </div>
-                        <div className="text-right">
-                           <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Durasi Sesi:</p>
-                           <p className="text-[12px] font-black text-slate-800 uppercase tracking-tight">2 Jam / 120 Menit</p>
-                        </div>
-                     </div>
-                  </div>
-               </div>
-               <div className="pt-8 border-t-2 border-slate-900">
-                  <div className="flex justify-between items-start h-[32px]">
-                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">VERIFIKASI SISTEM:</p>
-                     <div className="text-right flex flex-col items-end">
-                        <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] italic">Terverifikasi Digital</p>
-                        <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-1">Status: LUNAS</p>
-                     </div>
-                  </div>
-                  <p className="text-5xl font-black text-emerald-600 italic leading-none mt-4 text-left">Rp {p.amount.toLocaleString()}</p>
-               </div>
-               <div className="pt-10 border-t border-slate-100 flex justify-between items-end gap-10">
-                  <div className="max-w-xs text-left">
-                     <p className="text-[10px] font-bold text-slate-400 italic Kalimat text-left">"Terima kasih atas kepercayaannya bergabung di Sanur Akademi Inspirasi. Pembayaran ini sah diverifikasi sistem internal."</p>
-                  </div>
-                  <div className="text-center flex flex-col items-center shrink-0">
-                     <ShieldCheck size={44} className="text-slate-900 opacity-20 mb-2" />
-                     <p className="text-[13px] font-black uppercase text-slate-900 tracking-tight leading-none">Admin Sanur</p>
-                     <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1.5">Official Receipt</p>
-                  </div>
-               </div>
+               <div className="flex justify-between items-start border-b-2 border-slate-900 pb-10"><div className="min-w-0 text-left"><h1 className="text-3xl font-black italic tracking-tighter text-slate-900 leading-none">SANUR</h1><p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1 text-left">Akademi Inspirasi</p></div><div className="text-right flex flex-col items-end"><h2 className="text-xl font-black uppercase italic text-slate-800 leading-none">KUITANSI RESMI</h2><p className="text-[10px] font-black text-slate-800 uppercase tracking-widest mt-2 whitespace-nowrap">ID: {p.id.toUpperCase()}</p></div></div>
+               <div className="grid grid-cols-12 gap-10"><div className="col-span-8 pr-6 border-r border-slate-50 text-left"><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Diterima Dari:</p><p className="text-lg font-black text-slate-900 uppercase italic Kalimat text-left">{p.studentName}</p></div><div className="col-span-4 text-right"><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Tanggal Bayar:</p><p className="text-base font-black text-slate-800 uppercase italic Kalimat">{formatDateToDMY(p.date)}</p></div></div>
+               <div className="space-y-6"><div className="flex items-center gap-3 text-slate-400 border-b-2 border-slate-50 pb-2"><ClipboardList size={14} /><p className="text-[10px] font-black uppercase tracking-[0.3em]">Rincian Paket Pembelajaran</p></div><div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 flex flex-col gap-6"><div className="text-left"><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Nama Program/Kelas:</p><p className="text-[13px] font-black text-slate-800 uppercase Kalimat text-left">{p.className}</p></div><div className="grid grid-cols-2 gap-8 pt-6 border-t border-slate-200/60"><div className="text-left"><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Total Sesi Paket:</p><p className="text-[12px] font-black text-slate-800 uppercase tracking-tight text-left">6 Sesi</p></div><div className="text-right"><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Durasi Sesi:</p><p className="text-[12px] font-black text-slate-800 uppercase tracking-tight">2 Jam / 120 Menit</p></div></div></div></div>
+               <div className="pt-8 border-t-2 border-slate-900"><div className="flex justify-between items-start h-[32px]"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">VERIFIKASI SISTEM:</p><div className="text-right flex flex-col items-end"><p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] italic">Terverifikasi Digital</p><p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-1">Status: LUNAS</p></div></div><p className="text-5xl font-black text-emerald-600 italic leading-none mt-4 text-left">Rp {p.amount.toLocaleString()}</p></div>
+               <div className="pt-10 border-t border-slate-100 flex justify-between items-end gap-10"><div className="max-w-xs text-left"><p className="text-[10px] font-bold text-slate-400 italic Kalimat text-left">"Terima kasih atas kepercayaannya bergabung di Sanur Akademi Inspirasi. Pembayaran ini sah diverifikasi sistem internal."</p></div><div className="text-center flex flex-col items-center shrink-0"><ShieldCheck size={44} className="text-slate-900 opacity-20 mb-2" /><p className="text-[13px] font-black uppercase text-slate-900 tracking-tight leading-none">Admin Sanur</p><p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1.5">Official Receipt</p></div></div>
             </div>
          ))}
       </div>
