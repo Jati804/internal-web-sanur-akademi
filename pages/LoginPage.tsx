@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { User, Role } from '../types';
 import { MOCK_ADMIN } from '../constants';
@@ -186,13 +185,23 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
 
       <div className="w-full max-w-6xl flex flex-col items-center gap-12 relative z-10 animate-in fade-in duration-700">
         <div className="text-center space-y-6">
-           <div className="inline-flex items-center gap-3 px-6 py-3 bg-white border border-slate-100 rounded-2xl shadow-xl">
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-lg rotate-3"><Database size={20} /></div>
-              <div className="text-left">
-                 <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">SANUR Akademi Inspirasi</h1>
-                 <p className="text-[8px] font-black text-blue-600 uppercase tracking-char mt-1">Internal Management System</p>
+           {/* LOGO SANUR SECTION */}
+           <div className="inline-flex items-center gap-4 px-8 py-4 bg-white border border-slate-100 rounded-3xl shadow-xl">
+              {/* Logo Image */}
+              <img 
+                src="https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png" 
+                alt="SANUR Logo" 
+                className="h-14 w-auto object-contain"
+              />
+              {/* Text Section */}
+              <div className="text-left border-l-2 border-slate-100 pl-4">
+                 <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">SANUR</h1>
+                 <p className="text-xs font-black text-blue-600 uppercase tracking-wide leading-tight">Akademi Inspirasi</p>
+                 <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Internal Management System</p>
               </div>
            </div>
+
+           {/* Connection Status */}
            <div className="flex items-center gap-4 justify-center">
               <div className={`flex items-center gap-2 px-4 py-2 rounded-full border text-[9px] font-black uppercase tracking-widest transition-all ${connectionError ? 'bg-rose-50 text-rose-600 border-rose-200' : isSyncing ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'}`}>
                  {isSyncing ? <Loader2 size={14} className="animate-spin" /> : connectionError ? <WifiOff size={14} /> : <CheckCircle2 size={14} />}
