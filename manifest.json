@@ -1,13 +1,17 @@
-
 {
   "name": "SANUR Internal System",
   "short_name": "SANUR",
   "description": "Sistem Manajemen Internal SANUR Akademi Inspirasi",
   "start_url": "/#/",
-  "display": "standalone",
+  "scope": "/",
+  "display": "minimal-ui",
   "background_color": "#F8FAFC",
   "theme_color": "#2563eb",
-  "orientation": "portrait-primary",
+  "orientation": "any",
+  "categories": ["education", "productivity"],
+  "lang": "id-ID",
+  "dir": "ltr",
+  "prefer_related_applications": false,
   "icons": [
     {
       "src": "https://raw.githubusercontent.com/user-attachments/assets/080a8f94-67f7-49d7-84a7-897b2521c761",
@@ -21,5 +25,54 @@
       "type": "image/png",
       "purpose": "any"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Presensi Cepat",
+      "short_name": "Presensi",
+      "description": "Langsung ke halaman presensi",
+      "url": "/#/teacher",
+      "icons": [
+        {
+          "src": "https://raw.githubusercontent.com/user-attachments/assets/080a8f94-67f7-49d7-84a7-897b2521c761",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Cek Honor",
+      "short_name": "Honor",
+      "description": "Lihat dompet honor",
+      "url": "/#/teacher/honor",
+      "icons": [
+        {
+          "src": "https://raw.githubusercontent.com/user-attachments/assets/080a8f94-67f7-49d7-84a7-897b2521c761",
+          "sizes": "96x96"
+        }
+      ]
+    },
+    {
+      "name": "Dashboard Admin",
+      "short_name": "Admin",
+      "description": "Akses panel admin",
+      "url": "/#/admin",
+      "icons": [
+        {
+          "src": "https://raw.githubusercontent.com/user-attachments/assets/080a8f94-67f7-49d7-84a7-897b2521c761",
+          "sizes": "96x96"
+        }
+      ]
+    }
   ]
 }
+```
+
+---
+
+## **SOAL ICON APP:**
+
+**ICON UDAH ADA KOK!** ✅
+
+Icon yang kamu pakai sekarang:
+```
+https://raw.githubusercontent.com/user-attachments/assets/080a8f94-67f7-49d7-84a7-897b2521c761
