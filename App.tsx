@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
 const { HashRouter, Routes, Route, Navigate, Link, useLocation, useNavigate } = ReactRouterDOM as any;
@@ -35,7 +36,7 @@ const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }
   const colors: any = {
     blue: isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-blue-600',
     emerald: isActive ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:text-emerald-600',
-    orange: isActive ? 'bg-orange-500 text-white shadow-lg' : 'text-slate-400 hover:text-orange-500',
+    orange: isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-blue-600', // Diseragamkan ke biru
   };
   return (
     <Link 
@@ -104,7 +105,7 @@ const GuideModal = ({ role, onClose }: { role: string, onClose: () => void }) =>
               <div className={`w-8 h-8 rounded-full ${content.color} text-white flex items-center justify-center font-black italic shrink-0 text-xs shadow-md`}>0{i+1}</div>
               <div className="space-y-1">
                 <h4 className={`text-xs font-black uppercase tracking-widest ${content.text}`}>{s.title}</h4>
-                <p className="text-[10px] font-bold text-slate-400 leading-relaxed uppercase">{s.desc}</p>
+                <p className="text-[10px] font-bold text-slate-400 uppercase leading-relaxed uppercase">{s.desc}</p>
               </div>
             </div>
           ))}
@@ -138,12 +139,10 @@ const AppContent = ({
     navigate('/', { replace: true });
   };
 
-  const pendingReportsCount = user && user.role === 'TEACHER' 
-    ? attendanceLogs.filter((l: Attendance) => 
+  const pendingReportsCount = Array.isArray(attendanceLogs) ? attendanceLogs.filter((l: Attendance) => 
         (l.status === 'REPORT_REQUEST' || l.status === 'REPORT_PROCESSING') && 
-        l.teacherId === user.id
-      ).length 
-    : 0;
+        l.teacherId === user?.id
+      ).length : 0;
 
   if (location.pathname === '/verify') return <VerifyCertificate />;
   
@@ -177,7 +176,7 @@ const AppContent = ({
               <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl rotate-3 shrink-0"><BookOpen size={24} /></div>
               <div>
                 <h1 className="font-black text-slate-800 text-xl tracking-tighter uppercase italic leading-none">SANUR</h1>
-                <p className="text-[8px] font-black text-blue-500 uppercase tracking-[0.4em] mt-1.5">Portal Internal</p>
+                <p className="text-[8px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1.5">Portal Internal</p>
               </div>
             </div>
             <button onClick={closeSidebar} className="lg:hidden p-2 text-slate-300 hover:text-rose-500"><X size={24} /></button>
@@ -199,13 +198,13 @@ const AppContent = ({
               <>
                 <NavItem to="/teacher" icon={ClipboardCheck} label="Lapor Presensi" onClick={closeSidebar} />
                 <NavItem to="/teacher/honor" icon={Wallet} label="Honor Saya" activeColor="blue" onClick={closeSidebar} />
-                <NavItem to="/teacher/reports" icon={GraduationCap} label="Rapot Siswa" activeColor="orange" onClick={closeSidebar} badge={pendingReportsCount} />
+                <NavItem to="/teacher/reports" icon={GraduationCap} label="Rapot Siswa" activeColor="blue" onClick={closeSidebar} badge={pendingReportsCount} />
               </>
             )}
             {user.role === 'STUDENT' && (
               <>
                 <NavItem to="/student" icon={GraduationCap} label="Kelas Saya" activeColor="blue" onClick={closeSidebar} />
-                <NavItem to="/student/payments" icon={CreditCard} label="Pembayaran" activeColor="orange" onClick={closeSidebar} />
+                <NavItem to="/student/payments" icon={CreditCard} label="Pembayaran" activeColor="blue" onClick={closeSidebar} />
               </>
             )}
           </nav>
@@ -234,10 +233,9 @@ const AppContent = ({
               <Route path="/admin" element={<AdminDashboard user={user} attendanceLogs={attendanceLogs} setAttendanceLogs={setAttendanceLogs} teachers={teachers} transactions={transactions} studentProfiles={studentProfiles} />} />
               <Route path="/admin/finance" element={<AdminFinance attendanceLogs={attendanceLogs} transactions={transactions} studentPayments={studentPayments} refreshAllData={refreshAllData} />} />
               <Route path="/admin/buku-induk" element={<AdminInventory studentProfiles={studentProfiles} setStudentProfiles={setStudentProfiles} refreshAllData={refreshAllData} />} />
-              <Route path="/admin/staff" element={<AdminStaff user={user} teachers={teachers} setTeachers={setTeachers} studentAccounts={studentAccounts} setStudentAccounts={setStudentAccounts} />} />
-              {/* FIX: Correctly pass setScheduleData prop which maps to setMasterSchedule state */}
+              <Route path="/admin/staff" element={<AdminStaff user={user} teachers={teachers} setTeachers={setTeachers} studentAccounts={studentAccounts} setStudentAccounts={setStudentAccounts} refreshAllData={refreshAllData} />} />
               <Route path="/admin/academic" element={<AdminAcademic subjects={subjects} setSubjects={setSubjects} classes={classes} setClasses={setClasses} levels={levels} setLevels={setLevels} scheduleData={masterSchedule} setScheduleData={setMasterSchedule} salaryConfig={salaryConfig} setSalaryConfig={setSalaryConfig} />} />
-              <Route path="/admin/maintenance" element={<AdminMaintenance attendanceLogs={attendanceLogs} setAttendanceLogs={setAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} />} />
+              <Route path="/admin/maintenance" element={<AdminMaintenance attendanceLogs={attendanceLogs} setAttendanceLogs={setAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} refreshAllData={refreshAllData} />} />
               <Route path="/teacher" element={<TeacherDashboard user={user} logs={attendanceLogs} studentAccounts={studentAccounts} subjects={subjects} classes={classes} levels={levels} salaryConfig={salaryConfig} teachers={teachers} refreshAllData={refreshAllData} />} />
               <Route path="/teacher/honor" element={<TeacherHonor user={user} logs={attendanceLogs} refreshAllData={refreshAllData} />} />
               <Route path="/teacher/reports" element={<TeacherReportsInbox user={user} logs={attendanceLogs} studentAccounts={studentAccounts} refreshAllData={refreshAllData} />} />
@@ -252,15 +250,9 @@ const AppContent = ({
   );
 };
 
+// Fix: Added missing App component which coordinates the central state and provides it to AppContent
 const App = () => {
-  const [user, setUser] = useState<User | null>(() => {
-    const saved = localStorage.getItem('sanur_user');
-    try {
-      return saved ? JSON.parse(saved) : null;
-    } catch {
-      return null;
-    }
-  });
+  const [user, setUser] = useState<User | null>(null);
   const [attendanceLogs, setAttendanceLogs] = useState<Attendance[]>([]);
   const [teachers, setTeachers] = useState<User[]>([]);
   const [studentAccounts, setStudentAccounts] = useState<User[]>([]);
@@ -276,78 +268,80 @@ const App = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [connectionError, setConnectionError] = useState(false);
 
+  // Fix: Implemented refreshAllData to synchronize all state with Supabase
   const refreshAllData = useCallback(async () => {
     if (!isSupabaseConfigured()) return;
     setIsSyncing(true);
     try {
-      const [att, pays, txs, profs, teach, sets, studs] = await Promise.all([
+      const [
+        { data: att },
+        { data: teach },
+        { data: stuAcc },
+        { data: trans },
+        { data: stuPay },
+        { data: stuProf },
+        { data: settings }
+      ] = await Promise.all([
         supabase.from('attendance').select('*'),
-        supabase.from('student_payments').select('*'),
-        supabase.from('transactions').select('*'),
-        supabase.from('student_profiles').select('*'),
         supabase.from('teachers').select('*'),
-        supabase.from('settings').select('*'),
-        supabase.from('student_accounts').select('*')
+        supabase.from('student_accounts').select('*'),
+        supabase.from('transactions').select('*'),
+        supabase.from('student_payments').select('*'),
+        supabase.from('student_profiles').select('*'),
+        supabase.from('settings').select('*')
       ]);
 
-      if (att.data) setAttendanceLogs(att.data.map((l: any) => ({
-        ...l,
-        teacherId: l.teacherid,
-        teacherName: l.teachername,
-        clockIn: l.clockin,
-        className: l.classname,
-        sessionCategory: l.sessioncategory,
-        studentsAttended: l.studentsattended,
-        studentSessions: l.studentsessions,
-        studentScores: l.studentscores,
-        studentTopics: l.studenttopics,
-        studentNarratives: l.studentnarratives,
-        paymentStatus: l.paymentstatus,
-        receiptUrl: l.receipturl,
-        receiptData: l.receiptdata,
-        packageId: l.packageid,
-        sessionNumber: l.sessionnumber,
-        totalPackageSessions: l.totalpackagesessions,
-        reportNarrative: l.reportnarrative,
-        substituteFor: l.substitutefor,
-        originalTeacherId: l.originalteacherid
+      if (att) setAttendanceLogs(att.map((a: any) => ({
+        ...a,
+        teacherId: a.teacherid,
+        teacherName: a.teachername,
+        clockIn: a.clockin,
+        className: a.classname,
+        level: a.level, // FIXED: Menambahkan pemetaan level agar terdeteksi di dashboard
+        sessionCategory: a.sessioncategory,
+        packageId: a.packageid,
+        sessionNumber: a.sessionnumber,
+        studentsAttended: a.studentsattended,
+        studentSessions: a.studentsessions,
+        studentScores: a.studentscores,
+        studentTopics: a.studenttopics,
+        studentNarratives: a.studentnarratives,
+        paymentStatus: a.paymentstatus,
+        receiptData: a.receiptdata,
+        reportNarrative: a.reportnarrative,
+        substituteFor: a.substitutefor,
+        originalTeacherId: a.originalteacherid
       })));
-      
-      if (pays.data) setStudentPayments(pays.data.map((p: any) => ({
+      if (teach) setTeachers(teach);
+      if (stuAcc) setStudentAccounts(stuAcc);
+      if (trans) setTransactions(trans);
+      if (stuPay) setStudentPayments(stuPay.map((p: any) => ({
         ...p,
         studentName: p.studentname,
         className: p.classname,
         receiptData: p.receiptdata
       })));
-      
-      if (txs.data) setTransactions(txs.data);
-
-      // FIX: Mapping Student Profiles agar kolom personalphone & parentphone terdeteksi aplikasi
-      if (profs.data) setStudentProfiles(profs.data.map((p: any) => ({
+      if (stuProf) setStudentProfiles(stuProf.map((p: any) => ({
         ...p,
         personalPhone: p.personalphone,
         parentPhone: p.parentphone,
         enrolledClass: p.enrolledclass
       })));
 
-      if (teach.data) setTeachers(teach.data);
-      if (studs.data) setStudentAccounts(studs.data);
-      
-      if (sets.data) {
-        const academic = sets.data.find(s => s.key === 'academic_config')?.value;
-        if (academic) {
-          if (academic.subjects) setSubjects(academic.subjects);
-          if (academic.levels) setLevels(academic.levels);
-          if (academic.classes) setClasses(academic.classes);
+      if (settings) {
+        const acad = settings.find(s => s.key === 'academic_config');
+        if (acad?.value) {
+          if (acad.value.subjects) setSubjects(acad.value.subjects);
+          if (acad.value.levels) setLevels(acad.value.levels);
+          if (acad.value.classes) setClasses(acad.value.classes);
         }
-        const schedule = sets.data.find(s => s.key === 'master_schedule')?.value;
-        if (schedule) setMasterSchedule(schedule);
-        const salary = sets.data.find(s => s.key === 'salary_config')?.value;
-        if (salary) setSalaryConfig(salary);
+        const sched = settings.find(s => s.key === 'master_schedule');
+        if (sched?.value) setMasterSchedule(sched.value);
+        const sal = settings.find(s => s.key === 'salary_config');
+        if (sal?.value) setSalaryConfig(sal.value);
       }
       setConnectionError(false);
     } catch (e) {
-      console.error(e);
       setConnectionError(true);
     } finally {
       setIsSyncing(false);
@@ -355,6 +349,8 @@ const App = () => {
   }, []);
 
   useEffect(() => {
+    const savedUser = localStorage.getItem('sanur_user');
+    if (savedUser) setUser(JSON.parse(savedUser));
     refreshAllData();
   }, [refreshAllData]);
 
@@ -374,8 +370,7 @@ const App = () => {
         masterSchedule={masterSchedule} setMasterSchedule={setMasterSchedule}
         salaryConfig={salaryConfig} setSalaryConfig={setSalaryConfig}
         isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}
-        isSyncing={isSyncing}
-        connectionError={connectionError}
+        isSyncing={isSyncing} connectionError={connectionError}
         refreshAllData={refreshAllData}
       />
     </Router>
