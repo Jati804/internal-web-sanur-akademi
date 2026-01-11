@@ -442,13 +442,6 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
                           <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-3xl flex items-center justify-center shadow-inner group-hover:bg-emerald-600 group-hover:text-white transition-all duration-500"><Banknote size={36}/></div>
                           <div className="flex flex-col items-end gap-2">
                              <span className="px-4 py-1.5 bg-emerald-50 text-emerald-600 border border-emerald-100 rounded-full text-[8px] font-black uppercase tracking-widest">Antrean SPP</span>
-                             <button 
-                               onClick={() => handleQuickPreviewSpp(p)} 
-                               className="p-3 bg-white text-blue-600 rounded-full shadow-lg border border-blue-50 hover:bg-blue-600 hover:text-white transition-all active:scale-90 flex items-center justify-center gap-2"
-                               title="Lihat Bukti Bayar"
-                             >
-                                <Eye size={18} />
-                             </button>
                           </div>
                        </div>
                        <p className="text-[10px] font-black text-slate-300 uppercase mb-1">{formatDate(p.date)}</p>
