@@ -270,7 +270,6 @@ const App = () => {
 
   // Fix: Implemented refreshAllData to synchronize all state with Supabase
   const refreshAllData = useCallback(async () => {
-    if (!isSupabaseConfigured()) return;
     setIsSyncing(true);
     try {
       const [
