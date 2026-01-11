@@ -121,6 +121,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
     emerald: { text: "text-emerald-600", bg: "bg-emerald-600", border: "border-emerald-600" }
   };
 
+  const roleLabels: Record<Role, string> = {
+    ADMIN: 'PENGURUS',
+    TEACHER: 'PENGAJAR',
+    STUDENT: 'SISWA'
+  };
+
   const currentTheme = role === 'ADMIN' ? theme.blue : role === 'TEACHER' ? theme.orange : theme.emerald;
 
   if (view === 'MAINTENANCE') {
@@ -190,7 +196,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
            <div className="flex items-center gap-4 justify-center">
               <div className={`flex items-center gap-2 px-4 py-2 rounded-full border text-[9px] font-black uppercase tracking-widest transition-all ${connectionError ? 'bg-rose-50 text-rose-600 border-rose-200' : isSyncing ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'}`}>
                  {isSyncing ? <Loader2 size={14} className="animate-spin" /> : connectionError ? <WifiOff size={14} /> : <CheckCircle2 size={14} />}
-                 {isSyncing ? "Connecting..." : connectionError ? "Cloud Offline" : "Database Connected"}
+                 {isSyncing ? "Connecting..." : connectionError ? "Cloud Offline" : "Database Terkoneksi"}
               </div>
            </div>
         </div>
@@ -216,7 +222,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
                     <div className="w-24 h-24 bg-white/10 backdrop-blur-md rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl rotate-3">
                        {role === 'ADMIN' ? <UserCog size={48}/> : role === 'TEACHER' ? <GraduationCap size={48}/> : <Users size={48}/>}
                     </div>
-                    <h3 className="text-3xl font-black uppercase italic tracking-tighter">PORTAL <br/> {role}</h3>
+                    <h3 className="text-3xl font-black uppercase italic tracking-tighter">PORTAL <br/> {roleLabels[role]}</h3>
                  </div>
                  <div className="text-[9px] font-black uppercase tracking-widest opacity-60">SANUR Akademi Inspirasi</div>
               </div>
