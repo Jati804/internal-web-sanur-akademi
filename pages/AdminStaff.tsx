@@ -1,11 +1,11 @@
 
 import React, { useState, useMemo } from 'react';
-import { User } from '../types';
+import { User, Attendance, StudentPayment } from '../types';
 import { supabase } from '../services/supabase.ts';
 import { 
   UserPlus, Trash2, Search, X, GraduationCap, 
   Edit3, CheckCircle2, Lock, Loader2, UserCircle,
-  ShieldAlert, BadgeCheck, AlertTriangle, Key, Check, Plus, Info, AlertCircle
+  ShieldAlert, BadgeCheck, AlertTriangle, Key, Check, Plus, Info, AlertCircle, Zap
 } from 'lucide-react';
 
 interface AdminStaffProps {
@@ -14,10 +14,11 @@ interface AdminStaffProps {
   setTeachers: React.Dispatch<React.SetStateAction<User[]>>;
   studentAccounts: User[];
   setStudentAccounts: React.Dispatch<React.SetStateAction<User[]>>;
+  refreshAllData?: () => Promise<void>;
 }
 
 const AdminStaff: React.FC<AdminStaffProps> = ({ 
-  teachers, setTeachers, studentAccounts, setStudentAccounts
+  teachers, setTeachers, studentAccounts, setStudentAccounts, refreshAllData
 }) => {
   const [activeTab, setActiveTab] = useState<'ADMINS' | 'TEACHERS' | 'STUDENTS'>('TEACHERS');
   const [searchTerm, setSearchTerm] = useState('');
@@ -28,9 +29,9 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
   const [isLocalSyncing, setIsLocalSyncing] = useState(false);
 
   const roleTheme = {
-    ADMINS: { text: "text-blue-600", bg: "bg-blue-600", light: "bg-blue-50", border: "border-blue-100" },
-    TEACHERS: { text: "text-orange-600", bg: "bg-orange-500", textValue: "orange", light: "bg-orange-50", border: "border-orange-100" },
-    STUDENTS: { text: "text-emerald-600", bg: "bg-emerald-600", textValue: "emerald", light: "bg-emerald-50", border: "border-emerald-100" }
+    ADMINS: { text: "text-blue-600", bg: "bg-blue-600", light: "bg-blue-50", border: "border-blue-100", label: "PENGURUS" },
+    TEACHERS: { text: "text-orange-600", bg: "bg-orange-500", textValue: "orange", light: "bg-orange-50", border: "border-orange-100", label: "PENGAJAR" },
+    STUDENTS: { text: "text-emerald-600", bg: "bg-emerald-600", textValue: "emerald", light: "bg-emerald-50", border: "border-emerald-100", label: "SISWA" }
   }[activeTab];
 
   const adminCount = teachers.filter(u => u.role === 'ADMIN').length;
@@ -51,7 +52,6 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
   }, [currentList, searchTerm]);
 
   const handleOpenAdd = () => {
-    // Standard PIN 6 Digit Baru
     const defaultPin = activeTab === 'STUDENTS' ? '051020' : '224488';
     setFormData({ name: '', username: '', pin: defaultPin });
     setShowModal('ADD');
@@ -67,6 +67,53 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
     setShowModal('EDIT');
   };
 
+  const performCascadingUpdate = async (oldName: string, newName: string, userId: string, isStudent: boolean) => {
+    const oldNameNorm = oldName.toUpperCase().trim();
+    const newNameNorm = newName.toUpperCase().trim();
+    const oldNameSlug = oldNameNorm.replace(/\s+/g, '-');
+    const newNameSlug = newNameNorm.replace(/\s+/g, '-');
+    
+    if (oldNameNorm === newNameNorm) return;
+
+    if (!isStudent) {
+      await supabase.from('attendance').update({ teachername: newNameNorm }).eq('teacherid', userId);
+      await supabase.from('attendance').update({ substitutefor: newNameNorm }).ilike('substitutefor', oldNameNorm);
+    } else {
+      await supabase.from('student_payments').update({ studentname: newNameNorm }).ilike('studentname', oldNameNorm);
+      const { data: affectedLogs } = await supabase.from('attendance').select('*');
+      if (affectedLogs && affectedLogs.length > 0) {
+        for (const log of affectedLogs) {
+          const attended = (log.studentsattended as string[]) || [];
+          const hasOldName = attended.some(n => n.toUpperCase().trim() === oldNameNorm);
+          if (hasOldName) {
+            const newAttended = attended.map(n => n.toUpperCase().trim() === oldNameNorm ? newNameNorm : n);
+            const renameJsonKey = (obj: any) => {
+              if (!obj || typeof obj !== 'object') return obj;
+              const newObj = { ...obj };
+              const existingKey = Object.keys(newObj).find(k => k.toUpperCase().trim() === oldNameNorm);
+              if (existingKey) {
+                newObj[newNameNorm] = newObj[existingKey];
+                if (existingKey !== newNameNorm) delete newObj[existingKey];
+              }
+              return newObj;
+            };
+            const currentPkgId = log.packageid || '';
+            const newPkgId = currentPkgId.includes(oldNameSlug) ? currentPkgId.replace(oldNameSlug, newNameSlug) : currentPkgId;
+            const updatePayload = {
+              packageid: newPkgId,
+              studentsattended: newAttended,
+              studentsessions: renameJsonKey(log.studentsessions),
+              studentscores: renameJsonKey(log.studentscores),
+              studenttopics: renameJsonKey(log.studenttopics),
+              studentnarratives: renameJsonKey(log.studentnarratives)
+            };
+            await supabase.from('attendance').update(updatePayload).eq('id', log.id);
+          }
+        }
+      }
+    }
+  };
+
   const handleSave = async () => {
     if (!formData.name || !formData.username) return;
     setIsLocalSyncing(true);
@@ -74,36 +121,27 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
       const isStudent = activeTab === 'STUDENTS';
       const tableName = isStudent ? 'student_accounts' : 'teachers';
       const finalRole = activeTab === 'ADMINS' ? 'ADMIN' : activeTab === 'TEACHERS' ? 'TEACHER' : 'STUDENT';
-      
       const payload: any = { 
         name: formData.name.toUpperCase().trim(), 
         username: formData.username.toUpperCase().trim(), 
         pin: formData.pin, 
         role: finalRole 
       };
-      
       if (showModal === 'ADD') {
         const id = `${activeTab.substring(0,3)}-${Date.now()}`;
         const { error } = await supabase.from(tableName).insert({ ...payload, id });
         if (error) throw error;
-        
-        const newUser = { ...payload, id };
-        if (isStudent) setStudentAccounts(prev => [newUser, ...prev]);
-        else setTeachers(prev => [newUser, ...prev]);
       } else if (editingUser) {
+        if (editingUser.name.toUpperCase().trim() !== payload.name) {
+          await performCascadingUpdate(editingUser.name, payload.name, editingUser.id, isStudent);
+        }
         const { error } = await supabase.from(tableName).update(payload).eq('id', editingUser.id);
         if (error) throw error;
-        
-        if (isStudent) setStudentAccounts(prev => prev.map(u => u.id === editingUser.id ? { ...u, ...payload } : u));
-        else setTeachers(prev => prev.map(u => u.id === editingUser.id ? { ...u, ...payload } : u));
       }
-      
+      if (refreshAllData) await refreshAllData();
       setShowModal(null);
-    } catch (e: any) { 
-      alert("Error: " + e.message); 
-    } finally { 
-      setIsLocalSyncing(false); 
-    }
+      alert("Akses & Histori Berhasil Disinkronkan! ✨");
+    } catch (e: any) { alert("Terjadi Kendala: " + e.message); } finally { setIsLocalSyncing(false); }
   };
 
   const executeDelete = async () => {
@@ -112,19 +150,11 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
     try {
       const isStudent = activeTab === 'STUDENTS';
       const tableName = isStudent ? 'student_accounts' : 'teachers';
-      
       const { error } = await supabase.from(tableName).delete().eq('id', showDeleteConfirm.id);
       if (error) throw error;
-
-      if (isStudent) setStudentAccounts(prev => prev.filter(u => u.id !== showDeleteConfirm.id));
-      else setTeachers(prev => prev.filter(u => u.id !== showDeleteConfirm.id));
-
+      if (refreshAllData) await refreshAllData();
       setShowDeleteConfirm(null);
-    } catch (e: any) { 
-      alert("Gagal menghapus: " + e.message); 
-    } finally { 
-      setIsLocalSyncing(false); 
-    }
+    } catch (e: any) { alert("Gagal menghapus: " + e.message); } finally { setIsLocalSyncing(false); }
   };
 
   return (
@@ -156,14 +186,23 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
          <button onClick={() => setActiveTab('STUDENTS')} className={`flex-1 py-5 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all flex items-center justify-center gap-3 ${activeTab === 'STUDENTS' ? 'bg-white text-emerald-600 shadow-xl' : 'text-slate-400'}`}><GraduationCap size={16}/> Siswa ({studentCount})</button>
       </div>
 
-      {activeTab === 'STUDENTS' && (
-         <div className="bg-emerald-50 p-6 rounded-[2.5rem] border border-emerald-100 flex items-center gap-4 animate-pulse max-w-2xl mx-auto shadow-sm">
-            <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-emerald-600 shadow-sm shrink-0"><AlertCircle size={20}/></div>
-            <p className="text-[10px] font-black text-emerald-800 uppercase italic">
-               "Tolong hapus manual akun user siswa setelah 1 tahun lulus biar meringankan sistem Kak! ✨"
-            </p>
+      {/* INFO DASHBOARD (DI BAWAH NAV TAB) */}
+      <div className={`${roleTheme.light} p-8 rounded-[3rem] border-2 border-dashed ${roleTheme.border} flex flex-col md:flex-row items-center gap-8 max-w-4xl mx-auto shadow-sm animate-in slide-in-from-top-4`}>
+         <div className={`w-14 h-14 bg-white ${roleTheme.text} rounded-2xl flex items-center justify-center shadow-sm shrink-0 border ${roleTheme.border}`}>
+            <Info size={32} />
          </div>
-      )}
+         <div className="space-y-2 text-center md:text-left flex-1">
+            <h4 className={`text-xs font-black uppercase tracking-widest ${roleTheme.text}`}>Informasi Akses {roleTheme.label}</h4>
+            <p className="text-[10px] font-bold text-slate-500 uppercase leading-relaxed tracking-wide italic">
+               "Fitur edit <span className="text-slate-800 font-black">NAMA, USERNAME, & PIN</span> bisa dilakukan di sini. Sistem akan otomatis menyinkronkan nama baru ke seluruh riwayat & histori sesi tanpa menghapus data lama. ✨"
+            </p>
+            {activeTab === 'STUDENTS' && (
+              <p className="text-[10px] font-black text-rose-600 uppercase italic pt-1 flex items-center justify-center md:justify-start gap-2">
+                 <Zap size={14} /> Khusus Siswa: Disarankan hapus manual akun user setelah 1 tahun lulus agar sistem tetap ringan!
+              </p>
+            )}
+         </div>
+      </div>
 
       <div className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl overflow-hidden p-10 md:p-14 space-y-8">
          <div className="max-h-[600px] overflow-y-auto custom-scrollbar pr-2 space-y-4">
@@ -206,15 +245,6 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
               <h4 className={`text-3xl font-black italic mb-10 tracking-tighter leading-none ${roleTheme.text}`}>USER & <span className="text-slate-800">ACCESS</span></h4>
               
               <div className="space-y-6">
-                 {activeTab === 'ADMINS' && (
-                    <div className="p-5 bg-orange-50 border border-orange-100 rounded-2xl flex items-start gap-4 mb-2">
-                       <Info size={20} className="text-orange-500 shrink-0 mt-0.5" />
-                       <p className="text-[9px] font-bold text-orange-800 uppercase leading-relaxed">
-                          Peringatan: Koordinasikan dengan pengurus lain sebelum mengubah data ini, karena perubahan username/pin akan memutus akses login mereka secara langsung.
-                       </p>
-                    </div>
-                 )}
-
                  <div className="space-y-2 text-left">
                     <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Nama Lengkap</label>
                     <input type="text" placeholder="MISAL: BUDI SANTOSO" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
@@ -225,10 +255,10 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
                  </div>
                  <div className="space-y-2 text-left">
                     <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">PIN 6 DIGIT KEAMANAN</label>
-                    <input type="text" placeholder="MISAL: 224488" value={formData.pin} onChange={e => setFormData({...formData, pin: e.target.value.replace(/\D/g, '')})} maxLength={6} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+                    <input type="text" placeholder="MISAL: 051020" value={formData.pin} onChange={e => setFormData({...formData, pin: e.target.value.replace(/\D/g, '')})} maxLength={6} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
                  </div>
                  <button onClick={handleSave} disabled={isLocalSyncing} className={`w-full py-6 ${roleTheme.bg} text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3`}>
-                    {isLocalSyncing ? <Loader2 size={18} className="animate-spin" /> : <ShieldAlert size={18}/>} UPDATE AKSES ✨
+                    {isLocalSyncing ? <Loader2 size={18} className="animate-spin" /> : <ShieldAlert size={18}/>} {showModal === 'ADD' ? 'BUAT AKSES BARU ✨' : 'UPDATE AKSES & HISTORI ✨'}
                  </button>
               </div>
            </div>
@@ -239,32 +269,16 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
         <div className="fixed inset-0 z-[110000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in">
            <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative">
               <button onClick={() => setShowDeleteConfirm(null)} className="absolute top-8 right-8 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={24}/></button>
-              
-              <div className="w-24 h-24 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm animate-pulse">
-                <AlertTriangle size={48} />
-              </div>
-              
+              <div className="w-24 h-24 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm animate-pulse"><AlertTriangle size={48} /></div>
               <div className="space-y-2">
                  <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Hapus Akun?</h4>
                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4">
-                    Akses milik <span className="text-slate-800 font-black underline">{showDeleteConfirm.name}</span> akan dihapus permanen. Pengguna ini tidak akan bisa login lagi.
+                    Akses milik <span className="text-slate-800 font-black underline">{showDeleteConfirm.name}</span> akan dihapus. Perhatikan: Menghapus akun tidak akan menghapus riwayat mereka di database utama (Presensi/SPP).
                  </p>
               </div>
-
               <div className="flex gap-4">
-                 <button 
-                   onClick={() => setShowDeleteConfirm(null)} 
-                   className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all"
-                 >
-                    BATAL
-                 </button>
-                 <button 
-                   onClick={executeDelete} 
-                   disabled={isLocalSyncing}
-                   className="flex-1 py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl shadow-rose-200 active:scale-95 transition-all flex items-center justify-center gap-2"
-                 >
-                    {isLocalSyncing ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />} IYA, HAPUS
-                 </button>
+                 <button onClick={() => setShowDeleteConfirm(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all">BATAL</button>
+                 <button onClick={executeDelete} disabled={isLocalSyncing} className="flex-1 py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl shadow-rose-200 active:scale-95 transition-all flex items-center justify-center gap-2">{isLocalSyncing ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />} IYA, HAPUS</button>
               </div>
            </div>
         </div>
