@@ -11,7 +11,7 @@ import {
   Sparkles, HelpCircle, Info
 } from 'lucide-react';
 
-import { supabase, isSupabaseConfigured } from './services/supabase.ts';
+import { supabase } from './services/supabase.ts';
 
 import LoginPage from './pages/LoginPage.tsx';
 import AdminDashboard from './pages/AdminDashboard.tsx';
