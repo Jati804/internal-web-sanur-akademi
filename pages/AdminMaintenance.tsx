@@ -567,7 +567,7 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
                </button>
                
                <button onClick={() => setConfirmPurge(true)} className="px-10 py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-700 transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95 ring-4 ring-rose-500/20">
-                  <Eraser size={18} /> PURGE MEDIA > 3 HARI ✨
+                  <Eraser size={18} /> PURGE MEDIA &gt; 3 HARI ✨
                </button>
             </div>
           </div>
