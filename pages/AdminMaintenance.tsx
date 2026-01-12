@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Attendance, StudentPayment } from '../types';
 import { supabase } from '../services/supabase.ts';
@@ -637,7 +636,6 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
         </div>
       )}
 
-      {/* MODAL KOTAK PELINDUNG (SECURITY GATE) KHUSUS RESET */}
       {isResetGateOpen && (
         <div className="fixed inset-0 z-[250000] bg-[#0F172A]/95 backdrop-blur-2xl flex items-center justify-center p-6 animate-in zoom-in">
            <div className="bg-white w-full max-w-[360px] rounded-[4rem] p-10 md:p-14 shadow-2xl border-4 border-rose-600 text-center space-y-8 relative overflow-hidden">
@@ -739,8 +737,5 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
            </div>
         </div>
       )}
-    </div>
-  );
-};
 
-export default AdminMaintenance;
+      <MaintenanceNotes />
