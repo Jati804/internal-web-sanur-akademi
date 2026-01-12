@@ -18,7 +18,21 @@ interface AdminFinanceProps {
   studentPayments: StudentPayment[];
   refreshAllData?: () => Promise<void>;
 }
+// ✨ HELPER FUNCTIONS UNTUK LOCK BODY SCROLL
+const lockBodyScroll = () => {
+  document.body.style.overflow = 'hidden';
+  document.body.style.paddingRight = `${window.innerWidth - document.documentElement.clientWidth}px`;
+};
 
+const unlockBodyScroll = () => {
+  document.body.style.overflow = '';
+  document.body.style.paddingRight = '';
+};
+
+const AdminFinance: React.FC<AdminFinanceProps> = ({ 
+  transactions, 
+  studentPayments,
+  // dst...
 const AdminFinance: React.FC<AdminFinanceProps> = ({ 
   transactions, 
   studentPayments,
@@ -59,7 +73,41 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
     date: getWIBDate(),
     description: ''
   });
+  // ✨ LOCK SCROLL UNTUK SETIAP MODAL
+useEffect(() => {
+  if (selectedPayout) lockBodyScroll();
+  return () => unlockBodyScroll();
+}, [selectedPayout]);
 
+useEffect(() => {
+  if (confirmingSpp) lockBodyScroll();
+  return () => unlockBodyScroll();
+}, [confirmingSpp]);
+
+useEffect(() => {
+  if (showAddModal) lockBodyScroll();
+  return () => unlockBodyScroll();
+}, [showAddModal]);
+
+useEffect(() => {
+  if (editingTransaction) lockBodyScroll();
+  return () => unlockBodyScroll();
+}, [editingTransaction]);
+
+useEffect(() => {
+  if (confirmDeleteTx) lockBodyScroll();
+  return () => unlockBodyScroll();
+}, [confirmDeleteTx]);
+
+useEffect(() => {
+  if (showImportModal) lockBodyScroll();
+  return () => unlockBodyScroll();
+}, [showImportModal]);
+
+useEffect(() => {
+  if (previewImg) lockBodyScroll();
+  return () => unlockBodyScroll();
+}, [previewImg]);
   // LOGIKA AUTO-SCROLL & GLOW SETELAH AKSI
   useEffect(() => {
     if (highlightTx) {
