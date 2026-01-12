@@ -30,6 +30,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
   
   const [activeTab, setActiveTab] = useState<'LEDGER' | 'PAYROLL' | 'STUDENT_ACC'>(() => {
     return location?.state?.tab || 'LEDGER';
+  });
   const [isLoading, setIsLoading] = useState(false);
   const [highlightTx, setHighlightTx] = useState<{ id: string; type: 'INCOME' | 'EXPENSE' } | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
