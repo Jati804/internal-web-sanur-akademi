@@ -1,11 +1,10 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, Attendance } from '../types';
 import { supabase } from '../services/supabase.ts';
 import { 
   ClipboardCheck, Loader2, Clock, Send, Zap, HeartPulse,
   UserPlus, BookOpen, Home, Layers, Wallet, Hash,
-  Timer, RotateCcw, Save, Sparkles, Users, Info
+  Timer, RotateCcw, Save, Sparkles, Users, Info, AlertTriangle, X, Check
 } from 'lucide-react';
 import * as ReactRouterDOM from 'react-router-dom';
 const { Link, useLocation, useNavigate } = ReactRouterDOM as any;
@@ -47,6 +46,13 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
   const [activePackageId, setActivePackageId] = useState<string | null>(null);
   const [activeOriginalTeacherId, setActiveOriginalTeacherId] = useState<string | null>(null);
+  
+  // STATE BARU: Modal blocking untuk slot yang sedang dipakai
+  const [blockModal, setBlockModal] = useState<{
+    ownerName: string;
+    className: string;
+    currentSession: number;
+  } | null>(null);
 
   useEffect(() => {
     if (editData) {
@@ -144,6 +150,29 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
     if (isDetecting) return;
     if (!form.subject || !form.room) return alert("Pilih Matpel & Ruangan dulu ya! ✨");
     if (form.category === 'PRIVATE' && !form.studentName) return alert("Pilih Nama Siswa dulu untuk kelas Private! ✨");
+    
+    // ⭐ VALIDASI OWNERSHIP SEBELUM SUBMIT!
+    if (activePackageId && activeOriginalTeacherId && activeOriginalTeacherId !== user.id) {
+      // Ini bukan siklus saya, cek apakah saya pernah substitusi di paket ini
+      const mySubLogs = logs.filter(l => 
+        l.packageId === activePackageId && 
+        l.teacherId === user.id && 
+        l.status === 'SUB_LOG'
+      );
+      
+      if (mySubLogs.length === 0) {
+        // BLOCK! Saya tidak punya akses ke siklus ini
+        const owner = teachers.find(t => t.id === activeOriginalTeacherId);
+        const fullClassName = `${form.subject} (${form.level}) - ${form.room}`;
+        
+        setBlockModal({
+          ownerName: owner?.name || 'Guru Lain',
+          className: fullClassName,
+          currentSession: form.sessionNumber
+        });
+        return; // STOP SUBMIT!
+      }
+    }
     
     setLoading(true);
     try {
@@ -369,6 +398,78 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             {loading ? <Loader2 className="animate-spin" size={32} /> : isDetecting ? 'HARAP TUNGGU...' : (editData ? <><Save size={28}/> SIMPAN PERUBAHAN ✨</> : <><Send size={28} className="group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform" /> KIRIM PRESENSI SEKARANG ✨</>)}
          </button>
       </div>
+
+      {/* MODAL BLOCKING SLOT OWNERSHIP */}
+      {blockModal && (
+        <div className="fixed inset-0 z-[300000] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
+          <div className="bg-white w-full max-w-md rounded-[4rem] p-12 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600">
+            <button 
+              onClick={() => setBlockModal(null)} 
+              className="absolute top-8 right-8 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"
+            >
+              <X size={20}/>
+            </button>
+            
+            <div className="w-24 h-24 bg-rose-50 text-rose-600 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-inner animate-pulse border-4 border-rose-100">
+              <AlertTriangle size={48} />
+            </div>
+            
+            <div className="space-y-4">
+              <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">
+                Slot Sedang Digunakan! ⚠️
+              </h4>
+              
+              <div className="p-6 bg-rose-50 rounded-[2rem] border-2 border-rose-100 space-y-3">
+                <p className="text-[11px] font-bold text-rose-800 uppercase leading-relaxed">
+                  Kelas <span className="font-black text-rose-600">"{blockModal.className}"</span> sedang berjalan oleh:
+                </p>
+                <div className="py-4 px-6 bg-white rounded-2xl shadow-sm border border-rose-100">
+                  <p className="text-lg font-black text-slate-800 uppercase italic">
+                    {blockModal.ownerName}
+                  </p>
+                </div>
+                <p className="text-[10px] font-bold text-rose-700 italic">
+                  Saat ini mereka di Sesi {blockModal.currentSession}/6
+                </p>
+              </div>
+              
+              <div className="p-5 bg-blue-50 rounded-2xl border border-blue-100 text-left space-y-2">
+                <div className="flex items-start gap-3">
+                  <Info size={16} className="text-blue-600 shrink-0 mt-0.5" />
+                  <p className="text-[10px] font-bold text-blue-800 leading-relaxed">
+                    <span className="font-black">Kakak bisa input kelas ini setelah:</span>
+                  </p>
+                </div>
+                <ul className="ml-7 space-y-1.5 text-[9px] font-bold text-blue-700">
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-400">•</span>
+                    <span>Beliau menyelesaikan <span className="font-black">Sesi 6</span>, atau</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-400">•</span>
+                    <span>Beliau <span className="font-black">mendelegasikan</span> sesi kepada Kakak, atau</span>
+                  </li>
+                  <li className="flex items-start gap-2">
+                    <span className="text-blue-400">•</span>
+                    <span>Hubungi <span className="font-black">Admin</span> untuk koordinasi tukar kelas</span>
+                  </li>
+                </ul>
+              </div>
+              
+              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic px-4 leading-relaxed">
+                "Sistem ini mencegah bentrok data agar honor Kakak dan rekan tetap akurat! ✨"
+              </p>
+            </div>
+            
+            <button 
+              onClick={() => setBlockModal(null)} 
+              className="w-full py-6 bg-slate-900 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-widest shadow-xl hover:bg-blue-600 active:scale-95 transition-all flex items-center justify-center gap-3"
+            >
+              <Check size={20}/> SAYA MENGERTI
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
