@@ -230,11 +230,11 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
     setIsLoading(true);
     try {
       const lines = importText.trim().split(/\r?\n/);
-      const payload = lines?.map(line => {
+      const payload = lines.map(line => {
         if (!line.trim()) return null;
         let delimiter = ',';
         if (line.includes('\t')) delimiter = '\t'; else if (line.includes(';')) delimiter = ';';
-        const parts = line.split(delimiter)?.map(p => p.trim().replace(/^["']|["']$/g, ''));
+        const parts = line.split(delimiter).map(p => p.trim().replace(/^["']|["']$/g, ''));
         if (parts.length < 5) return null;
         const [date, desc, cat, type, amt] = parts;
         const cleanAmount = parseInt(amt.replace(/[^\d]/g, '')) || 0;
@@ -261,7 +261,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
 
   const handleExportExcel = () => {
     const headers = "TANGGAL,DESKRIPSI,KATEGORI,TIPE,NOMINAL\n";
-    const rows = filteredLedger?.map(t => `"${t.date}","${t.description}","${t.category}","${t.type}","${t.amount}"`).join("\n");
+    const rows = filteredLedger.map(t => `"${t.date}","${t.description}","${t.category}","${t.type}","${t.amount}"`).join("\n");
     const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
@@ -304,15 +304,15 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full relative z-10 max-w-5xl">
           <div className="bg-white/5 backdrop-blur-xl p-10 rounded-[3rem] border border-white/10 text-center flex flex-col justify-center min-h-[180px]">
              <p className="text-[10px] font-black uppercase text-blue-300 tracking-[0.4em] mb-3">Kas Bersih</p>
-             <p className="text-[17px] font-black italic tracking-tighter leading-none">Rp {stats.balance.toLocaleString()}</p>
+             <p className="text-2xl font-black italic tracking-tighter leading-none">Rp {stats.balance.toLocaleString()}</p>
           </div>
           <div className="bg-emerald-50/10 p-10 rounded-[3rem] border border-emerald-500/20 text-center flex flex-col justify-center min-h-[180px]">
              <div className="flex items-center gap-3 text-emerald-400 mb-4 justify-center"><ArrowUpCircle size={16}/><p className="text-[10px] font-black uppercase">Masuk</p></div>
-             <p className="text-[17px] font-black italic tracking-tighter leading-none">Rp {stats.income.toLocaleString()}</p>
+             <p className="text-2xl font-black italic tracking-tighter leading-none">Rp {stats.income.toLocaleString()}</p>
           </div>
           <div className="bg-rose-50/10 p-10 rounded-[3rem] border border-rose-500/20 text-center flex flex-col justify-center min-h-[180px]">
              <div className="flex items-center gap-3 text-rose-400 mb-4 justify-center"><ArrowDownCircle size={16}/><p className="text-[10px] font-black uppercase">Keluar</p></div>
-             <p className="text-[17px] font-black italic tracking-tighter leading-none">Rp {stats.expense.toLocaleString()}</p>
+             <p className="text-2xl font-black italic tracking-tighter leading-none">Rp {stats.expense.toLocaleString()}</p>
           </div>
         </div>
       </div>
@@ -354,7 +354,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
                   <table className="w-full text-left">
                      <thead className="bg-white sticky top-0 z-10 shadow-sm"><tr><th className="px-12 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Transaksi</th><th className="px-12 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Nominal</th><th className="px-12 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Aksi</th></tr></thead>
                      <tbody className="divide-y divide-slate-50">
-                        {filteredLedger?.map(t => {
+                        {filteredLedger.map(t => {
                            const isHighlighted = highlightTx?.id === t.id;
                            // GLOW SCHEME: INCOME = Emerald (Green), EXPENSE = Rose (Red)
                            const highlightColor = t.type === 'INCOME' 
@@ -389,7 +389,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
                <Search size={22} className="text-blue-500 ml-4 group-focus-within:scale-110 transition-transform" />
                <input type="text" placeholder="CARI GURU, KELAS, ATAU SISWA..." value={payrollSearch} onChange={e => setPayrollSearch(e.target.value.toUpperCase())} className="flex-1 bg-transparent outline-none text-[11px] font-black uppercase tracking-widest placeholder:text-slate-300" />
             </div>
-            {payrollQueue?.map((it) => (
+            {payrollQueue.map((it) => (
               <div key={it.id} className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl p-10 md:p-14 space-y-12 group hover:border-blue-200 transition-all duration-500">
                 <div className="flex flex-col md:flex-row justify-between items-start gap-8">
                   <div className="flex items-center gap-6">
@@ -406,7 +406,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
                 <div className="space-y-6">
                   <div className="flex items-center gap-6 px-2"><div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-blue-600"></div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Sesi Asli Guru Tersebut</p></div><div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-600"></div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Guru Tersebut Menggantikan</p></div><div className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest border ml-auto animate-pulse ${it.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>SIAP CAIR ({it.sessionCount} SESI)</div></div>
                   <div className="grid grid-cols-2 md:grid-cols-6 gap-3 md:gap-4 p-6 md:p-8 bg-slate-50/50 rounded-[3rem] border border-slate-50 shadow-inner">
-                    {[1,2,3,4,5,6]?.map(num => {
+                    {[1,2,3,4,5,6].map(num => {
                       const log = it.packageContextLogs.find((l: any) => l.sessionNumber === num);
                       const isMe = log && log.teacherId === it.teacherId;
                       const isOriginal = log && log.originalTeacherId === it.teacherId;
@@ -434,7 +434,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
                <input type="text" placeholder="CARI SISWA ATAU KELAS..." value={sppSearch} onChange={e => setSppSearch(e.target.value.toUpperCase())} className="flex-1 bg-transparent outline-none text-[11px] font-black uppercase tracking-widest placeholder:text-slate-300" />
             </div>
            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              {filteredSpp?.map((p) => (
+              {filteredSpp.map((p) => (
                  <div key={p.id} className="bg-white p-10 rounded-[4rem] border border-slate-100 shadow-2xl flex flex-col justify-between hover:border-emerald-500 transition-all group relative overflow-hidden">
                     <div className="absolute top-0 right-0 w-24 h-24 bg-emerald-50 rounded-full blur-2xl -mr-12 -mt-12 opacity-50"></div>
                     <div className="relative z-10">
