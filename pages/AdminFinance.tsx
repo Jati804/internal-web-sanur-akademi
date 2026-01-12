@@ -25,7 +25,8 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
 }) => {
   const getWIBDate = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
-  const [activeTab, setActiveTab] = useState<'LEDGER' | 'PAYROLL' | 'STUDENT_ACC'>('LEDGER');
+  const [activeTab, setActiveTab] = useState<'LEDGER' | 'PAYROLL' | 'STUDENT_ACC'>(() => {
+    return location?.state?.tab || 'LEDGER';
   const [isLoading, setIsLoading] = useState(false);
   const [highlightTx, setHighlightTx] = useState<{ id: string; type: 'INCOME' | 'EXPENSE' } | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
