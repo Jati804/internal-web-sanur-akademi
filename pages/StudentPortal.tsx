@@ -391,7 +391,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
               <div className="flex items-center justify-center md:justify-start gap-2">
                  <Sparkles size={14} className="text-emerald-400" />
                  <p className="text-[11px] font-black text-emerald-700 uppercase tracking-widest leading-relaxed">
-                    "Sertif & Rapot segera disimpan ya! Setelah <span className="bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg">1 tahun lulus</span> akun akan dihapus pengurus demi kelancaran sistem."
+                    "Sertif & Rapot segera disimpan ya! Setelah <span className="bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg">3 bulan lulus</span> dari kelas terakhir, akun akan dihapus pengurus demi kelancaran sistem."
                  </p>
               </div>
            </div>
