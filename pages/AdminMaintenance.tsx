@@ -337,8 +337,8 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
     try {
       const { data: attData } = await supabase.from('attendance').select('id, teachername, date, receiptdata').not('receiptdata', 'is', null).order('date', { ascending: false }).limit(40);
       const { data: payData } = await supabase.from('student_payments').select('id, studentname, date, receiptdata').not('receiptdata', 'is', null).order('date', { ascending: false }).limit(40);
-      const attItems = (attData || []).map(l => ({ id: l.id, date: l.date, type: 'SESI', name: l.teachername, img: l.receiptdata }));
-      const payItems = (payData || []).map(p => ({ id: p.id, date: p.date, type: 'SPP', name: p.studentname, img: p.receiptdata }));
+      const attItems = (attData || [])?.map(l => ({ id: l.id, date: l.date, type: 'SESI', name: l.teachername, img: l.receiptdata }));
+      const payItems = (payData || [])?.map(p => ({ id: p.id, date: p.date, type: 'SPP', name: p.studentname, img: p.receiptdata }));
       setGalleryItems([...attItems, ...payItems].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()));
       fetchMediaCount();
     } catch (e) { console.error(e); } finally { setIsFetchingGallery(false); }
@@ -575,7 +575,7 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
       {showPreviewList && galleryItems.length > 0 && (
         <div className="mx-2 bg-white rounded-[3.5rem] border border-slate-100 shadow-2xl overflow-hidden animate-in slide-in-from-top-4">
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 p-8 max-h-[700px] overflow-y-auto custom-scrollbar">
-              {galleryItems.map((item, idx) => (
+              {galleryItems?.map((item, idx) => (
                   <div key={idx} className="bg-slate-50 p-5 rounded-[2.5rem] border border-transparent hover:border-blue-200 transition-all group flex flex-col h-full shadow-sm">
                     <div className="aspect-square bg-white rounded-[1.8rem] mb-5 overflow-hidden border border-slate-200 relative cursor-pointer" onClick={() => setPreviewImg(item.img)}>
                         <img src={item.img} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="Receipt" />
