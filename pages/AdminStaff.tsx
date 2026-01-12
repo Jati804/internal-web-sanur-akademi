@@ -198,7 +198,7 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
             </p>
             {activeTab === 'STUDENTS' && (
               <p className="text-[10px] font-black text-rose-600 uppercase italic pt-1 flex items-center justify-center md:justify-start gap-2">
-                 <Zap size={14} /> Khusus Siswa: Disarankan hapus manual akun user setelah 1 tahun lulus agar sistem tetap ringan!
+                 <Zap size={14} /> Khusus Siswa: Disarankan hapus manual akun user setelah 3 bulan lulus dari kelas terakhir agar sistem tetap ringan!
               </p>
             )}
          </div>
