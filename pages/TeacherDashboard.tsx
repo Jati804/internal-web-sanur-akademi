@@ -1,10 +1,11 @@
+
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, Attendance } from '../types';
 import { supabase } from '../services/supabase.ts';
 import { 
   ClipboardCheck, Loader2, Clock, Send, Zap, HeartPulse,
   UserPlus, BookOpen, Home, Layers, Wallet, Hash,
-  Timer, RotateCcw, Save, Sparkles, Users, AlertTriangle, X
+  Timer, RotateCcw, Save, Sparkles, Users, Info
 } from 'lucide-react';
 import * as ReactRouterDOM from 'react-router-dom';
 const { Link, useLocation, useNavigate } = ReactRouterDOM as any;
@@ -25,6 +26,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   user, logs, studentAccounts, subjects, classes, levels, salaryConfig, teachers, refreshAllData
 }) => {
   const [loading, setLoading] = useState(false);
+  const [isDetecting, setIsDetecting] = useState(false);
   const [isDelegating, setIsDelegating] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
@@ -45,9 +47,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
   const [activePackageId, setActivePackageId] = useState<string | null>(null);
   const [activeOriginalTeacherId, setActiveOriginalTeacherId] = useState<string | null>(null);
-  const [showLockAlert, setShowLockAlert] = useState<{ ownerName: string } | null>(null);
 
-  // Pre-fill jika mode Edit
   useEffect(() => {
     if (editData) {
       const match = editData.className?.match(/(.*) \((.*)\) - (.*)/);
@@ -69,13 +69,13 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   }, [editData, user.id]);
 
   const estimatedHonor = useMemo(() => {
-    const hourlyRate = form.category === 'PRIVATE' ? salaryConfig.privateRate : salaryConfig.regulerRate;
+    const hourlyRate = form.category === 'PRIVATE' ? (salaryConfig?.privateRate || 25000) : (salaryConfig?.regulerRate || 15000);
     return Math.round(hourlyRate * form.duration);
   }, [form.category, form.duration, salaryConfig]);
 
-  // LOGIKA DETEKSI SIKLUS & PROTEKSI SLOT
+  // LOGIKA DETEKSI SESI OTOMATIS (FIXED: ENTRY TIME BASED)
   useEffect(() => {
-    if (editData || !form.subject || !form.room) return;
+    if (editData || !form.subject || !form.room || !Array.isArray(logs)) return;
     
     if (form.category === 'PRIVATE' && !form.studentName) {
       setForm(prev => ({ ...prev, sessionNumber: 1 }));
@@ -84,45 +84,66 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
       return;
     }
 
-    const fullClassName = `${form.subject} (${form.level}) - ${form.room}`.toUpperCase();
+    setIsDetecting(true);
     
-    const relevantLogs = logs.filter(l => {
-      const isSameClass = (l.className || '').toUpperCase() === fullClassName;
-      const isSameLevel = (l.level || '').toUpperCase() === form.level.toUpperCase();
-      const isSameCategory = (l.sessionCategory || 'REGULER') === form.category;
+    const fullClassName = `${form.subject} (${form.level}) - ${form.room}`.toUpperCase().trim();
+    
+    const timer = setTimeout(() => {
+      // 1. Ambil semua riwayat pengajaran kelas ini
+      const relevantLogs = logs.filter(l => {
+        const dbClass = (l.className || '').toUpperCase().trim();
+        const dbLevel = (l.level || '').toUpperCase().trim();
+        const dbCategory = (l.sessionCategory || 'REGULER');
+        
+        const isSameClass = dbClass === fullClassName;
+        const isSameLevel = dbLevel === form.level.toUpperCase();
+        const isSameCategory = dbCategory === form.category;
+        
+        const isSameGrouping = form.category === 'PRIVATE' 
+          ? (l.studentsAttended?.[0] || '').toUpperCase().trim() === form.studentName.toUpperCase().trim()
+          : true;
+
+        return isSameClass && isSameLevel && isSameCategory && isSameGrouping && 
+               (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG');
+      });
+
+      // 2. URUTKAN BERDASARKAN ID (TIMESTAMP) TERBARU
+      // Ini kunci utamanya: Sesi 1 yang baru diinput di siklus baru akan punya ID lebih besar 
+      // dibanding Sesi 6 di siklus lama, meskipun nomor sesinya lebih kecil.
+      const sortedByEntry = [...relevantLogs].sort((a, b) => b.id.localeCompare(a.id));
       
-      const isSameGrouping = form.category === 'PRIVATE' 
-        ? (l.studentsAttended?.[0] || '').toUpperCase() === form.studentName.toUpperCase()
-        : true;
+      const latestAction = sortedByEntry[0];
+      
+      if (latestAction) {
+        const lastSessNum = Number(latestAction.sessionNumber) || 0;
+        
+        // Jika aktivitas terakhir belum mencapai 6, lanjutkan paket tersebut
+        if (lastSessNum < 6) {
+          setForm(prev => ({ ...prev, sessionNumber: lastSessNum + 1 }));
+          setActivePackageId(latestAction.packageId || null);
+          setActiveOriginalTeacherId(latestAction.originalTeacherId || null);
+        } else {
+          // Jika aktivitas terakhir adalah Sesi 6, maka siklus selesai, buka paket baru (Sesi 1)
+          setForm(prev => ({ ...prev, sessionNumber: 1 }));
+          setActivePackageId(null);
+          setActiveOriginalTeacherId(null);
+        }
+      } else {
+        // Jika tidak ada riwayat sama sekali
+        setForm(prev => ({ ...prev, sessionNumber: 1 }));
+        setActivePackageId(null);
+        setActiveOriginalTeacherId(null);
+      }
+      setIsDetecting(false);
+    }, 400);
 
-      return isSameClass && isSameLevel && isSameCategory && isSameGrouping && 
-             (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG');
-    }).sort((a,b) => (b.sessionNumber || 0) - (a.sessionNumber || 0));
-
-    const latestLog = relevantLogs[0];
-    const lastSess = latestLog?.sessionNumber || 0;
-
-    if (lastSess > 0 && lastSess < 6) {
-      setForm(prev => ({ ...prev, sessionNumber: lastSess + 1 }));
-      setActivePackageId(latestLog.packageId || null);
-      setActiveOriginalTeacherId(latestLog.originalTeacherId || null);
-    } else {
-      setForm(prev => ({ ...prev, sessionNumber: 1 }));
-      setActivePackageId(null);
-      setActiveOriginalTeacherId(null);
-    }
+    return () => clearTimeout(timer);
   }, [logs, form.subject, form.level, form.room, form.category, form.studentName, editData]);
 
   const handleLaporPresensi = async () => {
+    if (isDetecting) return;
     if (!form.subject || !form.room) return alert("Pilih Matpel & Ruangan dulu ya! ✨");
     if (form.category === 'PRIVATE' && !form.studentName) return alert("Pilih Nama Siswa dulu untuk kelas Private! ✨");
-
-    // --- VALIDASI PROTEKSI SLOT (KECUALI JIKA DELEGASI AKTIF) ---
-    if (activeOriginalTeacherId && activeOriginalTeacherId !== user.id && !isDelegating && !editData) {
-      const owner = teachers.find(t => t.id === activeOriginalTeacherId);
-      setShowLockAlert({ ownerName: owner?.name || 'GURU LAIN' });
-      return;
-    }
     
     setLoading(true);
     try {
@@ -130,11 +151,12 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
       const targetTeacher = teachers.find(t => t.id === form.targetTeacherId);
       
       const groupSuffix = form.category === 'PRIVATE' ? `-${form.studentName.replace(/\s+/g, '-')}` : '-GROUP';
+      // ID Paket ditentukan di sini: kalau Sesi 1 buat baru, kalau 2-6 pakai yang lama
       const finalPackageId = activePackageId || `PKG-${form.category}-${fullClassName.replace(/\s+/g, '-')}${groupSuffix}-${Date.now()}`;
       const finalOriginalTeacherId = activeOriginalTeacherId || user.id;
 
       const payload: any = {
-        id: editData ? editData.id : `ATT-${Date.now()}`,
+        id: editData ? editData.id : `ATT-${Date.now()}`, // ID berisi timestamp untuk sorting
         teacherid: isDelegating ? (targetTeacher?.id || user.id) : user.id,
         teachername: isDelegating ? (targetTeacher?.name.toUpperCase() || user.name.toUpperCase()) : user.name.toUpperCase(),
         date: form.date,
@@ -158,7 +180,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
       if (refreshAllData) await refreshAllData();
       setLoading(false);
-      navigate('/teacher/honor', { replace: true }); 
+      navigate('/teacher/honor', { replace: true, state: { highlightId: finalPackageId } }); 
 
     } catch (e: any) {
       alert("Gagal: " + e.message);
@@ -168,12 +190,14 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
   return (
     <div className="max-w-4xl mx-auto space-y-12 pb-40 px-4 animate-in">
-      {loading && (
+      {(loading || isDetecting) && (
         <div className="fixed inset-0 z-[200000] bg-slate-900/80 backdrop-blur-xl flex flex-col items-center justify-center text-white animate-in fade-in">
            <div className="w-24 h-24 bg-blue-600 rounded-[2.5rem] flex items-center justify-center shadow-xl mb-8 animate-bounce">
               <Loader2 className="animate-spin" size={48} />
            </div>
-           <p className="text-[12px] font-black uppercase tracking-[0.4em] italic animate-pulse">Memproses Data Sanur...</p>
+           <p className="text-[12px] font-black uppercase tracking-[0.4em] italic animate-pulse">
+             {isDetecting ? 'Mencari Riwayat Sesi...' : 'Memproses Data Sanur...'}
+           </p>
         </div>
       )}
 
@@ -198,7 +222,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
          <Link to="/teacher" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase transition-all text-center flex items-center justify-center gap-3 bg-blue-600 text-white shadow-lg shadow-blue-200">
             <ClipboardCheck size={16}/> Presensi
          </Link>
-         <Link to="/teacher/honor" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase transition-all text-center flex items-center justify-center gap-3 text-slate-400 hover:text-blue-600">
+         <Link to="/teacher/honor" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase transition-all text-center flex items-center justify-center gap-3 text-slate-400 hover:text-orange-600">
             <Wallet size={16}/> Honor
          </Link>
       </div>
@@ -250,17 +274,32 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             )}
 
             <div className="md:col-span-2 space-y-6 pt-4">
-               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 flex items-center gap-2"><Hash size={14} className="text-blue-500"/> Sesi Ke-Berapa? (1-6)</label>
+               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 flex items-center gap-2"><Hash size={14} className="text-blue-500"/> Sesi Terdeteksi Otomatis (1-6)</label>
                <div className="grid grid-cols-6 gap-3">
                   {[1, 2, 3, 4, 5, 6].map(n => (
-                    <button key={n} onClick={() => setForm({...form, sessionNumber: n})} className={`py-5 rounded-2xl font-black text-lg transition-all border-2 ${form.sessionNumber === n ? 'bg-blue-600 text-white border-blue-600 shadow-lg scale-105' : 'bg-white text-slate-600 border-slate-200 hover:border-blue-400 shadow-sm'}`}>{n}</button>
+                    <div 
+                      key={n} 
+                      className={`py-5 rounded-2xl font-black text-lg transition-all border-2 text-center flex items-center justify-center cursor-default ${form.sessionNumber === n ? 'bg-blue-600 text-white border-blue-600 shadow-lg scale-105' : 'bg-slate-50 text-slate-300 border-slate-100 shadow-inner'} ${isDetecting ? 'animate-pulse opacity-50' : ''}`}
+                    >
+                      {n}
+                    </div>
                   ))}
                </div>
                {activePackageId ? (
-                  <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest ml-4 italic animate-pulse">✨ Melanjutkan Siklus Aktif ({form.category}) — Sesi {form.sessionNumber}/6</p>
+                  <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest ml-4 italic animate-pulse">✨ Melanjutkan Siklus Aktif ({form.category}) — Sesi {form.sessionNumber}/6 Terdeteksi</p>
                ) : (
-                  <p className="text-[9px] font-black text-slate-400 uppercase ml-4 tracking-widest italic">🆕 Memulai Siklus 6 Sesi Baru</p>
+                  <p className="text-[9px] font-black text-slate-400 uppercase ml-4 tracking-widest italic">🆕 Memulai Siklus 6 Sesi Baru (Sesi 1)</p>
                )}
+               <p className="text-[7px] font-bold text-slate-300 uppercase tracking-[0.2em] ml-4 italic">*Nomor sesi otomatis mengikuti riwayat mengajar Kakak.</p>
+               
+               <div className="mt-4 ml-4 bg-blue-50 p-6 rounded-[2rem] border border-blue-100 flex items-start gap-4 shadow-sm animate-in fade-in duration-700">
+                  <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center shrink-0 shadow-md">
+                     <Info size={16} />
+                  </div>
+                  <p className="text-[9px] font-bold text-blue-800 uppercase italic leading-relaxed tracking-wide">
+                     "Jika nomor sesi tidak sesuai, mohon cek kembali: <span className="font-black underline">Mata Pelajaran</span>, <span className="font-black underline">Level Belajar</span>, <span className="font-black underline">Ruang Kelas</span>, <span className="font-black underline">Tipe Sesi</span>, dan <span className="font-black underline">Nama Siswa</span> (Khusus Private) agar sistem mendeteksi paket yang benar Kak! ✨"
+                  </p>
+               </div>
             </div>
 
             <div className="space-y-6">
@@ -324,38 +363,12 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
          <button 
            onClick={handleLaporPresensi} 
-           disabled={loading || !form.subject || !form.room} 
+           disabled={loading || isDetecting || !form.subject || !form.room} 
            className="w-full py-10 bg-blue-600 text-white rounded-[3rem] font-black text-[14px] uppercase tracking-[0.5em] shadow-2xl hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30 group"
          >
-            {loading ? <Loader2 className="animate-spin" size={32} /> : (editData ? <><Save size={28}/> SIMPAN PERUBAHAN ✨</> : <><Send size={28} className="group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform" /> KIRIM PRESENSI SEKARANG ✨</>)}
+            {loading ? <Loader2 className="animate-spin" size={32} /> : isDetecting ? 'HARAP TUNGGU...' : (editData ? <><Save size={28}/> SIMPAN PERUBAHAN ✨</> : <><Send size={28} className="group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform" /> KIRIM PRESENSI SEKARANG ✨</>)}
          </button>
       </div>
-
-      {/* MODAL PROTEKSI SLOT (LOCK ALERT) */}
-      {showLockAlert && (
-        <div className="fixed inset-0 z-[250000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in">
-           <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative border-t-8 border-orange-500">
-              <div className="w-24 h-24 bg-orange-50 text-orange-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm animate-pulse">
-                <AlertTriangle size={48} />
-              </div>
-              <div className="space-y-4">
-                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Slot Terkunci!</h4>
-                 <p className="text-[11px] font-bold text-slate-500 uppercase tracking-widest leading-relaxed px-4">
-                    Maaf Kak! Kelas ini sedang digunakan oleh <span className="text-orange-600 font-black underline">Kak {showLockAlert.ownerName.split(' ')[0]}</span> dan siklus belajarnya belum selesai (Sesi 6).
-                 </p>
-                 <div className="p-5 bg-slate-50 rounded-2xl border border-slate-100 text-[9px] font-black text-slate-400 uppercase leading-relaxed">
-                    Jika Kakak hanya menggantikan beliau hari ini, silakan centang tombol <span className="text-blue-600">"SAYA MENGGANTIKAN TEMAN"</span> di form presensi.
-                 </div>
-              </div>
-              <button 
-                onClick={() => setShowLockAlert(null)} 
-                className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2"
-              >
-                MENGERTI, SAYA CEK LAGI ✨
-              </button>
-           </div>
-        </div>
-      )}
     </div>
   );
 };
