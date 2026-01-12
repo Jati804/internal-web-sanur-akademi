@@ -1,4 +1,3 @@
-
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { Attendance, StudentPayment } from '../types';
 import { supabase } from '../services/supabase.ts';
@@ -637,7 +636,6 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
         </div>
       )}
 
-      {/* MODAL KOTAK PELINDUNG (SECURITY GATE) KHUSUS RESET */}
       {isResetGateOpen && (
         <div className="fixed inset-0 z-[250000] bg-[#0F172A]/95 backdrop-blur-2xl flex items-center justify-center p-6 animate-in zoom-in">
            <div className="bg-white w-full max-w-[360px] rounded-[4rem] p-10 md:p-14 shadow-2xl border-4 border-rose-600 text-center space-y-8 relative overflow-hidden">
@@ -737,6 +735,127 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
               <button className="absolute -top-14 right-0 p-4 text-white hover:text-rose-500 transition-colors" onClick={() => setPreviewImg(null)}><X size={40}/></button>
               <img src={previewImg} className="max-w-full max-h-[75vh] rounded-[3rem] shadow-2xl border-4 border-white/10 object-contain animate-in zoom-in" alt="Preview" />
            </div>
+        </div>
+      )}
+
+      <MaintenanceNotes />
+    </div>
+  );
+};
+
+const MaintenanceNotes: React.FC = () => {
+  const [isEditing, setIsEditing] = useState(false);
+  const [notes, setNotes] = useState('');
+  const [tempNotes, setTempNotes] = useState('');
+  const [lastModified, setLastModified] = useState('');
+
+  useEffect(() => {
+    const savedNotes = localStorage.getItem('maintenanceNotes') || '';
+    const savedDate = localStorage.getItem('notesLastModified') || '';
+    setNotes(savedNotes);
+    setLastModified(savedDate);
+  }, []);
+
+  const handleEdit = () => {
+    setTempNotes(notes);
+    setIsEditing(true);
+  };
+
+  const handleCancel = () => {
+    setTempNotes('');
+    setIsEditing(false);
+  };
+
+  const handleSave = () => {
+    const now = new Date().toLocaleString('id-ID', {
+      day: '2-digit',
+      month: 'long',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+    
+    setNotes(tempNotes);
+    setLastModified(now);
+    localStorage.setItem('maintenanceNotes', tempNotes);
+    localStorage.setItem('notesLastModified', now);
+    setIsEditing(false);
+  };
+
+  return (
+    <div className="mx-2 bg-white p-10 md:p-14 rounded-[4rem] border border-slate-100 shadow-2xl space-y-8 relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full blur-[100px] -mr-32 -mt-32 opacity-50"></div>
+      
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+        <div className="flex items-center gap-6">
+          <div className="p-4 bg-blue-600 text-white rounded-2xl shadow-xl">
+            <ClipboardList size={32} />
+          </div>
+          <div>
+            <h3 className="text-2xl font-black text-slate-800 uppercase italic">Catatan Maintenance</h3>
+            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-1">PR perbaikan web, tanggal perpanjangan domain, dll. ✨</p>
+          </div>
+        </div>
+        
+        <div className="flex gap-3">
+          {!isEditing ? (
+            <button 
+              onClick={handleEdit}
+              className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-700 transition-all shadow-xl flex items-center gap-3 active:scale-95"
+            >
+              <FileCode size={18} /> EDIT
+            </button>
+          ) : (
+            <>
+              <button 
+                onClick={handleCancel}
+                className="px-8 py-4 bg-slate-200 text-slate-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-300 transition-all flex items-center gap-3 active:scale-95"
+              >
+                <X size={18} /> BATAL
+              </button>
+              <button 
+                onClick={handleSave}
+                className="px-8 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-xl flex items-center gap-3 active:scale-95"
+              >
+                <Check size={18} /> SIMPAN
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className={`relative z-10 bg-slate-50 border-2 rounded-[2.5rem] p-6 transition-all ${isEditing ? 'border-blue-600 bg-white' : 'border-slate-200'}`}>
+        {!isEditing ? (
+          <div className="min-h-[300px]">
+            {notes ? (
+              <p className="text-[15px] leading-relaxed text-slate-700 whitespace-pre-wrap font-medium">
+                {notes}
+              </p>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-[300px] text-slate-400">
+                <ClipboardList size={48} className="mb-4 opacity-30" />
+                <p className="text-[11px] font-bold uppercase tracking-widest italic">
+                  Belum ada catatan. Klik "EDIT" untuk menambahkan. ✨
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <textarea
+            value={tempNotes}
+            onChange={(e) => setTempNotes(e.target.value)}
+            placeholder="Tulis catatan di sini...&#10;&#10;Contoh:&#10;- Perpanjangan domain: 15 Februari 2026&#10;- Fix bug di halaman login&#10;- Update library ke versi terbaru&#10;- Backup database mingguan"
+            className="w-full min-h-[300px] bg-transparent outline-none resize-none text-[15px] leading-relaxed text-slate-700 font-medium"
+            autoFocus
+          />
+        )}
+      </div>
+
+      {lastModified && (
+        <div className="text-right relative z-10">
+          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+            Terakhir diubah: {lastModified}
+          </p>
         </div>
       )}
     </div>
