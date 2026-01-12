@@ -203,7 +203,7 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
           const end = Math.min(start + batchSize, rawRows.length);
           const currentBatch = rawRows.slice(start, end);
 
-          const batchPromises = currentBatch.map(async (row) => {
+          const batchPromises = currentBatch?.map(async (row) => {
             if (!row || typeof row !== 'object') return false;
             const validCols = DB_COLUMNS[tableName] || [];
             const cleanedRow: any = {};
