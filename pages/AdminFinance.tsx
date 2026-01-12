@@ -9,6 +9,8 @@ import {
   Plus, Info, AlertCircle, Package, UserCheck, Repeat, Heart, Calendar, Clock, ImageIcon, FileText, Users, ClipboardList, ChevronRight, Maximize2,
   Zap, ShieldCheck, AlertOctagon
 } from 'lucide-react';
+import * as ReactRouterDOM from 'react-router-dom';
+const { useLocation } = ReactRouterDOM as any;
 
 interface AdminFinanceProps {
   attendanceLogs: Attendance[];
@@ -23,8 +25,9 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
   refreshAllData,
   attendanceLogs,
 }) => {
+  const location = useLocation();
   const getWIBDate = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
-
+  
   const [activeTab, setActiveTab] = useState<'LEDGER' | 'PAYROLL' | 'STUDENT_ACC'>(() => {
     return location?.state?.tab || 'LEDGER';
   const [isLoading, setIsLoading] = useState(false);
