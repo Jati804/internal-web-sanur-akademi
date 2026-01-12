@@ -304,15 +304,15 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full relative z-10 max-w-5xl">
           <div className="bg-white/5 backdrop-blur-xl p-10 rounded-[3rem] border border-white/10 text-center flex flex-col justify-center min-h-[180px]">
              <p className="text-[10px] font-black uppercase text-blue-300 tracking-[0.4em] mb-3">Kas Bersih</p>
-             <p className="text-[18px] font-black italic tracking-tighter leading-none">Rp {stats.balance.toLocaleString()}</p>
+             <p className="text-2xl font-black italic tracking-tighter leading-none">Rp {stats.balance.toLocaleString()}</p>
           </div>
           <div className="bg-emerald-50/10 p-10 rounded-[3rem] border border-emerald-500/20 text-center flex flex-col justify-center min-h-[180px]">
              <div className="flex items-center gap-3 text-emerald-400 mb-4 justify-center"><ArrowUpCircle size={16}/><p className="text-[10px] font-black uppercase">Masuk</p></div>
-             <p className="text-[18px] font-black italic tracking-tighter leading-none">Rp {stats.income.toLocaleString()}</p>
+             <p className="text-2xl font-black italic tracking-tighter leading-none">Rp {stats.income.toLocaleString()}</p>
           </div>
           <div className="bg-rose-50/10 p-10 rounded-[3rem] border border-rose-500/20 text-center flex flex-col justify-center min-h-[180px]">
              <div className="flex items-center gap-3 text-rose-400 mb-4 justify-center"><ArrowDownCircle size={16}/><p className="text-[10px] font-black uppercase">Keluar</p></div>
-             <p className="text-[18px] font-black italic tracking-tighter leading-none">Rp {stats.expense.toLocaleString()}</p>
+             <p className="text-2xl font-black italic tracking-tighter leading-none">Rp {stats.expense.toLocaleString()}</p>
           </div>
         </div>
       </div>
