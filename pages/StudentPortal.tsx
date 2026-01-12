@@ -59,7 +59,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
 
   const motivationalQuotes = [
     "Setiap langkah kecil belajarmu adalah pondasi kesuksesan di masa depan. Semangat! ✨",
-    "Belajar mandiri melatih kemandirianmu untuk menjadi pribadi yang hebat. 🚀",
+    "Setiap pembelajaran akan melatih dirimu untuk menjadi pribadi yang hebat. 🚀",
     "Kesuksesan hari esok ditentukan oleh seberapa giat kamu belajar hari ini. ⭐",
     "Jadilah versi terbaik dirimu setiap hari melalui ilmu yang bermanfaat. 🔥",
     "Tidak ada kata terlambat untuk memulai hal yang hebat. Ayo lanjut! 🎯"
