@@ -390,8 +390,14 @@ useEffect(() => {
                <div className="p-10 bg-slate-50 border-b flex flex-col md:flex-row justify-between items-center gap-6">
                   <h3 className="text-[11px] font-black uppercase tracking-widest flex items-center gap-3"><History size={20}/> BUKU KAS BESAR</h3>
                   <div className="flex flex-wrap gap-3">
-                     <button onClick={() => setShowAddModal(true)} className="px-6 py-4 bg-blue-600 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-200"><Plus size={14}/> TAMBAH</button>
-                     <button onClick={() => setShowImportModal(true)} className="px-6 py-4 bg-slate-900 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:bg-black transition-all shadow-xl"><Upload size={14}/> IMPORT</button>
+                     <button onClick={() => { 
+  window.scrollTo({ top: 0, behavior: 'smooth' }); 
+  setShowAddModal(true); 
+}} className="px-6 py-4 bg-blue-600 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-200"><Plus size={14}/> TAMBAH</button>
+                     <button onClick={() => { 
+  window.scrollTo({ top: 0, behavior: 'smooth' }); 
+  setShowImportModal(true); 
+}} className="px-6 py-4 bg-slate-900 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:bg-black transition-all shadow-xl"><Upload size={14}/> IMPORT</button>
                      <button onClick={handleExportExcel} className="px-6 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-200"><FileSpreadsheet size={14}/> EXPORT EXCEL</button>
                   </div>
                </div>
@@ -421,7 +427,13 @@ useEffect(() => {
                                     <span className="text-[8px] font-black text-blue-500 bg-blue-50 px-3 py-1 rounded-lg uppercase tracking-widest mt-3 italic">{t.category || 'UMUM'}</span>
                                  </td>
                                  <td className="px-12 py-8 text-right min-w-[200px]"><div className={`flex items-baseline justify-end gap-1.5 font-black italic whitespace-nowrap flex-nowrap ${t.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'}`}><span className="text-xs md:text-sm">{t.type === 'INCOME' ? '+' : '-'} Rp</span><span className="text-2xl md:text-3xl tracking-tighter leading-none">{t.amount.toLocaleString()}</span></div></td>
-                                 <td className="px-12 py-8 text-center min-w-[150px]"><div className="flex justify-center gap-2"><button onClick={() => setEditingTransaction(t)} className="p-3 bg-white text-slate-300 hover:text-blue-600 rounded-xl transition-all shadow-sm border border-slate-50"><Edit3 size={16}/></button><button onClick={() => setConfirmDeleteTx(t)} className="p-3 bg-white text-slate-300 hover:text-rose-500 rounded-xl transition-all shadow-sm border border-slate-50"><Trash2 size={16}/></button></div></td>
+                                 <td className="px-12 py-8 text-center min-w-[150px]"><div className="flex justify-center gap-2"><button onClick={() => { 
+  window.scrollTo({ top: 0, behavior: 'smooth' }); 
+  setEditingTransaction(t); 
+}} className="p-3 bg-white text-slate-300 hover:text-blue-600 rounded-xl transition-all shadow-sm border border-slate-50"><Edit3 size={16}/></button><button onClick={() => { 
+  window.scrollTo({ top: 0, behavior: 'smooth' }); 
+  setConfirmDeleteTx(t); 
+}} className="p-3 bg-white text-slate-300 hover:text-rose-500 rounded-xl transition-all shadow-sm border border-slate-50"><Trash2 size={16}/></button></div></td>
                               </tr>
                            );
                         })}
@@ -450,7 +462,10 @@ useEffect(() => {
                       <div className="flex items-center gap-2 pt-1"><Calendar size={12} className="text-slate-300"/><p className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Update: {formatDate(it.lastUpdate)}</p></div>
                     </div>
                   </div>
-                  <div className="bg-slate-50/80 backdrop-blur-sm p-8 rounded-[3rem] border border-slate-100 min-w-[240px] text-center space-y-6 shadow-sm"><div className="space-y-1"><p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] italic">TOTAL CAIRKAN</p><h4 className="text-3xl font-black italic tracking-tighter text-blue-600 leading-none">Rp {it.amount.toLocaleString()}</h4></div><button onClick={() => setSelectedPayout(it)} className="w-full py-4 bg-[#0F172A] text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-3 group">BAYAR SEKARANG <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform"/></button></div>
+                  <div className="bg-slate-50/80 backdrop-blur-sm p-8 rounded-[3rem] border border-slate-100 min-w-[240px] text-center space-y-6 shadow-sm"><div className="space-y-1"><p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] italic">TOTAL CAIRKAN</p><h4 className="text-3xl font-black italic tracking-tighter text-blue-600 leading-none">Rp {it.amount.toLocaleString()}</h4></div><button onClick={() => { 
+  window.scrollTo({ top: 0, behavior: 'smooth' }); 
+  setSelectedPayout(it); 
+}} className="w-full py-4 bg-[#0F172A] text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-3 group">BAYAR SEKARANG <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform"/></button></div>
                 </div>
                 <div className="space-y-6">
                   <div className="flex items-center gap-6 px-2"><div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-blue-600"></div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Sesi Asli Guru Tersebut</p></div><div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-600"></div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Guru Tersebut Menggantikan</p></div><div className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest border ml-auto animate-pulse ${it.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>SIAP CAIR ({it.sessionCount} SESI)</div></div>
