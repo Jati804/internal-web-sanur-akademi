@@ -351,6 +351,16 @@ const executeFinalRequestReport = async () => {
     } catch (e: any) { alert(e.message); } finally { setLoading(false); }
   };
 
+  // Lock body scroll when any modal is open
+  useEffect(() => {
+    const hasModal = !!(activeDownloadId || loading || showSuccess || showEditDateModal || confirmDeletePayment || showFinalConfirmation || previewModal || confirmingAbsen || requestingReportFor);
+    if (hasModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'unset';
+    }
+    return () => { document.body.style.overflow = 'unset'; };
+  }, [activeDownloadId, loading, showSuccess, showEditDateModal, confirmDeletePayment, showFinalConfirmation, previewModal, confirmingAbsen, requestingReportFor]);
   return (
     <div className="max-w-6xl mx-auto space-y-8 pb-40 px-4 animate-in fade-in duration-700">
       {(activeDownloadId || loading) && (
