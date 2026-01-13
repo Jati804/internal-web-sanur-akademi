@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Attendance, Transaction, StudentPayment } from '../types';
 import { supabase } from '../services/supabase.ts';
@@ -18,16 +17,6 @@ interface AdminFinanceProps {
   studentPayments: StudentPayment[];
   refreshAllData?: () => Promise<void>;
 }
-// ✨ HELPER FUNCTIONS UNTUK LOCK BODY SCROLL
-const lockBodyScroll = () => {
-  document.body.style.overflow = 'hidden';
-  document.body.style.paddingRight = `${window.innerWidth - document.documentElement.clientWidth}px`;
-};
-
-const unlockBodyScroll = () => {
-  document.body.style.overflow = '';
-  document.body.style.paddingRight = '';
-};
 
 const AdminFinance: React.FC<AdminFinanceProps> = ({ 
   transactions, 
@@ -69,62 +58,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
     date: getWIBDate(),
     description: ''
   });
-  // ✨ LOCK SCROLL UNTUK SETIAP MODAL
-useEffect(() => {
-  if (selectedPayout) {
-    window.scrollTo({ top: 0, behavior: 'instant' });
-    lockBodyScroll();
-  }
-  return () => unlockBodyScroll();
-}, [selectedPayout]);
 
-useEffect(() => {
-  if (confirmingSpp) {
-    window.scrollTo({ top: 0, behavior: 'instant' });
-    lockBodyScroll();
-  }
-  return () => unlockBodyScroll();
-}, [confirmingSpp]);
-
-useEffect(() => {
-  if (showAddModal) {
-    window.scrollTo({ top: 0, behavior: 'instant' });
-    lockBodyScroll();
-  }
-  return () => unlockBodyScroll();
-}, [showAddModal]);
-
-useEffect(() => {
-  if (editingTransaction) {
-    window.scrollTo({ top: 0, behavior: 'instant' });
-    lockBodyScroll();
-  }
-  return () => unlockBodyScroll();
-}, [editingTransaction]);
-
-useEffect(() => {
-  if (confirmDeleteTx) {
-    window.scrollTo({ top: 0, behavior: 'instant' });
-    lockBodyScroll();
-  }
-  return () => unlockBodyScroll();
-}, [confirmDeleteTx]);
-
-useEffect(() => {
-  if (showImportModal) {
-    window.scrollTo({ top: 0, behavior: 'instant' });
-    lockBodyScroll();
-  }
-  return () => unlockBodyScroll();
-}, [showImportModal]);
-
-useEffect(() => {
-  if (previewImg) {
-    window.scrollTo({ top: 0, behavior: 'instant' });
-    lockBodyScroll();
-  }
-  return () => unlockBodyScroll();
-}, [previewImg]);
   // LOGIKA AUTO-SCROLL & GLOW SETELAH AKSI
   useEffect(() => {
     if (highlightTx) {
