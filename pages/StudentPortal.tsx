@@ -44,6 +44,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   const [selectedAbsenDate, setSelectedAbsenDate] = useState(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()));
   const [requestingReportFor, setRequestingReportFor] = useState<any | null>(null);
   const [selectedTeacherForReport, setSelectedTeacherForReport] = useState('');
+  const [showFinalConfirmation, setShowFinalConfirmation] = useState(false);
   
   const [confirmDeletePayment, setConfirmDeletePayment] = useState<StudentPayment | null>(null);
   const [showEditDateModal, setShowEditDateModal] = useState<any | null>(null);
@@ -243,30 +244,36 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   };
 
   const handleRequestReport = async () => {
-    if (!selectedTeacherForReport || !requestingReportFor) return alert("Pilih Guru Pembimbing dulu ya! ✨");
-    setLoading(true);
-    try {
-      const teacher = teachers.find(t => t.id === selectedTeacherForReport);
-      const payload = { 
-        id: `REQ-${Date.now()}`, 
-        teacherid: selectedTeacherForReport, 
-        teachername: (teacher?.name || 'GURU').toUpperCase(), 
-        date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), 
-        status: 'REPORT_REQUEST', 
-        classname: requestingReportFor.className.toUpperCase(), 
-        packageid: requestingReportFor.id, 
-        studentsattended: [normalizedUserName], 
-        paymentstatus: 'PAID' 
-      };
-      await supabase.from('attendance').delete().eq('packageid', requestingReportFor.id).eq('status', 'REPORT_REJECTED');
-      await supabase.from('attendance').insert([payload]);
-      if (refreshAllData) await refreshAllData();
-      setRequestingReportFor(null);
-      setSelectedTeacherForReport('');
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000);
-    } catch (e: any) { alert(e.message); } finally { setLoading(false); }
-  };
+  if (!selectedTeacherForReport || !requestingReportFor) return alert("Pilih Guru Pembimbing dulu ya! ✨");
+  setShowFinalConfirmation(true);
+};
+
+const executeFinalRequestReport = async () => {
+  if (!selectedTeacherForReport || !requestingReportFor) return;
+  setLoading(true);
+  try {
+    const teacher = teachers.find(t => t.id === selectedTeacherForReport);
+    const payload = { 
+      id: `REQ-${Date.now()}`, 
+      teacherid: selectedTeacherForReport, 
+      teachername: (teacher?.name || 'GURU').toUpperCase(), 
+      date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), 
+      status: 'REPORT_REQUEST', 
+      classname: requestingReportFor.className.toUpperCase(), 
+      packageid: requestingReportFor.id, 
+      studentsattended: [normalizedUserName], 
+      paymentstatus: 'PAID' 
+    };
+    await supabase.from('attendance').delete().eq('packageid', requestingReportFor.id).eq('status', 'REPORT_REJECTED');
+    await supabase.from('attendance').insert([payload]);
+    if (refreshAllData) await refreshAllData();
+    setRequestingReportFor(null);
+    setSelectedTeacherForReport('');
+    setShowFinalConfirmation(false);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
+  } catch (e: any) { alert(e.message); } finally { setLoading(false); }
+};
 
   const handleDownloadPDFReport = async (course: any) => {
     const reportLog = findOfficialReportLog(course);
@@ -691,7 +698,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
                                           )}
                                           <p className="text-[6px] md:text-[7px] font-black uppercase">{doneLog ? 'DONE' : `SESI ${sNum}`}</p>
                                        </button>
-                                       {!!doneLog && sNum === Math.max(...completedSessions.map(s => s.num)) && !isRequesting && !isProcessing && (
+                                       {!!doneLog && !isRequesting && !isProcessing && (
                                          <button onClick={(e) => { e.stopPropagation(); setShowEditDateModal(doneLog); setEditDateValue(doneLog.date); }} className="absolute -top-1.5 -right-1.5 p-1.5 bg-white text-blue-500 rounded-full shadow-lg border border-blue-50 hover:bg-blue-50 transition-all z-20" title="Ubah Tanggal"><Edit3 size={10} strokeWidth={3} /></button>
                                        )}
                                      </div>
@@ -738,6 +745,55 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
               <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mx-auto shadow-sm animate-bounce"><AlertTriangle size={32} /></div>
               <div className="space-y-2"><h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Hapus Laporan?</h4><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4">Data laporan bayar <span className="text-slate-800 font-black underline">{confirmDeletePayment.className}</span> akan dihapus permanen Kak.</p></div>
               <div className="flex gap-3"><button onClick={() => setConfirmDeletePayment(null)} className="flex-1 py-4 bg-slate-50 text-slate-400 rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">BATAL</button><button onClick={executeDeletePayment} disabled={loading} className="flex-1 py-4 bg-rose-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 flex items-center justify-center gap-2">{loading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} HAPUS</button></div>
+           </div>
+        </div>
+      )}
+
+      {showFinalConfirmation && (
+        <div className="fixed inset-0 z-[130000] flex items-center justify-center p-6 bg-slate-900/95 backdrop-blur-xl animate-in zoom-in">
+           <div className="bg-white w-full max-w-[380px] rounded-[2.5rem] p-10 shadow-2xl text-center space-y-8 relative overflow-hidden border-t-4 border-amber-500">
+              <button onClick={() => setShowFinalConfirmation(false)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
+              
+              <div className="w-16 h-16 bg-amber-50 text-amber-600 rounded-[1.5rem] flex items-center justify-center mx-auto shadow-lg animate-pulse">
+                <AlertCircle size={36} strokeWidth={2.5} />
+              </div>
+
+              <div className="space-y-3">
+                <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Perhatian!</h4>
+                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Konfirmasi Klaim Rapot</p>
+              </div>
+
+              <div className="bg-amber-50/60 border-2 border-amber-100 rounded-[2rem] p-6 space-y-3">
+                <div className="flex items-start gap-3 text-left">
+                  <div className="w-6 h-6 bg-amber-500 text-white rounded-full flex items-center justify-center shrink-0 mt-0.5">
+                    <AlertTriangle size={14} strokeWidth={3} />
+                  </div>
+                  <div className="flex-1">
+                    <p className="text-[11px] font-black text-amber-900 uppercase italic leading-relaxed">
+                      Setelah klik "YAKIN LANJUTKAN!", tanggal sesi yang sudah kamu input <span className="bg-amber-200 text-amber-900 px-2 py-0.5 rounded-lg">TIDAK BISA DIUBAH</span> lagi ya Kak! 
+                    </p>
+                    <p className="text-[9px] font-bold text-amber-700 mt-3 leading-relaxed">
+                      Pastikan semua tanggal sudah benar sebelum melanjutkan. ✨
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setShowFinalConfirmation(false)} 
+                  className="flex-1 py-4 bg-slate-50 text-slate-600 rounded-xl font-black text-[9px] uppercase tracking-wide hover:bg-slate-100 active:scale-95 transition-all shadow-sm"
+                >
+                  BATAL
+                </button>
+                <button 
+                  onClick={executeFinalRequestReport} 
+                  disabled={loading}
+                  className="flex-[2] py-4 bg-emerald-600 text-white rounded-xl font-black text-[9px] uppercase tracking-wide shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                >
+                  {loading ? <Loader2 size={16} className="animate-spin" /> : <><Check size={16} strokeWidth={3} /> YAKIN, LANJUTKAN! 🚀</>}
+                </button>
+              </div>
            </div>
         </div>
       )}
