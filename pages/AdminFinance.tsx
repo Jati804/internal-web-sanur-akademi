@@ -515,9 +515,9 @@ useEffect(() => {
     style={{ animation: 'fadeIn 0.2s ease-out' }}
   >
     <div 
-      className="bg-white w-full max-w-sm rounded-[4rem] p-12 shadow-2xl relative overflow-hidden flex flex-col items-center"
-      style={{ animation: 'scaleIn 0.3s ease-out' }}
-    >
+  className="bg-white w-full max-w-sm rounded-[4rem] p-8 shadow-2xl relative overflow-hidden flex flex-col items-center max-h-[90vh] overflow-y-auto"
+  style={{ animation: 'scaleIn 0.3s ease-out' }}
+>
               <button onClick={() => { setSelectedPayout(null); setPayForm({ receiptData: '' }); }} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
               <div className={`w-20 h-20 ${selectedPayout.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'} rounded-[2rem] flex items-center justify-center mb-8 shadow-inner rotate-3`}><Banknote size={40}/></div>
               <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-2 leading-none text-center">Cairkan Honor</h4>
@@ -551,9 +551,9 @@ useEffect(() => {
     style={{ animation: 'fadeIn 0.2s ease-out' }}
   >
     <div 
-      className="bg-white w-full max-w-sm rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden flex flex-col items-center"
-      style={{ animation: 'scaleIn 0.3s ease-out' }}
-    >
+  className="bg-white w-full max-w-sm rounded-[4rem] p-8 shadow-2xl relative overflow-hidden flex flex-col items-center max-h-[90vh] overflow-y-auto"
+  style={{ animation: 'scaleIn 0.3s ease-out' }}
+>
               <button onClick={() => setConfirmingSpp(null)} className="absolute top-8 right-8 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
               <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-[2rem] flex items-center justify-center mb-6 shadow-inner rotate-3"><CheckCircle2 size={40}/></div>
               <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-1 leading-none text-center">Verifikasi SPP</h4>
@@ -587,9 +587,9 @@ useEffect(() => {
     style={{ animation: 'fadeIn 0.2s ease-out' }}
   >
     <div 
-      className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 md:p-12 shadow-2xl relative overflow-hidden"
-      style={{ animation: 'scaleIn 0.3s ease-out' }}
-    >
+  className="bg-white w-full max-w-sm rounded-[3.5rem] p-8 shadow-2xl relative overflow-hidden max-h-[90vh] overflow-y-auto"
+  style={{ animation: 'scaleIn 0.3s ease-out' }}
+>
                <button onClick={() => setShowAddModal(false)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
                <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-8 tracking-tighter">Input <span className="text-blue-600">Manual</span></h4>
                <form onSubmit={handleAddTransaction} className="space-y-6">
@@ -610,9 +610,9 @@ useEffect(() => {
     style={{ animation: 'fadeIn 0.2s ease-out' }}
   >
     <div 
-      className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 md:p-12 shadow-2xl relative overflow-hidden"
-      style={{ animation: 'scaleIn 0.3s ease-out' }}
-    >
+  className="bg-white w-full max-w-sm rounded-[3.5rem] p-8 shadow-2xl relative overflow-hidden max-h-[90vh] overflow-y-auto"
+  style={{ animation: 'scaleIn 0.3s ease-out' }}
+>
                <button onClick={() => setEditingTransaction(null)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
                <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-8 tracking-tighter">Edit <span className="text-blue-600">Transaksi</span></h4>
                <form onSubmit={handleUpdateTx} className="space-y-6">
@@ -636,9 +636,9 @@ useEffect(() => {
     style={{ animation: 'fadeIn 0.2s ease-out' }}
   >
     <div 
-      className="bg-white w-full max-w-[340px] rounded-[3rem] p-10 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600"
-      style={{ animation: 'scaleIn 0.3s ease-out' }}
-    >
+  className="bg-white w-full max-w-[340px] rounded-[3rem] p-8 text-center space-y-6 shadow-2xl relative border-t-8 border-rose-600 max-h-[90vh] overflow-y-auto"
+  style={{ animation: 'scaleIn 0.3s ease-out' }}
+>
                <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner animate-pulse"><Trash2 size={40} /></div>
                <div className="space-y-2">
                   <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Hapus Transaksi?</h4>
@@ -662,9 +662,9 @@ useEffect(() => {
     style={{ animation: 'fadeIn 0.2s ease-out' }}
   >
     <div 
-      className="bg-white w-full max-w-lg rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden"
-      style={{ animation: 'scaleIn 0.3s ease-out' }}
-    >
+  className="bg-white w-full max-w-lg rounded-[4rem] p-8 shadow-2xl relative overflow-hidden max-h-[90vh] overflow-y-auto"
+  style={{ animation: 'scaleIn 0.3s ease-out' }}
+>
                <button onClick={() => setShowImportModal(false)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
                <div className="flex items-center gap-4 mb-8"><div className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl"><ClipboardList size={24}/></div><div><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Smart Import Box</h4><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2 italic">Format: TGL, DESKRIPSI, KATEGORI, TIPE, NOMINAL ✨</p></div></div>
                <div className="space-y-6"><div className="p-6 bg-blue-50 rounded-[2rem] border border-blue-100"><p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-3 text-center">Urutan Kolom Harus Sesuai:</p><code className="text-[9px] font-mono font-bold text-slate-500 block bg-white p-4 rounded-xl border border-blue-50 leading-relaxed text-center uppercase">TANGGAL, DESKRIPSI, KATEGORI, TIPE, NOMINAL</code></div><textarea value={importText} onChange={e => setImportText(e.target.value)} placeholder="TEMPEL DATA DARI EXCEL DI SINI (COPY SELURUH TABEL)..." rows={8} className="w-full p-8 bg-slate-50 rounded-[2rem] font-mono text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all shadow-inner" /><div className="flex items-center gap-3 bg-orange-50 p-4 rounded-2xl border border-orange-100"><Zap size={16} className="text-orange-500 shrink-0" /><p className="text-[8px] font-bold text-orange-800 uppercase italic">Tips: Tipe bisa berisi "INCOME" atau "EXPENSE" ✨</p></div><button onClick={handleImportCSV} disabled={isLoading || !importText.trim()} className="w-full py-7 bg-blue-600 text-white rounded-[2.5rem] font-black text-[10px] uppercase shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">{isLoading ? <Loader2 size={24} className="animate-spin"/> : <><Check size={20}/> PROSES IMPORT MASSAL ✨</>}</button></div>
