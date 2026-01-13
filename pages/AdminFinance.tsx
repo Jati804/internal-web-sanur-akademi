@@ -49,35 +49,60 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
   const [importText, setImportText] = useState('');
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [confirmDeleteTx, setConfirmDeleteTx] = useState<Transaction | null>(null);
-  const [previewImg, setPreviewImg] = useState<string | null>(null);
+  // Semua useState dulu
+const [previewImg, setPreviewImg] = useState<string | null>(null);
 
-  const [addForm, setAddForm] = useState({
-    type: 'INCOME' as 'INCOME' | 'EXPENSE',
-    category: 'UMUM',
-    amount: 0,
-    date: getWIBDate(),
-    description: ''
-  });
+const [addForm, setAddForm] = useState({
+  type: 'INCOME' as 'INCOME' | 'EXPENSE',
+  category: 'UMUM',
+  amount: 0,
+  date: getWIBDate(),
+  description: ''
+});
 
-  // LOGIKA AUTO-SCROLL & GLOW SETELAH AKSI
-  useEffect(() => {
-    if (highlightTx) {
-      // Tunggu render selesai baru scroll
-      const timer = setTimeout(() => {
-        const element = document.getElementById(`tx-row-${highlightTx.id}`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 600);
+// ✅ BARU taruh useEffect di sini (setelah semua useState)
+useEffect(() => {
+  const hasModal = !!(
+    selectedPayout || 
+    confirmingSpp || 
+    showAddModal || 
+    editingTransaction || 
+    confirmDeleteTx || 
+    showImportModal || 
+    previewImg ||
+    isLoading
+  );
+  
+  if (hasModal) {
+    document.body.style.overflow = 'hidden';
+  } else {
+    document.body.style.overflow = 'unset';
+  }
+  
+  return () => { 
+    document.body.style.overflow = 'unset'; 
+  };
+}, [selectedPayout, confirmingSpp, showAddModal, editingTransaction, confirmDeleteTx, showImportModal, previewImg, isLoading]);
 
-      // Hilangkan efek glow setelah 8 detik
-      const glowTimer = setTimeout(() => setHighlightTx(null), 8000);
-      return () => {
-        clearTimeout(timer);
-        clearTimeout(glowTimer);
-      };
-    }
-  }, [highlightTx]);
+// LOGIKA AUTO-SCROLL & GLOW SETELAH AKSI
+useEffect(() => {
+  if (highlightTx) {
+    // Tunggu render selesai baru scroll
+    const timer = setTimeout(() => {
+      const element = document.getElementById(`tx-row-${highlightTx.id}`);
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 600);
+
+    // Hilangkan efek glow setelah 8 detik
+    const glowTimer = setTimeout(() => setHighlightTx(null), 8000);
+    return () => {
+      clearTimeout(timer);
+      clearTimeout(glowTimer);
+    };
+  }
+}, [highlightTx]);
 
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
