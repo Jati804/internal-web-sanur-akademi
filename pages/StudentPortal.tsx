@@ -245,7 +245,20 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
 
   const handleRequestReport = async () => {
   if (!selectedTeacherForReport || !requestingReportFor) return alert("Pilih Guru Pembimbing dulu ya! ✨");
-  setShowFinalConfirmation(true);
+  
+  // CEK: Apakah ini klaim ulang setelah rejected?
+  const isReclaimAfterRejected = myLogs.some(l => 
+    l.packageId === requestingReportFor.id && 
+    l.status === 'REPORT_REJECTED'
+  );
+  
+  // Kalau klaim ulang dari rejected -> langsung eksekusi tanpa modal konfirmasi
+  if (isReclaimAfterRejected) {
+    executeFinalRequestReport();
+  } else {
+    // Kalau klaim pertama kali -> tampilkan modal warning
+    setShowFinalConfirmation(true);
+  }
 };
 
 const executeFinalRequestReport = async () => {
