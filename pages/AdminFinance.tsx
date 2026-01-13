@@ -32,10 +32,6 @@ const unlockBodyScroll = () => {
 const AdminFinance: React.FC<AdminFinanceProps> = ({ 
   transactions, 
   studentPayments,
-  // dst...
-const AdminFinance: React.FC<AdminFinanceProps> = ({ 
-  transactions, 
-  studentPayments,
   refreshAllData,
   attendanceLogs,
 }) => {
