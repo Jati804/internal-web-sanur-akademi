@@ -60,7 +60,7 @@ const [addForm, setAddForm] = useState({
   description: ''
 });
 
-// ✅ BARU taruh useEffect di sini (setelah semua useState)
+// ✅ Auto scroll modal ke tengah viewport (body bebas scroll)
 useEffect(() => {
   const hasModal = !!(
     selectedPayout || 
@@ -69,20 +69,21 @@ useEffect(() => {
     editingTransaction || 
     confirmDeleteTx || 
     showImportModal || 
-    previewImg ||
-    isLoading
+    previewImg
   );
   
   if (hasModal) {
-    document.body.style.overflow = 'hidden';
-  } else {
-    document.body.style.overflow = 'unset';
+    // Tunggu dikit biar DOM modal udah ada, baru scroll
+    const timer = setTimeout(() => {
+      const modalElement = document.querySelector('[data-modal-container]');
+      if (modalElement) {
+        modalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 150);
+    
+    return () => clearTimeout(timer);
   }
-  
-  return () => { 
-    document.body.style.overflow = 'unset'; 
-  };
-}, [selectedPayout, confirmingSpp, showAddModal, editingTransaction, confirmDeleteTx, showImportModal, previewImg, isLoading]);
+}, [selectedPayout, confirmingSpp, showAddModal, editingTransaction, confirmDeleteTx, showImportModal, previewImg]);
 
 // LOGIKA AUTO-SCROLL & GLOW SETELAH AKSI
 useEffect(() => {
@@ -326,6 +327,29 @@ useEffect(() => {
   const formatDate = (dateStr: string) => dateStr.split('-').reverse().join('/');
 
   return (
+    <>
+      <style>{`
+        @keyframes modalFadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes modalZoomIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+      `}</style>
+      
     <div className="space-y-12 animate-in pb-40 px-2">
       <div className="bg-[#0F172A] p-12 md:p-16 rounded-[4rem] text-white shadow-2xl relative overflow-hidden flex flex-col items-center">
         <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600 rounded-full blur-[120px] opacity-20"></div>
@@ -491,8 +515,8 @@ useEffect(() => {
       )}
 
       {selectedPayout && (
-        <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-           <div className="bg-white w-full max-w-sm rounded-[4rem] p-12 shadow-2xl relative overflow-hidden flex flex-col items-center">
+  <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+     <div className="bg-white w-full max-w-sm rounded-[4rem] p-12 shadow-2xl relative overflow-hidden flex flex-col items-center opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => { setSelectedPayout(null); setPayForm({ receiptData: '' }); }} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
               <div className={`w-20 h-20 ${selectedPayout.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'} rounded-[2rem] flex items-center justify-center mb-8 shadow-inner rotate-3`}><Banknote size={40}/></div>
               <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-2 leading-none text-center">Cairkan Honor</h4>
@@ -521,8 +545,8 @@ useEffect(() => {
       )}
 
       {confirmingSpp && (
-        <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-           <div className="bg-white w-full max-w-sm rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden flex flex-col items-center">
+  <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+     <div className="bg-white w-full max-w-sm rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden flex flex-col items-center opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setConfirmingSpp(null)} className="absolute top-8 right-8 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
               <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-[2rem] flex items-center justify-center mb-6 shadow-inner rotate-3"><CheckCircle2 size={40}/></div>
               <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-1 leading-none text-center">Verifikasi SPP</h4>
@@ -551,8 +575,8 @@ useEffect(() => {
       )}
 
       {showAddModal && (
-         <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-            <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 md:p-12 shadow-2xl relative overflow-hidden">
+  <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+     <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 md:p-12 shadow-2xl relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
                <button onClick={() => setShowAddModal(false)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
                <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-8 tracking-tighter">Input <span className="text-blue-600">Manual</span></h4>
                <form onSubmit={handleAddTransaction} className="space-y-6">
@@ -568,8 +592,8 @@ useEffect(() => {
       )}
 
       {editingTransaction && (
-         <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-            <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 md:p-12 shadow-2xl relative overflow-hidden">
+  <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+     <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 md:p-12 shadow-2xl relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
                <button onClick={() => setEditingTransaction(null)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
                <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-8 tracking-tighter">Edit <span className="text-blue-600">Transaksi</span></h4>
                <form onSubmit={handleUpdateTx} className="space-y-6">
@@ -588,8 +612,8 @@ useEffect(() => {
       )}
 
       {confirmDeleteTx && (
-         <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-            <div className="bg-white w-full max-w-[340px] rounded-[3rem] p-10 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600">
+  <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+     <div className="bg-white w-full max-w-[340px] rounded-[3rem] p-10 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
                <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner animate-pulse"><Trash2 size={40} /></div>
                <div className="space-y-2">
                   <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Hapus Transaksi?</h4>
@@ -608,8 +632,8 @@ useEffect(() => {
       )}
 
       {showImportModal && (
-         <div className="fixed inset-0 z-[100000] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-            <div className="bg-white w-full max-w-lg rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden">
+  <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+     <div className="bg-white w-full max-w-lg rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
                <button onClick={() => setShowImportModal(false)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
                <div className="flex items-center gap-4 mb-8"><div className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl"><ClipboardList size={24}/></div><div><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Smart Import Box</h4><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2 italic">Format: TGL, DESKRIPSI, KATEGORI, TIPE, NOMINAL ✨</p></div></div>
                <div className="space-y-6"><div className="p-6 bg-blue-50 rounded-[2rem] border border-blue-100"><p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-3 text-center">Urutan Kolom Harus Sesuai:</p><code className="text-[9px] font-mono font-bold text-slate-500 block bg-white p-4 rounded-xl border border-blue-50 leading-relaxed text-center uppercase">TANGGAL, DESKRIPSI, KATEGORI, TIPE, NOMINAL</code></div><textarea value={importText} onChange={e => setImportText(e.target.value)} placeholder="TEMPEL DATA DARI EXCEL DI SINI (COPY SELURUH TABEL)..." rows={8} className="w-full p-8 bg-slate-50 rounded-[2rem] font-mono text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all shadow-inner" /><div className="flex items-center gap-3 bg-orange-50 p-4 rounded-2xl border border-orange-100"><Zap size={16} className="text-orange-500 shrink-0" /><p className="text-[8px] font-bold text-orange-800 uppercase italic">Tips: Tipe bisa berisi "INCOME" atau "EXPENSE" ✨</p></div><button onClick={handleImportCSV} disabled={isLoading || !importText.trim()} className="w-full py-7 bg-blue-600 text-white rounded-[2.5rem] font-black text-[10px] uppercase shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">{isLoading ? <Loader2 size={24} className="animate-spin"/> : <><Check size={20}/> PROSES IMPORT MASSAL ✨</>}</button></div>
@@ -618,15 +642,16 @@ useEffect(() => {
       )}
 
       {previewImg && (
-        <div className="fixed inset-0 z-[300000] bg-slate-900/95 flex flex-col items-center justify-center p-6" onClick={() => setPreviewImg(null)}>
-           <div className="relative max-w-4xl w-full flex flex-col items-center">
-              <button className="absolute -top-14 right-0 p-4 text-white hover:text-rose-500 transition-colors" onClick={() => setPreviewImg(null)}><X size={40}/></button>
-              <img src={previewImg} className="max-w-full max-h-[75vh] rounded-[3rem] shadow-2xl border-4 border-white/10 object-contain animate-in zoom-in" alt="Preview" />
+  <div data-modal-container className="fixed inset-0 z-[300000] bg-slate-900/95 flex flex-col items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}} onClick={() => setPreviewImg(null)}>
+     <div className="relative max-w-4xl w-full flex flex-col items-center opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+        <button className="absolute -top-14 right-0 p-4 text-white hover:text-rose-500 transition-colors" onClick={() => setPreviewImg(null)}><X size={40}/></button>
+        <img src={previewImg} className="max-w-full max-h-[75vh] rounded-[3rem] shadow-2xl border-4 border-white/10 object-contain" alt="Preview" />
               <div className="mt-8 text-center"><p className="text-[10px] font-black text-white/40 uppercase tracking-[0.8em] italic">Sanur Payment Verification ✨</p></div>
            </div>
         </div>
       )}
     </div>
+    </>
   );
 };
 
