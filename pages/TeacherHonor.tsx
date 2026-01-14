@@ -486,7 +486,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
             </div>
             <div className="pt-10 border-t border-slate-100 flex justify-between items-end gap-10">
               <div className="max-w-xs text-left">
-                <p className="text-[10px] font-bold text-slate-400 italic leading-relaxed text-left">"Slip ini adalah bukti pembayaran sah dari sistem internal Sanur Akademi Inspirasi. Pajak ditanggung lembaga."</p>
+                <p className="text-[10px] font-bold text-slate-400 italic leading-relaxed text-left">""Terima kasih atas kepercayaannya bergabung di SANUR Akademi Inspirasi. Slip ini adalah bukti pembayaran sah yang diverifikasi sistem internal."</p>
               </div>
               <div className="text-center flex flex-col items-center shrink-0">
                 <ShieldCheck size={44} className="text-slate-900 opacity-20 mb-2" />
