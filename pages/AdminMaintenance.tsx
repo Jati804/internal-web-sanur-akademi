@@ -513,33 +513,33 @@ useEffect(() => {
   return (
     <div className="max-w-7xl mx-auto space-y-12 pb-40 px-4 animate-in">
       {processingStatus !== 'IDLE' && (
-        <div className="fixed inset-0 z-[200000] bg-slate-900/80 backdrop-blur-xl flex flex-col items-center justify-center p-6">
-           {processingStatus === 'LOADING' ? (
-             <div className="bg-white p-12 rounded-[4rem] shadow-2xl flex flex-col items-center gap-8 w-full max-w-sm animate-in zoom-in">
-                <div className="w-24 h-24 bg-blue-600 rounded-[2.5rem] flex items-center justify-center shadow-xl animate-bounce">
-                    <Loader2 className="animate-spin text-white" size={48} />
-                </div>
-                <div className="text-center space-y-4 w-full">
-                    <p className="text-[12px] font-black uppercase tracking-[0.4em] italic text-blue-600">{loadingText}</p>
-                    <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 border">
-                        <div className="h-full bg-blue-500 rounded-full transition-all duration-300" style={{ width: `${importProgress}%` }}></div>
-                    </div>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{importProgress}% PROGRESS</p>
-                </div>
-             </div>
-           ) : (
-             <div className="bg-white p-12 rounded-[4rem] shadow-2xl flex flex-col items-center gap-8 w-full max-w-sm animate-in zoom-in border-b-8 border-emerald-500">
-                <div className="w-24 h-24 bg-emerald-50 text-emerald-600 rounded-[2.5rem] flex items-center justify-center shadow-inner">
-                    <CheckCircle2 size={72} className="fill-emerald-500 text-white" />
-                </div>
-                <div className="text-center">
-                    <h3 className="text-2xl font-black text-slate-800 uppercase italic leading-none mb-3">BERHASIL!</h3>
-                    <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.2em]">{successText}</p>
-                </div>
-             </div>
-           )}
-        </div>
-      )}
+  <div className="fixed inset-0 z-[200000] bg-slate-900/80 backdrop-blur-xl flex flex-col items-center justify-center p-6">
+     {processingStatus === 'LOADING' ? (
+       <div className="bg-white p-12 rounded-[4rem] shadow-2xl flex flex-col items-center gap-8 w-full max-w-sm">
+          <div className="w-24 h-24 bg-blue-600 rounded-[2.5rem] flex items-center justify-center shadow-xl animate-bounce">
+              <Loader2 className="animate-spin text-white" size={48} />
+          </div>
+          <div className="text-center space-y-4 w-full">
+              <p className="text-[12px] font-black uppercase tracking-[0.4em] italic text-blue-600">{loadingText}</p>
+              <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 border">
+                  <div className="h-full bg-blue-500 rounded-full transition-all duration-300" style={{ width: `${importProgress}%` }}></div>
+              </div>
+              <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{importProgress}% PROGRESS</p>
+          </div>
+       </div>
+     ) : (
+       <div className="bg-white p-12 rounded-[4rem] shadow-2xl flex flex-col items-center gap-8 w-full max-w-sm border-b-8 border-emerald-500">
+          <div className="w-24 h-24 bg-emerald-50 text-emerald-600 rounded-[2.5rem] flex items-center justify-center shadow-inner">
+              <CheckCircle2 size={72} className="fill-emerald-500 text-white" />
+          </div>
+          <div className="text-center">
+              <h3 className="text-2xl font-black text-slate-800 uppercase italic leading-none mb-3">BERHASIL!</h3>
+              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.2em]">{successText}</p>
+          </div>
+       </div>
+     )}
+  </div>
+)}
 
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-2">
         <div className="space-y-4">
