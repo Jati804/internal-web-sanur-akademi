@@ -86,6 +86,7 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
   const hardResetModalRef = useRef<HTMLDivElement>(null);
   const deleteMediaModalRef = useRef<HTMLDivElement>(null);
   const previewImgRef = useRef<HTMLDivElement>(null);
+  const loadingOverlayRef = useRef<HTMLDivElement>(null);
 
   const DB_COLUMNS: Record<string, string[]> = {
     settings: ['key', 'value'],
@@ -178,6 +179,15 @@ useEffect(() => {
     }, 100);
   }
 }, [previewImg]);
+
+// AUTO SCROLL KE LOADING OVERLAY ✨
+useEffect(() => {
+  if (processingStatus !== 'IDLE' && loadingOverlayRef.current) {
+    setTimeout(() => {
+      loadingOverlayRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  }
+}, [processingStatus]);
 
   const handleVerifyGate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -515,7 +525,7 @@ useEffect(() => {
       {processingStatus !== 'IDLE' && (
   <div className="fixed inset-0 z-[200000] bg-slate-900/80 backdrop-blur-xl flex flex-col items-center justify-center p-6 overflow-y-auto">
      {processingStatus === 'LOADING' ? (
-       <div className="my-auto">
+       <div className="my-auto" ref={loadingOverlayRef}>
           <div className="bg-white p-12 rounded-[4rem] shadow-2xl flex flex-col items-center gap-8 w-full max-w-sm">
               <div className="w-24 h-24 bg-blue-600 rounded-[2.5rem] flex items-center justify-center shadow-xl animate-bounce">
                   <Loader2 className="animate-spin text-white" size={48} />
@@ -530,7 +540,7 @@ useEffect(() => {
            </div>
         </div>
      ) : (
-       <div className="my-auto">
+       <div className="my-auto" ref={loadingOverlayRef}>
           <div className="bg-white p-12 rounded-[4rem] shadow-2xl flex flex-col items-center gap-8 w-full max-w-sm border-b-8 border-emerald-500">
               <div className="w-24 h-24 bg-emerald-50 text-emerald-600 rounded-[2.5rem] flex items-center justify-center shadow-inner">
                   <CheckCircle2 size={72} className="fill-emerald-500 text-white" />
