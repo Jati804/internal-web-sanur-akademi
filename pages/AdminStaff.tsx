@@ -39,9 +39,17 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
   const studentCount = studentAccounts.length;
 
   const currentList = useMemo(() => {
-    if (activeTab === 'ADMINS') return teachers.filter(u => u.role === 'ADMIN');
-    if (activeTab === 'TEACHERS') return teachers.filter(u => u.role === 'TEACHER');
-    return studentAccounts;
+    let list: User[] = [];
+    if (activeTab === 'ADMINS') list = teachers.filter(u => u.role === 'ADMIN');
+    else if (activeTab === 'TEACHERS') list = teachers.filter(u => u.role === 'TEACHER');
+    else list = studentAccounts;
+    
+    // Sort by ID descending (yang baru di atas)
+    return list.sort((a, b) => {
+      const idA = a.id.split('-')[1] || '0';
+      const idB = b.id.split('-')[1] || '0';
+      return parseInt(idB) - parseInt(idA);
+    });
   }, [activeTab, teachers, studentAccounts]);
 
   const filteredData = useMemo(() => {
