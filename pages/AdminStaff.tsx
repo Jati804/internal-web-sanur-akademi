@@ -1,5 +1,5 @@
 
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { User, Attendance, StudentPayment } from '../types';
 import { supabase } from '../services/supabase.ts';
 import { 
@@ -27,6 +27,25 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [formData, setFormData] = useState({ name: '', username: '', pin: '224488' });
   const [isLocalSyncing, setIsLocalSyncing] = useState(false);
+
+  // ✅ Auto scroll modal ke tengah viewport (body bebas scroll)
+useEffect(() => {
+  const hasModal = !!(
+    showModal || 
+    showDeleteConfirm
+  );
+  
+  if (hasModal) {
+    const timer = setTimeout(() => {
+      const modalElement = document.querySelector('[data-modal-container]');
+      if (modalElement) {
+        modalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 150);
+    
+    return () => clearTimeout(timer);
+  }
+}, [showModal, showDeleteConfirm]);
 
   const roleTheme = {
     ADMINS: { text: "text-blue-600", bg: "bg-blue-600", light: "bg-blue-50", border: "border-blue-100", label: "PENGURUS" },
@@ -166,6 +185,25 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
   };
 
   return (
+  <>
+    <style>{`
+      @keyframes modalFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes modalZoomIn {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+    `}</style>
+
     <div className="max-w-6xl mx-auto space-y-12 pb-40 px-4 animate-in">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-10 px-2">
         <div className="space-y-4">
@@ -246,9 +284,9 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
          </div>
       </div>
 
-      {showModal && (
-        <div className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in">
-           <div className="bg-white w-full max-w-sm rounded-[4rem] p-12 shadow-2xl relative border border-white/20">
+    {showModal && (
+      <div data-modal-container className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+   <div className="bg-white w-full max-w-sm rounded-[4rem] p-12 shadow-2xl relative border border-white/20 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setShowModal(null)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all"><X size={20}/></button>
               <h4 className={`text-3xl font-black italic mb-10 tracking-tighter leading-none ${roleTheme.text}`}>USER & <span className="text-slate-800">ACCESS</span></h4>
               
@@ -274,8 +312,8 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
       )}
 
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[110000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in">
-           <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative">
+       <div data-modal-container className="fixed inset-0 z-[110000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+   <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setShowDeleteConfirm(null)} className="absolute top-8 right-8 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={24}/></button>
               <div className="w-24 h-24 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm animate-pulse"><AlertTriangle size={48} /></div>
               <div className="space-y-2">
@@ -292,6 +330,7 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
         </div>
       )}
     </div>
+  </>
   );
 };
 
