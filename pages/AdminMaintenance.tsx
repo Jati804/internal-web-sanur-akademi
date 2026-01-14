@@ -439,6 +439,24 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
   }
 
   return (
+  <>
+    <style>{`
+      @keyframes modalFadeScaleIn {
+        from {
+          opacity: 0;
+          transform: scale(0.9);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+
+      .animate-modalFadeScaleIn {
+        animation: modalFadeScaleIn 0.3s ease-out;
+      }
+    `}</style>
+
     <div className="max-w-7xl mx-auto space-y-12 pb-40 px-4 animate-in">
       {processingStatus !== 'IDLE' && (
         <div className="fixed inset-0 z-[200000] bg-slate-900/80 backdrop-blur-xl flex flex-col items-center justify-center p-6">
@@ -617,117 +635,133 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
       )}
 
       {showPasteModal && (
-        <div className="fixed inset-0 z-[100000] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-           <div className="bg-white w-full max-w-2xl rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden flex flex-col">
-              <button onClick={() => setShowPasteModal(false)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
-              <div className="flex items-center gap-4 mb-8">
-                 <div className="p-4 bg-blue-600 text-white rounded-2xl shadow-xl"><FileCode size={28}/></div>
-                 <div>
-                    <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Import Box v6.5</h4>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2 italic">Tempel data backup Kakak di sini. {skipPhotos ? '✨ (Foto akan diabaikan)' : '⚠️ (Hati-hati data besar)'}</p>
-                 </div>
-              </div>
-              <textarea ref={textareaRef} placeholder="TEMPEL ISI FILE JSON DI SINI..." className="w-full h-80 p-8 bg-slate-50 rounded-[2.5rem] font-mono text-[10px] border-2 border-transparent focus:border-blue-600 outline-none transition-all shadow-inner resize-none custom-scrollbar" />
-              <div className="flex gap-4 mt-8">
-                 <button onClick={() => setShowPasteModal(false)} className="flex-1 py-6 bg-slate-50 text-slate-400 rounded-3xl font-black text-[11px] uppercase tracking-widest">BATAL</button>
-                 <button onClick={handleImportPaste} className="flex-[2] py-6 bg-blue-600 text-white rounded-3xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl hover:bg-blue-700 flex items-center justify-center gap-3 transition-all active:scale-95"><CheckCircle2 size={20}/> KONFIRMASI & RESTORE ✨</button>
-              </div>
-           </div>
-        </div>
-      )}
+  <div className="fixed inset-0 z-[100000] bg-slate-900/95 backdrop-blur-xl pointer-events-auto animate-in zoom-in">
+     <div className="fixed inset-0 flex items-center justify-center p-6">
+       <div className="bg-white w-full max-w-2xl rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden flex flex-col animate-modalFadeScaleIn">
+          <button onClick={() => setShowPasteModal(false)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
+          <div className="flex items-center gap-4 mb-8">
+             <div className="p-4 bg-blue-600 text-white rounded-2xl shadow-xl"><FileCode size={28}/></div>
+             <div>
+                <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Import Box v6.5</h4>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2 italic">Tempel data backup Kakak di sini. {skipPhotos ? '✨ (Foto akan diabaikan)' : '⚠️ (Hati-hati data besar)'}</p>
+             </div>
+          </div>
+          <textarea ref={textareaRef} placeholder="TEMPEL ISI FILE JSON DI SINI..." className="w-full h-80 p-8 bg-slate-50 rounded-[2.5rem] font-mono text-[10px] border-2 border-transparent focus:border-blue-600 outline-none transition-all shadow-inner resize-none custom-scrollbar" />
+          <div className="flex gap-4 mt-8">
+             <button onClick={() => setShowPasteModal(false)} className="flex-1 py-6 bg-slate-50 text-slate-400 rounded-3xl font-black text-[11px] uppercase tracking-widest">BATAL</button>
+             <button onClick={handleImportPaste} className="flex-[2] py-6 bg-blue-600 text-white rounded-3xl font-black text-[11px] uppercase tracking-[0.2em] shadow-xl hover:bg-blue-700 flex items-center justify-center gap-3 transition-all active:scale-95"><CheckCircle2 size={20}/> KONFIRMASI & RESTORE ✨</button>
+          </div>
+       </div>
+     </div>
+  </div>
+)}
 
       {isResetGateOpen && (
-        <div className="fixed inset-0 z-[250000] bg-[#0F172A]/95 backdrop-blur-2xl flex items-center justify-center p-6 animate-in zoom-in">
-           <div className="bg-white w-full max-w-[360px] rounded-[4rem] p-10 md:p-14 shadow-2xl border-4 border-rose-600 text-center space-y-8 relative overflow-hidden">
-              <button onClick={() => setIsResetGateOpen(false)} className="absolute top-8 right-8 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={24}/></button>
-              
-              <div className="space-y-4">
-                 <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner animate-pulse">
-                    <ShieldX size={48} />
-                 </div>
-                 <h2 className="text-2xl font-black text-slate-800 uppercase italic leading-none tracking-tighter">Buka Kunci <br/><span className="text-rose-600">Pelindung</span></h2>
-                 <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">Masukkan password untuk membuka akses reset massal! ✨</p>
-              </div>
+  <div className="fixed inset-0 z-[250000] bg-[#0F172A]/95 backdrop-blur-2xl pointer-events-auto animate-in zoom-in">
+     <div className="fixed inset-0 flex items-center justify-center p-6">
+       <div className="bg-white w-full max-w-[360px] rounded-[4rem] p-10 md:p-14 shadow-2xl border-4 border-rose-600 text-center space-y-8 relative overflow-hidden animate-modalFadeScaleIn">
+          <button onClick={() => setIsResetGateOpen(false)} className="absolute top-8 right-8 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={24}/></button>
+          
+          <div className="space-y-4">
+             <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner animate-pulse">
+                <ShieldX size={48} />
+             </div>
+             <h2 className="text-2xl font-black text-slate-800 uppercase italic leading-none tracking-tighter">Buka Kunci <br/><span className="text-rose-600">Pelindung</span></h2>
+             <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest leading-relaxed">Masukkan password untuk membuka akses reset massal! ✨</p>
+          </div>
 
-              <form onSubmit={handleVerifyResetGate} className="space-y-6">
-                 <div className={resetGateError ? 'animate-shake' : ''}>
-                    <input 
-                       autoFocus
-                       type="password" 
-                       value={resetGatePin}
-                       maxLength={6}
-                       onChange={e => setResetGatePin(e.target.value.replace(/\D/g, ''))}
-                       className={`w-full py-5 bg-slate-50 rounded-[1.8rem] text-center font-black text-3xl tracking-[0.4em] outline-none border-4 transition-all ${resetGateError ? 'border-rose-500 bg-rose-50 text-rose-600' : 'border-transparent focus:border-rose-600 focus:bg-white'}`}
-                       placeholder="******"
-                    />
-                 </div>
-                 <button 
-                    type="submit"
-                    className="w-full py-5 bg-rose-600 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-xl hover:bg-rose-700 active:scale-95 transition-all flex items-center justify-center gap-3"
-                 >
-                    <Unlock size={18} /> BUKA PELINDUNG
-                 </button>
-              </form>
+          <form onSubmit={handleVerifyResetGate} className="space-y-6">
+             <div className={resetGateError ? 'animate-shake' : ''}>
+                <input 
+                   autoFocus
+                   type="password" 
+                   value={resetGatePin}
+                   maxLength={6}
+                   onChange={e => setResetGatePin(e.target.value.replace(/\D/g, ''))}
+                   className={`w-full py-5 bg-slate-50 rounded-[1.8rem] text-center font-black text-3xl tracking-[0.4em] outline-none border-4 transition-all ${resetGateError ? 'border-rose-500 bg-rose-50 text-rose-600' : 'border-transparent focus:border-rose-600 focus:bg-white'}`}
+                   placeholder="******"
+                />
+             </div>
+             <button 
+                type="submit"
+                className="w-full py-5 bg-rose-600 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-xl hover:bg-rose-700 active:scale-95 transition-all flex items-center justify-center gap-3"
+             >
+                <Unlock size={18} /> BUKA PELINDUNG
+             </button>
+          </form>
 
-              <div className="pt-4 border-t border-slate-50 flex items-center justify-center gap-2 opacity-30">
-                 <Terminal size={12}/>
-                 <p className="text-[7px] font-black uppercase tracking-widest">RESET_AUTH_REQUIRED_V2</p>
-              </div>
-           </div>
-        </div>
-      )}
+          <div className="pt-4 border-t border-slate-50 flex items-center justify-center gap-2 opacity-30">
+             <Terminal size={12}/>
+             <p className="text-[7px] font-black uppercase tracking-widest">RESET_AUTH_REQUIRED_V2</p>
+          </div>
+       </div>
+     </div>
+  </div>
+)}
 
       {confirmPurge && (
-        <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-           <div className="bg-white w-full max-w-[340px] rounded-[3rem] p-10 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600">
-              <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner animate-pulse"><Eraser size={40} /></div>
-              <div className="space-y-2">
-                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Purge Media?</h4>
-                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-relaxed px-4 italic">
-                    "Semua foto (Base64) di tabel <span className="font-black text-rose-600">PRESENSI/HONOR</span> & <span className="font-black text-rose-600">SPP</span> yang sudah lebih dari <span className="text-rose-600 font-black">3 HARI</span> akan dihapus permanen untuk membersihkan memori. ✨"
-                 </p>
-              </div>
-              <div className="flex gap-4">
-                 <button onClick={() => setConfirmPurge(false)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase">BATAL</button>
-                 <button onClick={handleAutoPurgeMedia} className="flex-[2] py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 flex items-center justify-center gap-2">
-                    <Check size={18}/> IYA, BERSIHKAN! ✨
-                 </button>
-              </div>
-           </div>
-        </div>
-      )}
+  <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl pointer-events-auto animate-in zoom-in">
+     <div className="fixed inset-0 flex items-center justify-center p-6">
+       <div className="bg-white w-full max-w-[340px] rounded-[3rem] p-10 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600 animate-modalFadeScaleIn">
+          <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner animate-pulse"><Eraser size={40} /></div>
+          <div className="space-y-2">
+             <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Purge Media?</h4>
+             <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-relaxed px-4 italic">
+                "Semua foto (Base64) di tabel <span className="font-black text-rose-600">PRESENSI/HONOR</span> & <span className="font-black text-rose-600">SPP</span> yang sudah lebih dari <span className="text-rose-600 font-black">3 HARI</span> akan dihapus permanen untuk membersihkan memori. ✨"
+             </p>
+          </div>
+          <div className="flex gap-4">
+             <button onClick={() => setConfirmPurge(false)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase">BATAL</button>
+             <button onClick={handleAutoPurgeMedia} className="flex-[2] py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 flex items-center justify-center gap-2">
+                <Check size={18}/> IYA, BERSIHKAN! ✨
+             </button>
+          </div>
+       </div>
+     </div>
+  </div>
+)}
 
       {showHardResetModal && (
-        <div className="fixed inset-0 z-[260000] bg-[#0F172A]/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-           <div className="bg-white w-full max-w-[380px] rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600">
-              <button onClick={() => setShowHardResetModal(false)} className="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={24}/></button>
-              <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm animate-bounce"><RotateCcw size={40} /></div>
-              <div className="space-y-3">
-                 <h4 className="text-2xl font-black text-rose-600 uppercase italic leading-none">KONFIRMASI FINAL</h4>
-                 <p className="text-[10px] font-black text-slate-800 uppercase tracking-widest leading-relaxed px-2">
-                   PERINGATAN: Histori Presensi, SPP, dan Buku Kas akan dikosongkan total. Aksi ini tidak bisa dibatalkan Kak! ✨
-                 </p>
-              </div>
-              <div className="flex gap-4">
-                 <button onClick={() => setShowHardResetModal(false)} className="flex-1 py-5 bg-slate-100 text-slate-500 rounded-3xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all">BATAL</button>
-                 <button onClick={executeHardResetAttendance} className="flex-[1.5] py-5 bg-rose-600 text-white rounded-3xl font-black text-[10px] uppercase shadow-xl hover:bg-rose-700 active:scale-95 transition-all flex items-center justify-center gap-2">
-                   <ShieldAlert size={18}/> IYA, KOSONGKAN SEKARANG
-                 </button>
-              </div>
-           </div>
-        </div>
-      )}
+  <div className="fixed inset-0 z-[260000] bg-[#0F172A]/90 backdrop-blur-xl pointer-events-auto animate-in zoom-in">
+     <div className="fixed inset-0 flex items-center justify-center p-6">
+       <div className="bg-white w-full max-w-[380px] rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600 animate-modalFadeScaleIn">
+          <button onClick={() => setShowHardResetModal(false)} className="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={24}/></button>
+          <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm animate-bounce"><RotateCcw size={40} /></div>
+          <div className="space-y-3">
+             <h4 className="text-2xl font-black text-rose-600 uppercase italic leading-none">KONFIRMASI FINAL</h4>
+             <p className="text-[10px] font-black text-slate-800 uppercase tracking-widest leading-relaxed px-2">
+               PERINGATAN: Histori Presensi, SPP, dan Buku Kas akan dikosongkan total. Aksi ini tidak bisa dibatalkan Kak! ✨
+             </p>
+          </div>
+          <div className="flex gap-4">
+             <button onClick={() => setShowHardResetModal(false)} className="flex-1 py-5 bg-slate-100 text-slate-500 rounded-3xl font-black text-[10px] uppercase tracking-widest hover:bg-slate-200 transition-all">BATAL</button>
+             <button onClick={executeHardResetAttendance} className="flex-[1.5] py-5 bg-rose-600 text-white rounded-3xl font-black text-[10px] uppercase shadow-xl hover:bg-rose-700 active:scale-95 transition-all flex items-center justify-center gap-2">
+               <ShieldAlert size={18}/> IYA, KOSONGKAN SEKARANG
+             </button>
+          </div>
+       </div>
+     </div>
+  </div>
+)}
 
       {confirmDeleteMedia && (
-        <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-           <div className="bg-white w-full max-w-[340px] rounded-[2.5rem] p-8 text-center space-y-6 shadow-2xl relative border-t-8 border-rose-500">
-              <button onClick={() => setConfirmDeleteMedia(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
-              <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mx-auto shadow-sm"><Trash2 size={32} /></div>
-              <div className="space-y-1"><h4 className="text-xl font-black text-slate-800 uppercase italic leading-none text-rose-600">HAPUS FOTO?</h4><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4">Bukti milik <span className="text-slate-800 font-black">{confirmDeleteMedia.name}</span> akan dihapus from memory cloud. ✨</p></div>
-              <div className="flex gap-3"><button onClick={() => setConfirmDeleteMedia(null)} className="flex-1 py-4 bg-slate-400 text-white rounded-xl font-black text-[9px] uppercase">BATAL</button><button onClick={executeDeleteMedia} className="flex-[1.5] py-4 bg-rose-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg flex items-center justify-center gap-2"><Check size={16}/> IYA, HAPUS</button></div>
-           </div>
-        </div>
-      )}
+  <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl pointer-events-auto animate-in zoom-in">
+     <div className="fixed inset-0 flex items-center justify-center p-6">
+       <div className="bg-white w-full max-w-[340px] rounded-[2.5rem] p-8 text-center space-y-6 shadow-2xl relative border-t-8 border-rose-500 animate-modalFadeScaleIn">
+          <button onClick={() => setConfirmDeleteMedia(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
+          <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mx-auto shadow-sm"><Trash2 size={32} /></div>
+          <div className="space-y-1">
+             <h4 className="text-xl font-black text-slate-800 uppercase italic leading-none text-rose-600">HAPUS FOTO?</h4>
+             <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4">Bukti milik <span className="text-slate-800 font-black">{confirmDeleteMedia.name}</span> akan dihapus from memory cloud. ✨</p>
+          </div>
+          <div className="flex gap-3">
+             <button onClick={() => setConfirmDeleteMedia(null)} className="flex-1 py-4 bg-slate-400 text-white rounded-xl font-black text-[9px] uppercase">BATAL</button>
+             <button onClick={executeDeleteMedia} className="flex-[1.5] py-4 bg-rose-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg flex items-center justify-center gap-2"><Check size={16}/> IYA, HAPUS</button>
+          </div>
+       </div>
+     </div>
+  </div>
+)}
 
       {previewImg && (
         <div className="fixed inset-0 z-[300000] bg-slate-900/95 flex items-center justify-center p-6" onClick={() => setPreviewImg(null)}>
@@ -740,6 +774,7 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
 
       <MaintenanceNotes />
     </div>
+  </>
   );
 };
 
