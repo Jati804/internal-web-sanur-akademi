@@ -1,5 +1,5 @@
 
-import React, { useMemo, useState, useRef } from 'react';
+import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { StudentProfile } from '../types';
 import { supabase } from '../services/supabase.ts';
 import { 
@@ -25,6 +25,26 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
   const [formData, setFormData] = useState<Partial<StudentProfile & { status: string }>>({
     name: '', dob: '', institution: '', personalPhone: '', parentPhone: '', enrolledClass: '', notes: '', status: 'SISWA_SANUR'
   });
+
+  // ✅ Auto scroll modal ke tengah viewport (body bebas scroll)
+useEffect(() => {
+  const hasModal = !!(
+    showImportModal || 
+    showModal || 
+    showDeleteConfirm
+  );
+  
+  if (hasModal) {
+    const timer = setTimeout(() => {
+      const modalElement = document.querySelector('[data-modal-container]');
+      if (modalElement) {
+        modalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 150);
+    
+    return () => clearTimeout(timer);
+  }
+}, [showImportModal, showModal, showDeleteConfirm]);
 
   const todayDate = new Date();
   const todayMonthName = todayDate.toLocaleString('id-ID', { month: 'long' }).toUpperCase();
@@ -211,13 +231,32 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
   };
 
   return (
+  <>
+    <style>{`
+      @keyframes modalFadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+
+      @keyframes modalZoomIn {
+        from {
+          opacity: 0;
+          transform: scale(0.95);
+        }
+        to {
+          opacity: 1;
+          transform: scale(1);
+        }
+      }
+    `}</style>
+
     <div className="space-y-12 animate-in pb-40 px-2">
       {isLoading && (
-        <div className="fixed inset-0 z-[200000] bg-slate-900/60 backdrop-blur-md flex flex-col items-center justify-center text-white">
-           <Loader2 size={48} className="animate-spin mb-4" />
-           <p className="text-[10px] font-black uppercase tracking-[0.4em]">Sedang Memproses Data...</p>
-        </div>
-      )}
+  <div data-modal-container className="fixed inset-0 z-[200000] bg-slate-900/60 backdrop-blur-md flex flex-col items-center justify-center text-white opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+     <Loader2 size={48} className="animate-spin mb-4" />
+     <p className="text-[10px] font-black uppercase tracking-[0.4em]">Sedang Memproses Data...</p>
+  </div>
+)}
 
       <div className="mx-4 space-y-8">
          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-10">
@@ -371,8 +410,8 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
       </div>
 
       {showImportModal && (
-         <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-            <div className="bg-white w-full max-w-lg rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden">
+         <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+   <div className="bg-white w-full max-w-lg rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
                <button onClick={() => setShowImportModal(false)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all"><X size={20}/></button>
                <div className="flex items-center gap-4 mb-8">
                   <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl"><ClipboardList size={24}/></div>
@@ -408,8 +447,8 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
       )}
 
       {showModal && (
-        <div className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in">
-           <div className="bg-white w-full max-w-md rounded-[4rem] p-12 shadow-2xl relative border border-white/20">
+        <div data-modal-container className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+   <div className="bg-white w-full max-w-md rounded-[4rem] p-12 shadow-2xl relative border border-white/20 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setShowModal(null)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all"><X size={20}/></button>
               <h4 className="text-3xl font-black text-slate-800 uppercase italic mb-10 tracking-tighter leading-none text-center">DATA <span className="text-blue-600">SISWA</span></h4>
               <div className="space-y-6">
@@ -452,8 +491,8 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
       )}
 
       {showDeleteConfirm && (
-        <div className="fixed inset-0 z-[110000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in">
-           <div className="bg-white w-full max-w-[320px] rounded-[2.5rem] p-8 text-center space-y-6 shadow-2xl relative">
+        <div data-modal-container className="fixed inset-0 z-[110000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+   <div className="bg-white w-full max-w-[320px] rounded-[2.5rem] p-8 text-center space-y-6 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setShowDeleteConfirm(null)} className="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
               <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mx-auto shadow-sm animate-pulse">
                 <AlertTriangle size={32} />
@@ -474,6 +513,7 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
         </div>
       )}
     </div>
+  </>
   );
 };
 
