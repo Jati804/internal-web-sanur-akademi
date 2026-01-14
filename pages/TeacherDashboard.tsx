@@ -74,6 +74,23 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
     }
   }, [editData, user.id]);
 
+  // ✅ Auto scroll modal ke tengah viewport (body bebas scroll)
+  useEffect(() => {
+    const hasModal = !!blockModal;
+    
+    if (hasModal) {
+      // Tunggu dikit biar DOM modal udah ada, baru scroll
+      const timer = setTimeout(() => {
+        const modalElement = document.querySelector('[data-modal-container]');
+        if (modalElement) {
+          modalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [blockModal]);
+
   const estimatedHonor = useMemo(() => {
     const hourlyRate = form.category === 'PRIVATE' ? (salaryConfig?.privateRate || 25000) : (salaryConfig?.regulerRate || 15000);
     return Math.round(hourlyRate * form.duration);
@@ -218,7 +235,30 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   };
 
   return (
-    <div className="max-w-4xl mx-auto space-y-12 pb-40 px-4 animate-in">
+    <>
+      <style>{`
+        @keyframes modalFadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes modalZoomIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+      `}</style>
+
+      <div className="max-w-4xl mx-auto space-y-12 pb-40 px-4 animate-in">
       {(loading || isDetecting) && (
         <div className="fixed inset-0 z-[200000] bg-slate-900/80 backdrop-blur-xl flex flex-col items-center justify-center text-white animate-in fade-in">
            <div className="w-24 h-24 bg-blue-600 rounded-[2.5rem] flex items-center justify-center shadow-xl mb-8 animate-bounce">
@@ -401,8 +441,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
       {/* MODAL BLOCKING SLOT OWNERSHIP */}
       {blockModal && (
-        <div className="fixed inset-0 z-[300000] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-          <div className="bg-white w-full max-w-md rounded-[4rem] p-12 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600">
+        <div data-modal-container className="fixed inset-0 z-[300000] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+          <div className="bg-white w-full max-w-md rounded-[4rem] p-12 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
             <button 
               onClick={() => setBlockModal(null)} 
               className="absolute top-8 right-8 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"
@@ -471,6 +511,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
         </div>
       )}
     </div>
+    </>
   );
 };
 
