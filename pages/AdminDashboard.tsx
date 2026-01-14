@@ -147,9 +147,9 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs }) => {
             </div>
          </div>
 
-         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 relative z-10">
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 relative z-10">
             {followUpList.length > 0 ? followUpList.map((s: any, i) => (
-               <div key={i} className={`p-10 rounded-[3.5rem] border-2 transition-all group relative overflow-hidden flex flex-col justify-between min-h-[220px] ${s.lastSess >= 6 ? 'bg-slate-900 border-slate-800 text-white shadow-2xl' : 'bg-white border-orange-100 hover:border-orange-300 shadow-sm hover:shadow-xl'}`}>
+               <div key={i} className={`p-10 rounded-[3.5rem] border-2 transition-all group relative overflow-hidden flex flex-col justify-between min-h-[280px] ${s.lastSess >= 6 ? 'bg-slate-900 border-slate-800 text-white shadow-2xl' : 'bg-white border-orange-100 hover:border-orange-300 shadow-sm hover:shadow-xl'}`}>
                   {s.lastSess >= 6 && <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -mr-12 -mt-12"></div>}
                   
                   <div className="flex justify-between items-start mb-6">
