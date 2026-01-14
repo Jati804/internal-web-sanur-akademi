@@ -388,26 +388,54 @@ const executeFinalRequestReport = async () => {
   return (
     <>
       <style>{`
-        @keyframes modalFadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
+  @keyframes modalFadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
 
-        @keyframes modalZoomIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-      `}</style>
+  @keyframes modalZoomIn {
+    from {
+      opacity: 0;
+      transform: scale(0.95);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
+  @keyframes glowPulse {
+    0%, 100% {
+      box-shadow: 0 0 20px rgba(249, 115, 22, 0.4), 0 0 40px rgba(249, 115, 22, 0.2);
+      border-color: rgba(249, 115, 22, 0.6);
+    }
+    50% {
+      box-shadow: 0 0 30px rgba(249, 115, 22, 0.6), 0 0 60px rgba(249, 115, 22, 0.3);
+      border-color: rgba(249, 115, 22, 0.9);
+    }
+  }
+
+  @keyframes highlightFade {
+    0% {
+      background-color: rgba(254, 243, 199, 0.6);
+    }
+    100% {
+      background-color: transparent;
+    }
+  }
+
+  .edit-mode-glow {
+    animation: glowPulse 2s ease-in-out 3;
+  }
+
+  .edit-mode-highlight {
+    animation: highlightFade 4s ease-out forwards;
+  }
+`}</style>
 
       <div className="max-w-6xl mx-auto space-y-8 pb-40 px-4 animate-in fade-in duration-700">
       {(activeDownloadId || loading) && (
@@ -493,9 +521,24 @@ const executeFinalRequestReport = async () => {
 
       {isPaymentView ? (
         <section className="space-y-12">
-           <div id="form-bayar" className="bg-white p-12 md:p-16 rounded-[4rem] border-2 border-slate-50 shadow-2xl space-y-12 relative overflow-hidden scroll-mt-32">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50 rounded-full blur-[100px] -mr-32 -mt-32 opacity-50"></div>
-              <div className="flex items-center gap-8 relative z-10"><div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-3xl flex items-center justify-center shadow-inner shrink-0"><Receipt size={36} /></div><div><h3 className="text-3xl font-black text-slate-800 uppercase italic leading-none">{isEditing ? 'Update Laporan' : 'Lapor Bayar'}</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Pastikan bukti transfer jelas ya Kak ✨</p></div>{isEditing && <button onClick={resetForm} className="ml-auto p-4 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>}</div>
+           <div 
+  id="form-bayar" 
+  className={`bg-white p-12 md:p-16 rounded-[4rem] border-2 shadow-2xl space-y-12 relative overflow-hidden scroll-mt-32 transition-all duration-500 ${
+    isEditing 
+      ? 'border-orange-500 edit-mode-glow edit-mode-highlight' 
+      : 'border-slate-50'
+  }`}
+>
+  <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50 rounded-full blur-[100px] -mr-32 -mt-32 opacity-50"></div>
+  
+  {isEditing && (
+    <div className="absolute top-6 right-6 z-30 flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-full shadow-xl animate-pulse">
+      <Edit3 size={16} strokeWidth={3} className="animate-spin" style={{animationDuration: '3s'}} />
+      <span className="text-[10px] font-black uppercase tracking-widest">MODE UPDATE</span>
+    </div>
+  )}
+  
+  <div className="flex items-center gap-8 relative z-10"><div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-3xl flex items-center justify-center shadow-inner shrink-0"><Receipt size={36} /></div><div><h3 className="text-3xl font-black text-slate-800 uppercase italic leading-none">{isEditing ? 'Update Laporan' : 'Lapor Bayar'}</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Pastikan bukti transfer jelas ya Kak ✨</p></div>{isEditing && <button onClick={resetForm} className="ml-auto p-4 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>}</div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
                 <div className="space-y-3">
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Mata Pelajaran</label>
