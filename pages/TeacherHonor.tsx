@@ -171,6 +171,27 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
     }
   }, [highlightId, cycleGroups]);
 
+  // ✅ Auto scroll modal ke tengah viewport (body bebas scroll)
+  useEffect(() => {
+    const hasModal = !!(
+      showProofModal || 
+      showPurgedInfo || 
+      confirmDeletePkg
+    );
+    
+    if (hasModal) {
+      // Tunggu dikit biar DOM modal udah ada, baru scroll
+      const timer = setTimeout(() => {
+        const modalElement = document.querySelector('[data-modal-container]');
+        if (modalElement) {
+          modalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [showProofModal, showPurgedInfo, confirmDeletePkg]);
+
   const unpaidTotal = useMemo(() => 
     logs.filter(l => 
       l.teacherId === user.id && 
@@ -181,7 +202,30 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
   , [logs, user.id, selectedYear]);
 
   return (
-    <div className="max-w-7xl mx-auto space-y-12 pb-40 px-4 animate-in">
+    <>
+      <style>{`
+        @keyframes modalFadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes modalZoomIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+      `}</style>
+
+      <div className="max-w-7xl mx-auto space-y-12 pb-40 px-4 animate-in">
       {showSuccessMsg && (
         <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200000] px-10 py-6 bg-emerald-600 text-white rounded-[2.5rem] font-black text-xs uppercase tracking-widest shadow-2xl flex items-center gap-4 animate-in slide-in-from-top-4 border-4 border-white/20">
            <CheckCircle2 size={28} /> {showSuccessMsg}
@@ -455,8 +499,8 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
       </div>
 
       {showProofModal && (
-        <div className="fixed inset-0 z-[100000] bg-slate-900/95 backdrop-blur-xl flex flex-col items-center justify-center p-6" onClick={() => setShowProofModal(null)}>
-           <div className="relative max-w-2xl w-full">
+        <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}} onClick={() => setShowProofModal(null)}>
+           <div className="relative max-w-2xl w-full opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button className="absolute -top-12 right-0 p-4 text-white hover:text-rose-500 transition-colors" onClick={() => setShowProofModal(null)}><X size={32}/></button>
               <img src={showProofModal} className="w-full h-auto rounded-[3rem] shadow-2xl border-4 border-white/10" alt="Bukti Transfer" />
               <div className="mt-8 text-center"><p className="text-[10px] font-black text-white/50 uppercase tracking-[0.5em] italic">Bukti Transfer Sah dari Pengurus Sanur ✨</p></div>
@@ -465,8 +509,8 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
       )}
 
       {showPurgedInfo && (
-        <div className="fixed inset-0 z-[200000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-           <div className="bg-white w-full max-w-sm rounded-[4rem] p-12 text-center space-y-8 shadow-2xl relative">
+        <div data-modal-container className="fixed inset-0 z-[200000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+           <div className="bg-white w-full max-w-sm rounded-[4rem] p-12 text-center space-y-8 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setShowPurgedInfo(false)} className="absolute top-8 right-8 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
               <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner animate-pulse"><Info size={40} /></div>
               <div className="space-y-4">
@@ -487,8 +531,8 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
       )}
 
       {confirmDeletePkg && (
-        <div className="fixed inset-0 z-[200000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-           <div className="bg-white w-full max-w-sm rounded-[4rem] p-12 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600">
+        <div data-modal-container className="fixed inset-0 z-[200000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+           <div className="bg-white w-full max-w-sm rounded-[4rem] p-12 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner animate-pulse"><X size={40} className="text-rose-600" /></div>
               <div className="space-y-2">
                  <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Hapus Kotak Honor?</h4>
@@ -506,6 +550,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
         </div>
       )}
     </div>
+    </>
   );
 };
 
