@@ -608,8 +608,17 @@ const executeFinalRequestReport = async () => {
                                disabled={isDownloading}
                                className="px-8 py-5 bg-slate-900 text-white rounded-[2rem] shadow-xl hover:bg-emerald-600 transition-all flex items-center gap-3 active:scale-95 group"
                              >
-                               <Printer size={24} className="group-hover:scale-110 transition-transform" /> 
-                               <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">CETAK KUITANSI RESMI</span>
+                               {isDownloading ? (
+  <>
+    <Loader2 size={24} className="animate-spin" />
+    <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">MEMPROSES PDF...</span>
+  </>
+) : (
+  <>
+    <Printer size={24} className="group-hover:scale-110 transition-transform" /> 
+    <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">CETAK KUITANSI RESMI</span>
+  </>
+)}
                              </button>
                            )}
                          </div>
