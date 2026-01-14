@@ -75,8 +75,17 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
   const [isFetchingGallery, setIsFetchingGallery] = useState(false);
   
   const [mediaStats, setMediaStats] = useState({ count: 0, limit: 150 });
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // REF UNTUK AUTO SCROLL MODAL ✨
+  const importResultsRef = useRef<HTMLDivElement>(null);
+  const pasteModalRef = useRef<HTMLDivElement>(null);
+  const resetGateRef = useRef<HTMLDivElement>(null);
+  const purgeModalRef = useRef<HTMLDivElement>(null);
+  const hardResetModalRef = useRef<HTMLDivElement>(null);
+  const deleteMediaModalRef = useRef<HTMLDivElement>(null);
+  const previewImgRef = useRef<HTMLDivElement>(null);
 
   const DB_COLUMNS: Record<string, string[]> = {
     settings: ['key', 'value'],
@@ -97,15 +106,78 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
   };
 
   useEffect(() => {
-    const init = async () => {
-      try {
-        const { data } = await supabase.from('settings').select('*').eq('key', 'system_status').single();
-        if (data?.value?.maintenance) setIsMaintMode(true);
-        fetchMediaCount();
-      } catch (e) {}
-    };
-    init();
-  }, []);
+  const init = async () => {
+    try {
+      const { data } = await supabase.from('settings').select('*').eq('key', 'system_status').single();
+      if (data?.value?.maintenance) setIsMaintMode(true);
+      fetchMediaCount();
+    } catch (e) {}
+  };
+  init();
+}, []);
+
+// AUTO SCROLL KE MODAL IMPORT RESULTS ✨
+useEffect(() => {
+  if (importResults && importResultsRef.current) {
+    setTimeout(() => {
+      importResultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  }
+}, [importResults]);
+
+// AUTO SCROLL KE MODAL PASTE ✨
+useEffect(() => {
+  if (showPasteModal && pasteModalRef.current) {
+    setTimeout(() => {
+      pasteModalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  }
+}, [showPasteModal]);
+
+// AUTO SCROLL KE MODAL RESET GATE ✨
+useEffect(() => {
+  if (isResetGateOpen && resetGateRef.current) {
+    setTimeout(() => {
+      resetGateRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  }
+}, [isResetGateOpen]);
+
+// AUTO SCROLL KE MODAL PURGE ✨
+useEffect(() => {
+  if (confirmPurge && purgeModalRef.current) {
+    setTimeout(() => {
+      purgeModalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  }
+}, [confirmPurge]);
+
+// AUTO SCROLL KE MODAL HARD RESET ✨
+useEffect(() => {
+  if (showHardResetModal && hardResetModalRef.current) {
+    setTimeout(() => {
+      hardResetModalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  }
+}, [showHardResetModal]);
+
+// AUTO SCROLL KE MODAL DELETE MEDIA ✨
+useEffect(() => {
+  if (confirmDeleteMedia && deleteMediaModalRef.current) {
+    setTimeout(() => {
+      deleteMediaModalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  }
+}, [confirmDeleteMedia]);
+
+// AUTO SCROLL KE MODAL PREVIEW IMAGE ✨
+useEffect(() => {
+  if (previewImg && previewImgRef.current) {
+    setTimeout(() => {
+      previewImgRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }, 100);
+  }
+}, [previewImg]);
 
   const handleVerifyGate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -596,8 +668,9 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
       )}
 
       {importResults && (
-        <div className="fixed inset-0 z-[300000] bg-slate-900/90 backdrop-blur-2xl flex items-center justify-center p-6 animate-in zoom-in">
-           <div className="bg-white w-full max-w-lg rounded-[4rem] p-10 md:p-14 shadow-2xl relative overflow-hidden flex flex-col items-center">
+  <div className="fixed inset-0 z-[300000] bg-slate-900/90 backdrop-blur-2xl flex items-center justify-center p-6 overflow-y-auto">
+     <div className="my-auto" ref={importResultsRef}>
+        <div className="bg-white w-full max-w-lg rounded-[4rem] p-10 md:p-14 shadow-2xl relative overflow-hidden flex flex-col items-center">
               <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-[2.2rem] flex items-center justify-center mb-8 shadow-inner"><FileCheck size={40}/></div>
               <h3 className="text-3xl font-black text-slate-800 uppercase italic mb-2 leading-none text-center">Sinkron Selesai</h3>
               <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-10 text-center">Data Berhasil Dipulihkan:</p>
@@ -614,11 +687,13 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
               <button onClick={handleCloseImportResults} className="w-full py-6 bg-slate-900 text-white rounded-[2.5rem] font-black text-[12px] uppercase tracking-[0.3em] hover:bg-black active:scale-95 transition-all flex items-center justify-center gap-3 shadow-xl"><CheckCircle2 size={20}/> SELESAIKAN & TUTUP ✨</button>
            </div>
         </div>
+    </div>
       )}
 
       {showPasteModal && (
-        <div className="fixed inset-0 z-[100000] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-           <div className="bg-white w-full max-w-2xl rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden flex flex-col">
+  <div className="fixed inset-0 z-[100000] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6 overflow-y-auto">
+     <div className="my-auto" ref={pasteModalRef}>
+        <div className="bg-white w-full max-w-2xl rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden flex flex-col">
               <button onClick={() => setShowPasteModal(false)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
               <div className="flex items-center gap-4 mb-8">
                  <div className="p-4 bg-blue-600 text-white rounded-2xl shadow-xl"><FileCode size={28}/></div>
@@ -634,11 +709,13 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
               </div>
            </div>
         </div>
+    </div> 
       )}
 
       {isResetGateOpen && (
-        <div className="fixed inset-0 z-[250000] bg-[#0F172A]/95 backdrop-blur-2xl flex items-center justify-center p-6 animate-in zoom-in">
-           <div className="bg-white w-full max-w-[360px] rounded-[4rem] p-10 md:p-14 shadow-2xl border-4 border-rose-600 text-center space-y-8 relative overflow-hidden">
+  <div className="fixed inset-0 z-[250000] bg-[#0F172A]/95 backdrop-blur-2xl flex items-center justify-center p-6 overflow-y-auto">
+     <div className="my-auto" ref={resetGateRef}>
+        <div className="bg-white w-full max-w-[360px] rounded-[4rem] p-10 md:p-14 shadow-2xl border-4 border-rose-600 text-center space-y-8 relative overflow-hidden">
               <button onClick={() => setIsResetGateOpen(false)} className="absolute top-8 right-8 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={24}/></button>
               
               <div className="space-y-4">
@@ -675,11 +752,13 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
               </div>
            </div>
         </div>
+    </div>
       )}
 
       {confirmPurge && (
-        <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-           <div className="bg-white w-full max-w-[340px] rounded-[3rem] p-10 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600">
+  <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 overflow-y-auto">
+     <div className="my-auto" ref={purgeModalRef}>
+        <div className="bg-white w-full max-w-[340px] rounded-[3rem] p-10 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600">
               <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner animate-pulse"><Eraser size={40} /></div>
               <div className="space-y-2">
                  <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Purge Media?</h4>
@@ -695,11 +774,13 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
               </div>
            </div>
         </div>
+    </div>
       )}
 
       {showHardResetModal && (
-        <div className="fixed inset-0 z-[260000] bg-[#0F172A]/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-           <div className="bg-white w-full max-w-[380px] rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600">
+  <div className="fixed inset-0 z-[260000] bg-[#0F172A]/90 backdrop-blur-xl flex items-center justify-center p-6 overflow-y-auto">
+     <div className="my-auto" ref={hardResetModalRef}>
+        <div className="bg-white w-full max-w-[380px] rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600">
               <button onClick={() => setShowHardResetModal(false)} className="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={24}/></button>
               <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm animate-bounce"><RotateCcw size={40} /></div>
               <div className="space-y-3">
@@ -716,26 +797,31 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
               </div>
            </div>
         </div>
+    </div>
       )}
 
       {confirmDeleteMedia && (
-        <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 animate-in zoom-in">
-           <div className="bg-white w-full max-w-[340px] rounded-[2.5rem] p-8 text-center space-y-6 shadow-2xl relative border-t-8 border-rose-500">
+  <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 overflow-y-auto">
+     <div className="my-auto" ref={deleteMediaModalRef}>
+        <div className="bg-white w-full max-w-[340px] rounded-[2.5rem] p-8 text-center space-y-6 shadow-2xl relative border-t-8 border-rose-500">
               <button onClick={() => setConfirmDeleteMedia(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
               <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mx-auto shadow-sm"><Trash2 size={32} /></div>
               <div className="space-y-1"><h4 className="text-xl font-black text-slate-800 uppercase italic leading-none text-rose-600">HAPUS FOTO?</h4><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4">Bukti milik <span className="text-slate-800 font-black">{confirmDeleteMedia.name}</span> akan dihapus from memory cloud. ✨</p></div>
               <div className="flex gap-3"><button onClick={() => setConfirmDeleteMedia(null)} className="flex-1 py-4 bg-slate-400 text-white rounded-xl font-black text-[9px] uppercase">BATAL</button><button onClick={executeDeleteMedia} className="flex-[1.5] py-4 bg-rose-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg flex items-center justify-center gap-2"><Check size={16}/> IYA, HAPUS</button></div>
            </div>
         </div>
+    </div>
       )}
 
       {previewImg && (
-        <div className="fixed inset-0 z-[300000] bg-slate-900/95 flex items-center justify-center p-6" onClick={() => setPreviewImg(null)}>
-           <div className="relative max-w-4xl w-full flex flex-col items-center">
+  <div className="fixed inset-0 z-[300000] bg-slate-900/95 flex items-center justify-center p-6 overflow-y-auto" onClick={() => setPreviewImg(null)}>
+     <div className="my-auto" ref={previewImgRef}>
+        <div className="relative max-w-4xl w-full flex flex-col items-center">
               <button className="absolute -top-14 right-0 p-4 text-white hover:text-rose-500 transition-colors" onClick={() => setPreviewImg(null)}><X size={40}/></button>
               <img src={previewImg} className="max-w-full max-h-[75vh] rounded-[3rem] shadow-2xl border-4 border-white/10 object-contain animate-in zoom-in" alt="Preview" />
            </div>
         </div>
+    </div>
       )}
 
       <MaintenanceNotes />
