@@ -359,7 +359,8 @@ const executeFinalRequestReport = async () => {
       showFinalConfirmation || 
       previewModal || 
       confirmingAbsen || 
-      requestingReportFor
+      requestingReportFor ||
+      activeDownloadId 
     );
     
     if (hasModal) {
@@ -373,7 +374,7 @@ const executeFinalRequestReport = async () => {
       
       return () => clearTimeout(timer);
     }
-  }, [showEditDateModal, confirmDeletePayment, showFinalConfirmation, previewModal, confirmingAbsen, requestingReportFor]);
+  }, [showEditDateModal, confirmDeletePayment, showFinalConfirmation, previewModal, confirmingAbsen, requestingReportFor, activeDownloadId]);
   return (
     <>
       <style>{`
@@ -603,14 +604,17 @@ const executeFinalRequestReport = async () => {
                                <button onClick={() => handleEditPending(p)} className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-orange-500 hover:text-white transition-all"><Edit3 size={24}/></button>
                              </>
                            ) : (
-                             <button 
-  onClick={() => handleDownloadSlipDirect(p)} 
-  disabled={isDownloading}
-  className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-emerald-600 hover:text-white transition-all disabled:opacity-50"
-  title={isDownloading ? "Memproses PDF..." : "Cetak Kuitansi"}
->
-  {isDownloading ? <Loader2 size={24} className="animate-spin" /> : <Printer size={24} />}
-</button>
+                             <div className="flex gap-3">
+  <button 
+    onClick={() => handleDownloadSlipDirect(p)} 
+    disabled={isDownloading}
+    className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-emerald-600 hover:text-white transition-all disabled:opacity-50"
+    title={isDownloading ? "Memproses PDF..." : "Cetak Kuitansi"}
+  >
+    {isDownloading ? <Loader2 size={24} className="animate-spin" /> : <Printer size={24} />}
+  </button>
+  <div className="p-4"></div> {/* Placeholder biar lebar konsisten */}
+</div>
                            )}
                          </div>
                        </div>
