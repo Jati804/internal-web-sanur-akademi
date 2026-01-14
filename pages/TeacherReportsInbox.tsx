@@ -89,6 +89,27 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
     }
   }, [activeStep, lastActionedId]);
 
+  // ✅ Auto scroll modal ke tengah viewport (body bebas scroll)
+  useEffect(() => {
+    const hasModal = !!(
+      activeDownloadId || 
+      showMilestoneFor || 
+      confirmReject
+    );
+    
+    if (hasModal) {
+      // Tunggu dikit biar DOM modal udah ada, baru scroll
+      const timer = setTimeout(() => {
+        const modalElement = document.querySelector('[data-modal-container]');
+        if (modalElement) {
+          modalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [activeDownloadId, showMilestoneFor, confirmReject]);
+
   const reportRequests = useMemo(() => {
     const requests = logs.filter(l => (l.status === 'REPORT_REQUEST' || l.status === 'REPORT_PROCESSING') && l.teacherId === user.id);
     return requests.filter(req => {
@@ -254,11 +275,34 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
   };
 
   return (
-    <div className="max-w-7xl mx-auto space-y-12 pb-40 px-4 animate-in fade-in duration-700">
+    <>
+      <style>{`
+        @keyframes modalFadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+
+        @keyframes modalZoomIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+      `}</style>
+
+      <div className="max-w-7xl mx-auto space-y-12 pb-40 px-4 animate-in fade-in duration-700">
       {/* LOADING MODAL TENGAH - DENGAN REAL PROGRESS BAR */}
       {activeDownloadId && (
-        <div className="fixed inset-0 z-[300000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6 animate-in fade-in">
-           <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-12 shadow-2xl flex flex-col items-center text-center space-y-8 animate-in zoom-in duration-300">
+        <div data-modal-container className="fixed inset-0 z-[300000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+           <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-12 shadow-2xl flex flex-col items-center text-center space-y-8 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <div className="w-20 h-20 bg-blue-600 text-white rounded-[2.2rem] flex items-center justify-center shadow-xl animate-bounce">
                 <FileDown size={40} />
               </div>
@@ -518,8 +562,8 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
       </div>
 
       {showMilestoneFor && (
-        <div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in">
-           <div className="bg-white w-full max-w-2xl rounded-[4rem] p-12 shadow-2xl relative overflow-hidden space-y-10">
+        <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+           <div className="bg-white w-full max-w-2xl rounded-[4rem] p-12 shadow-2xl relative overflow-hidden space-y-10 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setShowMilestoneFor(null)} className="absolute top-10 right-10 p-3 bg-slate-50 text-slate-400 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
               <div className="flex items-center gap-6"><div className="w-16 h-16 bg-blue-600 text-white rounded-[2rem] flex items-center justify-center shadow-xl rotate-3"><History size={32} /></div><div><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Milestone Belajar</h4><p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-2">{showMilestoneFor.studentsAttended?.[0]}</p></div></div>
               <MilestoneView logs={logs} studentName={showMilestoneFor.studentsAttended?.[0] || ''} packageId={showMilestoneFor.packageId} />
@@ -529,8 +573,8 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
       )}
 
       {confirmReject && (
-         <div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl animate-in zoom-in">
-            <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative">
+         <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+            <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
                <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm animate-pulse"><AlertCircle size={48} /></div>
                <div className="space-y-2"><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Tolak Permintaan?</h4><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest Kalimat leading-relaxed px-4">Siswa akan diminta memilih pengajar lain untuk klaim rapot mereka.</p></div>
                <div className="flex gap-4"><button onClick={() => setConfirmReject(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase">BATAL</button><button onClick={handleRejectRequest} disabled={!!actionLoadingId} className="flex-1 py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl flex items-center justify-center gap-2">{actionLoadingId === confirmReject.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18}/>} IYA, TOLAK</button></div>
@@ -538,6 +582,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
          </div>
       )}
     </div>
+    </>
   );
 };
 
