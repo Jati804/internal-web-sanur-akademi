@@ -748,13 +748,43 @@ const MaintenanceNotes: React.FC = () => {
   const [notes, setNotes] = useState('');
   const [tempNotes, setTempNotes] = useState('');
   const [lastModified, setLastModified] = useState('');
+  const [isSaving, setIsSaving] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const savedNotes = localStorage.getItem('maintenanceNotes') || '';
-    const savedDate = localStorage.getItem('notesLastModified') || '';
-    setNotes(savedNotes);
-    setLastModified(savedDate);
+    fetchNotes();
   }, []);
+
+  const fetchNotes = async () => {
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from('maintenance_notes')
+        .select('*')
+        .eq('id', '00000000-0000-0000-0000-000000000001')
+        .single();
+      
+      if (error) throw error;
+      
+      if (data) {
+        setNotes(data.content || '');
+        if (data.last_modified) {
+          const date = new Date(data.last_modified);
+          setLastModified(date.toLocaleString('id-ID', {
+            day: '2-digit',
+            month: 'long',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          }));
+        }
+      }
+    } catch (error: any) {
+      console.error('Error fetching notes:', error.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   const handleEdit = () => {
     setTempNotes(notes);
@@ -766,20 +796,26 @@ const MaintenanceNotes: React.FC = () => {
     setIsEditing(false);
   };
 
-  const handleSave = () => {
-    const now = new Date().toLocaleString('id-ID', {
-      day: '2-digit',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    });
-    
-    setNotes(tempNotes);
-    setLastModified(now);
-    localStorage.setItem('maintenanceNotes', tempNotes);
-    localStorage.setItem('notesLastModified', now);
-    setIsEditing(false);
+  const handleSave = async () => {
+    setIsSaving(true);
+    try {
+      const { error } = await supabase
+        .from('maintenance_notes')
+        .update({ 
+          content: tempNotes,
+          last_modified: new Date().toISOString()
+        })
+        .eq('id', '00000000-0000-0000-0000-000000000001');
+      
+      if (error) throw error;
+      
+      await fetchNotes();
+      setIsEditing(false);
+    } catch (error: any) {
+      alert('Gagal menyimpan catatan: ' + error.message);
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -815,9 +851,11 @@ const MaintenanceNotes: React.FC = () => {
               </button>
               <button 
                 onClick={handleSave}
-                className="px-8 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-xl flex items-center gap-3 active:scale-95"
+                disabled={isSaving}
+                className="px-8 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-emerald-700 transition-all shadow-xl flex items-center gap-3 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Check size={18} /> SIMPAN
+                {isSaving ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />}
+                {isSaving ? 'MENYIMPAN...' : 'SIMPAN'}
               </button>
             </>
           )}
@@ -825,7 +863,14 @@ const MaintenanceNotes: React.FC = () => {
       </div>
 
       <div className={`relative z-10 bg-slate-50 border-2 rounded-[2.5rem] p-6 transition-all ${isEditing ? 'border-blue-600 bg-white' : 'border-slate-200'}`}>
-        {!isEditing ? (
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center h-[300px] text-slate-400">
+            <Loader2 size={48} className="mb-4 opacity-30 animate-spin" />
+            <p className="text-[11px] font-bold uppercase tracking-widest italic">
+              Memuat catatan... ✨
+            </p>
+          </div>
+        ) : !isEditing ? (
           <div className="min-h-[300px]">
             {notes ? (
               <p className="text-[15px] leading-relaxed text-slate-700 whitespace-pre-wrap font-medium">
