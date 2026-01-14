@@ -37,7 +37,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [previewModal, setPreviewModal] = useState<string | null>(null);
   const [showDigitalSlip, setShowDigitalSlip] = useState<StudentPayment | null>(null);
-  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadingPaymentId, setDownloadingPaymentId] = useState<string | null>(null);
   const slipRef = useRef<HTMLDivElement>(null);
 
   const [confirmingAbsen, setConfirmingAbsen] = useState<{course: any, sessionNum: number} | null>(null);
@@ -323,19 +323,28 @@ const executeFinalRequestReport = async () => {
   };
 
   const handleDownloadSlipDirect = async (p: StudentPayment) => {
-    setShowDigitalSlip(p);
-    setIsDownloading(true);
-    setTimeout(async () => {
-      if (!slipRef.current) { setIsDownloading(false); setShowDigitalSlip(null); return; }
-      try {
-        const canvas = await html2canvas(slipRef.current, { scale: 2, useCORS: true, logging: false, width: 700 });
-        const imgData = canvas.toDataURL('image/png');
-        const pdf = new jsPDF('p', 'px', [700, 1000]);
-        pdf.addImage(imgData, 'PNG', 0, 0, 700, 1000);
-        pdf.save(`Kuitansi_Sanur_${p.studentName.replace(/\s+/g, '_')}_${p.id.substring(0,8)}.pdf`);
-      } catch (e) { alert("Gagal download PDF"); } finally { setIsDownloading(false); setShowDigitalSlip(null); }
-    }, 500);
-  };
+  setShowDigitalSlip(p);
+  setDownloadingPaymentId(p.id); // 👈 Tandai payment ini yang lagi didownload
+  setTimeout(async () => {
+    if (!slipRef.current) { 
+      setDownloadingPaymentId(null); // 👈 Reset
+      setShowDigitalSlip(null); 
+      return; 
+    }
+    try {
+      const canvas = await html2canvas(slipRef.current, { scale: 2, useCORS: true, logging: false, width: 700 });
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'px', [700, 1000]);
+      pdf.addImage(imgData, 'PNG', 0, 0, 700, 1000);
+      pdf.save(`Kuitansi_Sanur_${p.studentName.replace(/\s+/g, '_')}_${p.id.substring(0,8)}.pdf`);
+    } catch (e) { 
+      alert("Gagal download PDF"); 
+    } finally { 
+      setDownloadingPaymentId(null); // 👈 Reset setelah selesai
+      setShowDigitalSlip(null); 
+    }
+  }, 500);
+};
 
   const getDisplayAmount = (amt: number) => {
     return amt > 0 ? `Rp ${amt}` : 'Rp ';
@@ -607,13 +616,16 @@ const executeFinalRequestReport = async () => {
                              <div className="flex gap-3">
   <button 
     onClick={() => handleDownloadSlipDirect(p)} 
-    disabled={isDownloading}
-    className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-emerald-600 hover:text-white transition-all disabled:opacity-50"
-    title={isDownloading ? "Memproses PDF..." : "Cetak Kuitansi"}
+    disabled={downloadingPaymentId === p.id} 
+    className="px-6 py-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-emerald-600 hover:text-white transition-all disabled:opacity-50 min-w-[120px] flex items-center justify-center"
+    title={downloadingPaymentId === p.id ? "Memproses PDF..." : "Cetak Kuitansi"}
   >
-    {isDownloading ? <Loader2 size={24} className="animate-spin" /> : <Printer size={24} />}
+    {downloadingPaymentId === p.id ? (
+      <Loader2 size={24} className="animate-spin" />
+    ) : (
+      <Printer size={24} />
+    )}
   </button>
-  <div className="p-4"></div> {/* Placeholder biar lebar konsisten */}
 </div>
                            )}
                          </div>
