@@ -400,8 +400,8 @@ const executeFinalRequestReport = async () => {
 
       <div className="max-w-6xl mx-auto space-y-8 pb-40 px-4 animate-in fade-in duration-700">
       {(activeDownloadId || loading) && (
-        <div data-modal-container className="fixed inset-0 z-[300000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-           <div className="bg-white w-full max-w-[320px] rounded-[2rem] p-10 shadow-2xl flex flex-col items-center text-center space-y-6 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+  <div data-modal-container className="fixed inset-0 z-[300000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+     <div className="bg-white w-full max-w-[320px] rounded-[2rem] p-10 shadow-2xl flex flex-col items-center text-center space-y-6 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <div className="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center shadow-xl animate-bounce">
                 {activeDownloadId ? <FileDown size={32} /> : <Loader2 size={32} className="animate-spin" />}
               </div>
@@ -604,22 +604,13 @@ const executeFinalRequestReport = async () => {
                              </>
                            ) : (
                              <button 
-                               onClick={() => handleDownloadSlipDirect(p)} 
-                               disabled={isDownloading}
-                               className="px-8 py-5 bg-slate-900 text-white rounded-[2rem] shadow-xl hover:bg-emerald-600 transition-all flex items-center gap-3 active:scale-95 group"
-                             >
-                               {isDownloading ? (
-  <>
-    <Loader2 size={24} className="animate-spin" />
-    <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">MEMPROSES PDF...</span>
-  </>
-) : (
-  <>
-    <Printer size={24} className="group-hover:scale-110 transition-transform" /> 
-    <span className="text-[10px] font-black uppercase tracking-widest hidden sm:inline">CETAK KUITANSI RESMI</span>
-  </>
-)}
-                             </button>
+  onClick={() => handleDownloadSlipDirect(p)} 
+  disabled={isDownloading}
+  className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-emerald-600 hover:text-white transition-all disabled:opacity-50"
+  title={isDownloading ? "Memproses PDF..." : "Cetak Kuitansi"}
+>
+  {isDownloading ? <Loader2 size={24} className="animate-spin" /> : <Printer size={24} />}
+</button>
                            )}
                          </div>
                        </div>
