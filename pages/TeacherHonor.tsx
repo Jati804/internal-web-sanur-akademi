@@ -252,25 +252,44 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
          </div>
       </header>
 
-      <div className="flex flex-col lg:flex-row items-start justify-center gap-10 px-4 relative">
-        <div className="hidden lg:block lg:flex-1"></div>
-        <div className="flex bg-white p-2 rounded-[2.5rem] border border-slate-100 shadow-xl w-full lg:w-[400px] shrink-0">
-           <Link to="/teacher" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center gap-3 text-slate-400 hover:text-blue-600"><ClipboardCheck size={16}/> Presensi</Link>
-           <Link to="/teacher/honor" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center gap-3 bg-blue-600 text-white shadow-lg shadow-blue-200"><Wallet size={16}/> Honor</Link>
-        </div>
-        <div className="flex flex-col gap-4 w-full lg:w-72 lg:flex-1 items-center lg:items-end">
-           <div className="w-full lg:w-48 relative group">
-              <div className="absolute left-6 top-1/2 -translate-y-1/2 text-blue-500"><Filter size={18} /></div>
-              <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} className="pl-14 pr-12 py-4 bg-white border-2 border-slate-100 rounded-3xl font-black text-[10px] uppercase tracking-widest outline-none focus:border-blue-500 transition-all shadow-xl appearance-none cursor-pointer w-full">
-                 {years.map(y => <option key={y} value={y}>TAHUN {y}</option>)}
-              </select>
-           </div>
-           <div className="w-full lg:w-64 relative group">
-              <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"><Search size={18} /></div>
-              <input type="text" placeholder="CARI SISWA / KELAS..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value.toUpperCase())} className="w-full pl-14 pr-8 py-4 bg-white border-2 border-slate-100 rounded-3xl font-black text-[10px] uppercase outline-none focus:border-blue-500 transition-all shadow-xl" />
-           </div>
-        </div>
-      </div>
+<div className="space-y-8">
+  {/* QuickNav CENTERED - IDENTIK Dashboard */}
+  <div className="flex bg-white p-2 rounded-[2.5rem] border border-slate-100 shadow-xl max-w-sm mx-auto">
+     <Link to="/teacher" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase transition-all text-center flex items-center justify-center gap-3 text-slate-400 hover:text-blue-600">
+        <ClipboardCheck size={16}/> Presensi
+     </Link>
+     <Link to="/teacher/honor" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase transition-all text-center flex items-center justify-center gap-3 bg-blue-600 text-white shadow-lg shadow-blue-200">
+        <Wallet size={16}/> Honor
+     </Link>
+  </div>
+
+  {/* SearchBar + Filter - SearchBar IKUTIN LEBAR QuickNav */}
+  <div className="flex items-center justify-center gap-3 px-2">
+     {/* SearchBar - SAMA LEBAR QUICKNAV (max-w-sm) */}
+     <div className="max-w-sm flex-1 relative group">
+        <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"><Search size={18} /></div>
+        <input 
+           type="text" 
+           placeholder="CARI SISWA / KELAS..." 
+           value={searchTerm} 
+           onChange={(e) => setSearchTerm(e.target.value.toUpperCase())} 
+           className="w-full pl-14 pr-8 py-5 bg-white border-2 border-slate-100 rounded-3xl font-black text-[10px] uppercase outline-none focus:border-blue-500 transition-all shadow-xl" 
+        />
+     </div>
+
+     {/* Filter Tahun - MEPET DI SAMPING KANAN */}
+     <div className="w-[120px] relative group shrink-0">
+        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500"><Filter size={12} /></div>
+        <select 
+           value={selectedYear} 
+           onChange={(e) => setSelectedYear(e.target.value)} 
+           className="w-full pl-8 pr-2 py-5 bg-white border-2 border-slate-100 rounded-3xl font-black text-[9px] uppercase tracking-wide outline-none focus:border-blue-500 transition-all shadow-xl appearance-none cursor-pointer text-center"
+        >
+           {years.map(y => <option key={y} value={y}>{y}</option>)}
+        </select>
+     </div>
+  </div>
+</div>
 
       <div className="mx-2 bg-blue-50/60 backdrop-blur-sm border-2 border-dashed border-blue-200/60 rounded-[3rem] p-8 shadow-sm flex flex-col md:flex-row items-center gap-6 animate-in slide-in-from-top-4 group">
          <div className="w-14 h-14 bg-white text-blue-500 rounded-full flex items-center justify-center shrink-0 shadow-sm border border-blue-100 animate-pulse transition-all">
