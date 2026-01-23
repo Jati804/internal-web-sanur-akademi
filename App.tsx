@@ -125,7 +125,7 @@ const GuideModal = ({ role, onClose }: { role: string, onClose: () => void }) =>
 };
 
 const AppContent = ({ 
-  user, setUser, attendanceLogs, setAttendanceLogs, teachers, setTeachers, studentAccounts, setStudentAccounts, transactions, setTransactions, studentPayments, setStudentPayments, studentProfiles, setStudentProfiles, subjects, setSubjects, classes, setClasses, levels, setLevels, masterSchedule, setMasterSchedule, salaryConfig, setSalaryConfig, isSidebarOpen, setIsSidebarOpen, isSyncing, connectionError, refreshAllData
+  user, setUser, attendanceLogs, setAttendanceLogs, studentAttendanceLogs, setStudentAttendanceLogs, teachers, setTeachers, studentAccounts, setStudentAccounts, transactions, setTransactions, studentPayments, setStudentPayments, studentProfiles, setStudentProfiles, subjects, setSubjects, classes, setClasses, levels, setLevels, masterSchedule, setMasterSchedule, salaryConfig, setSalaryConfig, isSidebarOpen, setIsSidebarOpen, isSyncing, connectionError, refreshAllData
 }: any) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -239,8 +239,8 @@ const AppContent = ({
               <Route path="/teacher" element={<TeacherDashboard user={user} logs={attendanceLogs} studentAccounts={studentAccounts} subjects={subjects} classes={classes} levels={levels} salaryConfig={salaryConfig} teachers={teachers} refreshAllData={refreshAllData} />} />
               <Route path="/teacher/honor" element={<TeacherHonor user={user} logs={attendanceLogs} refreshAllData={refreshAllData} />} />
               <Route path="/teacher/reports" element={<TeacherReportsInbox user={user} logs={attendanceLogs} studentAccounts={studentAccounts} refreshAllData={refreshAllData} />} />
-              <Route path="/student" element={<StudentPortal user={user} attendanceLogs={attendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} subjects={subjects} levels={levels} classes={classes} teachers={teachers} initialView="PROGRESS" refreshAllData={refreshAllData} />} />
-              <Route path="/student/payments" element={<StudentPortal user={user} attendanceLogs={attendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} subjects={subjects} levels={levels} classes={classes} teachers={teachers} initialView="PAYMENTS" refreshAllData={refreshAllData} />} />
+              <Route path="/student" element={<StudentPortal user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} subjects={subjects} levels={levels} classes={classes} teachers={teachers} initialView="PROGRESS" refreshAllData={refreshAllData} />} />
+              <Route path="/student/payments" element={<StudentPortal user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} subjects={subjects} levels={levels} classes={classes} teachers={teachers} initialView="PAYMENTS" refreshAllData={refreshAllData} />} />
               <Route path="/" element={<Navigate to={user.role === 'ADMIN' ? '/admin' : user.role === 'TEACHER' ? '/teacher' : '/student'} replace />} />
             </Routes>
           </div>
@@ -256,6 +256,7 @@ const App = () => {
   const [attendanceLogs, setAttendanceLogs] = useState<Attendance[]>([]);
   const [teachers, setTeachers] = useState<User[]>([]);
   const [studentAccounts, setStudentAccounts] = useState<User[]>([]);
+  const [studentAttendanceLogs, setStudentAttendanceLogs] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [studentPayments, setStudentPayments] = useState<StudentPayment[]>([]);
   const [studentProfiles, setStudentProfiles] = useState<StudentProfile[]>([]);
@@ -273,22 +274,24 @@ const App = () => {
     setIsSyncing(true);
     try {
       const [
-        { data: att },
-        { data: teach },
-        { data: stuAcc },
-        { data: trans },
-        { data: stuPay },
-        { data: stuProf },
-        { data: settings }
-      ] = await Promise.all([
-        supabase.from('attendance').select('*'),
-        supabase.from('teachers').select('*'),
-        supabase.from('student_accounts').select('*'),
-        supabase.from('transactions').select('*'),
-        supabase.from('student_payments').select('*'),
-        supabase.from('student_profiles').select('*'),
-        supabase.from('settings').select('*')
-      ]);
+  { data: att },
+  { data: stuAtt }, // ⬅️ BARIS 2
+  { data: teach },
+  { data: stuAcc },
+  { data: trans },
+  { data: stuPay },
+  { data: stuProf },
+  { data: settings }
+] = await Promise.all([
+  supabase.from('attendance').select('*'),
+  supabase.from('student_attendance').select('*'), // ⬅️ TAMBAHIN INI DI BARIS 2!
+  supabase.from('teachers').select('*'),
+  supabase.from('student_accounts').select('*'),
+  supabase.from('transactions').select('*'),
+  supabase.from('student_payments').select('*'),
+  supabase.from('student_profiles').select('*'),
+  supabase.from('settings').select('*')
+]);
 
       if (att) setAttendanceLogs(att.map((a: any) => ({
         ...a,
@@ -311,6 +314,22 @@ const App = () => {
         substituteFor: a.substitutefor,
         originalTeacherId: a.originalteacherid
       })));
+
+        // ✅ TAMBAHIN INI DI BAWAHNYA
+if (stuAtt) setStudentAttendanceLogs(stuAtt.map((s: any) => ({
+  ...s,
+  packageId: s.packageid,
+  studentName: s.studentname,
+  sessionNumber: s.sessionnumber,
+  clockIn: s.clockin,
+  className: s.classname,
+  sessionCategory: s.sessioncategory,
+  studentScores: s.studentscores,
+  studentTopics: s.studenttopics,
+  studentNarratives: s.studentnarratives,
+  reportNarrative: s.reportnarrative
+})));
+      
       if (teach) setTeachers(teach);
       if (stuAcc) setStudentAccounts(stuAcc);
       if (trans) setTransactions(trans);
@@ -358,6 +377,7 @@ const App = () => {
       <AppContent 
         user={user} setUser={setUser}
         attendanceLogs={attendanceLogs} setAttendanceLogs={setAttendanceLogs}
+        studentAttendanceLogs={studentAttendanceLogs} setStudentAttendanceLogs={setStudentAttendanceLogs}
         teachers={teachers} setTeachers={setTeachers}
         studentAccounts={studentAccounts} setStudentAccounts={setStudentAccounts}
         transactions={transactions} setTransactions={setTransactions}
