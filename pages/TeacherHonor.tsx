@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { User, Attendance } from '../types';
 import { supabase } from '../services/supabase.ts';
@@ -91,7 +90,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
     if (error) throw error;
     if (refreshAllData) await refreshAllData();
     
-    setConfirmDeletePkg(null); // ✅ Langsung close modal aja
+    setConfirmDeletePkg(null); // âœ… Langsung close modal aja
   } catch (e: any) {
     alert("Terjadi kendala saat menghapus: " + e.message);
   } finally {
@@ -106,7 +105,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
     const relevantLogs = logs.filter(l => 
   (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG') && 
   (l.teacherId === user.id || l.originalTeacherId === user.id) &&
-  l.teacherId !== 'SISWA_MANDIRI' && // ✅ TAMBAHAN BARIS INI
+  l.teacherId !== 'SISWA_MANDIRI' && // âœ… TAMBAHAN BARIS INI
   l.date.startsWith(selectedYear) &&
   (l.earnings || 0) > 0
 );
@@ -169,7 +168,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
     }
   }, [highlightId, cycleGroups]);
 
-  // ✅ Auto scroll modal ke tengah viewport (body bebas scroll)
+  // âœ… Auto scroll modal ke tengah viewport (body bebas scroll)
   useEffect(() => {
     const hasModal = !!(
       showProofModal || 
@@ -241,7 +240,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                   <span className="text-[9px] font-black uppercase tracking-widest text-blue-300">Sanur Wallet System</span>
                </div>
                <h2 className="text-4xl font-black uppercase italic leading-none">Dompet <span className="text-blue-500">Honor</span></h2>
-               <p className="text-slate-400 font-bold text-xs uppercase tracking-widest italic">Halo Kak {user.name.split(' ')[0]}! Semangat mengajar ✨</p>
+               <p className="text-slate-400 font-bold text-xs uppercase tracking-widest italic">Halo Kak {user.name.split(' ')[0]}! Semangat mengajar âœ¨</p>
             </div>
             <div className="flex bg-white/5 backdrop-blur-xl p-6 rounded-[2.5rem] border border-white/10 items-center gap-6 min-w-[260px]">
                <div className="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-900/40"><Wallet size={32}/></div>
@@ -253,53 +252,25 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
          </div>
       </header>
 
-<div className="space-y-8">
-  {/* QuickNav CENTERED - IDENTIK Dashboard */}
-  <div className="flex bg-white p-2 rounded-[2.5rem] border border-slate-100 shadow-xl max-w-sm mx-auto">
-     <Link to="/teacher" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase transition-all text-center flex items-center justify-center gap-3 text-slate-400 hover:text-blue-600">
-        <ClipboardCheck size={16}/> Presensi
-     </Link>
-     <Link to="/teacher/honor" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase transition-all text-center flex items-center justify-center gap-3 bg-blue-600 text-white shadow-lg shadow-blue-200">
-        <Wallet size={16}/> Honor
-     </Link>
-  </div>
-
-  {/* SearchBar + Filter SEJAJAR 1 BARIS */}
-  <div className="max-w-5xl mx-auto flex items-center gap-4">
-     {/* SearchBar - Flex Grow */}
-     <div className="flex-1 relative group">
-        <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"><Search size={18} /></div>
-        <input 
-           type="text" 
-           placeholder="CARI SISWA / KELAS..." 
-           value={searchTerm} 
-           onChange={(e) => setSearchTerm(e.target.value.toUpperCase())} 
-           className="w-full pl-14 pr-8 py-5 bg-white border-2 border-slate-100 rounded-3xl font-black text-[10px] uppercase outline-none focus:border-blue-500 transition-all shadow-xl" 
-        />
-     </div>
-
-     {/* Filter Tahun - Pojok Kanan */}
-     <div className="w-[140px] relative group shrink-0">
-        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500"><Filter size={14} /></div>
-        <select 
-           value={selectedYear} 
-           onChange={(e) => setSelectedYear(e.target.value)} 
-           className="w-full pl-10 pr-3 py-5 bg-white border-2 border-slate-100 rounded-3xl font-black text-[9px] uppercase tracking-wider outline-none focus:border-blue-500 transition-all shadow-xl appearance-none cursor-pointer text-center"
-        >
-           {years.map(y => <option key={y} value={y}>{y}</option>)}
-        </select>
-     </div>
-  </div>
-</div>
-
-  {/* Search Bar - Full Width Sepanjang Info Box */}
-  <div className="max-w-5xl mx-auto">
-     <div className="relative group">
-        <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"><Search size={18} /></div>
-        <input type="text" placeholder="CARI SISWA / KELAS..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value.toUpperCase())} className="w-full pl-14 pr-8 py-5 bg-white border-2 border-slate-100 rounded-3xl font-black text-[10px] uppercase outline-none focus:border-blue-500 transition-all shadow-xl" />
-     </div>
-  </div>
-</div>
+      <div className="flex flex-col lg:flex-row items-start justify-center gap-10 px-4 relative">
+        <div className="hidden lg:block lg:flex-1"></div>
+        <div className="flex bg-white p-2 rounded-[2.5rem] border border-slate-100 shadow-xl w-full lg:w-[400px] shrink-0">
+           <Link to="/teacher" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center gap-3 text-slate-400 hover:text-blue-600"><ClipboardCheck size={16}/> Presensi</Link>
+           <Link to="/teacher/honor" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center gap-3 bg-blue-600 text-white shadow-lg shadow-blue-200"><Wallet size={16}/> Honor</Link>
+        </div>
+        <div className="flex flex-col gap-4 w-full lg:w-72 lg:flex-1 items-center lg:items-end">
+           <div className="w-full lg:w-48 relative group">
+              <div className="absolute left-6 top-1/2 -translate-y-1/2 text-blue-500"><Filter size={18} /></div>
+              <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} className="pl-14 pr-12 py-4 bg-white border-2 border-slate-100 rounded-3xl font-black text-[10px] uppercase tracking-widest outline-none focus:border-blue-500 transition-all shadow-xl appearance-none cursor-pointer w-full">
+                 {years.map(y => <option key={y} value={y}>TAHUN {y}</option>)}
+              </select>
+           </div>
+           <div className="w-full lg:w-64 relative group">
+              <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"><Search size={18} /></div>
+              <input type="text" placeholder="CARI SISWA / KELAS..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value.toUpperCase())} className="w-full pl-14 pr-8 py-4 bg-white border-2 border-slate-100 rounded-3xl font-black text-[10px] uppercase outline-none focus:border-blue-500 transition-all shadow-xl" />
+           </div>
+        </div>
+      </div>
 
       <div className="mx-2 bg-blue-50/60 backdrop-blur-sm border-2 border-dashed border-blue-200/60 rounded-[3rem] p-8 shadow-sm flex flex-col md:flex-row items-center gap-6 animate-in slide-in-from-top-4 group">
          <div className="w-14 h-14 bg-white text-blue-500 rounded-full flex items-center justify-center shrink-0 shadow-sm border border-blue-100 animate-pulse transition-all">
@@ -309,7 +280,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
             <div className="flex items-center justify-center md:justify-start gap-2">
                <Sparkles size={14} className="text-blue-400" />
                <p className="text-[11px] font-black text-blue-800 uppercase tracking-widest leading-relaxed">
-                  "Foto bukti transfer tersedia <span className="bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg">maksimal 3 hari</span>, namun <span className="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-lg">SLIP GAJI DIGITAL</span> aktif selamanya dan bisa diunduh kapan saja! 🚀"
+                  "Foto bukti transfer tersedia <span className="bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg">maksimal 3 hari</span>, namun <span className="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-lg">SLIP GAJI DIGITAL</span> aktif selamanya dan bisa diunduh kapan saja! ðŸš€"
                </p>
             </div>
          </div>
@@ -343,7 +314,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                             <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-tight">{pkg.className}</h4>
                             <span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${pkg.category === 'PRIVATE' ? 'bg-orange-500 text-white' : 'bg-blue-900 text-white'}`}>{pkg.category}</span>
                             {isNew && (
-                               <span className="px-4 py-1 bg-blue-600 text-white rounded-full text-[8px] font-black uppercase tracking-widest animate-bounce shadow-lg">DATA TERBARU ✨</span>
+                               <span className="px-4 py-1 bg-blue-600 text-white rounded-full text-[8px] font-black uppercase tracking-widest animate-bounce shadow-lg">DATA TERBARU âœ¨</span>
                             )}
                          </div>
                          <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mt-2 italic">Siswa: {pkg.studentName}</p>
@@ -435,7 +406,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
          }) : (
             <div className="py-40 text-center bg-white rounded-[4rem] border-2 border-dashed border-slate-100 opacity-30">
                <ClipboardCheck size={64} className="mx-auto mb-6 text-slate-300" />
-               <p className="font-black text-[11px] uppercase tracking-[0.4em] italic leading-relaxed text-center">Belum ada riwayat honor di tahun {selectedYear}. ✨</p>
+               <p className="font-black text-[11px] uppercase tracking-[0.4em] italic leading-relaxed text-center">Belum ada riwayat honor di tahun {selectedYear}. âœ¨</p>
             </div>
          )}
       </div>
@@ -524,7 +495,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
            <div className="relative max-w-2xl w-full opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button className="absolute -top-12 right-0 p-4 text-white hover:text-rose-500 transition-colors" onClick={() => setShowProofModal(null)}><X size={32}/></button>
               <img src={showProofModal} className="w-full h-auto rounded-[3rem] shadow-2xl border-4 border-white/10" alt="Bukti Transfer" />
-              <div className="mt-8 text-center"><p className="text-[10px] font-black text-white/50 uppercase tracking-[0.5em] italic">Bukti Transfer Sah dari Pengurus Sanur ✨</p></div>
+              <div className="mt-8 text-center"><p className="text-[10px] font-black text-white/50 uppercase tracking-[0.5em] italic">Bukti Transfer Sah dari Pengurus Sanur âœ¨</p></div>
            </div>
         </div>
       )}
@@ -535,9 +506,9 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
               <button onClick={() => setShowPurgedInfo(false)} className="absolute top-8 right-8 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
               <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner animate-pulse"><Info size={40} /></div>
               <div className="space-y-4">
-                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Media Bersih ✨</h4>
+                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Media Bersih âœ¨</h4>
                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4 italic">
-                    "Mohon maaf Kak, foto bukti transfer ini hanya tersedia <span className="text-rose-600 font-black">Maksimal 3 Hari</span> guna menjaga database tetap kencang. ✨"
+                    "Mohon maaf Kak, foto bukti transfer ini hanya tersedia <span className="text-rose-600 font-black">Maksimal 3 Hari</span> guna menjaga database tetap kencang. âœ¨"
                  </p>
                  <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3">
                     <Zap size={16} className="text-emerald-600 shrink-0" />
@@ -546,7 +517,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                     </p>
                  </div>
               </div>
-              <button onClick={() => setShowPurgedInfo(false)} className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 transition-all">SAYA MENGERTI ✨</button>
+              <button onClick={() => setShowPurgedInfo(false)} className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 transition-all">SAYA MENGERTI âœ¨</button>
            </div>
         </div>
       )}
@@ -558,7 +529,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
               <div className="space-y-2">
                  <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Hapus Kotak Honor?</h4>
                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4 italic">
-                    "Data pengajaran Kakak di kotak <span className="font-black text-rose-600">{confirmDeletePkg.className}</span> akan dihapus permanen dari antrean. Lakukan ini hanya jika data salah input ya Kak! ✨"
+                    "Data pengajaran Kakak di kotak <span className="font-black text-rose-600">{confirmDeletePkg.className}</span> akan dihapus permanen dari antrean. Lakukan ini hanya jika data salah input ya Kak! âœ¨"
                  </p>
               </div>
               <div className="flex gap-4">
