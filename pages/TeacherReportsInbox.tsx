@@ -16,21 +16,21 @@ import { jsPDF } from 'jspdf';
 interface TeacherReportsInboxProps {
   user: User;
   logs: Attendance[];
+  studentAttendanceLogs: any[]; // ✅ TAMBAHAN BARU
   studentAccounts: User[];
   refreshAllData: () => Promise<void>;
 }
 
-const MilestoneView = ({ logs, studentName, packageId }: { logs: Attendance[], studentName: string, packageId: string }) => {
+const MilestoneView = ({ studentAttendanceLogs, studentName, packageId }: { studentAttendanceLogs: any[], studentName: string, packageId: string }) => {
   const sNameNorm = studentName.toUpperCase().trim();
   const pkgIdNorm = packageId.toUpperCase().trim();
 
-  const sortedLogs = [...logs]
+  const sortedLogs = [...studentAttendanceLogs] // ✅ GANTI KE TABLE BARU
     .filter(l => 
-      l.status === 'SESSION_LOG' && 
-      (l.packageId || '').toUpperCase().trim() === pkgIdNorm && 
-      l.studentsAttended?.some(s => s.toUpperCase().trim() === sNameNorm)
+      (l.packageid || '').toUpperCase().trim() === pkgIdNorm && 
+      (l.studentname || '').toUpperCase().trim() === sNameNorm
     )
-    .sort((a,b) => (a.sessionNumber || 0) - (b.sessionNumber || 0));
+    .sort((a,b) => (a.sessionnumber || 0) - (b.sessionnumber || 0));
 
   return (
     <div className="space-y-6">
@@ -57,7 +57,7 @@ const MilestoneView = ({ logs, studentName, packageId }: { logs: Attendance[], s
   );
 };
 
-const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, studentAccounts, refreshAllData }) => {
+const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, studentAttendanceLogs, studentAccounts, refreshAllData }) => {
   const [activeStep, setActiveStep] = useState<'ANTREAN' | 'WORKSPACE' | 'HISTORY'>('ANTREAN');
   const [selectedPackage, setSelectedPackage] = useState<any | null>(null);
   const [lastActionedId, setLastActionedId] = useState<string | null>(null);
@@ -399,7 +399,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
             <div className="p-8 md:p-14 space-y-16">
                <section className="space-y-4">
                   <div className="flex items-center gap-3 text-blue-600"><History size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Langkah Pembelajaran (Milestone)</h4></div>
-                  <div className="bg-slate-50 p-8 rounded-[3rem] border border-slate-100"><MilestoneView logs={logs} studentName={selectedPackage.studentsAttended?.[0] || ''} packageId={selectedPackage.packageId} /></div>
+                  <div className="bg-slate-50 p-8 rounded-[3rem] border border-slate-100"><MilestoneView studentAttendanceLogs={studentAttendanceLogs} studentName={selectedPackage.studentsAttended?.[0] || ''} packageId={selectedPackage.packageId} /></div>
                </section>
                <section className="flex flex-col items-center">
                   <div className="bg-slate-900 p-12 rounded-[4rem] text-white text-center shadow-2xl relative overflow-hidden w-full max-w-lg">
@@ -550,23 +550,24 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
       )}
 
       {/* RENDER PDF HIDDEN MENGGUNAKAN MASTER TEMPLATE */}
-      <div className="fixed left-[-9999px] top-0 pointer-events-none">
-         {publishedReports.map((req) => (
-            <ReportTemplate 
-              key={req.id} 
-              reportLog={req} 
-              allLogs={logs} 
-              studentName={req.studentsAttended?.[0] || 'SISWA'} 
-            />
-         ))}
-      </div>
+<div className="fixed left-[-9999px] top-0 pointer-events-none">
+   {publishedReports.map((req) => (
+      <ReportTemplate 
+        key={req.id} 
+        reportLog={req} 
+        allLogs={logs}
+        studentAttendanceLogs={studentAttendanceLogs} // ✅ INI HARUS ADA!
+        studentName={req.studentsAttended?.[0] || 'SISWA'} 
+      />
+   ))}
+</div>
 
       {showMilestoneFor && (
         <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
            <div className="bg-white w-full max-w-2xl rounded-[4rem] p-12 shadow-2xl relative overflow-hidden space-y-10 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setShowMilestoneFor(null)} className="absolute top-10 right-10 p-3 bg-slate-50 text-slate-400 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
               <div className="flex items-center gap-6"><div className="w-16 h-16 bg-blue-600 text-white rounded-[2rem] flex items-center justify-center shadow-xl rotate-3"><History size={32} /></div><div><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Milestone Belajar</h4><p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-2">{showMilestoneFor.studentsAttended?.[0]}</p></div></div>
-              <MilestoneView logs={logs} studentName={showMilestoneFor.studentsAttended?.[0] || ''} packageId={showMilestoneFor.packageId} />
+              <MilestoneView studentAttendanceLogs={studentAttendanceLogs} studentName={showMilestoneFor.studentsAttended?.[0] || ''} packageId={showMilestoneFor.packageId} />
               <button onClick={() => setShowMilestoneFor(null)} className="w-full py-5 bg-slate-900 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-[0.3em] shadow-xl">TUTUP MILESTONE ✨</button>
            </div>
         </div>
@@ -587,4 +588,3 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
 };
 
 export default TeacherReportsInbox;
-
