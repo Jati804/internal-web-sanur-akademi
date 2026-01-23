@@ -44,6 +44,8 @@ const AdminAcademic: React.FC<AdminAcademicProps> = ({
   const [newClass, setNewClass] = useState('');
   const [newLevel, setNewLevel] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
+const [draggedType, setDraggedType] = useState<'SUBJECT' | 'CLASS' | 'LEVEL' | null>(null);
 
   // Salary Editing State
   const [tempSalary, setTempSalary] = useState(salaryConfig);
@@ -164,6 +166,50 @@ const AdminAcademic: React.FC<AdminAcademicProps> = ({
     setLevels(next);
     syncConfigToCloud(subjects, next, classes);
   };
+  const handleDragStart = (index: number, type: 'SUBJECT' | 'CLASS' | 'LEVEL') => {
+  setDraggedIndex(index);
+  setDraggedType(type);
+};
+
+const handleDragOver = (e: React.DragEvent) => {
+  e.preventDefault();
+};
+
+const handleDrop = (dropIndex: number, type: 'SUBJECT' | 'CLASS' | 'LEVEL') => {
+  if (draggedIndex === null || draggedType !== type || draggedIndex === dropIndex) {
+    setDraggedIndex(null);
+    setDraggedType(null);
+    return;
+  }
+
+  if (type === 'SUBJECT') {
+    const next = [...subjects];
+    const [moved] = next.splice(draggedIndex, 1);
+    next.splice(dropIndex, 0, moved);
+    setSubjects(next);
+    syncConfigToCloud(next, levels, classes);
+  } else if (type === 'CLASS') {
+    const next = [...classes];
+    const [moved] = next.splice(draggedIndex, 1);
+    next.splice(dropIndex, 0, moved);
+    setClasses(next);
+    syncConfigToCloud(subjects, levels, next);
+  } else if (type === 'LEVEL') {
+    const next = [...levels];
+    const [moved] = next.splice(draggedIndex, 1);
+    next.splice(dropIndex, 0, moved);
+    setLevels(next);
+    syncConfigToCloud(subjects, next, classes);
+  }
+
+  setDraggedIndex(null);
+  setDraggedType(null);
+};
+
+const handleDragEnd = () => {
+  setDraggedIndex(null);
+  setDraggedType(null);
+};
 
   return (
     <div className="max-w-7xl mx-auto space-y-12 pb-40 px-4 animate-in fade-in duration-500">
@@ -203,13 +249,25 @@ const AdminAcademic: React.FC<AdminAcademicProps> = ({
               <button onClick={handleAddSubject} className="p-5 bg-blue-600 text-white rounded-[1.5rem] shadow-xl hover:bg-blue-700 active:scale-95 transition-all"><Plus size={20} /></button>
             </div>
             <div className="space-y-2 flex-1 max-h-[450px] overflow-y-auto custom-scrollbar pr-2">
-              {subjects.map((s, idx) => (
-                <div key={idx} className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-transparent hover:border-blue-100 transition-all group/item">
-                  <span className="text-[11px] font-black uppercase italic text-slate-700">{s}</span>
-                  <button onClick={() => handleRemoveSubject(s)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
-                </div>
-              ))}
-            </div>
+  {subjects.map((s, idx) => (
+    <div 
+      key={idx} 
+      draggable
+      onDragStart={() => handleDragStart(idx, 'SUBJECT')}
+      onDragOver={handleDragOver}
+      onDrop={() => handleDrop(idx, 'SUBJECT')}
+      onDragEnd={handleDragEnd}
+      className={`flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-transparent hover:border-blue-100 transition-all group/item cursor-move ${
+        draggedIndex === idx && draggedType === 'SUBJECT' 
+          ? 'opacity-50 scale-95 rotate-2 shadow-2xl' 
+          : 'opacity-100'
+      }`}
+    >
+      <span className="text-[11px] font-black uppercase italic text-slate-700">{s}</span>
+      <button onClick={() => handleRemoveSubject(s)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
+    </div>
+  ))}
+</div>
           </section>
 
           <section className="bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-2xl space-y-8 flex flex-col group hover:border-emerald-200 transition-all duration-500">
@@ -225,13 +283,25 @@ const AdminAcademic: React.FC<AdminAcademicProps> = ({
               <button onClick={handleAddLevel} className="p-5 bg-emerald-600 text-white rounded-[1.5rem] shadow-xl hover:bg-emerald-700 active:scale-95 transition-all"><Plus size={20} /></button>
             </div>
             <div className="space-y-2 flex-1 max-h-[450px] overflow-y-auto custom-scrollbar pr-2">
-              {levels.map((l, idx) => (
-                <div key={idx} className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-transparent hover:border-emerald-100 transition-all group/item">
-                  <span className="text-[11px] font-black uppercase italic text-slate-700">{l}</span>
-                  <button onClick={() => handleRemoveLevel(l)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
-                </div>
-              ))}
-            </div>
+  {levels.map((l, idx) => (
+    <div 
+      key={idx} 
+      draggable
+      onDragStart={() => handleDragStart(idx, 'LEVEL')}
+      onDragOver={handleDragOver}
+      onDrop={() => handleDrop(idx, 'LEVEL')}
+      onDragEnd={handleDragEnd}
+      className={`flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-transparent hover:border-emerald-100 transition-all group/item cursor-move ${
+        draggedIndex === idx && draggedType === 'LEVEL' 
+          ? 'opacity-50 scale-95 rotate-2 shadow-2xl' 
+          : 'opacity-100'
+      }`}
+    >
+      <span className="text-[11px] font-black uppercase italic text-slate-700">{l}</span>
+      <button onClick={() => handleRemoveLevel(l)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
+    </div>
+  ))}
+</div>
           </section>
 
           <section className="bg-white p-10 rounded-[3.5rem] border border-slate-100 shadow-2xl space-y-8 flex flex-col group hover:border-orange-200 transition-all duration-500">
@@ -247,13 +317,25 @@ const AdminAcademic: React.FC<AdminAcademicProps> = ({
               <button onClick={handleAddClass} className="p-5 bg-orange-500 text-white rounded-[1.5rem] shadow-xl hover:bg-orange-600 active:scale-95 transition-all"><Plus size={20} /></button>
             </div>
             <div className="space-y-2 flex-1 max-h-[450px] overflow-y-auto custom-scrollbar pr-2">
-              {classes.map((c, idx) => (
-                <div key={idx} className="flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-transparent hover:border-orange-100 transition-all group/item">
-                  <span className="text-[11px] font-black uppercase italic text-slate-700">{c}</span>
-                  <button onClick={() => handleRemoveClass(c)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
-                </div>
-              ))}
-            </div>
+  {classes.map((c, idx) => (
+    <div 
+      key={idx} 
+      draggable
+      onDragStart={() => handleDragStart(idx, 'CLASS')}
+      onDragOver={handleDragOver}
+      onDrop={() => handleDrop(idx, 'CLASS')}
+      onDragEnd={handleDragEnd}
+      className={`flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-transparent hover:border-orange-100 transition-all group/item cursor-move ${
+        draggedIndex === idx && draggedType === 'CLASS' 
+          ? 'opacity-50 scale-95 rotate-2 shadow-2xl' 
+          : 'opacity-100'
+      }`}
+    >
+      <span className="text-[11px] font-black uppercase italic text-slate-700">{c}</span>
+      <button onClick={() => handleRemoveClass(c)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
+    </div>
+  ))}
+</div>
           </section>
         </div>
       )}
