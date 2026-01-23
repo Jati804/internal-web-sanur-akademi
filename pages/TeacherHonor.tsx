@@ -255,7 +255,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
 
 <div className="space-y-8 px-2">
   {/* Tab Navigation + Filter Tahun */}
-  <div className="flex flex-col lg:flex-row items-center justify-center gap-6">
+  <div className="flex flex-col items-center justify-center gap-6">
      {/* Tab Navigation - Centered */}
      <div className="flex bg-white p-2 rounded-[2.5rem] border border-slate-100 shadow-xl w-full max-w-md">
         <Link to="/teacher" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center gap-3 text-slate-400 hover:text-blue-600"><ClipboardCheck size={16}/> Presensi</Link>
@@ -263,12 +263,12 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
      </div>
 
      {/* Filter Tahun - Di Samping Navbar */}
-     <div className="w-full lg:w-64 relative group">
-        <div className="absolute left-6 top-1/2 -translate-y-1/2 text-blue-500"><Filter size={18} /></div>
-        <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} className="w-full pl-14 pr-12 py-5 bg-white border-2 border-slate-100 rounded-3xl font-black text-[10px] uppercase tracking-widest outline-none focus:border-blue-500 transition-all shadow-xl appearance-none cursor-pointer">
-           {years.map(y => <option key={y} value={y}>TAHUN {y}</option>)}
-        </select>
-     </div>
+     <div className="w-full max-w-[200px] relative group">
+   <div className="absolute left-5 top-1/2 -translate-y-1/2 text-blue-500"><Filter size={16} /></div>
+   <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} className="w-full pl-12 pr-10 py-4 bg-white border-2 border-slate-100 rounded-3xl font-black text-[9px] uppercase tracking-wider outline-none focus:border-blue-500 transition-all shadow-xl appearance-none cursor-pointer text-center">
+      {years.map(y => <option key={y} value={y}>{y}</option>)}
+   </select>
+</div>
   </div>
 
   {/* Search Bar - Full Width Sepanjang Info Box */}
