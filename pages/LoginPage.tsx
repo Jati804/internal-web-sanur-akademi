@@ -137,14 +137,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
         
         {/* PINTU RAHASIA ADMIN - Benar-benar Hitam/Transparan Tanpa Garis */}
         <button 
-          onClick={() => { setRole('ADMIN'); setView('LOGIN'); }}
-          className="fixed left-0 top-1/2 -translate-y-1/2 w-20 h-40 z-[99999] group flex items-center justify-start pl-4 outline-none"
-        >
-          {/* Default: Kosong/Polos (Hanya Area Klik) */}
-          <div className="hidden group-active:block group-hover:block w-16 h-16 animate-in zoom-in duration-300">
-             <ScribbleMarker />
-          </div>
-        </button>
+  onClick={() => { setRole('ADMIN'); setView('LOGIN'); }}
+  className="fixed left-0 top-1/2 -translate-y-1/2 w-20 h-40 z-[99999] outline-none"
+  aria-label="Secret Admin Access"
+>
+  {/* BENAR-BENAR KOSONG - GAK ADA VISUAL APAPUN */}
+</button>
 
         <div className="max-w-md w-full space-y-10 animate-in fade-in zoom-in duration-700 relative z-10">
            <div className="w-32 h-32 bg-orange-500 text-white rounded-[3rem] flex items-center justify-center mx-auto shadow-2xl animate-bounce border-8 border-slate-900">
