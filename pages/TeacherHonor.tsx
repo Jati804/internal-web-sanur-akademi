@@ -304,7 +304,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
             <div className="flex items-center justify-center md:justify-start gap-2">
                <Sparkles size={14} className="text-blue-400" />
                <p className="text-[11px] font-black text-blue-800 uppercase tracking-widest leading-relaxed">
-                  "Foto bukti transfer tersedia <span className="bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg">maksimal 3 hari</span>, namun <span className="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-lg">SLIP GAJI DIGITAL</span> aktif selamanya dan bisa diunduh kapan saja! ✨"
+                  "Foto bukti transfer tersedia <span className="bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg">maksimal 3 hari</span>, namun <span className="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-lg">SLIP GAJI DIGITAL</span> aktif selamanya dan bisa diunduh kapan saja!"
                </p>
             </div>
          </div>
