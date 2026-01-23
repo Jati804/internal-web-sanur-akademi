@@ -258,10 +258,10 @@ const handleDragEnd = () => {
       onDrop={() => handleDrop(idx, 'SUBJECT')}
       onDragEnd={handleDragEnd}
       className={`flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-transparent hover:border-blue-100 transition-all group/item cursor-move ${
-        draggedIndex === idx && draggedType === 'SUBJECT' 
-          ? 'opacity-50 scale-95 rotate-2 shadow-2xl' 
-          : 'opacity-100'
-      }`}
+  draggedIndex === idx && draggedType === 'SUBJECT' 
+    ? 'scale-110 shadow-2xl ring-4 ring-blue-400 z-50 bg-white' 
+    : ''
+}`}
     >
       <span className="text-[11px] font-black uppercase italic text-slate-700">{s}</span>
       <button onClick={() => handleRemoveSubject(s)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
@@ -292,10 +292,10 @@ const handleDragEnd = () => {
       onDrop={() => handleDrop(idx, 'LEVEL')}
       onDragEnd={handleDragEnd}
       className={`flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-transparent hover:border-emerald-100 transition-all group/item cursor-move ${
-        draggedIndex === idx && draggedType === 'LEVEL' 
-          ? 'opacity-50 scale-95 rotate-2 shadow-2xl' 
-          : 'opacity-100'
-      }`}
+  draggedIndex === idx && draggedType === 'LEVEL' 
+    ? 'scale-110 shadow-2xl ring-4 ring-emerald-400 z-50 bg-white' 
+    : ''
+}`}
     >
       <span className="text-[11px] font-black uppercase italic text-slate-700">{l}</span>
       <button onClick={() => handleRemoveLevel(l)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
@@ -326,10 +326,10 @@ const handleDragEnd = () => {
       onDrop={() => handleDrop(idx, 'CLASS')}
       onDragEnd={handleDragEnd}
       className={`flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-transparent hover:border-orange-100 transition-all group/item cursor-move ${
-        draggedIndex === idx && draggedType === 'CLASS' 
-          ? 'opacity-50 scale-95 rotate-2 shadow-2xl' 
-          : 'opacity-100'
-      }`}
+  draggedIndex === idx && draggedType === 'CLASS' 
+    ? 'scale-110 shadow-2xl ring-4 ring-orange-400 z-50 bg-white' 
+    : ''
+}`}
     >
       <span className="text-[11px] font-black uppercase italic text-slate-700">{c}</span>
       <button onClick={() => handleRemoveClass(c)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
