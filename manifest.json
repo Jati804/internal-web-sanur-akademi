@@ -2,9 +2,9 @@
   "name": "SANUR Internal System",
   "short_name": "SANUR",
   "description": "Sistem Manajemen Internal SANUR Akademi Inspirasi",
-  "start_url": "/#/",
+  "start_url": "/",
   "scope": "/",
-  "display": "minimal-ui",
+  "display": "standalone",
   "background_color": "#F8FAFC",
   "theme_color": "#2563eb",
   "orientation": "any",
@@ -14,16 +14,80 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png",
+      "src": "/images/icon-72x72.png",
+      "sizes": "72x72",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icon-96x96.png",
+      "sizes": "96x96",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icon-128x128.png",
+      "sizes": "128x128",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icon-144x144.png",
+      "sizes": "144x144",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icon-152x152.png",
+      "sizes": "152x152",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icon-384x384.png",
+      "sizes": "384x384",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/images/icon-512x512.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any"
     },
     {
-      "src": "https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png",
+      "src": "/images/icon-192x192.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
+    },
+    {
+      "src": "/images/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ],
+  "screenshots": [
+    {
+      "src": "/images/screenshot-desktop.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide",
+      "label": "SANUR Dashboard Desktop"
+    },
+    {
+      "src": "/images/screenshot-mobile.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow",
+      "label": "SANUR Dashboard Mobile"
     }
   ],
   "shortcuts": [
@@ -31,11 +95,12 @@
       "name": "Presensi Cepat",
       "short_name": "Presensi",
       "description": "Langsung ke halaman presensi",
-      "url": "/#/teacher",
+      "url": "/teacher",
       "icons": [
         {
-          "src": "https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png",
-          "sizes": "96x96"
+          "src": "/images/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
         }
       ]
     },
@@ -43,11 +108,12 @@
       "name": "Cek Honor",
       "short_name": "Honor",
       "description": "Lihat dompet honor",
-      "url": "/#/teacher/honor",
+      "url": "/teacher/honor",
       "icons": [
         {
-          "src": "https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png",
-          "sizes": "96x96"
+          "src": "/images/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
         }
       ]
     },
@@ -55,11 +121,12 @@
       "name": "Dashboard Admin",
       "short_name": "Admin",
       "description": "Akses panel admin",
-      "url": "/#/admin",
+      "url": "/admin",
       "icons": [
         {
-          "src": "https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png",
-          "sizes": "96x96"
+          "src": "/images/icon-96x96.png",
+          "sizes": "96x96",
+          "type": "image/png"
         }
       ]
     }
