@@ -45,9 +45,11 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
   const [sppSearch, setSppSearch] = useState('');
   // 🆕 State untuk filter ledger
 const [ledgerFilters, setLedgerFilters] = useState({
-  period: 'ALL', // 'TODAY', 'THIS_WEEK', 'THIS_MONTH', 'ALL'
-  category: 'ALL', // 'ALL', 'SPP_SISWA', 'HONOR_GURU', dll
-  type: 'ALL' // 'ALL', 'INCOME', 'EXPENSE'
+  period: 'ALL', // 'THIS_WEEK', 'THIS_MONTH', 'THIS_YEAR', 'CUSTOM', 'ALL'
+  category: 'ALL',
+  type: 'ALL',
+  customYear: new Date().getFullYear(), // Untuk filter custom
+  customMonth: 'ALL' // 'ALL' atau 1-12
 });
 const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   
@@ -163,32 +165,45 @@ useEffect(() => {
       );
     }
     
-    // 3️⃣ Filter berdasarkan Period (Hari/Minggu/Bulan)
-    if (ledgerFilters.period !== 'ALL') {
-      const today = new Date();
-      const todayStr = getWIBDate();
-      
-      results = results.filter(t => {
-        const txDate = new Date(t.date);
-        
-        if (ledgerFilters.period === 'TODAY') {
-          return t.date === todayStr;
-        }
-        
-        if (ledgerFilters.period === 'THIS_WEEK') {
-          const weekAgo = new Date(today);
-          weekAgo.setDate(today.getDate() - 7);
-          return txDate >= weekAgo;
-        }
-        
-        if (ledgerFilters.period === 'THIS_MONTH') {
-          return txDate.getMonth() === today.getMonth() && 
-                 txDate.getFullYear() === today.getFullYear();
-        }
-        
-        return true;
-      });
+    // 3️⃣ Filter berdasarkan Period
+if (ledgerFilters.period !== 'ALL') {
+  const today = new Date();
+  
+  results = results.filter(t => {
+    const txDate = new Date(t.date);
+    
+    // Minggu Ini (7 hari terakhir)
+    if (ledgerFilters.period === 'THIS_WEEK') {
+      const weekAgo = new Date(today);
+      weekAgo.setDate(today.getDate() - 7);
+      return txDate >= weekAgo;
     }
+    
+    // Bulan Ini
+    if (ledgerFilters.period === 'THIS_MONTH') {
+      return txDate.getMonth() === today.getMonth() && 
+             txDate.getFullYear() === today.getFullYear();
+    }
+    
+    // Tahun Ini
+    if (ledgerFilters.period === 'THIS_YEAR') {
+      return txDate.getFullYear() === today.getFullYear();
+    }
+    
+    // Custom (Pilih Tahun & Bulan)
+    if (ledgerFilters.period === 'CUSTOM') {
+      const yearMatch = txDate.getFullYear() === ledgerFilters.customYear;
+      
+      if (ledgerFilters.customMonth === 'ALL') {
+        return yearMatch; // Semua bulan di tahun tersebut
+      } else {
+        return yearMatch && txDate.getMonth() === (ledgerFilters.customMonth - 1);
+      }
+    }
+    
+    return true;
+  });
+}
     
     // 4️⃣ Filter berdasarkan Category
     if (ledgerFilters.category !== 'ALL') {
@@ -486,53 +501,96 @@ useEffect(() => {
 <div className="px-8 py-6 bg-slate-50 border-b border-slate-100">
   <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-4">⚡ Quick Filter:</p>
   <div className="flex flex-wrap gap-3">
-    <button onClick={() => setLedgerFilters({...ledgerFilters, period: 'TODAY'})} className={`px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${ledgerFilters.period === 'TODAY' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-slate-100'}`}>
-      📅 Hari Ini
-    </button>
-    <button onClick={() => setLedgerFilters({...ledgerFilters, period: 'THIS_WEEK'})} className={`px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${ledgerFilters.period === 'THIS_WEEK' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-slate-100'}`}>
-      📅 Minggu Ini
-    </button>
-    <button onClick={() => setLedgerFilters({...ledgerFilters, period: 'THIS_MONTH'})} className={`px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${ledgerFilters.period === 'THIS_MONTH' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-slate-100'}`}>
-      📅 Bulan Ini
-    </button>
-    <button onClick={() => setLedgerFilters({period: 'ALL', category: 'ALL', type: 'ALL'})} className="px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all">
-      🔄 Reset Semua
-    </button>
-    <button onClick={() => setShowAdvancedFilter(!showAdvancedFilter)} className="px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider bg-slate-900 text-white hover:bg-slate-800 transition-all ml-auto">
-      {showAdvancedFilter ? '▲ Sembunyikan' : '▼ Filter Lanjut'}
-    </button>
-  </div>
+  <button onClick={() => setLedgerFilters({...ledgerFilters, period: 'THIS_WEEK'})} className={`px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${ledgerFilters.period === 'THIS_WEEK' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-slate-100'}`}>
+    📅 Minggu Ini
+  </button>
+  <button onClick={() => setLedgerFilters({...ledgerFilters, period: 'THIS_MONTH'})} className={`px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${ledgerFilters.period === 'THIS_MONTH' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-slate-100'}`}>
+    📅 Bulan Ini
+  </button>
+  <button onClick={() => setLedgerFilters({...ledgerFilters, period: 'THIS_YEAR'})} className={`px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${ledgerFilters.period === 'THIS_YEAR' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-slate-100'}`}>
+    📅 Tahun Ini
+  </button>
+  <button onClick={() => setLedgerFilters({period: 'ALL', category: 'ALL', type: 'ALL', customYear: new Date().getFullYear(), customMonth: 'ALL'})} className="px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all">
+    🔄 Reset Filter
+  </button>
+  <button onClick={() => setShowAdvancedFilter(!showAdvancedFilter)} className="px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider bg-slate-900 text-white hover:bg-slate-800 transition-all ml-auto">
+    {showAdvancedFilter ? '▲ Sembunyikan' : '▼ Filter Lanjut'}
+  </button>
+</div>
   
   {/* 🎨 ADVANCED FILTER (Tersembunyi) */}
-  {showAdvancedFilter && (
-    <div className="mt-6 p-6 bg-white rounded-3xl border border-slate-200 space-y-4 animate-in fade-in">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {/* Filter Tipe */}
+{showAdvancedFilter && (
+  <div className="mt-6 p-6 bg-white rounded-3xl border border-slate-200 space-y-4 animate-in fade-in">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      {/* Filter Tipe */}
+      <div>
+        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2 block">💸 Tipe Transaksi:</label>
+        <select value={ledgerFilters.type} onChange={(e) => setLedgerFilters({...ledgerFilters, type: e.target.value})} className="w-full px-4 py-3 bg-slate-50 rounded-2xl text-[10px] font-black uppercase outline-none border-2 border-transparent focus:border-blue-500 transition-all">
+          <option value="ALL">SEMUA TIPE</option>
+          <option value="INCOME">⬆️ MASUK</option>
+          <option value="EXPENSE">⬇️ KELUAR</option>
+        </select>
+      </div>
+      
+      {/* Filter Kategori */}
+      <div>
+        <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2 block">🏷️ Kategori:</label>
+        <select value={ledgerFilters.category} onChange={(e) => setLedgerFilters({...ledgerFilters, category: e.target.value})} className="w-full px-4 py-3 bg-slate-50 rounded-2xl text-[10px] font-black uppercase outline-none border-2 border-transparent focus:border-blue-500 transition-all">
+          <option value="ALL">SEMUA KATEGORI</option>
+          <option value="SPP_SISWA">💰 SPP SISWA</option>
+          <option value="HONOR_GURU">👨‍🏫 HONOR GURU</option>
+          <option value="UMUM">📦 UMUM</option>
+        </select>
+      </div>
+    </div>
+    
+    {/* 🆕 Custom Year & Month Filter (PINDAH KE SINI - DI DALAM showAdvancedFilter!) */}
+    <div className="pt-4 border-t border-slate-200">
+      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-3">📆 Filter Custom (Pilih Tahun & Bulan):</p>
+      <div className="grid grid-cols-2 gap-4">
+        {/* Pilih Tahun */}
         <div>
-          <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2 block">💸 Tipe Transaksi:</label>
-          <select value={ledgerFilters.type} onChange={(e) => setLedgerFilters({...ledgerFilters, type: e.target.value})} className="w-full px-4 py-3 bg-slate-50 rounded-2xl text-[10px] font-black uppercase outline-none border-2 border-transparent focus:border-blue-500 transition-all">
-            <option value="ALL">SEMUA TIPE</option>
-            <option value="INCOME">⬆️ MASUK</option>
-            <option value="EXPENSE">⬇️ KELUAR</option>
+          <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Tahun:</label>
+          <select 
+            value={ledgerFilters.customYear} 
+            onChange={(e) => setLedgerFilters({...ledgerFilters, period: 'CUSTOM', customYear: parseInt(e.target.value)})} 
+            className="w-full px-4 py-3 bg-slate-50 rounded-2xl text-[10px] font-black uppercase outline-none border-2 border-transparent focus:border-blue-500 transition-all"
+          >
+            {[2034, 2033, 2032, 2031, 2030, 2029, 2028, 2027, 2026, 2025, 2024].map(year => (
+              <option key={year} value={year}>{year}</option>
+            ))}
           </select>
         </div>
         
-        {/* Filter Kategori */}
+        {/* Pilih Bulan */}
         <div>
-          <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2 block">🏷️ Kategori:</label>
-          <select value={ledgerFilters.category} onChange={(e) => setLedgerFilters({...ledgerFilters, category: e.target.value})} className="w-full px-4 py-3 bg-slate-50 rounded-2xl text-[10px] font-black uppercase outline-none border-2 border-transparent focus:border-blue-500 transition-all">
-            <option value="ALL">SEMUA KATEGORI</option>
-            <option value="SPP_SISWA">💰 SPP SISWA</option>
-            <option value="HONOR_GURU">👨‍🏫 HONOR GURU</option>
-            <option value="UMUM">📦 UMUM</option>
-            {/* Tambahin kategori lain sesuai kebutuhan */}
+          <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Bulan:</label>
+          <select 
+            value={ledgerFilters.customMonth} 
+            onChange={(e) => setLedgerFilters({...ledgerFilters, period: 'CUSTOM', customMonth: e.target.value === 'ALL' ? 'ALL' : parseInt(e.target.value)})} 
+            className="w-full px-4 py-3 bg-slate-50 rounded-2xl text-[10px] font-black uppercase outline-none border-2 border-transparent focus:border-blue-500 transition-all"
+          >
+            <option value="ALL">SEMUA BULAN</option>
+            <option value="1">JANUARI</option>
+            <option value="2">FEBRUARI</option>
+            <option value="3">MARET</option>
+            <option value="4">APRIL</option>
+            <option value="5">MEI</option>
+            <option value="6">JUNI</option>
+            <option value="7">JULI</option>
+            <option value="8">AGUSTUS</option>
+            <option value="9">SEPTEMBER</option>
+            <option value="10">OKTOBER</option>
+            <option value="11">NOVEMBER</option>
+            <option value="12">DESEMBER</option>
           </select>
         </div>
       </div>
     </div>
-  )}
-</div>
-
+  </div>
+)}
+</div>             
+              
 {/* 📊 STATS BANNER HASIL FILTER */}
 {(ledgerFilters.period !== 'ALL' || ledgerFilters.category !== 'ALL' || ledgerFilters.type !== 'ALL') && (
   <div className="mx-8 mt-6 mb-6 p-6 bg-gradient-to-r from-blue-50 to-emerald-50 rounded-3xl border-2 border-blue-200 shadow-lg">
@@ -553,7 +611,7 @@ useEffect(() => {
     </div>
   </div>
 )}
-               <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+               <div className="overflow-x-auto max-h-[800px] overflow-y-auto">
                   <table className="w-full text-left">
                      <thead className="bg-white sticky top-0 z-10 shadow-sm"><tr><th className="px-12 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Transaksi</th><th className="px-12 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Nominal</th><th className="px-12 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Aksi</th></tr></thead>
                      <tbody className="divide-y divide-slate-50">
