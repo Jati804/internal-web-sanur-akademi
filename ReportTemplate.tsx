@@ -9,6 +9,7 @@ import {
 interface ReportTemplateProps {
   reportLog: Attendance; 
   allLogs: Attendance[]; 
+  studentAttendanceLogs: any[]; // ✅ TAMBAHAN INI KAK!
   studentName: string;
 }
 
@@ -35,7 +36,12 @@ const getDirectValue = (dataObj: any, defaultValue: any) => {
   return dataObj[keys[0]] || defaultValue;
 };
 
-const ReportTemplate: React.FC<ReportTemplateProps> = ({ reportLog, allLogs, studentName }) => {
+const ReportTemplate: React.FC<ReportTemplateProps> = ({ 
+  reportLog, 
+  allLogs, 
+  studentAttendanceLogs, // ✅ TAMBAHAN INI KAK!
+  studentName 
+}) => {
   // 1. DATA GURU
   const rawScores = getDirectValue(reportLog.studentScores, Array(6).fill(0));
   const scores: number[] = Array.isArray(rawScores) ? rawScores : Array(6).fill(0);
@@ -54,12 +60,16 @@ const ReportTemplate: React.FC<ReportTemplateProps> = ({ reportLog, allLogs, stu
   const level = matpelMatch ? matpelMatch[2] : (reportLog.level || 'BASIC');
   
   // 2. DATA SISWA ONLY (Untuk Milestone)
-  const sNameNorm = studentName.toUpperCase().trim();
-  const studentOnlyLogs = allLogs.filter(l => 
-    l.packageId === reportLog.packageId && 
-    l.teacherId === 'SISWA_MANDIRI' && 
-    l.studentsAttended?.some(s => (s || '').toUpperCase().trim() === sNameNorm)
-  );
+const sNameNorm = studentName.toUpperCase().trim();
+const pkgIdNorm = (reportLog.packageId || '').toUpperCase().trim();
+
+// ✅ GANTI KE TABLE BARU (student_attendance)
+const studentOnlyLogs = [...studentAttendanceLogs]
+  .filter(l => 
+    (l.packageid || '').toUpperCase().trim() === pkgIdNorm && 
+    (l.studentname || '').toUpperCase().trim() === sNameNorm
+  )
+  .sort((a, b) => (a.sessionnumber || 0) - (b.sessionnumber || 0));
 
   // LOGIKA QR CODE: Teks Informasi
   const statusLabel = isPass ? "LULUS & KOMPETEN" : "PESERTA PELATIHAN";
