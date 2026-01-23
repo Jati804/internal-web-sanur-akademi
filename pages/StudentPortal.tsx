@@ -950,7 +950,7 @@ const completedSessions = studentAttendanceLogs
       )}
       
       <div className="fixed left-[-9999px] top-0 pointer-events-none">
-         {verifiedCourses.map((course) => { const reportLog = findOfficialReportLog(course); return reportLog ? ( <ReportTemplate key={reportLog.id} reportLog={reportLog} allLogs={attendanceLogs} studentName={normalizedUserName} /> ) : null; })}
+         {verifiedCourses.map((course) => { const reportLog = findOfficialReportLog(course); return reportLog ? ( <ReportTemplate key={reportLog.id} reportLog={reportLog} allLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} studentName={normalizedUserName} /> ) : null; })}
          {myPayments.map((p) => (
             <div id={`slip-digital-${p.id}`} ref={p.id === showDigitalSlip?.id ? slipRef : null} key={p.id} className="bg-white p-12 md:p-20 space-y-10 w-[700px] mx-auto overflow-hidden text-slate-900 border-8 border-double border-slate-100">
                <div className="flex justify-between items-start border-b-2 border-slate-900 pb-10"><div className="min-w-0 text-left"><h1 className="text-3xl font-black italic tracking-tighter text-slate-900 leading-none">SANUR</h1><p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1 text-left">Akademi Inspirasi</p></div><div className="text-right flex flex-col items-end"><h2 className="text-xl font-black uppercase italic text-slate-800 leading-none">KUITANSI RESMI</h2><p className="text-[10px] font-black text-slate-800 uppercase tracking-widest mt-2 whitespace-nowrap">ID: {p.id.toUpperCase()}</p></div></div>
