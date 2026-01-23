@@ -46,6 +46,7 @@ const AdminAcademic: React.FC<AdminAcademicProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
 const [draggedType, setDraggedType] = useState<'SUBJECT' | 'CLASS' | 'LEVEL' | null>(null);
+const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   // Salary Editing State
   const [tempSalary, setTempSalary] = useState(salaryConfig);
@@ -171,8 +172,9 @@ const [draggedType, setDraggedType] = useState<'SUBJECT' | 'CLASS' | 'LEVEL' | n
   setDraggedType(type);
 };
 
-const handleDragOver = (e: React.DragEvent) => {
+const handleDragOver = (e: React.DragEvent, index: number) => {
   e.preventDefault();
+  setDragOverIndex(index);
 };
 
 const handleDrop = (dropIndex: number, type: 'SUBJECT' | 'CLASS' | 'LEVEL') => {
@@ -209,6 +211,7 @@ const handleDrop = (dropIndex: number, type: 'SUBJECT' | 'CLASS' | 'LEVEL') => {
 const handleDragEnd = () => {
   setDraggedIndex(null);
   setDraggedType(null);
+  setDragOverIndex(null);
 };
 
   return (
@@ -251,18 +254,20 @@ const handleDragEnd = () => {
             <div className="space-y-2 flex-1 max-h-[450px] overflow-y-auto custom-scrollbar pr-2">
   {subjects.map((s, idx) => (
     <div 
-      key={idx} 
-      draggable
-      onDragStart={() => handleDragStart(idx, 'SUBJECT')}
-      onDragOver={handleDragOver}
-      onDrop={() => handleDrop(idx, 'SUBJECT')}
-      onDragEnd={handleDragEnd}
-      className={`flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-transparent hover:border-blue-100 transition-all group/item cursor-move ${
-  draggedIndex === idx && draggedType === 'SUBJECT' 
-    ? 'scale-110 shadow-2xl ring-4 ring-blue-400 z-50 bg-white' 
-    : ''
-}`}
-    >
+  key={idx} 
+  draggable
+  onDragStart={() => handleDragStart(idx, 'SUBJECT')}
+  onDragOver={(e) => handleDragOver(e, idx)}
+  onDrop={() => handleDrop(idx, 'SUBJECT')}
+  onDragEnd={handleDragEnd}
+  className={`flex items-center justify-between p-5 rounded-2xl border-2 transition-all group/item cursor-move ${
+    draggedIndex === idx && draggedType === 'SUBJECT' 
+      ? 'opacity-50 bg-blue-100 border-blue-300 border-dashed' 
+      : dragOverIndex === idx && draggedType === 'SUBJECT'
+      ? 'bg-blue-50 border-blue-400 scale-105 shadow-lg'
+      : 'bg-slate-50 border-transparent hover:border-blue-100'
+  }`}
+>
       <span className="text-[11px] font-black uppercase italic text-slate-700">{s}</span>
       <button onClick={() => handleRemoveSubject(s)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
     </div>
@@ -285,18 +290,20 @@ const handleDragEnd = () => {
             <div className="space-y-2 flex-1 max-h-[450px] overflow-y-auto custom-scrollbar pr-2">
   {levels.map((l, idx) => (
     <div 
-      key={idx} 
-      draggable
-      onDragStart={() => handleDragStart(idx, 'LEVEL')}
-      onDragOver={handleDragOver}
-      onDrop={() => handleDrop(idx, 'LEVEL')}
-      onDragEnd={handleDragEnd}
-      className={`flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-transparent hover:border-emerald-100 transition-all group/item cursor-move ${
-  draggedIndex === idx && draggedType === 'LEVEL' 
-    ? 'scale-110 shadow-2xl ring-4 ring-emerald-400 z-50 bg-white' 
-    : ''
-}`}
-    >
+  key={idx} 
+  draggable
+  onDragStart={() => handleDragStart(idx, 'LEVEL')}
+  onDragOver={(e) => handleDragOver(e, idx)}
+  onDrop={() => handleDrop(idx, 'LEVEL')}
+  onDragEnd={handleDragEnd}
+  className={`flex items-center justify-between p-5 rounded-2xl border-2 transition-all group/item cursor-move ${
+    draggedIndex === idx && draggedType === 'LEVEL' 
+      ? 'opacity-50 bg-emerald-100 border-emerald-300 border-dashed' 
+      : dragOverIndex === idx && draggedType === 'LEVEL'
+      ? 'bg-emerald-50 border-emerald-400 scale-105 shadow-lg'
+      : 'bg-slate-50 border-transparent hover:border-emerald-100'
+  }`}
+>
       <span className="text-[11px] font-black uppercase italic text-slate-700">{l}</span>
       <button onClick={() => handleRemoveLevel(l)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
     </div>
@@ -319,18 +326,20 @@ const handleDragEnd = () => {
             <div className="space-y-2 flex-1 max-h-[450px] overflow-y-auto custom-scrollbar pr-2">
   {classes.map((c, idx) => (
     <div 
-      key={idx} 
-      draggable
-      onDragStart={() => handleDragStart(idx, 'CLASS')}
-      onDragOver={handleDragOver}
-      onDrop={() => handleDrop(idx, 'CLASS')}
-      onDragEnd={handleDragEnd}
-      className={`flex items-center justify-between p-5 bg-slate-50 rounded-2xl border border-transparent hover:border-orange-100 transition-all group/item cursor-move ${
-  draggedIndex === idx && draggedType === 'CLASS' 
-    ? 'scale-110 shadow-2xl ring-4 ring-orange-400 z-50 bg-white' 
-    : ''
-}`}
-    >
+  key={idx} 
+  draggable
+  onDragStart={() => handleDragStart(idx, 'CLASS')}
+  onDragOver={(e) => handleDragOver(e, idx)}
+  onDrop={() => handleDrop(idx, 'CLASS')}
+  onDragEnd={handleDragEnd}
+  className={`flex items-center justify-between p-5 rounded-2xl border-2 transition-all group/item cursor-move ${
+    draggedIndex === idx && draggedType === 'CLASS' 
+      ? 'opacity-50 bg-orange-100 border-orange-300 border-dashed' 
+      : dragOverIndex === idx && draggedType === 'CLASS'
+      ? 'bg-orange-50 border-orange-400 scale-105 shadow-lg'
+      : 'bg-slate-50 border-transparent hover:border-orange-100'
+  }`}
+>
       <span className="text-[11px] font-black uppercase italic text-slate-700">{c}</span>
       <button onClick={() => handleRemoveClass(c)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
     </div>
