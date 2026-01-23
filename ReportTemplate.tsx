@@ -64,7 +64,7 @@ const sNameNorm = studentName.toUpperCase().trim();
 const pkgIdNorm = (reportLog.packageId || '').toUpperCase().trim();
 
 // ✅ GANTI KE TABLE BARU (student_attendance)
-const studentOnlyLogs = [...studentAttendanceLogs]
+const studentOnlyLogs = [...(studentAttendanceLogs || [])] // ✅ TAMBAH FALLBACK [] KALO UNDEFINED
   .filter(l => 
     (l.packageid || '').toUpperCase().trim() === pkgIdNorm && 
     (l.studentname || '').toUpperCase().trim() === sNameNorm
