@@ -43,6 +43,13 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
   const [payrollSearch, setPayrollSearch] = useState('');
   const [ledgerSearch, setLedgerSearch] = useState('');
   const [sppSearch, setSppSearch] = useState('');
+  // 🆕 State untuk filter ledger
+const [ledgerFilters, setLedgerFilters] = useState({
+  period: 'ALL', // 'TODAY', 'THIS_WEEK', 'THIS_MONTH', 'ALL'
+  category: 'ALL', // 'ALL', 'SPP_SISWA', 'HONOR_GURU', dll
+  type: 'ALL' // 'ALL', 'INCOME', 'EXPENSE'
+});
+const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   
   const [showAddModal, setShowAddModal] = useState(false);
   const [showImportModal, setShowImportModal] = useState(false);
@@ -136,8 +143,16 @@ useEffect(() => {
   }, [transactions]);
 
   const filteredLedger = useMemo(() => {
-    let results = [...transactions].sort((a, b) => b.id.localeCompare(a.id));
+    // 1️⃣ Sort dari yang terbaru
+    let results = [...transactions].sort((a, b) => {
+      const getTimestamp = (id: string) => {
+        const parts = id.split('-');
+        return parseInt(parts[parts.length - 1]) || 0;
+      };
+      return getTimestamp(b.id) - getTimestamp(a.id);
+    });
     
+    // 2️⃣ Filter berdasarkan Search Box
     if (ledgerSearch.trim()) {
       const q = ledgerSearch.toLowerCase();
       results = results.filter(t => 
@@ -147,8 +162,55 @@ useEffect(() => {
         t.date.includes(q)
       );
     }
+    
+    // 3️⃣ Filter berdasarkan Period (Hari/Minggu/Bulan)
+    if (ledgerFilters.period !== 'ALL') {
+      const today = new Date();
+      const todayStr = getWIBDate();
+      
+      results = results.filter(t => {
+        const txDate = new Date(t.date);
+        
+        if (ledgerFilters.period === 'TODAY') {
+          return t.date === todayStr;
+        }
+        
+        if (ledgerFilters.period === 'THIS_WEEK') {
+          const weekAgo = new Date(today);
+          weekAgo.setDate(today.getDate() - 7);
+          return txDate >= weekAgo;
+        }
+        
+        if (ledgerFilters.period === 'THIS_MONTH') {
+          return txDate.getMonth() === today.getMonth() && 
+                 txDate.getFullYear() === today.getFullYear();
+        }
+        
+        return true;
+      });
+    }
+    
+    // 4️⃣ Filter berdasarkan Category
+    if (ledgerFilters.category !== 'ALL') {
+      results = results.filter(t => 
+        (t.category || 'UMUM').toUpperCase() === ledgerFilters.category
+      );
+    }
+    
+    // 5️⃣ Filter berdasarkan Type (Masuk/Keluar)
+    if (ledgerFilters.type !== 'ALL') {
+      results = results.filter(t => t.type === ledgerFilters.type);
+    }
+    
     return results;
-  }, [transactions, ledgerSearch]);
+  }, [transactions, ledgerSearch, ledgerFilters]);
+
+  // 🆕 Stats khusus untuk hasil filter (PINDAH KE SINI!)
+  const filteredStats = useMemo(() => {
+    const income = filteredLedger.filter(t => t.type === 'INCOME').reduce((a, b) => a + b.amount, 0);
+    const expense = filteredLedger.filter(t => t.type === 'EXPENSE').reduce((a, b) => a + b.amount, 0);
+    return { income, expense, balance: income - expense, count: filteredLedger.length };
+  }, [filteredLedger]);
 
   const payrollQueue = useMemo(() => {
     const items: Record<string, any> = {};
@@ -329,6 +391,21 @@ useEffect(() => {
   return (
     <>
       <style>{`
+      /* Scroll bar cantik */
+.overflow-y-auto::-webkit-scrollbar {
+  width: 8px;
+}
+.overflow-y-auto::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb {
+  background: #3b82f6;
+  border-radius: 10px;
+}
+.overflow-y-auto::-webkit-scrollbar-thumb:hover {
+  background: #2563eb;
+}
         @keyframes modalFadeIn {
           from {
             opacity: 0;
@@ -399,11 +476,84 @@ useEffect(() => {
                      <button onClick={handleExportExcel} className="px-6 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-200"><FileSpreadsheet size={14}/> EXPORT EXCEL</button>
                   </div>
                </div>
-               <div className="p-8 border-b border-slate-100 relative group">
-                  <Search size={22} className="absolute left-14 top-1/2 -translate-y-1/2 text-blue-500 group-focus-within:scale-110 transition-transform" />
-                  <input type="text" placeholder="CARI APAPUN..." value={ledgerSearch} onChange={e => setLedgerSearch(e.target.value.toUpperCase())} className="w-full pl-16 pr-8 py-6 bg-slate-50 rounded-[2rem] text-[11px] font-black uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner" />
-               </div>
-               <div className="overflow-x-auto">
+               {/* 🔍 SEARCH BOX */}
+<div className="p-8 border-b border-slate-100 relative group">
+  <Search size={22} className="absolute left-14 top-1/2 -translate-y-1/2 text-blue-500 group-focus-within:scale-110 transition-transform" />
+  <input type="text" placeholder="CARI APAPUN..." value={ledgerSearch} onChange={e => setLedgerSearch(e.target.value.toUpperCase())} className="w-full pl-16 pr-8 py-6 bg-slate-50 rounded-[2rem] text-[11px] font-black uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner" />
+</div>
+
+{/* 🎯 QUICK FILTER PILLS */}
+<div className="px-8 py-6 bg-slate-50 border-b border-slate-100">
+  <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-4">⚡ Quick Filter:</p>
+  <div className="flex flex-wrap gap-3">
+    <button onClick={() => setLedgerFilters({...ledgerFilters, period: 'TODAY'})} className={`px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${ledgerFilters.period === 'TODAY' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-slate-100'}`}>
+      📅 Hari Ini
+    </button>
+    <button onClick={() => setLedgerFilters({...ledgerFilters, period: 'THIS_WEEK'})} className={`px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${ledgerFilters.period === 'THIS_WEEK' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-slate-100'}`}>
+      📅 Minggu Ini
+    </button>
+    <button onClick={() => setLedgerFilters({...ledgerFilters, period: 'THIS_MONTH'})} className={`px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${ledgerFilters.period === 'THIS_MONTH' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-slate-100'}`}>
+      📅 Bulan Ini
+    </button>
+    <button onClick={() => setLedgerFilters({period: 'ALL', category: 'ALL', type: 'ALL'})} className="px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all">
+      🔄 Reset Semua
+    </button>
+    <button onClick={() => setShowAdvancedFilter(!showAdvancedFilter)} className="px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider bg-slate-900 text-white hover:bg-slate-800 transition-all ml-auto">
+      {showAdvancedFilter ? '▲ Sembunyikan' : '▼ Filter Lanjut'}
+    </button>
+  </div>
+  
+  {/* 🎨 ADVANCED FILTER (Tersembunyi) */}
+  {showAdvancedFilter && (
+    <div className="mt-6 p-6 bg-white rounded-3xl border border-slate-200 space-y-4 animate-in fade-in">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Filter Tipe */}
+        <div>
+          <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2 block">💸 Tipe Transaksi:</label>
+          <select value={ledgerFilters.type} onChange={(e) => setLedgerFilters({...ledgerFilters, type: e.target.value})} className="w-full px-4 py-3 bg-slate-50 rounded-2xl text-[10px] font-black uppercase outline-none border-2 border-transparent focus:border-blue-500 transition-all">
+            <option value="ALL">SEMUA TIPE</option>
+            <option value="INCOME">⬆️ MASUK</option>
+            <option value="EXPENSE">⬇️ KELUAR</option>
+          </select>
+        </div>
+        
+        {/* Filter Kategori */}
+        <div>
+          <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2 block">🏷️ Kategori:</label>
+          <select value={ledgerFilters.category} onChange={(e) => setLedgerFilters({...ledgerFilters, category: e.target.value})} className="w-full px-4 py-3 bg-slate-50 rounded-2xl text-[10px] font-black uppercase outline-none border-2 border-transparent focus:border-blue-500 transition-all">
+            <option value="ALL">SEMUA KATEGORI</option>
+            <option value="SPP_SISWA">💰 SPP SISWA</option>
+            <option value="HONOR_GURU">👨‍🏫 HONOR GURU</option>
+            <option value="UMUM">📦 UMUM</option>
+            {/* Tambahin kategori lain sesuai kebutuhan */}
+          </select>
+        </div>
+      </div>
+    </div>
+  )}
+</div>
+
+{/* 📊 STATS BANNER HASIL FILTER */}
+{(ledgerFilters.period !== 'ALL' || ledgerFilters.category !== 'ALL' || ledgerFilters.type !== 'ALL') && (
+  <div className="mx-8 mt-6 mb-6 p-6 bg-gradient-to-r from-blue-50 to-emerald-50 rounded-3xl border-2 border-blue-200 shadow-lg">
+    <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-4 text-center">📊 HASIL FILTER ({filteredStats.count} TRANSAKSI)</p>
+    <div className="grid grid-cols-3 gap-4">
+      <div className="text-center">
+        <p className="text-[8px] font-black text-emerald-600 uppercase mb-1">Masuk</p>
+        <p className="text-lg font-black text-emerald-600 italic">Rp {filteredStats.income.toLocaleString()}</p>
+      </div>
+      <div className="text-center">
+        <p className="text-[8px] font-black text-rose-600 uppercase mb-1">Keluar</p>
+        <p className="text-lg font-black text-rose-600 italic">Rp {filteredStats.expense.toLocaleString()}</p>
+      </div>
+      <div className="text-center">
+        <p className="text-[8px] font-black text-blue-600 uppercase mb-1">Balance</p>
+        <p className="text-lg font-black text-blue-600 italic">Rp {filteredStats.balance.toLocaleString()}</p>
+      </div>
+    </div>
+  </div>
+)}
+               <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
                   <table className="w-full text-left">
                      <thead className="bg-white sticky top-0 z-10 shadow-sm"><tr><th className="px-12 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Transaksi</th><th className="px-12 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Nominal</th><th className="px-12 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Aksi</th></tr></thead>
                      <tbody className="divide-y divide-slate-50">
