@@ -240,7 +240,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                   <span className="text-[9px] font-black uppercase tracking-widest text-blue-300">Sanur Wallet System</span>
                </div>
                <h2 className="text-4xl font-black uppercase italic leading-none">Dompet <span className="text-blue-500">Honor</span></h2>
-               <p className="text-slate-400 font-bold text-xs uppercase tracking-widest italic">Halo Kak {user.name.split(' ')[0]}! Semangat mengajar âœ¨</p>
+               <p className="text-slate-400 font-bold text-xs uppercase tracking-widest italic">Halo Kak {user.name.split(' ')[0]}! Semangat mengajar ✨</p>
             </div>
             <div className="flex bg-white/5 backdrop-blur-xl p-6 rounded-[2.5rem] border border-white/10 items-center gap-6 min-w-[260px]">
                <div className="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-900/40"><Wallet size={32}/></div>
@@ -338,7 +338,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                             <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-tight">{pkg.className}</h4>
                             <span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${pkg.category === 'PRIVATE' ? 'bg-orange-500 text-white' : 'bg-blue-900 text-white'}`}>{pkg.category}</span>
                             {isNew && (
-                               <span className="px-4 py-1 bg-blue-600 text-white rounded-full text-[8px] font-black uppercase tracking-widest animate-bounce shadow-lg">DATA TERBARU âœ¨</span>
+                               <span className="px-4 py-1 bg-blue-600 text-white rounded-full text-[8px] font-black uppercase tracking-widest animate-bounce shadow-lg">DATA TERBARU ✨</span>
                             )}
                          </div>
                          <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mt-2 italic">Siswa: {pkg.studentName}</p>
@@ -502,7 +502,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
             </div>
             <div className="pt-10 border-t border-slate-100 flex justify-between items-end gap-10">
               <div className="max-w-xs text-left">
-                <p className="text-[10px] font-bold text-slate-400 italic leading-relaxed text-left">""Terima kasih atas kepercayaannya bergabung di SANUR Akademi Inspirasi. Slip ini adalah bukti pembayaran sah yang diverifikasi sistem internal."</p>
+                <p className="text-[10px] font-bold text-slate-400 italic leading-relaxed text-left">"Terima kasih atas kepercayaannya bergabung di SANUR Akademi Inspirasi. Slip ini adalah bukti pembayaran sah yang diverifikasi sistem internal."</p>
               </div>
               <div className="text-center flex flex-col items-center shrink-0">
                 <ShieldCheck size={44} className="text-slate-900 opacity-20 mb-2" />
