@@ -263,30 +263,35 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
      </Link>
   </div>
 
-  {/* SearchBar + Filter - SearchBar IKUTIN LEBAR QuickNav */}
-  <div className="flex items-center justify-center gap-3 px-2">
-     {/* SearchBar - SAMA LEBAR QUICKNAV (max-w-sm) */}
-     <div className="max-w-sm flex-1 relative group">
-        <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"><Search size={18} /></div>
-        <input 
-           type="text" 
-           placeholder="CARI SISWA / KELAS..." 
-           value={searchTerm} 
-           onChange={(e) => setSearchTerm(e.target.value.toUpperCase())} 
-           className="w-full pl-14 pr-8 py-5 bg-white border-2 border-slate-100 rounded-3xl font-black text-[10px] uppercase outline-none focus:border-blue-500 transition-all shadow-xl" 
-        />
-     </div>
+  {/* SearchBar + Filter INTEGRATED - Panjang kayak Info Box */}
+  <div className="max-w-5xl mx-auto">
+     <div className="flex items-center gap-3 bg-white border-2 border-slate-100 rounded-3xl shadow-xl p-2 pr-3">
+        {/* Search Input */}
+        <div className="flex-1 relative">
+           <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"><Search size={18} /></div>
+           <input 
+              type="text" 
+              placeholder="CARI SISWA / KELAS..." 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value.toUpperCase())} 
+              className="w-full pl-14 pr-4 py-4 bg-transparent font-black text-[10px] uppercase outline-none" 
+           />
+        </div>
 
-     {/* Filter Tahun - MEPET DI SAMPING KANAN */}
-     <div className="w-[120px] relative group shrink-0">
-        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500"><Filter size={12} /></div>
-        <select 
-           value={selectedYear} 
-           onChange={(e) => setSelectedYear(e.target.value)} 
-           className="w-full pl-8 pr-2 py-5 bg-white border-2 border-slate-100 rounded-3xl font-black text-[9px] uppercase tracking-wide outline-none focus:border-blue-500 transition-all shadow-xl appearance-none cursor-pointer text-center"
-        >
-           {years.map(y => <option key={y} value={y}>{y}</option>)}
-        </select>
+        {/* Divider */}
+        <div className="w-px h-8 bg-slate-200"></div>
+
+        {/* Filter Tahun - Integrated */}
+        <div className="relative group shrink-0">
+           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500"><Filter size={14} /></div>
+           <select 
+              value={selectedYear} 
+              onChange={(e) => setSelectedYear(e.target.value)} 
+              className="pl-9 pr-3 py-3 bg-transparent font-black text-[10px] uppercase outline-none appearance-none cursor-pointer min-w-[100px] text-center"
+           >
+              {years.map(y => <option key={y} value={y}>{y}</option>)}
+           </select>
+        </div>
      </div>
   </div>
 </div>
