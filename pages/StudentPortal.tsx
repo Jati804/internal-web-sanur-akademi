@@ -689,11 +689,11 @@ const executeFinalRequestReport = async () => {
       ) : (
         <section className="space-y-10">
            {verifiedCourses.map((course, idx) => {
-              // ✅ GANTI: Sekarang ambil dari student_attendance table
+              // ✅ GANTI PAKAI studentAttendanceLogs
 const pkgIdNorm = (course.id || '').toUpperCase().trim();
 const completedSessions = studentAttendanceLogs
   .filter(l => 
-    (l.packageid || '').toUpperCase().trim() === pkgIdNorm &&  // ⬅️ INI YANG PENTING!
+    (l.packageid || '').toUpperCase().trim() === pkgIdNorm &&  
     (l.studentname || '').toUpperCase().trim() === normalizedUserName
   )
   .map(l => ({ id: l.id, num: l.sessionnumber || 0, date: l.date }));
@@ -710,6 +710,7 @@ const completedSessions = studentAttendanceLogs
               
               const isReportPublished = !!reportLog && reportLog.status === 'SESSION_LOG';
               const isWaitingRelease = !!reportLog && reportLog.status === 'REPORT_READY';
+              const courseLogs = myLogs.filter(l => l.packageId === course.id);
               const isRequesting = courseLogs.some(l => l.status === 'REPORT_REQUEST');
               const isProcessing = courseLogs.some(l => l.status === 'REPORT_PROCESSING');
               const isRejected = courseLogs.some(l => l.status === 'REPORT_REJECTED');
