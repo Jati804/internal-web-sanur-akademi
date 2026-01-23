@@ -254,24 +254,25 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
       </header>
 
 <div className="space-y-8">
-  {/* QuickNav CENTERED kayak di Dashboard */}
-  <div className="flex bg-white p-2 rounded-[2.5rem] border border-slate-100 shadow-xl max-w-sm mx-auto">
-     <Link to="/teacher" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase transition-all text-center flex items-center justify-center gap-3 text-slate-400 hover:text-blue-600">
-        <ClipboardCheck size={16}/> Presensi
-     </Link>
-     <Link to="/teacher/honor" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase transition-all text-center flex items-center justify-center gap-3 bg-blue-600 text-white shadow-lg shadow-blue-200">
-        <Wallet size={16}/> Honor
-     </Link>
-  </div>
+  {/* QuickNav + Filter Tahun SEJAJAR 1 BARIS */}
+  <div className="flex items-center justify-center gap-6 px-2">
+     {/* QuickNav di Tengah */}
+     <div className="flex bg-white p-2 rounded-[2.5rem] border border-slate-100 shadow-xl max-w-sm">
+        <Link to="/teacher" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase transition-all text-center flex items-center justify-center gap-3 text-slate-400 hover:text-blue-600">
+           <ClipboardCheck size={16}/> Presensi
+        </Link>
+        <Link to="/teacher/honor" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase transition-all text-center flex items-center justify-center gap-3 bg-blue-600 text-white shadow-lg shadow-blue-200">
+           <Wallet size={16}/> Honor
+        </Link>
+     </div>
 
-  {/* Filter Tahun DI POJOK KANAN sejajar sama SearchBar */}
-  <div className="max-w-5xl mx-auto flex justify-end px-2">
-     <div className="w-[160px] relative group">
-        <div className="absolute left-5 top-1/2 -translate-y-1/2 text-blue-500"><Filter size={16} /></div>
+     {/* Filter Tahun Kecil di Samping */}
+     <div className="w-[140px] relative group">
+        <div className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-500"><Filter size={14} /></div>
         <select 
            value={selectedYear} 
            onChange={(e) => setSelectedYear(e.target.value)} 
-           className="w-full pl-12 pr-4 py-4 bg-white border-2 border-slate-100 rounded-3xl font-black text-[10px] uppercase tracking-wider outline-none focus:border-blue-500 transition-all shadow-xl appearance-none cursor-pointer text-center"
+           className="w-full pl-10 pr-3 py-4 bg-white border-2 border-slate-100 rounded-3xl font-black text-[9px] uppercase tracking-wider outline-none focus:border-blue-500 transition-all shadow-xl appearance-none cursor-pointer text-center"
         >
            {years.map(y => <option key={y} value={y}>{y}</option>)}
         </select>
