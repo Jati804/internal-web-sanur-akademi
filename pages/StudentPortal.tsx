@@ -223,7 +223,16 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
         studentsessions: { [normalizedUserName]: confirmingAbsen.sessionNum }, 
         paymentstatus: 'PAID' 
       };
-      await supabase.from('attendance').insert([payload]);
+      await supabase.from('student_attendance').insert([{
+  id: payload.id,
+  packageid: payload.packageid,
+  studentname: normalizedUserName,
+  sessionnumber: payload.sessionnumber,
+  date: payload.date,
+  clockin: payload.clockin,
+  duration: 2,
+  classname: payload.classname
+}]);
       if (refreshAllData) await refreshAllData();
       setConfirmingAbsen(null);
       setShowSuccess(true);
@@ -235,7 +244,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
     if (!showEditDateModal || !editDateValue) return;
     setLoading(true);
     try {
-      await supabase.from('attendance').update({ date: editDateValue }).eq('id', showEditDateModal.id);
+      await supabase.from('student_attendance').update({ date: editDateValue }).eq('id', showEditDateModal.id);
       if (refreshAllData) await refreshAllData();
       setShowEditDateModal(null);
       setShowSuccess(true);
