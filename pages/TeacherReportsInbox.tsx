@@ -7,7 +7,8 @@ import {
   GraduationCap, Search, X, Loader2, Check, Sparkles,
   History, Trophy, Edit3, CheckCircle2, UserCheck, Layout, BookOpen, Printer,
   Quote, BadgeCheck, ClipboardList, Star, Calendar, Clock, AlertCircle, Trash2,
-  FileEdit, ChevronRight, Zap, Info, Send, SendHorizonal, Save, AlertTriangle, FileDown, FileCheck
+  FileEdit, ChevronRight, Zap, Info, Send, SendHorizonal, Save, AlertTriangle, FileDown, FileCheck,
+  Filter // ✅ TAMBAH INI KALAU BELUM ADA
 } from 'lucide-react';
 
 import html2canvas from 'html2canvas';
@@ -80,7 +81,8 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
   // FIXED: Menggunakan state ID agar loading tidak terjadi secara massal
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [historySearchTerm, setHistorySearchTerm] = useState('');
-
+  const [selectedYear, setSelectedYear] = useState('2026'); // ✅ TAMBAH INI
+  
   // Efek Highlight untuk kartu yang baru saja dikerjakan
   useEffect(() => {
     if (activeStep === 'HISTORY' && lastActionedId) {
@@ -135,34 +137,29 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
     (l.status === 'SESSION_LOG' || l.status === 'REPORT_READY') && 
     l.sessionNumber === 6 && 
     l.teacherId === user.id &&
-    l.teacherId !== 'SISWA_MANDIRI' && // ✅ FILTER ABSEN SISWA MANDIRI
-    (l.packageId || '').startsWith('PAY-') // ✅ PASTIKAN INI DATA RAPOT (DARI PAYMENT ID)
+    l.teacherId !== 'SISWA_MANDIRI' &&
+    (l.packageId || '').startsWith('PAY-') &&
+    l.date.startsWith(selectedYear) // ✅ TAMBAH FILTER TAHUN
   );
     
-    // LOGIKA SORTING BARU: 
-    // 1. Yang baru saja diaksi (lastActionedId) SELALU PERTAMA.
-    // 2. Kemudian berdasarkan Tanggal (Terbaru).
-    // 3. Kemudian berdasarkan ID (Timestamp pembuatannya) agar tidak loncat-loncat jika tanggal sama.
-    const sorted = [...baseReports].sort((a, b) => {
-        if (a.id === lastActionedId) return -1;
-        if (b.id === lastActionedId) return 1;
+  // LOGIKA SORTING (sama kayak sebelumnya)
+  const sorted = [...baseReports].sort((a, b) => {
+      if (a.id === lastActionedId) return -1;
+      if (b.id === lastActionedId) return 1;
+      const dateCompare = new Date(b.date).getTime() - new Date(a.date).getTime();
+      if (dateCompare !== 0) return dateCompare;
+      return b.id.localeCompare(a.id);
+  });
 
-        const dateCompare = new Date(b.date).getTime() - new Date(a.date).getTime();
-        if (dateCompare !== 0) return dateCompare;
+  if (!historySearchTerm.trim()) return sorted;
 
-        // Fallback ke ID (karena ID mengandung timestamp Date.now() dari sistem lapor)
-        return b.id.localeCompare(a.id);
-    });
-
-    if (!historySearchTerm.trim()) return sorted;
-
-    const term = historySearchTerm.toLowerCase();
-    return sorted.filter(req => {
-        const sName = (req.studentsAttended?.[0] || '').toLowerCase();
-        const cName = (req.className || '').toLowerCase();
-        return sName.includes(term) || cName.includes(term);
-    });
-  }, [logs, user.id, historySearchTerm, lastActionedId]);
+  const term = historySearchTerm.toLowerCase();
+  return sorted.filter(req => {
+      const sName = (req.studentsAttended?.[0] || '').toLowerCase();
+      const cName = (req.className || '').toLowerCase();
+      return sName.includes(term) || cName.includes(term);
+  });
+}, [logs, user.id, historySearchTerm, lastActionedId, selectedYear]); // ✅ TAMBAH selectedYear DI DEPENDENCY
 
   const handleOpenWorkspace = (req: any, isEdit: boolean = false) => {
     setSelectedPackage(req);
@@ -359,17 +356,39 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
       </div>
 
       {activeStep === 'HISTORY' && (
-         <div className="relative max-w-xl mx-auto mt-8 shadow-2xl shadow-slate-200/50 animate-in slide-in-from-top-4">
-            <Search size={22} className="absolute left-8 top-1/2 -translate-y-1/2 text-emerald-500" />
-            <input 
+  <div className="max-w-5xl mx-auto">
+     <div className="flex items-center gap-3 bg-white border-2 border-slate-100 rounded-3xl shadow-xl p-2 pr-3">
+        {/* Search Input */}
+        <div className="flex-1 relative">
+           <div className="absolute left-6 top-1/2 -translate-y-1/2 text-emerald-500"><Search size={18} /></div>
+           <input 
               type="text" 
-              placeholder="CARI NAMA SISWA ATAU KELAS..." 
+              placeholder="CARI SISWA / KELAS..." 
               value={historySearchTerm} 
-              onChange={e => setHistorySearchTerm(e.target.value.toUpperCase())} 
-              className="w-full pl-16 pr-8 py-6 bg-white border border-slate-100 rounded-full text-[12px] font-black uppercase outline-none shadow-sm focus:border-emerald-500 transition-all placeholder:text-slate-300" 
-            />
-         </div>
-      )}
+              onChange={(e) => setHistorySearchTerm(e.target.value.toUpperCase())} 
+              className="w-full pl-14 pr-4 py-4 bg-transparent font-black text-[10px] uppercase outline-none" 
+           />
+        </div>
+
+        {/* Divider */}
+        <div className="w-px h-8 bg-slate-200"></div>
+
+        {/* Filter Tahun - Integrated */}
+        <div className="relative group shrink-0">
+           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500"><Filter size={14} /></div>
+           <select 
+              value={selectedYear} 
+              onChange={(e) => setSelectedYear(e.target.value)} 
+              className="pl-9 pr-3 py-3 bg-transparent font-black text-[10px] uppercase outline-none appearance-none cursor-pointer min-w-[100px] text-center"
+           >
+              {Array.from({ length: 11 }, (_, i) => (2024 + i).toString()).map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+           </select>
+        </div>
+     </div>
+  </div>
+)}
 
       {activeStep === 'ANTREAN' && (
          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
