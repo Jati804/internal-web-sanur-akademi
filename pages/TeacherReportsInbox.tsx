@@ -40,7 +40,7 @@ const MilestoneView = ({ studentAttendanceLogs, studentName, packageId }: { stud
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {[1,2,3,4,5,6].map(num => {
-          const log = sortedLogs.find(l => l.sessionnumber === num); // ✅ LOWERCASE 'sessionnumber'
+          const log = sortedLogs.find(l => l.sessionnumber === num); // ✅ LOWERCASE
           return (
             <div key={num} className={`p-4 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all ${log ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-transparent opacity-40'}`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black italic text-[10px] ${log ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-200 text-slate-400'}`}>0{num}</div>
@@ -119,15 +119,25 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
   }, [activeDownloadId, showMilestoneFor, confirmReject]);
 
   const reportRequests = useMemo(() => {
-    const requests = logs.filter(l => (l.status === 'REPORT_REQUEST' || l.status === 'REPORT_PROCESSING') && l.teacherId === user.id);
-    return requests.filter(req => {
-        const studentNameInRequest = (req.studentsAttended?.[0] || '').toUpperCase().trim();
-        return studentAccounts.some(acc => acc.name.toUpperCase().trim() === studentNameInRequest);
-    });
-  }, [logs, user.id, studentAccounts]);
+  const requests = logs.filter(l => 
+    (l.status === 'REPORT_REQUEST' || l.status === 'REPORT_PROCESSING') && 
+    l.teacherId === user.id &&
+    l.teacherId !== 'SISWA_MANDIRI' // ✅ FILTER ABSEN SISWA MANDIRI
+  );
+  return requests.filter(req => {
+      const studentNameInRequest = (req.studentsAttended?.[0] || '').toUpperCase().trim();
+      return studentAccounts.some(acc => acc.name.toUpperCase().trim() === studentNameInRequest);
+  });
+}, [logs, user.id, studentAccounts]);
 
   const publishedReports = useMemo(() => {
-    const baseReports = logs.filter(l => (l.status === 'SESSION_LOG' || l.status === 'REPORT_READY') && l.sessionNumber === 6 && l.teacherId === user.id);
+  const baseReports = logs.filter(l => 
+    (l.status === 'SESSION_LOG' || l.status === 'REPORT_READY') && 
+    l.sessionNumber === 6 && 
+    l.teacherId === user.id &&
+    l.teacherId !== 'SISWA_MANDIRI' && // ✅ FILTER ABSEN SISWA MANDIRI
+    (l.packageId || '').startsWith('PAY-') // ✅ PASTIKAN INI DATA RAPOT (DARI PAYMENT ID)
+  );
     
     // LOGIKA SORTING BARU: 
     // 1. Yang baru saja diaksi (lastActionedId) SELALU PERTAMA.
