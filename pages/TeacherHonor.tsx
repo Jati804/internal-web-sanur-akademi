@@ -254,24 +254,26 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
       </header>
 
 <div className="space-y-8 px-2">
-  {/* Tab Navigation */}
-  <div className="flex bg-white p-2 rounded-[2.5rem] border border-slate-100 shadow-xl w-full max-w-md mx-auto">
-     <Link to="/teacher" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center gap-3 text-slate-400 hover:text-blue-600"><ClipboardCheck size={16}/> Presensi</Link>
-     <Link to="/teacher/honor" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center gap-3 bg-blue-600 text-white shadow-lg shadow-blue-200"><Wallet size={16}/> Honor</Link>
-  </div>
+  {/* Tab Navigation + Filter Tahun */}
+  <div className="flex flex-col lg:flex-row items-center justify-center gap-6">
+     {/* Tab Navigation - Centered */}
+     <div className="flex bg-white p-2 rounded-[2.5rem] border border-slate-100 shadow-xl w-full max-w-md">
+        <Link to="/teacher" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center gap-3 text-slate-400 hover:text-blue-600"><ClipboardCheck size={16}/> Presensi</Link>
+        <Link to="/teacher/honor" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase tracking-widest transition-all text-center flex items-center justify-center gap-3 bg-blue-600 text-white shadow-lg shadow-blue-200"><Wallet size={16}/> Honor</Link>
+     </div>
 
-  {/* Filter + Search - Full Width Layout */}
-  <div className="flex flex-col md:flex-row items-stretch gap-4 max-w-5xl mx-auto">
-     {/* Filter Tahun */}
-     <div className="w-full md:w-64 relative group">
+     {/* Filter Tahun - Di Samping Navbar */}
+     <div className="w-full lg:w-64 relative group">
         <div className="absolute left-6 top-1/2 -translate-y-1/2 text-blue-500"><Filter size={18} /></div>
         <select value={selectedYear} onChange={(e) => setSelectedYear(e.target.value)} className="w-full pl-14 pr-12 py-5 bg-white border-2 border-slate-100 rounded-3xl font-black text-[10px] uppercase tracking-widest outline-none focus:border-blue-500 transition-all shadow-xl appearance-none cursor-pointer">
            {years.map(y => <option key={y} value={y}>TAHUN {y}</option>)}
         </select>
      </div>
+  </div>
 
-     {/* Search Bar - Flex 1 (makan sisa space) */}
-     <div className="flex-1 relative group">
+  {/* Search Bar - Full Width Sepanjang Info Box */}
+  <div className="max-w-5xl mx-auto">
+     <div className="relative group">
         <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"><Search size={18} /></div>
         <input type="text" placeholder="CARI SISWA / KELAS..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value.toUpperCase())} className="w-full pl-14 pr-8 py-5 bg-white border-2 border-slate-100 rounded-3xl font-black text-[10px] uppercase outline-none focus:border-blue-500 transition-all shadow-xl" />
      </div>
