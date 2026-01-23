@@ -693,7 +693,7 @@ const executeFinalRequestReport = async () => {
 const pkgIdNorm = (course.id || '').toUpperCase().trim();
 const completedSessions = studentAttendanceLogs
   .filter(l => 
-    (l.packageid || '').toUpperCase().trim() === pkgIdNorm && 
+    (l.packageid || '').toUpperCase().trim() === pkgIdNorm &&  // ⬅️ INI YANG PENTING!
     (l.studentname || '').toUpperCase().trim() === normalizedUserName
   )
   .map(l => ({ id: l.id, num: l.sessionnumber || 0, date: l.date }));
