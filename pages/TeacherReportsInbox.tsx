@@ -25,12 +25,12 @@ const MilestoneView = ({ studentAttendanceLogs, studentName, packageId }: { stud
   const sNameNorm = studentName.toUpperCase().trim();
   const pkgIdNorm = packageId.toUpperCase().trim();
 
-  const sortedLogs = [...studentAttendanceLogs] // ✅ GANTI KE TABLE BARU
+  const sortedLogs = [...(studentAttendanceLogs || [])] // ✅ TAMBAH FALLBACK [] KALO UNDEFINED
     .filter(l => 
       (l.packageid || '').toUpperCase().trim() === pkgIdNorm && 
       (l.studentname || '').toUpperCase().trim() === sNameNorm
     )
-    .sort((a,b) => (a.sessionnumber || 0) - (b.sessionnumber || 0));
+    .sort((a,b) => (a.sessionnumber || 0) - (b.sessionnumber || 0)); // ✅ HAPUS TITIK KOMA KEDUA
 
   return (
     <div className="space-y-6">
@@ -40,7 +40,7 @@ const MilestoneView = ({ studentAttendanceLogs, studentName, packageId }: { stud
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         {[1,2,3,4,5,6].map(num => {
-          const log = sortedLogs.find(l => l.sessionNumber === num);
+          const log = sortedLogs.find(l => l.sessionnumber === num); // ✅ LOWERCASE 'sessionnumber'
           return (
             <div key={num} className={`p-4 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all ${log ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-transparent opacity-40'}`}>
               <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black italic text-[10px] ${log ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-200 text-slate-400'}`}>0{num}</div>
@@ -58,6 +58,14 @@ const MilestoneView = ({ studentAttendanceLogs, studentName, packageId }: { stud
 };
 
 const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, studentAttendanceLogs, studentAccounts, refreshAllData }) => {
+  
+  // ✅ TAMBAH INI DI BARIS PALING ATAS
+  console.log('🔍 CHECK DATA MASUK:', {
+    studentAttendanceLogs,
+    isArray: Array.isArray(studentAttendanceLogs),
+    length: studentAttendanceLogs?.length
+  });
+
   const [activeStep, setActiveStep] = useState<'ANTREAN' | 'WORKSPACE' | 'HISTORY'>('ANTREAN');
   const [selectedPackage, setSelectedPackage] = useState<any | null>(null);
   const [lastActionedId, setLastActionedId] = useState<string | null>(null);
@@ -398,9 +406,22 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
             </div>
             <div className="p-8 md:p-14 space-y-16">
                <section className="space-y-4">
-                  <div className="flex items-center gap-3 text-blue-600"><History size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Langkah Pembelajaran (Milestone)</h4></div>
-                  <div className="bg-slate-50 p-8 rounded-[3rem] border border-slate-100"><MilestoneView studentAttendanceLogs={studentAttendanceLogs} studentName={selectedPackage.studentsAttended?.[0] || ''} packageId={selectedPackage.packageId} /></div>
-               </section>
+   <div className="flex items-center gap-3 text-blue-600"><History size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Langkah Pembelajaran (Milestone)</h4></div>
+   <div className="bg-slate-50 p-8 rounded-[3rem] border border-slate-100">
+      {/* ✅ TAMBAH PENGECEKAN INI */}
+      {studentAttendanceLogs && Array.isArray(studentAttendanceLogs) ? (
+         <MilestoneView 
+            studentAttendanceLogs={studentAttendanceLogs} 
+            studentName={selectedPackage.studentsAttended?.[0] || ''} 
+            packageId={selectedPackage.packageId} 
+         />
+      ) : (
+         <div className="text-center py-8">
+            <p className="text-slate-400 text-sm font-bold">Loading milestone data...</p>
+         </div>
+      )}
+   </div>
+</section>
                <section className="flex flex-col items-center">
                   <div className="bg-slate-900 p-12 rounded-[4rem] text-white text-center shadow-2xl relative overflow-hidden w-full max-w-lg">
                      <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
