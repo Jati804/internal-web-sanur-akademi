@@ -253,7 +253,7 @@ useEffect(() => {
       <div className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl overflow-hidden p-10 md:p-14 space-y-8">
          <div className="max-h-[600px] overflow-y-auto custom-scrollbar pr-2 space-y-4">
             {filteredData.map(u => (
-              <div key={u.id} className="p-8 bg-white border border-slate-50 rounded-[2.5rem] hover:bg-slate-50 transition-all grid grid-cols-[auto_1fr_1fr_auto] gap-6 items-center group shadow-sm hover:shadow-xl mb-2">
+              <div key={u.id} className="p-8 bg-white border border-slate-50 rounded-[2.5rem] hover:bg-slate-50 transition-all grid grid-cols-[280px_1fr_1fr_auto] gap-6 items-center group shadow-sm hover:shadow-xl mb-2">
                  <div className="flex items-center gap-6">
                     <div className={`w-14 h-14 ${roleTheme.bg} text-white rounded-2xl flex items-center justify-center shadow-lg group-hover:rotate-6 transition-all shrink-0`}>
                        {activeTab === 'STUDENTS' ? <GraduationCap size={28}/> : <UserCircle size={28}/>}
