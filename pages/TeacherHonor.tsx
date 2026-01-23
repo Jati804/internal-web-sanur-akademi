@@ -32,7 +32,6 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
   const [confirmDeletePkg, setConfirmDeletePkg] = useState<any | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [showSuccessMsg, setShowSuccessMsg] = useState('');
 
   const years = Array.from({ length: 11 }, (_, i) => (2024 + i).toString());
 
@@ -81,37 +80,36 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
   };
 
   const handleDeletePackage = async () => {
-    if (!confirmDeletePkg) return;
-    setIsDeleting(true);
-    try {
-      const { error } = await supabase
-        .from('attendance')
-        .delete()
-        .eq('packageid', confirmDeletePkg.id);
-      
-      if (error) throw error;
-      if (refreshAllData) await refreshAllData();
-      
-      setShowSuccessMsg("Kotak Honor Telah Dihapus! ✨");
-      setConfirmDeletePkg(null);
-      setTimeout(() => setShowSuccessMsg(''), 3000);
-    } catch (e: any) {
-      alert("Terjadi kendala saat menghapus: " + e.message);
-    } finally {
-      setIsDeleting(false);
-    }
-  };
+  if (!confirmDeletePkg) return;
+  setIsDeleting(true);
+  try {
+    const { error } = await supabase
+      .from('attendance')
+      .delete()
+      .eq('packageid', confirmDeletePkg.id);
+    
+    if (error) throw error;
+    if (refreshAllData) await refreshAllData();
+    
+    setConfirmDeletePkg(null); // ✅ Langsung close modal aja
+  } catch (e: any) {
+    alert("Terjadi kendala saat menghapus: " + e.message);
+  } finally {
+    setIsDeleting(false);
+  }
+};
 
   const cycleGroups = useMemo(() => {
     if (!Array.isArray(logs)) return [];
     const groups: Record<string, any> = {};
     
     const relevantLogs = logs.filter(l => 
-      (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG') && 
-      (l.teacherId === user.id || l.originalTeacherId === user.id) &&
-      l.date.startsWith(selectedYear) &&
-      (l.earnings || 0) > 0
-    );
+  (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG') && 
+  (l.teacherId === user.id || l.originalTeacherId === user.id) &&
+  l.teacherId !== 'SISWA_MANDIRI' && // ✅ TAMBAHAN BARIS INI
+  l.date.startsWith(selectedYear) &&
+  (l.earnings || 0) > 0
+);
 
     relevantLogs.forEach(log => {
       const pkgId = log.packageId || 'UNKNOWN';
@@ -226,11 +224,6 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
       `}</style>
 
       <div className="max-w-7xl mx-auto space-y-12 pb-40 px-4 animate-in">
-      {showSuccessMsg && (
-        <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200000] px-10 py-6 bg-emerald-600 text-white rounded-[2.5rem] font-black text-xs uppercase tracking-widest shadow-2xl flex items-center gap-4 animate-in slide-in-from-top-4 border-4 border-white/20">
-           <CheckCircle2 size={28} /> {showSuccessMsg}
-        </div>
-      )}
 
       {isDeleting && (
         <div className="fixed inset-0 z-[300000] bg-slate-900/60 backdrop-blur-xl flex flex-col items-center justify-center text-white">
