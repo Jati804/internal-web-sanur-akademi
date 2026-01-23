@@ -253,27 +253,38 @@ useEffect(() => {
       <div className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl overflow-hidden p-10 md:p-14 space-y-8">
          <div className="max-h-[600px] overflow-y-auto custom-scrollbar pr-2 space-y-4">
             {filteredData.map(u => (
-              <div key={u.id} className="p-8 bg-white border border-slate-50 rounded-[2.5rem] hover:bg-slate-50 transition-all flex items-center justify-between group shadow-sm hover:shadow-xl mb-2">
-                 <div className="flex-1 flex items-center gap-6">
+              <div key={u.id} className="p-8 bg-white border border-slate-50 rounded-[2.5rem] hover:bg-slate-50 transition-all grid grid-cols-[auto_1fr_1fr_auto] gap-6 items-center group shadow-sm hover:shadow-xl mb-2">
+                 <div className="flex items-center gap-6">
                     <div className={`w-14 h-14 ${roleTheme.bg} text-white rounded-2xl flex items-center justify-center shadow-lg group-hover:rotate-6 transition-all shrink-0`}>
                        {activeTab === 'STUDENTS' ? <GraduationCap size={28}/> : <UserCircle size={28}/>}
                     </div>
                     <div className="min-w-0">
-                       <p className="text-base font-black text-slate-800 uppercase italic leading-none truncate">{u.name}</p>
-                       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">{activeTab === 'ADMINS' ? 'PENGURUS SANUR' : activeTab === 'TEACHERS' ? 'PENGAJAR SANUR' : 'SISWA SANUR'}</p>
-                    </div>
+   <p 
+      className="text-base font-black text-slate-800 uppercase italic leading-none truncate cursor-help" 
+      title={u.name}
+   >
+      {u.name}
+   </p>
+   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">{activeTab === 'ADMINS' ? 'PENGURUS SANUR' : activeTab === 'TEACHERS' ? 'PENGAJAR SANUR' : 'SISWA SANUR'}</p>
+</div>
                  </div>
-                 <div className="flex-1 flex flex-col items-center gap-2">
-                    <div className={`${roleTheme.light} px-8 py-3 rounded-full border ${roleTheme.border} ${roleTheme.text} flex items-center gap-3 shadow-sm`}>
-                       <CheckCircle2 size={14} />
-                       <span className="text-[11px] font-black uppercase tracking-widest">{u.username.toUpperCase()}</span>
-                    </div>
-                    <div className="bg-slate-50 px-4 py-1.5 rounded-xl border border-slate-100 flex items-center gap-2">
-                       <Key size={10} className="text-slate-400"/>
-                       <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest">PIN: <span className={roleTheme.text}>{u.pin || '******'}</span></span>
-                    </div>
+                 <div className="flex flex-col items-center gap-2 justify-center">
+                    <div 
+   className={`${roleTheme.light} px-8 py-3 rounded-full border ${roleTheme.border} ${roleTheme.text} flex items-center gap-3 shadow-sm max-w-[200px] cursor-help`}
+   title={u.username.toUpperCase()}
+>
+   <CheckCircle2 size={14} className="shrink-0" />
+   <span className="text-[11px] font-black uppercase tracking-widest truncate">{u.username.toUpperCase()}</span>
+</div>
+                    <div 
+   className="bg-slate-50 px-4 py-1.5 rounded-xl border border-slate-100 flex items-center gap-2 max-w-[200px] cursor-help"
+   title={`PIN: ${u.pin || '******'}`}
+>
+   <Key size={10} className="text-slate-400 shrink-0"/>
+   <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest truncate">PIN: <span className={roleTheme.text}>{u.pin || '******'}</span></span>
+</div>
                  </div>
-                 <div className="flex-1 flex justify-end gap-3">
+                 <div className="flex justify-end gap-3">
                     <button onClick={() => handleOpenEdit(u)} className={`p-4 ${roleTheme.light} ${roleTheme.text} rounded-2xl hover:${roleTheme.bg} hover:text-white transition-all shadow-sm`}><Edit3 size={20}/></button>
                     {activeTab !== 'ADMINS' && (
                       <button onClick={() => setShowDeleteConfirm(u)} className="p-4 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-600 hover:text-white transition-all shadow-sm"><Trash2 size={20}/></button>
