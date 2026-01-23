@@ -22,12 +22,13 @@ interface StudentPortalProps {
   levels: string[];
   classes: string[];
   teachers: User[];
+  studentAttendanceLogs: any[];
   initialView?: 'PROGRESS' | 'PAYMENTS';
   refreshAllData?: () => Promise<void>;
 }
 
 const StudentPortal: React.FC<StudentPortalProps> = ({ 
-  user, attendanceLogs, studentPayments, setStudentPayments, teachers, initialView, refreshAllData, classes, subjects, levels 
+  user, attendanceLogs, studentPayments, setStudentPayments, teachers, initialView, refreshAllData, classes, subjects, levels, studentAttendanceLogs 
 }) => {
   const isPaymentView = initialView === 'PAYMENTS';
   const [loading, setLoading] = useState(false);
@@ -205,52 +206,46 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   };
 
   const handleConfirmAbsen = async () => {
-    if (!confirmingAbsen) return;
-    setLoading(true);
-    try {
-      // FIXED: Gunakan confirmingAbsen.course.id sebagai packageid agar sinkron dengan pembayaran spesifik ini
-      const payload = { 
-        id: `LOG-${Date.now()}`, 
-        teacherid: 'SISWA_MANDIRI', 
-        teachername: 'BELAJAR MANDIRI', 
-        date: selectedAbsenDate, 
-        clockin: new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' }).format(new Date()), 
-        status: 'SESSION_LOG', 
-        classname: confirmingAbsen.course.className.toUpperCase(), 
-        packageid: confirmingAbsen.course.id, // ID PEMBAYARAN KAK!
-        sessionnumber: confirmingAbsen.sessionNum, 
-        studentsattended: [normalizedUserName], 
-        studentsessions: { [normalizedUserName]: confirmingAbsen.sessionNum }, 
-        paymentstatus: 'PAID' 
-      };
-      await supabase.from('student_attendance').insert([{
-  id: payload.id,
-  packageid: payload.packageid,
-  studentname: normalizedUserName,
-  sessionnumber: payload.sessionnumber,
-  date: payload.date,
-  clockin: payload.clockin,
-  duration: 2,
-  classname: payload.classname
-}]);
-      if (refreshAllData) await refreshAllData();
-      setConfirmingAbsen(null);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000);
-    } catch (e: any) { alert(e.message); } finally { setLoading(false); }
-  };
+  if (!confirmingAbsen) return;
+  setLoading(true);
+  try {
+    // ✅ GANTI: Sekarang insert ke student_attendance
+    const payload = { 
+      id: `STU-${Date.now()}`, 
+      packageid: confirmingAbsen.course.id, // ID PEMBAYARAN
+      studentname: normalizedUserName,
+      sessionnumber: confirmingAbsen.sessionNum,
+      date: selectedAbsenDate, 
+      clockin: new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' }).format(new Date()), 
+      duration: 2,
+      classname: confirmingAbsen.course.className.toUpperCase(),
+      level: 'BASIC', // Bisa hardcode atau ambil dari course
+      sessioncategory: 'REGULER'
+    };
+    
+    // ✅ GANTI TABLE-NYA!
+    await supabase.from('student_attendance').insert([payload]);
+    
+    if (refreshAllData) await refreshAllData();
+    setConfirmingAbsen(null);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
+  } catch (e: any) { alert(e.message); } finally { setLoading(false); }
+};
 
   const executeUpdateSessionDate = async () => {
-    if (!showEditDateModal || !editDateValue) return;
-    setLoading(true);
-    try {
-      await supabase.from('student_attendance').update({ date: editDateValue }).eq('id', showEditDateModal.id);
-      if (refreshAllData) await refreshAllData();
-      setShowEditDateModal(null);
-      setShowSuccess(true);
-      setTimeout(() => setShowSuccess(false), 2000);
-    } catch (e: any) { alert("Gagal update tanggal: " + e.message); } finally { setLoading(false); }
-  };
+  if (!showEditDateModal || !editDateValue) return;
+  setLoading(true);
+  try {
+    // ✅ GANTI TABLE-NYA!
+    await supabase.from('student_attendance').update({ date: editDateValue }).eq('id', showEditDateModal.id);
+    
+    if (refreshAllData) await refreshAllData();
+    setShowEditDateModal(null);
+    setShowSuccess(true);
+    setTimeout(() => setShowSuccess(false), 2000);
+  } catch (e: any) { alert("Gagal update tanggal: " + e.message); } finally { setLoading(false); }
+};
 
   const handleRequestReport = async () => {
   if (!selectedTeacherForReport || !requestingReportFor) return alert("Pilih Guru Pembimbing dulu ya! ✨");
@@ -694,12 +689,14 @@ const executeFinalRequestReport = async () => {
       ) : (
         <section className="space-y-10">
            {verifiedCourses.map((course, idx) => {
-              // FIXED: Filter log progres hanya yang packageId-nya cocok dengan ID pembayaran spesifik ini
-              const courseLogs = myLogs.filter(l => l.packageId === course.id);
-              
-              const completedSessions = courseLogs
-                .filter(l => (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG'))
-                .map(l => ({ id: l.id, num: l.sessionNumber || 0, date: l.date }));
+              // ✅ GANTI: Sekarang ambil dari student_attendance table
+const pkgIdNorm = (course.id || '').toUpperCase().trim();
+const completedSessions = studentAttendanceLogs
+  .filter(l => 
+    (l.packageid || '').toUpperCase().trim() === pkgIdNorm && 
+    (l.studentname || '').toUpperCase().trim() === normalizedUserName
+  )
+  .map(l => ({ id: l.id, num: l.sessionnumber || 0, date: l.date }));
               
               const reportLog = findOfficialReportLog(course);
               
