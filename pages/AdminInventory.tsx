@@ -50,27 +50,26 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
   const hasModal = !!(showImportModal || showModal || showDeleteConfirm || showModalSales || showDeleteConfirmSales);
   
   if (hasModal) {
-    // KUNCI BODY BIAR GAK BISA SCROLL
     document.body.style.overflow = 'hidden';
     
-    // PAKSA RENDER DULU, BARU SCROLL
-    setTimeout(() => {
+    // ✨ PAKSA SCROLL LANGSUNG KE MODAL
+    requestAnimationFrame(() => {
       const modalElement = document.querySelector('[data-modal-container]');
       if (modalElement) {
-        modalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        modalElement.scrollIntoView({ behavior: 'instant', block: 'center' });
+        // ✨ PAKSA FOCUS KE MODAL BIAR KELIATAN
+        (modalElement as HTMLElement).focus();
       }
-    }, 100); // Tunggu 100ms biar modal udah di DOM
+    });
     
   } else {
-    // BUKA KUNCI BODY KALAU MODAL DITUTUP
     document.body.style.overflow = '';
   }
   
-  // CLEANUP: Pastikan body selalu bisa scroll kalau component unmount
   return () => {
     document.body.style.overflow = '';
   };
-}, [showImportModal, showModal, showDeleteConfirm, showModalSales, showDeleteConfirmSales]);
+}, [showImportModal, showModal, showDeleteConfirm, showModalSales, showDeleteConfirmSales, activeTab]); // ✨ TAMBAHIN activeTab!
 
   const todayDate = new Date();
   const todayMonthName = todayDate.toLocaleString('id-ID', { month: 'long' }).toUpperCase();
@@ -545,7 +544,7 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
       </div>
 
       {showImportModal && (
-         <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+   <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
    <div className="bg-white w-full max-w-lg rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
                <button onClick={() => setShowImportModal(false)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all"><X size={20}/></button>
                <div className="flex items-center gap-4 mb-8">
@@ -582,7 +581,7 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
       )}
 
       {showModal && (
-        <div data-modal-container className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+  <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
    <div className="bg-white w-full max-w-md rounded-[4rem] p-12 shadow-2xl relative border border-white/20 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setShowModal(null)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all"><X size={20}/></button>
               <h4 className="text-3xl font-black text-slate-800 uppercase italic mb-10 tracking-tighter leading-none text-center">DATA <span className="text-blue-600">SISWA</span></h4>
@@ -627,7 +626,7 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
 
       {/* MODAL DELETE SISWA */}
       {showDeleteConfirm && (
-        <div data-modal-container className="fixed inset-0 z-[110000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+  <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[110000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
           <div className="bg-white w-full max-w-[320px] rounded-[2.5rem] p-8 text-center space-y-6 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
             <button onClick={() => setShowDeleteConfirm(null)} className="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
             <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mx-auto shadow-sm animate-pulse">
@@ -651,7 +650,7 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
 
       {/* MODAL ADD/EDIT SALES B2B */}
       {showModalSales && (
-        <div data-modal-container className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+  <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
           <div className="bg-white w-full max-w-md rounded-[4rem] p-12 shadow-2xl relative border border-white/20 opacity-0 max-h-[90vh] overflow-y-auto custom-scrollbar" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
             <button onClick={() => setShowModalSales(null)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all"><X size={20}/></button>
             <h4 className="text-3xl font-black text-slate-800 uppercase italic mb-10 tracking-tighter leading-none text-center">DATA <span className="text-orange-600">SALES B2B</span></h4>
