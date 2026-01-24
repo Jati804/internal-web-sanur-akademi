@@ -48,15 +48,28 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
 
   useEffect(() => {
   const hasModal = !!(showImportModal || showModal || showDeleteConfirm || showModalSales || showDeleteConfirmSales);
+  
   if (hasModal) {
-    // Force immediate render
-    requestAnimationFrame(() => {
+    // KUNCI BODY BIAR GAK BISA SCROLL
+    document.body.style.overflow = 'hidden';
+    
+    // PAKSA RENDER DULU, BARU SCROLL
+    setTimeout(() => {
       const modalElement = document.querySelector('[data-modal-container]');
       if (modalElement) {
         modalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }
-    });
+    }, 100); // Tunggu 100ms biar modal udah di DOM
+    
+  } else {
+    // BUKA KUNCI BODY KALAU MODAL DITUTUP
+    document.body.style.overflow = '';
   }
+  
+  // CLEANUP: Pastikan body selalu bisa scroll kalau component unmount
+  return () => {
+    document.body.style.overflow = '';
+  };
 }, [showImportModal, showModal, showDeleteConfirm, showModalSales, showDeleteConfirmSales]);
 
   const todayDate = new Date();
