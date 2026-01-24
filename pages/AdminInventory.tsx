@@ -746,20 +746,21 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
                     return (
                       <tr key={s.id} className={`transition-all group border-l-8 ${isUrgent ? 'bg-rose-50/50 border-rose-400' : 'hover:bg-slate-50 border-transparent'}`}>
                         <td className="px-8 py-10">
-                          <div className="space-y-3">
-                            <div className="flex items-center gap-3">
-                              <Building2 size={16} className="text-orange-500 shrink-0" />
-                              <p className="text-base font-black uppercase italic leading-none text-slate-800">{s.institutionName}</p>
-                            </div>
-                            <div className="flex items-center gap-3 ml-6">
-                              <Briefcase size={14} className="text-slate-400 shrink-0" />
-                              <p className="text-xs font-black text-slate-600">{s.contactPerson}</p>
-                            </div>
-                            <div className="ml-6">
-                              <span className="inline-block px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[8px] font-black uppercase tracking-widest">{s.jobTitle}</span>
-                            </div>
-                          </div>
-                        </td>
+  <div className="space-y-3">
+    <div className="flex items-center gap-3">
+      <Building2 size={14} className="text-orange-500 shrink-0" />
+      <p className="text-sm font-black uppercase italic leading-none text-slate-800">{s.institutionName}</p>
+    </div>
+    <div className="flex items-center gap-3">
+      <Briefcase size={12} className="text-slate-400 shrink-0" />
+      <p className="text-xs font-black text-slate-600">{s.contactPerson}</p>
+    </div>
+    <div className="flex items-center gap-3">
+      <div className="w-3"></div>
+      <span className="inline-block px-3 py-1 bg-slate-100 text-slate-600 rounded-full text-[8px] font-black uppercase tracking-widest">{s.jobTitle}</span>
+    </div>
+  </div>
+</td>
                         <td className="px-8 py-10">
                           <div className="space-y-3">
                             <div className="flex items-center gap-3">
