@@ -232,7 +232,7 @@ const AppContent = ({
             <Routes>
               <Route path="/admin" element={<AdminDashboard user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} setAttendanceLogs={setAttendanceLogs} teachers={teachers} transactions={transactions} studentProfiles={studentProfiles} />} />
               <Route path="/admin/finance" element={<AdminFinance attendanceLogs={attendanceLogs} transactions={transactions} studentPayments={studentPayments} refreshAllData={refreshAllData} />} />
-              <Route path="/admin/buku-induk" element={<AdminInventory studentProfiles={studentProfiles} setStudentProfiles={setStudentProfiles} refreshAllData={refreshAllData} />} />
+              <Route path="/admin/buku-induk" element={<AdminInventory studentProfiles={studentProfiles} setStudentProfiles={setStudentProfiles} salesContacts={salesContacts} setSalesContacts={setSalesContacts} refreshAllData={refreshAllData} />} />
               <Route path="/admin/staff" element={<AdminStaff user={user} teachers={teachers} setTeachers={setTeachers} studentAccounts={studentAccounts} setStudentAccounts={setStudentAccounts} refreshAllData={refreshAllData} />} />
               <Route path="/admin/academic" element={<AdminAcademic subjects={subjects} setSubjects={setSubjects} classes={classes} setClasses={setClasses} levels={levels} setLevels={setLevels} scheduleData={masterSchedule} setScheduleData={setMasterSchedule} salaryConfig={salaryConfig} setSalaryConfig={setSalaryConfig} />} />
               <Route path="/admin/maintenance" element={<AdminMaintenance attendanceLogs={attendanceLogs} setAttendanceLogs={setAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} refreshAllData={refreshAllData} />} />
@@ -268,6 +268,7 @@ const App = () => {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [studentPayments, setStudentPayments] = useState<StudentPayment[]>([]);
   const [studentProfiles, setStudentProfiles] = useState<StudentProfile[]>([]);
+  const [salesContacts, setSalesContacts] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<string[]>(INITIAL_SUBJECTS);
   const [classes, setClasses] = useState<string[]>(CLASS_ROOM_OPTIONS);
   const [levels, setLevels] = useState<string[]>(['BASIC', 'INTERMEDIATE', 'ADVANCED']);
@@ -283,21 +284,23 @@ const App = () => {
     try {
       const [
   { data: att },
-  { data: stuAtt }, // ⬅️ BARIS 2
+  { data: stuAtt },
   { data: teach },
   { data: stuAcc },
   { data: trans },
   { data: stuPay },
   { data: stuProf },
+  { data: salesCon }, // ✅ TAMBAHIN INI!
   { data: settings }
 ] = await Promise.all([
   supabase.from('attendance').select('*'),
-  supabase.from('student_attendance').select('*'), // ⬅️ TAMBAHIN INI DI BARIS 2!
+  supabase.from('student_attendance').select('*'),
   supabase.from('teachers').select('*'),
   supabase.from('student_accounts').select('*'),
   supabase.from('transactions').select('*'),
   supabase.from('student_payments').select('*'),
   supabase.from('student_profiles').select('*'),
+  supabase.from('sales_contacts').select('*'), // ✅ DAN INI!
   supabase.from('settings').select('*')
 ]);
 
@@ -348,11 +351,24 @@ if (stuAtt) setStudentAttendanceLogs(stuAtt.map((s: any) => ({
         receiptData: p.receiptdata
       })));
       if (stuProf) setStudentProfiles(stuProf.map((p: any) => ({
-        ...p,
-        personalPhone: p.personalphone,
-        parentPhone: p.parentphone,
-        enrolledClass: p.enrolledclass
-      })));
+  ...p,
+  personalPhone: p.personalphone,
+  parentPhone: p.parentphone,
+  enrolledClass: p.enrolledclass
+})));
+
+// ✅ TAMBAHIN SEMUA INI DI BAWAHNYA!
+if (salesCon) setSalesContacts(salesCon.map((s: any) => ({
+  ...s,
+  institutionName: s.institution_name,
+  contactPerson: s.contact_person,
+  jobTitle: s.job_title,
+  lastContactDate: s.last_contact_date,
+  nextFollowupDate: s.next_followup_date,
+  dealStatus: s.deal_status,
+  meetingNotes: s.meeting_notes,
+  createdAt: s.created_at
+})));
 
       if (settings) {
         const acad = settings.find(s => s.key === 'academic_config');
