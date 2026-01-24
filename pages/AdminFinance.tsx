@@ -3,7 +3,7 @@ import { Attendance, Transaction, StudentPayment } from '../types';
 import { supabase } from '../services/supabase.ts';
 import { 
   X, Search, Banknote, Loader2, ArrowUpCircle, ArrowDownCircle, Upload, CheckCircle2, 
-  History, Eye, Check, BadgeCheck,
+  ChevronLeft, ChevronRight, History, Eye, Check, BadgeCheck,
   Trash2, Download, FileSpreadsheet, Edit3, AlertTriangle, 
   Plus, Info, AlertCircle, Package, UserCheck, Repeat, Heart, Calendar, Clock, ImageIcon, FileText, Users, ClipboardList, ChevronRight, Maximize2,
   Zap, ShieldCheck, AlertOctagon
@@ -42,6 +42,12 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
   
   const [payrollSearch, setPayrollSearch] = useState('');
   const [ledgerSearch, setLedgerSearch] = useState('');
+  // 🆕 State untuk pagination & server-side data
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage] = useState(50); // 50 transaksi per halaman
+  const [totalCount, setTotalCount] = useState(0);
+  const [serverLedger, setServerLedger] = useState<Transaction[]>([]);
+  const [isLoadingLedger, setIsLoadingLedger] = useState(false);
   const [sppSearch, setSppSearch] = useState('');
   // 🆕 State untuk filter ledger
 const [ledgerFilters, setLedgerFilters] = useState({
@@ -138,94 +144,111 @@ useEffect(() => {
     });
   };
 
+  // 🔥 Fungsi fetch data dari Supabase (server-side)
+const fetchLedgerData = async () => {
+  setIsLoadingLedger(true);
+  
+  try {
+    // 1️⃣ Bikin query dasar
+    let query = supabase
+      .from('transactions')
+      .select('*', { count: 'exact' }) // count: 'exact' buat dapetin total data
+      .order('id', { ascending: false }); // Urutkan dari yang terbaru
+    
+    // 2️⃣ Kalau ada search, tambahin filter
+    if (ledgerSearch.trim()) {
+      const searchTerm = `%${ledgerSearch.trim()}%`;
+      query = query.or(`description.ilike.${searchTerm},category.ilike.${searchTerm}`);
+    }
+    
+    // 3️⃣ Filter berdasarkan periode (Minggu Ini, Bulan Ini, dll)
+    if (ledgerFilters.period !== 'ALL') {
+      const today = new Date();
+      
+      if (ledgerFilters.period === 'THIS_WEEK') {
+        const weekAgo = new Date(today);
+        weekAgo.setDate(today.getDate() - 7);
+        query = query.gte('date', weekAgo.toISOString().split('T')[0]);
+      }
+      
+      if (ledgerFilters.period === 'THIS_MONTH') {
+        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
+        query = query.gte('date', firstDay.toISOString().split('T')[0]);
+      }
+      
+      if (ledgerFilters.period === 'THIS_YEAR') {
+        const firstDay = new Date(today.getFullYear(), 0, 1);
+        query = query.gte('date', firstDay.toISOString().split('T')[0]);
+      }
+      
+      if (ledgerFilters.period === 'CUSTOM') {
+        const yearStart = new Date(ledgerFilters.customYear, 0, 1);
+        const yearEnd = new Date(ledgerFilters.customYear, 11, 31);
+        query = query.gte('date', yearStart.toISOString().split('T')[0])
+                     .lte('date', yearEnd.toISOString().split('T')[0]);
+        
+        if (ledgerFilters.customMonth !== 'ALL') {
+          const monthNum = ledgerFilters.customMonth - 1;
+          const monthStart = new Date(ledgerFilters.customYear, monthNum, 1);
+          const monthEnd = new Date(ledgerFilters.customYear, monthNum + 1, 0);
+          query = query.gte('date', monthStart.toISOString().split('T')[0])
+                       .lte('date', monthEnd.toISOString().split('T')[0]);
+        }
+      }
+    }
+    
+    // 4️⃣ Filter berdasarkan kategori
+    if (ledgerFilters.category !== 'ALL') {
+      query = query.eq('category', ledgerFilters.category);
+    }
+    
+    // 5️⃣ Filter berdasarkan tipe (INCOME/EXPENSE)
+    if (ledgerFilters.type !== 'ALL') {
+      query = query.eq('type', ledgerFilters.type);
+    }
+    
+    // 6️⃣ Tambahin pagination (range)
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage - 1;
+    query = query.range(startIndex, endIndex);
+    
+    // 7️⃣ Eksekusi query
+    const { data, error, count } = await query;
+    
+    if (error) throw error;
+    
+    // 8️⃣ Simpan hasil ke state
+    setServerLedger(data || []);
+    setTotalCount(count || 0);
+    
+  } catch (error) {
+    console.error('Error fetching ledger:', error);
+    alert('Gagal memuat data transaksi. Coba lagi ya Kak! ✨');
+  } finally {
+    setIsLoadingLedger(false);
+  }
+};
+  
   const stats = useMemo(() => {
     const income = transactions.filter(t => t.type === 'INCOME').reduce((a, b) => a + b.amount, 0);
     const expense = transactions.filter(t => t.type === 'EXPENSE').reduce((a, b) => a + b.amount, 0);
     return { income, expense, balance: income - expense };
   }, [transactions]);
 
-  const filteredLedger = useMemo(() => {
-    // 1️⃣ Sort dari yang terbaru
-    let results = [...transactions].sort((a, b) => {
-      const getTimestamp = (id: string) => {
-        const parts = id.split('-');
-        return parseInt(parts[parts.length - 1]) || 0;
-      };
-      return getTimestamp(b.id) - getTimestamp(a.id);
-    });
-    
-    // 2️⃣ Filter berdasarkan Search Box
-    if (ledgerSearch.trim()) {
-      const q = ledgerSearch.toLowerCase();
-      results = results.filter(t => 
-        t.description.toLowerCase().includes(q) || 
-        (t.category || '').toLowerCase().includes(q) || 
-        t.amount.toString().includes(q) || 
-        t.date.includes(q)
-      );
-    }
-    
-    // 3️⃣ Filter berdasarkan Period
-if (ledgerFilters.period !== 'ALL') {
-  const today = new Date();
-  
-  results = results.filter(t => {
-    const txDate = new Date(t.date);
-    
-    // Minggu Ini (7 hari terakhir)
-    if (ledgerFilters.period === 'THIS_WEEK') {
-      const weekAgo = new Date(today);
-      weekAgo.setDate(today.getDate() - 7);
-      return txDate >= weekAgo;
-    }
-    
-    // Bulan Ini
-    if (ledgerFilters.period === 'THIS_MONTH') {
-      return txDate.getMonth() === today.getMonth() && 
-             txDate.getFullYear() === today.getFullYear();
-    }
-    
-    // Tahun Ini
-    if (ledgerFilters.period === 'THIS_YEAR') {
-      return txDate.getFullYear() === today.getFullYear();
-    }
-    
-    // Custom (Pilih Tahun & Bulan)
-    if (ledgerFilters.period === 'CUSTOM') {
-      const yearMatch = txDate.getFullYear() === ledgerFilters.customYear;
-      
-      if (ledgerFilters.customMonth === 'ALL') {
-        return yearMatch; // Semua bulan di tahun tersebut
-      } else {
-        return yearMatch && txDate.getMonth() === (ledgerFilters.customMonth - 1);
-      }
-    }
-    
-    return true;
-  });
-}
-    
-    // 4️⃣ Filter berdasarkan Category
-    if (ledgerFilters.category !== 'ALL') {
-      results = results.filter(t => 
-        (t.category || 'UMUM').toUpperCase() === ledgerFilters.category
-      );
-    }
-    
-    // 5️⃣ Filter berdasarkan Type (Masuk/Keluar)
-    if (ledgerFilters.type !== 'ALL') {
-      results = results.filter(t => t.type === ledgerFilters.type);
-    }
-    
-    return results;
-  }, [transactions, ledgerSearch, ledgerFilters]);
+  // 🆕 Pakai data dari server (udah ter-filter & ter-paginate)
+const filteredLedger = serverLedger;
 
   // 🆕 Stats khusus untuk hasil filter (PINDAH KE SINI!)
   const filteredStats = useMemo(() => {
-    const income = filteredLedger.filter(t => t.type === 'INCOME').reduce((a, b) => a + b.amount, 0);
-    const expense = filteredLedger.filter(t => t.type === 'EXPENSE').reduce((a, b) => a + b.amount, 0);
-    return { income, expense, balance: income - expense, count: filteredLedger.length };
-  }, [filteredLedger]);
+  const income = filteredLedger.filter(t => t.type === 'INCOME').reduce((a, b) => a + b.amount, 0);
+  const expense = filteredLedger.filter(t => t.type === 'EXPENSE').reduce((a, b) => a + b.amount, 0);
+  return { 
+    income, 
+    expense, 
+    balance: income - expense, 
+    count: totalCount // 🔥 Pakai totalCount dari server, bukan filteredLedger.length
+  };
+}, [filteredLedger, totalCount]); // 🔥 Tambahin totalCount di dependency
 
   const payrollQueue = useMemo(() => {
     const items: Record<string, any> = {};
@@ -262,6 +285,10 @@ if (ledgerFilters.period !== 'ALL') {
     return result.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [studentPayments, sppSearch]);
 
+useEffect(() => {
+  fetchLedgerData();
+}, [ledgerSearch, ledgerFilters, currentPage]);
+  
   const handleOpenConfirmSpp = async (p: StudentPayment) => {
     setActionLoadingId(p.id);
     try {
@@ -494,26 +521,65 @@ if (ledgerFilters.period !== 'ALL') {
                {/* 🔍 SEARCH BOX */}
 <div className="p-8 border-b border-slate-100 relative group">
   <Search size={22} className="absolute left-14 top-1/2 -translate-y-1/2 text-blue-500 group-focus-within:scale-110 transition-transform" />
-  <input type="text" placeholder="CARI APAPUN..." value={ledgerSearch} onChange={e => setLedgerSearch(e.target.value.toUpperCase())} className="w-full pl-16 pr-8 py-6 bg-slate-50 rounded-[2rem] text-[11px] font-black uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner" />
+  <input 
+  type="text" 
+  placeholder="CARI APAPUN..." 
+  value={ledgerSearch} 
+  onChange={e => {
+    setLedgerSearch(e.target.value.toUpperCase());
+    setCurrentPage(1); // 🔥 Reset ke halaman 1
+  }}
+    className="w-full pl-16 pr-8 py-6 bg-slate-50 rounded-[2rem] text-[11px] font-black uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner" />
 </div>
 
 {/* 🎯 QUICK FILTER PILLS */}
 <div className="px-8 py-6 bg-slate-50 border-b border-slate-100">
   <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-4">⚡ Quick Filter:</p>
   <div className="flex flex-wrap gap-3">
-  <button onClick={() => setLedgerFilters({...ledgerFilters, period: 'THIS_WEEK'})} className={`px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${ledgerFilters.period === 'THIS_WEEK' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-slate-100'}`}>
+  <button 
+    onClick={() => {
+      setLedgerFilters({...ledgerFilters, period: 'THIS_WEEK'});
+      setCurrentPage(1);
+    }}
+    className={`px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${ledgerFilters.period === 'THIS_WEEK' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-slate-100'}`}
+  >
     📅 Minggu Ini
   </button>
-  <button onClick={() => setLedgerFilters({...ledgerFilters, period: 'THIS_MONTH'})} className={`px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${ledgerFilters.period === 'THIS_MONTH' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-slate-100'}`}>
+  
+  <button 
+    onClick={() => {
+      setLedgerFilters({...ledgerFilters, period: 'THIS_MONTH'});
+      setCurrentPage(1);
+    }}
+    className={`px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${ledgerFilters.period === 'THIS_MONTH' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-slate-100'}`}
+  >
     📅 Bulan Ini
   </button>
-  <button onClick={() => setLedgerFilters({...ledgerFilters, period: 'THIS_YEAR'})} className={`px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${ledgerFilters.period === 'THIS_YEAR' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-slate-100'}`}>
+  
+  <button 
+    onClick={() => {
+      setLedgerFilters({...ledgerFilters, period: 'THIS_YEAR'});
+      setCurrentPage(1);
+    }}
+    className={`px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${ledgerFilters.period === 'THIS_YEAR' ? 'bg-blue-600 text-white shadow-lg' : 'bg-white text-slate-400 hover:bg-slate-100'}`}
+  >
     📅 Tahun Ini
   </button>
-  <button onClick={() => setLedgerFilters({period: 'ALL', category: 'ALL', type: 'ALL', customYear: new Date().getFullYear(), customMonth: 'ALL'})} className="px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all">
+  
+  <button 
+    onClick={() => {
+      setLedgerFilters({period: 'ALL', category: 'ALL', type: 'ALL', customYear: new Date().getFullYear(), customMonth: 'ALL'});
+      setCurrentPage(1);
+    }}
+    className="px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all"
+  >
     🔄 Reset Filter
   </button>
-  <button onClick={() => setShowAdvancedFilter(!showAdvancedFilter)} className="px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider bg-slate-900 text-white hover:bg-slate-800 transition-all ml-auto">
+  
+  <button 
+    onClick={() => setShowAdvancedFilter(!showAdvancedFilter)} 
+    className="px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider bg-slate-900 text-white hover:bg-slate-800 transition-all ml-auto"
+  >
     {showAdvancedFilter ? '▲ Sembunyikan' : '▼ Filter Lanjut'}
   </button>
 </div>
@@ -525,7 +591,11 @@ if (ledgerFilters.period !== 'ALL') {
       {/* Filter Tipe */}
       <div>
         <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2 block">💸 Tipe Transaksi:</label>
-        <select value={ledgerFilters.type} onChange={(e) => setLedgerFilters({...ledgerFilters, type: e.target.value})} className="w-full px-4 py-3 bg-slate-50 rounded-2xl text-[10px] font-black uppercase outline-none border-2 border-transparent focus:border-blue-500 transition-all">
+        <select value={ledgerFilters.type} onChange={(e) => {
+     setLedgerFilters({...ledgerFilters, type: e.target.value});
+     setCurrentPage(1);
+   }}
+        className="w-full px-4 py-3 bg-slate-50 rounded-2xl text-[10px] font-black uppercase outline-none border-2 border-transparent focus:border-blue-500 transition-all">
           <option value="ALL">SEMUA TIPE</option>
           <option value="INCOME">⬆️ MASUK</option>
           <option value="EXPENSE">⬇️ KELUAR</option>
@@ -535,7 +605,11 @@ if (ledgerFilters.period !== 'ALL') {
       {/* Filter Kategori */}
       <div>
         <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2 block">🏷️ Kategori:</label>
-        <select value={ledgerFilters.category} onChange={(e) => setLedgerFilters({...ledgerFilters, category: e.target.value})} className="w-full px-4 py-3 bg-slate-50 rounded-2xl text-[10px] font-black uppercase outline-none border-2 border-transparent focus:border-blue-500 transition-all">
+        <select value={ledgerFilters.category} onChange={(e) => {
+     setLedgerFilters({...ledgerFilters, category: e.target.value});
+     setCurrentPage(1);
+   }}
+        className="w-full px-4 py-3 bg-slate-50 rounded-2xl text-[10px] font-black uppercase outline-none border-2 border-transparent focus:border-blue-500 transition-all">
           <option value="ALL">SEMUA KATEGORI</option>
           <option value="SPP_SISWA">💰 SPP SISWA</option>
           <option value="HONOR_GURU">👨‍🏫 HONOR GURU</option>
@@ -553,7 +627,10 @@ if (ledgerFilters.period !== 'ALL') {
           <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Tahun:</label>
           <select 
             value={ledgerFilters.customYear} 
-            onChange={(e) => setLedgerFilters({...ledgerFilters, period: 'CUSTOM', customYear: parseInt(e.target.value)})} 
+            onChange={(e) => {
+     setLedgerFilters({...ledgerFilters, period: 'CUSTOM', customYear: parseInt(e.target.value)});
+     setCurrentPage(1);
+   }}
             className="w-full px-4 py-3 bg-slate-50 rounded-2xl text-[10px] font-black uppercase outline-none border-2 border-transparent focus:border-blue-500 transition-all"
           >
             {[2034, 2033, 2032, 2031, 2030, 2029, 2028, 2027, 2026, 2025, 2024].map(year => (
@@ -567,7 +644,10 @@ if (ledgerFilters.period !== 'ALL') {
           <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Bulan:</label>
           <select 
             value={ledgerFilters.customMonth} 
-            onChange={(e) => setLedgerFilters({...ledgerFilters, period: 'CUSTOM', customMonth: e.target.value === 'ALL' ? 'ALL' : parseInt(e.target.value)})} 
+            onChange={(e) => {
+     setLedgerFilters({...ledgerFilters, period: 'CUSTOM', customMonth: e.target.value === 'ALL' ? 'ALL' : parseInt(e.target.value)});
+     setCurrentPage(1);
+   }}
             className="w-full px-4 py-3 bg-slate-50 rounded-2xl text-[10px] font-black uppercase outline-none border-2 border-transparent focus:border-blue-500 transition-all"
           >
             <option value="ALL">SEMUA BULAN</option>
@@ -611,7 +691,19 @@ if (ledgerFilters.period !== 'ALL') {
     </div>
   </div>
 )}
-               <div className="overflow-x-auto max-h-[800px] overflow-y-auto">
+
+{/* 🆕 TARUH LOADING INDICATOR DI SINI (STEP 7) */}
+{isLoadingLedger && (
+  <div className="p-20 text-center">
+    <Loader2 size={48} className="animate-spin mx-auto mb-4 text-blue-600" />
+    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+      Memuat Data Transaksi...
+    </p>
+  </div>
+)}
+
+            {!isLoadingLedger && (
+              <div className="overflow-x-auto max-h-[800px] overflow-y-auto">
                   <table className="w-full text-left">
                      <thead className="bg-white sticky top-0 z-10 shadow-sm"><tr><th className="px-12 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Transaksi</th><th className="px-12 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Nominal</th><th className="px-12 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Aksi</th></tr></thead>
                      <tbody className="divide-y divide-slate-50">
@@ -640,6 +732,38 @@ if (ledgerFilters.period !== 'ALL') {
                      </tbody>
                   </table>
                </div>
+              {/* 📄 Pagination Controls */}
+{!isLoadingLedger && totalCount > itemsPerPage && (
+  <div className="p-8 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
+    {/* Tombol Previous */}
+    <button
+      onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+      disabled={currentPage === 1}
+      className="px-8 py-4 bg-slate-50 text-slate-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+    >
+      <ChevronLeft size={16} /> SEBELUMNYA
+    </button>
+    
+    {/* Info Halaman */}
+    <div className="flex flex-col md:flex-row items-center gap-4">
+      <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
+        Halaman {currentPage} dari {Math.ceil(totalCount / itemsPerPage)}
+      </span>
+      <span className="px-5 py-2 bg-blue-50 text-blue-600 rounded-xl text-[9px] font-black uppercase tracking-widest shadow-sm">
+        Menampilkan {filteredLedger.length} dari {totalCount} transaksi
+      </span>
+    </div>
+    
+    {/* Tombol Next */}
+    <button
+      onClick={() => setCurrentPage(p => Math.min(Math.ceil(totalCount / itemsPerPage), p + 1))}
+      disabled={currentPage === Math.ceil(totalCount / itemsPerPage)}
+      className="px-8 py-4 bg-slate-50 text-slate-600 rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-blue-600 hover:text-white transition-all disabled:opacity-30 disabled:cursor-not-allowed flex items-center gap-2 shadow-sm"
+    >
+      SELANJUTNYA <ChevronRight size={16} />
+    </button>
+  </div>
+)}
             </div>
          </div>
       )}
