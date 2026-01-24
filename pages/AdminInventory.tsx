@@ -30,9 +30,7 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<StudentProfile | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-  const [formData, setFormData] = useState<Partial<StudentProfile & { status: string }>>({
-    
-  // 🚫 HARD LIMIT checker
+  // ✅ TARUH CHECKER DI SINI (SEBELUM formData)
 const canAddStudent = useMemo(() => {
   return studentProfiles.length < 500;
 }, [studentProfiles]);
@@ -40,7 +38,7 @@ const canAddStudent = useMemo(() => {
 const canAddSales = useMemo(() => {
   return salesContacts.length < 150;
 }, [salesContacts]);
-  
+  const [formData, setFormData] = useState<Partial<StudentProfile & { status: string }>>({
     name: '', dob: '', institution: '', personalPhone: '', parentPhone: '', enrolledClass: '', notes: '', status: 'SISWA_SANUR'
   });
 
@@ -50,16 +48,6 @@ const canAddSales = useMemo(() => {
   const [showDeleteConfirmSales, setShowDeleteConfirmSales] = useState<any | null>(null);
   const [editingSalesId, setEditingSalesId] = useState<string | null>(null);
   const [salesFormData, setSalesFormData] = useState({
-    
-    // 🚫 HARD LIMIT checker
-const canAddStudent = useMemo(() => {
-  return studentProfiles.length < 500;
-}, [studentProfiles]);
-
-const canAddSales = useMemo(() => {
-  return salesContacts.length < 150;
-}, [salesContacts]);
-    
     institutionName: '', contactPerson: '', jobTitle: '', phone: '', email: '', 
     lastContactDate: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()),
     nextFollowupDate: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
