@@ -383,7 +383,8 @@ if (salesCon) setSalesContacts(salesCon.map((s: any) => ({
       }
       setConnectionError(false);
     } catch (e) {
-      setConnectionError(true);
+    console.error('❌ FETCH ERROR:', e); // ✅ TAMBAHIN INI
+    setConnectionError(true);
     } finally {
       setIsSyncing(false);
     }
