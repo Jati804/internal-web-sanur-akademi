@@ -882,8 +882,6 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
           </div>
         </div>
       )}
-        </>
-      )}
     </div>
   </>
   );
