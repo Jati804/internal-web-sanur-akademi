@@ -415,7 +415,7 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
                 onClick={() => { setFormData({ status: 'SISWA_SANUR', name: '', dob: '', institution: '', personalPhone: '', parentPhone: '', enrolledClass: '', notes: '' }); setShowModal('ADD'); }} 
                 className="h-[64px] px-10 bg-blue-600 text-white rounded-[2rem] text-[10px] font-black uppercase shadow-2xl hover:bg-blue-700 flex items-center justify-center gap-3 transition-all active:scale-95 w-full lg:w-auto"
               >
-                <UserPlus size={20} /> TAMBAH SISWA BARU ✨
+                <UserPlus size={20} /> TAMBAH SISWA BARU
               </button>
             </div>
           )}
@@ -434,7 +434,7 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
 }}
               className="h-[64px] px-10 bg-orange-600 text-white rounded-[2rem] text-[10px] font-black uppercase shadow-2xl hover:bg-orange-700 flex items-center justify-center gap-3 transition-all active:scale-95 w-full lg:w-auto"
             >
-              <UserPlus size={20} /> TAMBAH KONTAK B2B ✨
+              <UserPlus size={20} /> TAMBAH KONTAK B2B
             </button>
           )}
         </div>
@@ -798,7 +798,7 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
        {/* MODAL ADD/EDIT SALES B2B */}
       {showModalSales && (
   <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-          <div className="bg-white w-full max-w-md rounded-[4rem] p-12 shadow-2xl relative border border-white/20 opacity-0 max-h-[90vh] overflow-y-auto custom-scrollbar" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+          <div className="bg-white w-full max-w-md rounded-[4rem] p-12 shadow-2xl relative border border-white/20 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
             <button onClick={() => setShowModalSales(null)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all"><X size={20}/></button>
             <h4 className="text-3xl font-black text-slate-800 uppercase italic mb-10 tracking-tighter leading-none text-center">DATA <span className="text-orange-600">SALES B2B</span></h4>
             <div className="space-y-6">
