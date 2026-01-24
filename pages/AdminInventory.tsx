@@ -747,20 +747,15 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
                       <tr key={s.id} className={`transition-all group border-l-8 ${isUrgent ? 'bg-rose-50/50 border-rose-400' : 'hover:bg-slate-50 border-transparent'}`}>
                        <td className="px-8 py-10">
   <div className="space-y-3">
-    <div className="flex items-center gap-3">
-      <Building2 size={16} className="text-orange-500 shrink-0" />
-      <p className="text-sm font-black uppercase italic leading-none text-slate-800">{s.institutionName}</p>
-    </div>
+    <p className="text-sm font-black uppercase italic leading-none text-slate-800 text-center">{s.institutionName}</p>
     
-    <div className="p-4 bg-slate-50 rounded-2xl border border-slate-100">
-      <div className="flex items-center gap-2 mb-2">
-        <div className="w-7 h-7 bg-orange-100 rounded-lg flex items-center justify-center shrink-0">
-          <Briefcase size={14} className="text-orange-600" />
-        </div>
-        <p className="text-xs font-black text-slate-800">{s.contactPerson}</p>
+    <div className="p-3 bg-white rounded-xl border border-slate-100 shadow-sm">
+      <div className="flex items-center gap-2 mb-1.5">
+        <Briefcase size={12} className="text-slate-400 shrink-0" />
+        <p className="text-xs font-black text-slate-700">{s.contactPerson}</p>
       </div>
-      <div className="flex items-center gap-2 ml-9">
-        <span className="inline-block px-3 py-1.5 bg-white text-slate-600 rounded-xl text-[9px] font-black uppercase tracking-wider shadow-sm border border-slate-100">{s.jobTitle}</span>
+      <div className="ml-5">
+        <span className="text-[9px] font-bold text-slate-500 uppercase">{s.jobTitle}</span>
       </div>
     </div>
   </div>
