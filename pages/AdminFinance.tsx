@@ -147,6 +147,8 @@ useEffect(() => {
   // 🔥 Fungsi fetch data dari Supabase (server-side)
 const fetchLedgerData = async () => {
   setIsLoadingLedger(true);
+
+console.log('🔍 Filter aktif:', ledgerFilters);
   
   try {
     let query = supabase
@@ -210,12 +212,12 @@ if (ledgerFilters.period !== 'ALL') {
     
     // Category filter
     if (ledgerFilters.category !== 'ALL') {
-      query = query.eq('category', ledgerFilters.category);
+      query = query.eq('category', ledgerFilters.category.toUpperCase());
     }
     
     // Type filter
     if (ledgerFilters.type !== 'ALL') {
-      query = query.eq('type', ledgerFilters.type);
+      query = query.eq('type', ledgerFilters.type.toUpperCase());
     }
     
     // Pagination
@@ -224,6 +226,9 @@ if (ledgerFilters.period !== 'ALL') {
     query = query.range(startIndex, endIndex);
     
     const { data, error, count } = await query;
+
+    console.log('📊 Data dari server:', data); // ✅ Cek data yang balik
+    console.log('📈 Total count:', count); // ✅ Cek jumlah total
     
     if (error) throw error;
     
