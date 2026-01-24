@@ -732,6 +732,8 @@ useEffect(() => {
                      </tbody>
                   </table>
                </div>
+              )} {/* 🔥 PASTIKAN KURUNG TUTUP INI ADA! */}
+              
               {/* 📄 Pagination Controls */}
 {!isLoadingLedger && totalCount > itemsPerPage && (
   <div className="p-8 border-t border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6">
