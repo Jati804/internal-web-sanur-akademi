@@ -269,7 +269,6 @@ const App = () => {
   const [studentPayments, setStudentPayments] = useState<StudentPayment[]>([]);
   const [studentProfiles, setStudentProfiles] = useState<StudentProfile[]>([]);
   const [salesContacts, setSalesContacts] = useState<any[]>([]);
-  const [salesContacts, setSalesContacts] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<string[]>(INITIAL_SUBJECTS);
   const [classes, setClasses] = useState<string[]>(CLASS_ROOM_OPTIONS);
   const [levels, setLevels] = useState<string[]>(['BASIC', 'INTERMEDIATE', 'ADVANCED']);
