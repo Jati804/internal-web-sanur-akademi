@@ -16,6 +16,12 @@ interface AdminMarketingProps {
 }
 
 const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStudentProfiles, salesContacts, setSalesContacts, refreshAllData }) => {
+  
+  // ✅ TAMBAHIN INI DI BARIS PERTAMA
+  console.log('AdminMarketing props:', { 
+    studentProfiles: studentProfiles?.length, 
+    salesContacts: salesContacts?.length 
+  });
   const [activeTab, setActiveTab] = useState<'SISWA' | 'SALES'>('SISWA');
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState<'ADD' | 'EDIT' | null>(null);
