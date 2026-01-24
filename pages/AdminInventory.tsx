@@ -46,6 +46,15 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
     dealStatus: 'WARM', meetingNotes: ''
   });
 
+  // ✨ FUNGSI HELPER BUAT TUTUP SEMUA MODAL DULU
+  const resetAllModals = () => {
+    setShowModal(null);
+    setShowModalSales(null);
+    setShowDeleteConfirm(null);
+    setShowDeleteConfirmSales(null);
+    setShowImportModal(false);
+  };
+  
   useEffect(() => {
   const hasModal = !!(showImportModal || showModal || showDeleteConfirm || showModalSales || showDeleteConfirmSales);
   
@@ -176,20 +185,21 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
   };
 
   const handleOpenEditSales = (sales: any) => {
-    setEditingSalesId(sales.id);
-    setSalesFormData({
-      institutionName: sales.institutionName || '',
-      contactPerson: sales.contactPerson || '',
-      jobTitle: sales.jobTitle || '',
-      phone: sales.phone || '',
-      email: sales.email || '',
-      lastContactDate: sales.lastContactDate || new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()),
-      nextFollowupDate: sales.nextFollowupDate || new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()),
-      dealStatus: sales.dealStatus || 'WARM',
-      meetingNotes: sales.meetingNotes || ''
-    });
-    setShowModalSales('EDIT');
-  };
+  resetAllModals(); // ✨ TUTUP SEMUA MODAL DULU!
+  setEditingSalesId(sales.id);
+  setSalesFormData({
+    institutionName: sales.institutionName || '',
+    contactPerson: sales.contactPerson || '',
+    jobTitle: sales.jobTitle || '',
+    phone: sales.phone || '',
+    email: sales.email || '',
+    lastContactDate: sales.lastContactDate || new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()),
+    nextFollowupDate: sales.nextFollowupDate || new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()),
+    dealStatus: sales.dealStatus || 'WARM',
+    meetingNotes: sales.meetingNotes || ''
+  });
+  setTimeout(() => setShowModalSales('EDIT'), 50); // ✨ BUKA MODAL BARU SETELAH RESET
+};
 
   const handleSaveSales = async () => {
     if (!salesFormData.institutionName || !salesFormData.contactPerson || !salesFormData.jobTitle || !salesFormData.phone) {
@@ -413,14 +423,15 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
           {activeTab === 'SALES' && (
             <button 
               onClick={() => { 
-                setSalesFormData({
-                  institutionName: '', contactPerson: '', jobTitle: '', phone: '', email: '',
-                  lastContactDate: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()),
-                  nextFollowupDate: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
-                  dealStatus: 'WARM', meetingNotes: ''
-                }); 
-                setShowModalSales('ADD'); 
-              }} 
+  resetAllModals(); // ✨ TUTUP DULU!
+  setSalesFormData({
+    institutionName: '', contactPerson: '', jobTitle: '', phone: '', email: '',
+    lastContactDate: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()),
+    nextFollowupDate: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
+    dealStatus: 'WARM', meetingNotes: ''
+  }); 
+  setTimeout(() => setShowModalSales('ADD'), 50); // ✨ BUKA SETELAH RESET
+}}
               className="h-[64px] px-10 bg-orange-600 text-white rounded-[2rem] text-[10px] font-black uppercase shadow-2xl hover:bg-orange-700 flex items-center justify-center gap-3 transition-all active:scale-95 w-full lg:w-auto"
             >
               <UserPlus size={20} /> TAMBAH KONTAK B2B ✨
@@ -714,7 +725,7 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
 
       {/* MODAL DELETE SALES B2B */}
       {showDeleteConfirmSales && (
-        <div data-modal-container className="fixed inset-0 z-[110000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+        <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[110000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
           <div className="bg-white w-full max-w-[320px] rounded-[2.5rem] p-8 text-center space-y-6 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
             <button onClick={() => setShowDeleteConfirmSales(null)} className="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
             <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mx-auto shadow-sm animate-pulse">
@@ -848,7 +859,7 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
                         <td className="px-8 py-10">
                           <div className="flex justify-center gap-2">
                             <button onClick={() => handleOpenEditSales(s)} className="p-3.5 bg-white text-slate-300 hover:text-orange-600 rounded-2xl shadow-sm border border-slate-50 transition-all active:scale-90"><Edit3 size={18}/></button>
-                            <button onClick={() => setShowDeleteConfirmSales(s)} className="p-3.5 bg-white text-slate-300 hover:text-rose-500 rounded-2xl shadow-sm border border-slate-100 transition-all active:scale-90"><Trash2 size={18}/></button>
+                            <button onClick={() => { resetAllModals(); setTimeout(() => setShowDeleteConfirmSales(s), 50); }} className="p-3.5 bg-white text-slate-300 hover:text-rose-500 rounded-2xl shadow-sm border border-slate-100 transition-all active:scale-90"><Trash2 size={18}/></button>
                           </div>
                         </td>
                       </tr>
