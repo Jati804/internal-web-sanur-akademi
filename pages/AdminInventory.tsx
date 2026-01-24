@@ -47,15 +47,17 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
   });
 
   useEffect(() => {
-    const hasModal = !!(showImportModal || showModal || showDeleteConfirm || showModalSales || showDeleteConfirmSales);
-    if (hasModal) {
-      const timer = setTimeout(() => {
-        const modalElement = document.querySelector('[data-modal-container]');
-        if (modalElement) modalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 150);
-      return () => clearTimeout(timer);
-    }
-  }, [showImportModal, showModal, showDeleteConfirm, showModalSales, showDeleteConfirmSales]);
+  const hasModal = !!(showImportModal || showModal || showDeleteConfirm || showModalSales || showDeleteConfirmSales);
+  if (hasModal) {
+    // Force immediate render
+    requestAnimationFrame(() => {
+      const modalElement = document.querySelector('[data-modal-container]');
+      if (modalElement) {
+        modalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    });
+  }
+}, [showImportModal, showModal, showDeleteConfirm, showModalSales, showDeleteConfirmSales]);
 
   const todayDate = new Date();
   const todayMonthName = todayDate.toLocaleString('id-ID', { month: 'long' }).toUpperCase();
