@@ -126,7 +126,7 @@ const GuideModal = ({ role, onClose }: { role: string, onClose: () => void }) =>
 };
 
 const AppContent = ({ 
-  user, setUser, attendanceLogs, setAttendanceLogs, studentAttendanceLogs, setStudentAttendanceLogs, teachers, setTeachers, studentAccounts, setStudentAccounts, transactions, setTransactions, studentPayments, setStudentPayments, studentProfiles, setStudentProfiles, subjects, setSubjects, classes, setClasses, levels, setLevels, masterSchedule, setMasterSchedule, salaryConfig, setSalaryConfig, isSidebarOpen, setIsSidebarOpen, isSyncing, connectionError, refreshAllData
+  user, setUser, attendanceLogs, setAttendanceLogs, studentAttendanceLogs, setStudentAttendanceLogs, teachers, setTeachers, studentAccounts, setStudentAccounts, transactions, setTransactions, studentPayments, setStudentPayments, studentProfiles, setStudentProfiles, salesContacts, setSalesContacts, subjects, setSubjects, classes, setClasses, levels, setLevels, masterSchedule, setMasterSchedule, salaryConfig, setSalaryConfig, isSidebarOpen, setIsSidebarOpen, isSyncing, connectionError, refreshAllData
 }: any) => {
   const navigate = useNavigate();
   const location = useLocation();
