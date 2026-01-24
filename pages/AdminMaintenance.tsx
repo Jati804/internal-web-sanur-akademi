@@ -95,7 +95,10 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
     student_profiles: ['id', 'name', 'dob', 'institution', 'personalphone', 'parentphone', 'enrolledclass', 'notes'],
     transactions: ['id', 'type', 'category', 'amount', 'date', 'description'],
     attendance: ['id', 'teacherid', 'teachername', 'date', 'clockin', 'status', 'classname', 'level', 'sessioncategory', 'duration', 'packageid', 'sessionnumber', 'studentsattended', 'studentsessions', 'studentscores', 'studenttopics', 'studentnarratives', 'earnings', 'paymentstatus', 'reportnarrative', 'receiptdata', 'substitutefor', 'originalteacherid'],
-    student_payments: ['id', 'studentname', 'classname', 'amount', 'date', 'status', 'note', 'receiptdata']
+    student_payments: ['id', 'studentname', 'classname', 'amount', 'date', 'status', 'note', 'receiptdata'],
+    sales_contacts: ['id', 'institution_name', 'contact_person', 'job_title', 'phone', 'email', 'last_contact_date', 'next_followup_date', 'deal_status', 'meeting_notes'],
+    student_attendance: ['id', 'packageid', 'studentname', 'sessionnumber', 'date', 'clockin', 'duration', 'classname', 'level', 'sessioncategory', 'studentscores', 'studenttopics', 'studentnarratives', 'reportnarrative'],
+    maintenance_notes: ['id', 'content', 'last_modified']
   };
 
   const fetchMediaCount = async () => {
@@ -262,7 +265,7 @@ useEffect(() => {
     setLoadingText("MEMULIHKAN CLOUD...");
     setImportProgress(0);
     const resultsSummary: any[] = [];
-    const tableOrder = ['settings', 'teachers', 'student_accounts', 'student_profiles', 'transactions', 'attendance', 'student_payments'];
+    const tableOrder = ['settings', 'teachers', 'student_accounts', 'student_profiles', 'transactions', 'attendance', 'student_payments', 'sales_contacts', 'student_attendance', 'maintenance_notes'];
 
     try {
       for (let i = 0; i < tableOrder.length; i++) {
@@ -378,7 +381,7 @@ useEffect(() => {
     setProcessingStatus('LOADING');
     setLoadingText('MEMBUAT SNAPSHOT...');
     try {
-      const tablesToExport = ['settings', 'teachers', 'student_accounts', 'student_profiles', 'transactions', 'attendance', 'student_payments'];
+      const tablesToExport = ['settings', 'teachers', 'student_accounts', 'student_profiles', 'transactions', 'attendance', 'student_payments', 'sales_contacts', 'student_attendance', 'maintenance_notes'];
       const tablesData: Record<string, any> = {};
       for(let i = 0; i < tablesToExport.length; i++) {
         const tName = tablesToExport[i];
