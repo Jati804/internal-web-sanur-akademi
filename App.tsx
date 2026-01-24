@@ -398,23 +398,24 @@ if (salesCon) setSalesContacts(salesCon.map((s: any) => ({
   return (
     <Router>
       <AppContent 
-        user={user} setUser={setUser}
-        attendanceLogs={attendanceLogs} setAttendanceLogs={setAttendanceLogs}
-        studentAttendanceLogs={studentAttendanceLogs} setStudentAttendanceLogs={setStudentAttendanceLogs}
-        teachers={teachers} setTeachers={setTeachers}
-        studentAccounts={studentAccounts} setStudentAccounts={setStudentAccounts}
-        transactions={transactions} setTransactions={setTransactions}
-        studentPayments={studentPayments} setStudentPayments={setStudentPayments}
-        studentProfiles={studentProfiles} setStudentProfiles={setStudentProfiles}
-        subjects={subjects} setSubjects={setSubjects}
-        classes={classes} setClasses={setClasses}
-        levels={levels} setLevels={setLevels}
-        masterSchedule={masterSchedule} setMasterSchedule={setMasterSchedule}
-        salaryConfig={salaryConfig} setSalaryConfig={setSalaryConfig}
-        isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}
-        isSyncing={isSyncing} connectionError={connectionError}
-        refreshAllData={refreshAllData}
-      />
+  user={user} setUser={setUser}
+  attendanceLogs={attendanceLogs} setAttendanceLogs={setAttendanceLogs}
+  studentAttendanceLogs={studentAttendanceLogs} setStudentAttendanceLogs={setStudentAttendanceLogs}
+  teachers={teachers} setTeachers={setTeachers}
+  studentAccounts={studentAccounts} setStudentAccounts={setStudentAccounts}
+  transactions={transactions} setTransactions={setTransactions}
+  studentPayments={studentPayments} setStudentPayments={setStudentPayments}
+  studentProfiles={studentProfiles} setStudentProfiles={setStudentProfiles}
+  salesContacts={salesContacts} setSalesContacts={setSalesContacts}  // ✅ HARUS ADA!
+  subjects={subjects} setSubjects={setSubjects}
+  classes={classes} setClasses={setClasses}
+  levels={levels} setLevels={setLevels}
+  masterSchedule={masterSchedule} setMasterSchedule={setMasterSchedule}
+  salaryConfig={salaryConfig} setSalaryConfig={setSalaryConfig}
+  isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}
+  isSyncing={isSyncing} connectionError={connectionError}
+  refreshAllData={refreshAllData}
+/>
     </Router>
   );
 };
