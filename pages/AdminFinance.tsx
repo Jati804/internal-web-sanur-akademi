@@ -161,51 +161,52 @@ const fetchLedgerData = async () => {
     }
     
     // Period filters
-    if (ledgerFilters.period !== 'ALL') {
-      const today = new Date();
+if (ledgerFilters.period !== 'ALL') {
+  const today = new Date();
+  const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(today);
+  
+  if (ledgerFilters.period === 'THIS_WEEK') {
+    const weekAgo = new Date();
+    weekAgo.setDate(today.getDate() - 7);
+    const weekAgoStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(weekAgo);
+    query = query.gte('date', weekAgoStr).lte('date', todayStr); // ✅ TAMBAHIN .lte()
+  }
+  
+  if (ledgerFilters.period === 'THIS_MONTH') {
+    const year = today.getFullYear();
+    const month = today.getMonth();
+    const firstDay = new Date(year, month, 1);
+    const firstDayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(firstDay);
+    query = query.gte('date', firstDayStr).lte('date', todayStr); // ✅ TAMBAHIN .lte()
+  }
+  
+  if (ledgerFilters.period === 'THIS_YEAR') {
+    const firstDay = new Date(today.getFullYear(), 0, 1);
+    const firstDayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(firstDay);
+    query = query.gte('date', firstDayStr).lte('date', todayStr); // ✅ TAMBAHIN .lte()
+  }
+  
+  // Filter CUSTOM tetap sama (udah bener)
+  if (ledgerFilters.period === 'CUSTOM') {
+    const year = ledgerFilters.customYear;
+    const yearStart = new Date(year, 0, 1);
+    const yearEnd = new Date(year, 11, 31);
+    const startStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(yearStart);
+    const endStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(yearEnd);
+    
+    query = query.gte('date', startStr).lte('date', endStr);
+    
+    if (ledgerFilters.customMonth !== null) {
+      const monthNum = ledgerFilters.customMonth;
+      const monthStart = new Date(year, monthNum, 1);
+      const monthEnd = new Date(year, monthNum + 1, 0);
+      const startStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(monthStart);
+      const endStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(monthEnd);
       
-      if (ledgerFilters.period === 'THIS_WEEK') {
-        const weekAgo = new Date();
-        weekAgo.setDate(today.getDate() - 7);
-        const weekAgoStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(weekAgo);
-        query = query.gte('date', weekAgoStr);
-      }
-      
-      if (ledgerFilters.period === 'THIS_MONTH') {
-        const year = today.getFullYear();
-        const month = today.getMonth();
-        const firstDay = new Date(year, month, 1);
-        const firstDayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(firstDay);
-        query = query.gte('date', firstDayStr);
-      }
-      
-      if (ledgerFilters.period === 'THIS_YEAR') {
-        const firstDay = new Date(today.getFullYear(), 0, 1);
-        const firstDayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(firstDay);
-        query = query.gte('date', firstDayStr);
-      }
-      
-      if (ledgerFilters.period === 'CUSTOM') {
-        const year = ledgerFilters.customYear;
-        const yearStart = new Date(year, 0, 1);
-        const yearEnd = new Date(year, 11, 31);
-        const startStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(yearStart);
-        const endStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(yearEnd);
-        
-        query = query.gte('date', startStr).lte('date', endStr);
-        
-        if (ledgerFilters.customMonth !== null) { // ✅ Cek null, bukan 'ALL'
-          const monthNum = ledgerFilters.customMonth; // ✅ Langsung pakai, udah pasti number
-          
-          const monthStart = new Date(year, monthNum, 1);
-          const monthEnd = new Date(year, monthNum + 1, 0);
-          const startStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(monthStart);
-          const endStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(monthEnd);
-          
-          query = query.gte('date', startStr).lte('date', endStr);
-        }
-      }
+      query = query.gte('date', startStr).lte('date', endStr);
     }
+  }
+}
     
     // Category filter
     if (ledgerFilters.category !== 'ALL') {
