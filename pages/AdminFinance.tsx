@@ -51,11 +51,11 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
   const [sppSearch, setSppSearch] = useState('');
   // 🆕 State untuk filter ledger
 const [ledgerFilters, setLedgerFilters] = useState({
-  period: 'ALL', // 'THIS_WEEK', 'THIS_MONTH', 'THIS_YEAR', 'CUSTOM', 'ALL'
+  period: 'ALL',
   category: 'ALL',
   type: 'ALL',
-  customYear: new Date().getFullYear(), // Untuk filter custom
-  customMonth: 'ALL' // 'ALL' atau 1-12
+  customYear: new Date().getFullYear(),
+  customMonth: null // ✅ Pakai null, bukan 'ALL'
 });
 const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   
@@ -194,11 +194,8 @@ const fetchLedgerData = async () => {
         
         query = query.gte('date', startStr).lte('date', endStr);
         
-        if (ledgerFilters.customMonth !== 'ALL') {
-          // customMonth sekarang udah 0-11 (sesuai JavaScript Date)
-          const monthNum = typeof ledgerFilters.customMonth === 'string' 
-            ? parseInt(ledgerFilters.customMonth) 
-            : ledgerFilters.customMonth;
+        if (ledgerFilters.customMonth !== null) { // ✅ Cek null, bukan 'ALL'
+          const monthNum = ledgerFilters.customMonth; // ✅ Langsung pakai, udah pasti number
           
           const monthStart = new Date(year, monthNum, 1);
           const monthEnd = new Date(year, monthNum + 1, 0);
@@ -579,7 +576,7 @@ useEffect(() => {
   
   <button 
     onClick={() => {
-      setLedgerFilters({period: 'ALL', category: 'ALL', type: 'ALL', customYear: new Date().getFullYear(), customMonth: 'ALL'});
+      setLedgerFilters({period: 'ALL', category: 'ALL', type: 'ALL', customYear: new Date().getFullYear(), customMonth: null});
       setCurrentPage(1);
     }}
     className="px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all"
@@ -656,12 +653,16 @@ useEffect(() => {
           <select 
             value={ledgerFilters.customMonth} 
             onChange={(e) => {
-     setLedgerFilters({...ledgerFilters, period: 'CUSTOM', customMonth: e.target.value === 'ALL' ? 'ALL' : parseInt(e.target.value)});
-     setCurrentPage(1);
-   }}
+  setLedgerFilters({
+    ...ledgerFilters, 
+    period: 'CUSTOM', 
+    customMonth: e.target.value === '' ? null : parseInt(e.target.value) // ✅ null kalau kosong
+  });
+  setCurrentPage(1);
+}}
             className="w-full px-4 py-3 bg-slate-50 rounded-2xl text-[10px] font-black uppercase outline-none border-2 border-transparent focus:border-blue-500 transition-all"
           >
-            <option value="ALL">SEMUA BULAN</option>
+            <option value="">SEMUA BULAN</option>
             <option value="0">JANUARI</option>
             <option value="1">FEBRUARI</option>
             <option value="2">MARET</option>
