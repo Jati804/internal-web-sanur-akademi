@@ -197,7 +197,7 @@ if (ledgerFilters.period !== 'ALL') {
     query = query.gte('date', startStr).lte('date', endStr);
     
     if (ledgerFilters.customMonth !== null) {
-      const monthNum = ledgerFilters.customMonth;
+      const monthNum = parseInt(ledgerFilters.customMonth);
       const monthStart = new Date(year, monthNum, 1);
       const monthEnd = new Date(year, monthNum + 1, 0);
       const startStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(monthStart);
@@ -296,7 +296,7 @@ const filteredLedger = serverLedger;
 
 useEffect(() => {
   fetchLedgerData();
-}, [ledgerSearch, ledgerFilters, currentPage]);
+}, [ledgerSearch, ledgerFilters, currentPage, itemsPerPage]);
   
   const handleOpenConfirmSpp = async (p: StudentPayment) => {
     setActionLoadingId(p.id);
