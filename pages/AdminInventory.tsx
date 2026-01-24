@@ -471,6 +471,32 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
             </div>
           </div>
 
+              {/* ✨ INFO BOX BARU - TARUH DI SINI! */}
+    <div className="mx-4 p-6 bg-gradient-to-r from-orange-50 to-amber-50 rounded-[3rem] border-2 border-orange-100 shadow-lg">
+      <div className="flex items-start gap-4">
+        <div className="w-12 h-12 bg-orange-500 text-white rounded-2xl flex items-center justify-center shrink-0 shadow-lg">
+          <Info size={24} />
+        </div>
+        <div className="flex-1">
+          <h3 className="text-lg font-black text-slate-800 uppercase italic mb-4 leading-none">PANDUAN STATUS DEAL ✨</h3>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="p-4 bg-white rounded-2xl border-2 border-rose-100 shadow-sm">
+              <p className="text-xs font-black text-rose-600 uppercase mb-2">🔥 HOT (PANAS)</p>
+              <p className="text-[9px] font-bold text-slate-500 leading-relaxed">Prospek sangat tertarik & siap deal! Follow-up intensif 1-2 hari sekali.</p>
+            </div>
+            <div className="p-4 bg-white rounded-2xl border-2 border-amber-100 shadow-sm">
+              <p className="text-xs font-black text-amber-600 uppercase mb-2">🌤️ WARM (HANGAT)</p>
+              <p className="text-[9px] font-bold text-slate-500 leading-relaxed">Prospek tertarik, butuh follow-up rutin 3-5 hari sekali untuk closing.</p>
+            </div>
+            <div className="p-4 bg-white rounded-2xl border-2 border-blue-100 shadow-sm">
+              <p className="text-xs font-black text-blue-600 uppercase mb-2">❄️ COLD (DINGIN)</p>
+              <p className="text-[9px] font-bold text-slate-500 leading-relaxed">Prospek kurang minat saat ini, follow-up berkala 1-2 minggu sekali.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+          
           <div className="mx-4">
             <div className="relative w-full shadow-2xl shadow-slate-200/50">
               <Search size={22} className="absolute left-8 top-1/2 -translate-y-1/2 text-blue-500" />
