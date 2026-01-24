@@ -269,6 +269,7 @@ const App = () => {
   const [studentPayments, setStudentPayments] = useState<StudentPayment[]>([]);
   const [studentProfiles, setStudentProfiles] = useState<StudentProfile[]>([]);
   const [salesContacts, setSalesContacts] = useState<any[]>([]);
+  const [salesContacts, setSalesContacts] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<string[]>(INITIAL_SUBJECTS);
   const [classes, setClasses] = useState<string[]>(CLASS_ROOM_OPTIONS);
   const [levels, setLevels] = useState<string[]>(['BASIC', 'INTERMEDIATE', 'ADVANCED']);
@@ -290,7 +291,7 @@ const App = () => {
   { data: trans },
   { data: stuPay },
   { data: stuProf },
-  { data: salesCon }, // ✅ TAMBAHIN INI!
+  { data: salesCon },  // ✅ TAMBAHIN INI!
   { data: settings }
 ] = await Promise.all([
   supabase.from('attendance').select('*'),
@@ -366,8 +367,7 @@ if (salesCon) setSalesContacts(salesCon.map((s: any) => ({
   lastContactDate: s.last_contact_date,
   nextFollowupDate: s.next_followup_date,
   dealStatus: s.deal_status,
-  meetingNotes: s.meeting_notes,
-  createdAt: s.created_at
+  meetingNotes: s.meeting_notes
 })));
 
       if (settings) {
