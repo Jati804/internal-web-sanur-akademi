@@ -149,75 +149,86 @@ const fetchLedgerData = async () => {
   setIsLoadingLedger(true);
   
   try {
-    // 1️⃣ Bikin query dasar
     let query = supabase
       .from('transactions')
-      .select('*', { count: 'exact' }) // count: 'exact' buat dapetin total data
-      .order('id', { ascending: false }); // Urutkan dari yang terbaru
+      .select('*', { count: 'exact' })
+      .order('id', { ascending: false });
     
-    // 2️⃣ Kalau ada search, tambahin filter
+    // Search filter
     if (ledgerSearch.trim()) {
       const searchTerm = `%${ledgerSearch.trim()}%`;
       query = query.or(`description.ilike.${searchTerm},category.ilike.${searchTerm}`);
     }
     
-    // 3️⃣ Filter berdasarkan periode (Minggu Ini, Bulan Ini, dll)
+    // Period filters
     if (ledgerFilters.period !== 'ALL') {
       const today = new Date();
       
       if (ledgerFilters.period === 'THIS_WEEK') {
-        const weekAgo = new Date(today);
+        const weekAgo = new Date();
         weekAgo.setDate(today.getDate() - 7);
-        query = query.gte('date', weekAgo.toISOString().split('T')[0]);
+        const weekAgoStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(weekAgo);
+        query = query.gte('date', weekAgoStr);
       }
       
       if (ledgerFilters.period === 'THIS_MONTH') {
-        const firstDay = new Date(today.getFullYear(), today.getMonth(), 1);
-        query = query.gte('date', firstDay.toISOString().split('T')[0]);
+        const year = today.getFullYear();
+        const month = today.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const firstDayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(firstDay);
+        query = query.gte('date', firstDayStr);
       }
       
       if (ledgerFilters.period === 'THIS_YEAR') {
         const firstDay = new Date(today.getFullYear(), 0, 1);
-        query = query.gte('date', firstDay.toISOString().split('T')[0]);
+        const firstDayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(firstDay);
+        query = query.gte('date', firstDayStr);
       }
       
       if (ledgerFilters.period === 'CUSTOM') {
-        const yearStart = new Date(ledgerFilters.customYear, 0, 1);
-        const yearEnd = new Date(ledgerFilters.customYear, 11, 31);
-        query = query.gte('date', yearStart.toISOString().split('T')[0])
-                     .lte('date', yearEnd.toISOString().split('T')[0]);
+        const year = ledgerFilters.customYear;
+        const yearStart = new Date(year, 0, 1);
+        const yearEnd = new Date(year, 11, 31);
+        const startStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(yearStart);
+        const endStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(yearEnd);
+        
+        query = query.gte('date', startStr).lte('date', endStr);
         
         if (ledgerFilters.customMonth !== 'ALL') {
-          const monthNum = ledgerFilters.customMonth - 1;
-          const monthStart = new Date(ledgerFilters.customYear, monthNum, 1);
-          const monthEnd = new Date(ledgerFilters.customYear, monthNum + 1, 0);
-          query = query.gte('date', monthStart.toISOString().split('T')[0])
-                       .lte('date', monthEnd.toISOString().split('T')[0]);
+          // customMonth sekarang udah 0-11 (sesuai JavaScript Date)
+          const monthNum = typeof ledgerFilters.customMonth === 'string' 
+            ? parseInt(ledgerFilters.customMonth) 
+            : ledgerFilters.customMonth;
+          
+          const monthStart = new Date(year, monthNum, 1);
+          const monthEnd = new Date(year, monthNum + 1, 0);
+          const startStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(monthStart);
+          const endStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(monthEnd);
+          
+          query = query.gte('date', startStr).lte('date', endStr);
         }
       }
     }
     
-    // 4️⃣ Filter berdasarkan kategori
+    // Category filter
     if (ledgerFilters.category !== 'ALL') {
       query = query.eq('category', ledgerFilters.category);
     }
     
-    // 5️⃣ Filter berdasarkan tipe (INCOME/EXPENSE)
+    // Type filter
     if (ledgerFilters.type !== 'ALL') {
       query = query.eq('type', ledgerFilters.type);
     }
     
-    // 6️⃣ Tambahin pagination (range)
+    // Pagination
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage - 1;
     query = query.range(startIndex, endIndex);
     
-    // 7️⃣ Eksekusi query
     const { data, error, count } = await query;
     
     if (error) throw error;
     
-    // 8️⃣ Simpan hasil ke state
     setServerLedger(data || []);
     setTotalCount(count || 0);
     
@@ -651,18 +662,18 @@ useEffect(() => {
             className="w-full px-4 py-3 bg-slate-50 rounded-2xl text-[10px] font-black uppercase outline-none border-2 border-transparent focus:border-blue-500 transition-all"
           >
             <option value="ALL">SEMUA BULAN</option>
-            <option value="1">JANUARI</option>
-            <option value="2">FEBRUARI</option>
-            <option value="3">MARET</option>
-            <option value="4">APRIL</option>
-            <option value="5">MEI</option>
-            <option value="6">JUNI</option>
-            <option value="7">JULI</option>
-            <option value="8">AGUSTUS</option>
-            <option value="9">SEPTEMBER</option>
-            <option value="10">OKTOBER</option>
-            <option value="11">NOVEMBER</option>
-            <option value="12">DESEMBER</option>
+            <option value="0">JANUARI</option>
+            <option value="1">FEBRUARI</option>
+            <option value="2">MARET</option>
+            <option value="3">APRIL</option>
+            <option value="4">MEI</option>
+            <option value="5">JUNI</option>
+            <option value="6">JULI</option>
+            <option value="7">AGUSTUS</option>
+            <option value="8">SEPTEMBER</option>
+            <option value="9">OKTOBER</option>
+            <option value="10">NOVEMBER</option>
+            <option value="11">DESEMBER</option>
           </select>
         </div>
       </div>
