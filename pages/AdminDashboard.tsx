@@ -18,13 +18,14 @@ const { Link } = ReactRouterDOM as any;
 interface AdminDashboardProps {
   user: User;
   attendanceLogs: Attendance[];
+  studentAttendanceLogs: any[];
   setAttendanceLogs: React.Dispatch<React.SetStateAction<Attendance[]>>;
   teachers: User[];
   transactions: Transaction[];
   studentProfiles: StudentProfile[];
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, studentAttendanceLogs }) => {
   const getWIBDate = () => new Intl.DateTimeFormat('en-CA', { 
     timeZone: 'Asia/Jakarta', 
     year: 'numeric', 
@@ -35,39 +36,34 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs }) => {
   const currentToday = getWIBDate();
   
   const followUpList = useMemo(() => {
-    const statusMap: Record<string, any> = {};
-    [...attendanceLogs]
-      .filter(l => l.status === 'SESSION_LOG' || l.status === 'SUB_LOG')
-      .sort((a,b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-      .forEach(log => {
-        const students = log.studentsAttended || [];
-        
-        students.forEach(s => {
-          if (s === 'TEACHER_LOG') return;
-          
-          const sKey = s.trim().toUpperCase();
-          const cName = (log.className || 'UMUM').toUpperCase();
-          const key = `${sKey}|||${cName}`;
-          
-          const currentSess = log.studentSessions?.[s] || log.sessionNumber;
-          
-          if (!statusMap[key] || (currentSess > statusMap[key].lastSess)) {
-            statusMap[key] = { 
-              lastSess: currentSess, 
-              student: s, 
-              lastDate: log.date, 
-              fullClass: log.className 
-            };
-          }
-        });
-      });
-
-    return Object.values(statusMap).filter((s: any) => {
-      const isSess5 = s.lastSess === 5;
-      const isSess6Today = s.lastSess >= 6 && s.lastDate === currentToday;
-      return isSess5 || isSess6Today;
+  const statusMap: Record<string, any> = {};
+  
+  // ✅ GANTI: Pakai studentAttendanceLogs!
+  [...studentAttendanceLogs]
+    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
+    .forEach(log => {
+      const sName = (log.studentName || log.studentname || '').trim().toUpperCase();
+      const cName = (log.className || log.classname || 'UMUM').toUpperCase();
+      const key = `${sName}|||${cName}`;
+      
+      const currentSess = log.sessionNumber || log.sessionnumber || 0;
+      
+      if (!statusMap[key] || (currentSess > statusMap[key].lastSess)) {
+        statusMap[key] = { 
+          lastSess: currentSess, 
+          student: sName, 
+          lastDate: log.date, 
+          fullClass: cName 
+        };
+      }
     });
-  }, [attendanceLogs, currentToday]);
+
+  return Object.values(statusMap).filter((s: any) => {
+    const isSess5 = s.lastSess === 5;
+    const isSess6Today = s.lastSess >= 6 && s.lastDate === currentToday;
+    return isSess5 || isSess6Today;
+  });
+}, [studentAttendanceLogs, currentToday]); // ✅ Ganti dependency!
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-40 px-4 animate-in fade-in duration-500">
