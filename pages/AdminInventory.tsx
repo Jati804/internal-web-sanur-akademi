@@ -658,96 +658,10 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
           </div>
         </div>
       )}
-
-      {/* MODAL ADD/EDIT SALES B2B */}
-      {showModalSales && (
-  <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-          <div className="bg-white w-full max-w-md rounded-[4rem] p-12 shadow-2xl relative border border-white/20 opacity-0 max-h-[90vh] overflow-y-auto custom-scrollbar" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-            <button onClick={() => setShowModalSales(null)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all"><X size={20}/></button>
-            <h4 className="text-3xl font-black text-slate-800 uppercase italic mb-10 tracking-tighter leading-none text-center">DATA <span className="text-orange-600">SALES B2B</span></h4>
-            <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Nama Instansi *</label>
-                <input type="text" placeholder="MISAL: SD NEGERI 01 DENPASAR" value={salesFormData.institutionName} onChange={e => setSalesFormData({...salesFormData, institutionName: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Nama Narahubung *</label>
-                <input type="text" placeholder="MISAL: PAK BUDI SANTOSO" value={salesFormData.contactPerson} onChange={e => setSalesFormData({...salesFormData, contactPerson: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Jabatan *</label>
-<input type="text" placeholder="MISAL: KEPALA SEKOLAH" value={salesFormData.jobTitle} onChange={e => setSalesFormData({...salesFormData, jobTitle: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Nomor HP *</label>
-                  <input type="text" placeholder="08..." value={salesFormData.phone} onChange={e => setSalesFormData({...salesFormData, phone: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Email (Opsional)</label>
-                  <input type="email" placeholder="email@..." value={salesFormData.email} onChange={e => setSalesFormData({...salesFormData, email: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Last Contact</label>
-                  <input type="date" value={salesFormData.lastContactDate} onChange={e => setSalesFormData({...salesFormData, lastContactDate: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Next Follow-Up</label>
-                  <input type="date" value={salesFormData.nextFollowupDate} onChange={e => setSalesFormData({...salesFormData, nextFollowupDate: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Status Deal</label>
-                <select value={salesFormData.dealStatus} onChange={e => setSalesFormData({...salesFormData, dealStatus: e.target.value})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner">
-                  <option value="HOT">🔥 HOT (PANAS)</option>
-                  <option value="WARM">🌤️ WARM (HANGAT)</option>
-                  <option value="COLD">❄️ COLD (DINGIN)</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Meeting Notes</label>
-                <textarea placeholder="MISAL: MEETING PERTAMA, MINAT PAKET 20 SISWA..." value={salesFormData.meetingNotes} onChange={e => setSalesFormData({...salesFormData, meetingNotes: e.target.value.toUpperCase()})} rows={4} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-bold text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
-              </div>
-
-              <button onClick={handleSaveSales} disabled={isLoading} className="w-full py-6 bg-orange-600 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl transition-all active:scale-95 flex items-center justify-center">
-                {isLoading ? <Loader2 size={18} className="animate-spin" /> : 'SIMPAN DATA B2B ✨'}
-              </button>
-            </div>
-          </div>
-        </div>
+        
+        </>  
       )}
 
-      {/* MODAL DELETE SALES B2B */}
-      {showDeleteConfirmSales && (
-        <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[110000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-          <div className="bg-white w-full max-w-[320px] rounded-[2.5rem] p-8 text-center space-y-6 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-            <button onClick={() => setShowDeleteConfirmSales(null)} className="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
-            <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mx-auto shadow-sm animate-pulse">
-              <AlertTriangle size={32} />
-            </div>
-            <div className="space-y-2">
-              <h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Hapus Kontak?</h4>
-              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-2">
-                Data kontak <span className="text-slate-800 font-black underline">{showDeleteConfirmSales?.institutionName}</span> akan dihapus permanen.
-              </p>
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => setShowDeleteConfirmSales(null)} className="flex-1 py-4 bg-slate-50 text-slate-400 rounded-xl font-black text-[9px] uppercase tracking-widest active:scale-95 transition-all">BATAL</button>
-              <button onClick={executeDeleteSales} disabled={isLoading} className="flex-1 py-4 bg-rose-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 flex items-center justify-center gap-2">
-                {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14}/>} IYA, HAPUS
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-        </>
-      )}
 {activeTab === 'SALES' && (
         <>
           {urgentSalesContacts.length > 0 && (
@@ -879,6 +793,95 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
               </table>
             </div>
           </div>
+        </>
+      )}
+       {/* MODAL ADD/EDIT SALES B2B */}
+      {showModalSales && (
+  <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+          <div className="bg-white w-full max-w-md rounded-[4rem] p-12 shadow-2xl relative border border-white/20 opacity-0 max-h-[90vh] overflow-y-auto custom-scrollbar" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+            <button onClick={() => setShowModalSales(null)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all"><X size={20}/></button>
+            <h4 className="text-3xl font-black text-slate-800 uppercase italic mb-10 tracking-tighter leading-none text-center">DATA <span className="text-orange-600">SALES B2B</span></h4>
+            <div className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Nama Instansi *</label>
+                <input type="text" placeholder="MISAL: SD NEGERI 01 DENPASAR" value={salesFormData.institutionName} onChange={e => setSalesFormData({...salesFormData, institutionName: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Nama Narahubung *</label>
+                <input type="text" placeholder="MISAL: PAK BUDI SANTOSO" value={salesFormData.contactPerson} onChange={e => setSalesFormData({...salesFormData, contactPerson: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
+              </div>
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Jabatan *</label>
+<input type="text" placeholder="MISAL: KEPALA SEKOLAH" value={salesFormData.jobTitle} onChange={e => setSalesFormData({...salesFormData, jobTitle: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
+              </div>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Nomor HP *</label>
+                  <input type="text" placeholder="08..." value={salesFormData.phone} onChange={e => setSalesFormData({...salesFormData, phone: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Email (Opsional)</label>
+                  <input type="email" placeholder="email@..." value={salesFormData.email} onChange={e => setSalesFormData({...salesFormData, email: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Last Contact</label>
+                  <input type="date" value={salesFormData.lastContactDate} onChange={e => setSalesFormData({...salesFormData, lastContactDate: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Next Follow-Up</label>
+                  <input type="date" value={salesFormData.nextFollowupDate} onChange={e => setSalesFormData({...salesFormData, nextFollowupDate: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Status Deal</label>
+                <select value={salesFormData.dealStatus} onChange={e => setSalesFormData({...salesFormData, dealStatus: e.target.value})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner">
+                  <option value="HOT">🔥 HOT (PANAS)</option>
+                  <option value="WARM">🌤️ WARM (HANGAT)</option>
+                  <option value="COLD">❄️ COLD (DINGIN)</option>
+                </select>
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Meeting Notes</label>
+                <textarea placeholder="MISAL: MEETING PERTAMA, MINAT PAKET 20 SISWA..." value={salesFormData.meetingNotes} onChange={e => setSalesFormData({...salesFormData, meetingNotes: e.target.value.toUpperCase()})} rows={4} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-bold text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
+              </div>
+
+              <button onClick={handleSaveSales} disabled={isLoading} className="w-full py-6 bg-orange-600 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl transition-all active:scale-95 flex items-center justify-center">
+                {isLoading ? <Loader2 size={18} className="animate-spin" /> : 'SIMPAN DATA B2B ✨'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL DELETE SALES B2B */}
+      {showDeleteConfirmSales && (
+        <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[110000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+          <div className="bg-white w-full max-w-[320px] rounded-[2.5rem] p-8 text-center space-y-6 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+            <button onClick={() => setShowDeleteConfirmSales(null)} className="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
+            <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mx-auto shadow-sm animate-pulse">
+              <AlertTriangle size={32} />
+            </div>
+            <div className="space-y-2">
+              <h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Hapus Kontak?</h4>
+              <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-2">
+                Data kontak <span className="text-slate-800 font-black underline">{showDeleteConfirmSales?.institutionName}</span> akan dihapus permanen.
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setShowDeleteConfirmSales(null)} className="flex-1 py-4 bg-slate-50 text-slate-400 rounded-xl font-black text-[9px] uppercase tracking-widest active:scale-95 transition-all">BATAL</button>
+              <button onClick={executeDeleteSales} disabled={isLoading} className="flex-1 py-4 bg-rose-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 flex items-center justify-center gap-2">
+                {isLoading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14}/>} IYA, HAPUS
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
         </>
       )}
     </div>
