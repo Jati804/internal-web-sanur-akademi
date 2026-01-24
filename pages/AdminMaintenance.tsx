@@ -966,19 +966,19 @@ const MaintenanceNotes: React.FC = () => {
       </div>
 
       <div className={`relative z-10 bg-slate-50 border-2 rounded-[2.5rem] p-6 transition-all ${isEditing ? 'border-blue-600 bg-white' : 'border-slate-200'}`}>
-        {isLoading ? (
-          <div className="flex flex-col items-center justify-center h-[300px] text-slate-400">
-            <Loader2 size={48} className="mb-4 opacity-30 animate-spin" />
-            <p className="text-[11px] font-bold uppercase tracking-widest italic">
-              Memuat catatan... ✨
-            </p>
-          </div>
-        ) : !isEditing ? (
-          <div className="min-h-[300px]">
-            {notes ? (
-              <p className="text-[15px] leading-relaxed text-slate-700 whitespace-pre-wrap font-medium">
-                {notes}
-              </p>
+  {isLoading ? (
+    <div className="flex flex-col items-center justify-center h-[300px] text-slate-400">
+      <Loader2 size={48} className="mb-4 opacity-30 animate-spin" />
+      <p className="text-[11px] font-bold uppercase tracking-widest italic">
+        Memuat catatan... ✨
+      </p>
+    </div>
+  ) : !isEditing ? (
+    <div className="min-h-[300px] max-h-[500px] overflow-y-auto custom-scrollbar">
+      {notes ? (
+        <p className="text-[15px] leading-relaxed text-slate-700 whitespace-pre-wrap font-medium">
+          {notes}
+        </p>
             ) : (
               <div className="flex flex-col items-center justify-center h-[300px] text-slate-400">
                 <ClipboardList size={48} className="mb-4 opacity-30" />
