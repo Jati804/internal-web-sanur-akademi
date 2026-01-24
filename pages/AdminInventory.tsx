@@ -31,6 +31,16 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState<Partial<StudentProfile & { status: string }>>({
+    
+  // 🚫 HARD LIMIT checker
+const canAddStudent = useMemo(() => {
+  return studentProfiles.length < 500;
+}, [studentProfiles]);
+
+const canAddSales = useMemo(() => {
+  return salesContacts.length < 150;
+}, [salesContacts]);
+  
     name: '', dob: '', institution: '', personalPhone: '', parentPhone: '', enrolledClass: '', notes: '', status: 'SISWA_SANUR'
   });
 
@@ -40,6 +50,16 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
   const [showDeleteConfirmSales, setShowDeleteConfirmSales] = useState<any | null>(null);
   const [editingSalesId, setEditingSalesId] = useState<string | null>(null);
   const [salesFormData, setSalesFormData] = useState({
+    
+    // 🚫 HARD LIMIT checker
+const canAddStudent = useMemo(() => {
+  return studentProfiles.length < 500;
+}, [studentProfiles]);
+
+const canAddSales = useMemo(() => {
+  return salesContacts.length < 150;
+}, [salesContacts]);
+    
     institutionName: '', contactPerson: '', jobTitle: '', phone: '', email: '', 
     lastContactDate: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()),
     nextFollowupDate: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)),
