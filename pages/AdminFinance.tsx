@@ -65,7 +65,8 @@ const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [confirmDeleteTx, setConfirmDeleteTx] = useState<Transaction | null>(null);
   // Semua useState dulu
-const [previewImg, setPreviewImg] = useState<string | null>(null);
+  const [previewImg, setPreviewImg] = useState<string | null>(null);
+  const [showCategorySuggestions, setShowCategorySuggestions] = useState(false);
 
 const [addForm, setAddForm] = useState({
   type: 'INCOME' as 'INCOME' | 'EXPENSE',
@@ -1016,7 +1017,50 @@ const handleExportExcel = () => {
                <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-8 tracking-tighter">Input <span className="text-blue-600">Manual</span></h4>
                <form onSubmit={handleAddTransaction} className="space-y-6">
                   <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl"><button type="button" onClick={() => setAddForm({...addForm, type: 'INCOME'})} className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase transition-all ${addForm.type === 'INCOME' ? 'bg-white text-emerald-600 shadow-md' : 'text-slate-400'}`}>Masuk</button><button type="button" onClick={() => setAddForm({...addForm, type: 'EXPENSE'})} className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase transition-all ${addForm.type === 'EXPENSE' ? 'bg-white text-rose-600 shadow-md' : 'text-slate-400'}`}>Keluar</button></div>
-                  <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Deskripsi Transaksi</label><input type="text" placeholder="MISAL: BAYAR LISTRIK..." value={addForm.description} onChange={e => setAddForm({...addForm, description: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
+                  <div className="space-y-2 relative">
+  <label className="text-[9px] font-black text-slate-400 uppercase ml-4">Kategori</label>
+  <input 
+    type="text" 
+    placeholder="KETIK KATEGORI..." 
+    value={editingTransaction.category} 
+    onChange={e => {
+      setEditingTransaction({...editingTransaction, category: e.target.value.toUpperCase()});
+      setShowCategorySuggestions(true);
+    }}
+    onFocus={() => setShowCategorySuggestions(true)}
+    onBlur={() => setTimeout(() => setShowCategorySuggestions(false), 200)}
+    className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" 
+  />
+  
+  {/* Suggestions */}
+  {showCategorySuggestions && editingTransaction.category.trim() && (
+    <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-200 max-h-48 overflow-y-auto">
+      {uniqueCategories
+        .filter(cat => cat.includes(editingTransaction.category.toUpperCase()))
+        .slice(0, 5)
+        .map(cat => (
+          <button
+            key={cat}
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              setEditingTransaction({...editingTransaction, category: cat});
+              setShowCategorySuggestions(false);
+            }}
+            className="w-full px-4 py-2 text-left text-[10px] font-black hover:bg-blue-50 transition-all text-slate-700 border-b last:border-0"
+          >
+            {cat}
+          </button>
+        ))
+      }
+      {uniqueCategories.filter(cat => cat.includes(editingTransaction.category.toUpperCase())).length === 0 && (
+        <div className="px-4 py-2 text-[9px] font-bold text-slate-400 text-center">
+          Ketik kategori baru atau pilih yang sudah ada
+        </div>
+      )}
+    </div>
+  )}
+</div>
                   <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Kategori</label><input type="text" placeholder="MISAL: LISTRIK, MARKETING, SEWA..." value={addForm.category} onChange={e => setAddForm({...addForm, category: e.target.value.toUpperCase()})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
                   <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Nominal (Rp)</label><input type="number" placeholder="0" value={addForm.amount || ''} onChange={e => setAddForm({...addForm, amount: parseInt(e.target.value) || 0})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-lg outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
                   <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Tanggal</label><input type="date" value={addForm.date} onChange={e => setAddForm({...addForm, date: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
@@ -1037,7 +1081,50 @@ const handleExportExcel = () => {
                     <button type="button" onClick={() => setEditingTransaction({...editingTransaction, type: 'EXPENSE'})} className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase transition-all ${editingTransaction.type === 'EXPENSE' ? 'bg-white text-rose-600 shadow-md' : 'text-slate-400'}`}>Keluar</button>
                   </div>
                   <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Deskripsi Transaksi</label><input type="text" placeholder="MISAL: BAYAR LISTRIK..." value={editingTransaction.description} onChange={e => setEditingTransaction({...editingTransaction, description: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
-                  <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Kategori</label><input type="text" placeholder="MISAL: LISTRIK, MARKETING, SEWA..." value={editingTransaction.category} onChange={e => setEditingTransaction({...editingTransaction, category: e.target.value.toUpperCase()})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
+                  <div className="space-y-2 relative">
+  <label className="text-[9px] font-black text-slate-400 uppercase ml-4">Kategori</label>
+  <input 
+    type="text" 
+    placeholder="KETIK KATEGORI..." 
+    value={addForm.category} 
+    onChange={e => {
+      setAddForm({...addForm, category: e.target.value.toUpperCase()});
+      setShowCategorySuggestions(true);
+    }}
+    onFocus={() => setShowCategorySuggestions(true)}
+    onBlur={() => setTimeout(() => setShowCategorySuggestions(false), 200)}
+    className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" 
+  />
+  
+  {/* Suggestions (hanya muncul saat mengetik) */}
+  {showCategorySuggestions && addForm.category.trim() && (
+    <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-200 max-h-48 overflow-y-auto">
+      {uniqueCategories
+        .filter(cat => cat.includes(addForm.category.toUpperCase()))
+        .slice(0, 5)
+        .map(cat => (
+          <button
+            key={cat}
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              setAddForm({...addForm, category: cat});
+              setShowCategorySuggestions(false);
+            }}
+            className="w-full px-4 py-2 text-left text-[10px] font-black hover:bg-blue-50 transition-all text-slate-700 border-b last:border-0"
+          >
+            {cat}
+          </button>
+        ))
+      }
+      {uniqueCategories.filter(cat => cat.includes(addForm.category.toUpperCase())).length === 0 && (
+        <div className="px-4 py-2 text-[9px] font-bold text-slate-400 text-center">
+          Ketik kategori baru atau pilih yang sudah ada
+        </div>
+      )}
+    </div>
+  )}
+</div>
                   <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Nominal (Rp)</label><input type="number" placeholder="0" value={editingTransaction.amount || ''} onChange={e => setEditingTransaction({...editingTransaction, amount: parseInt(e.target.value) || 0})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-lg outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
                   <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Tanggal</label><input type="date" value={editingTransaction.date} onChange={e => setEditingTransaction({...editingTransaction, date: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
                   <button type="submit" disabled={isLoading} className="w-full py-6 bg-blue-600 text-white rounded-[2rem] font-black text-[10px] uppercase shadow-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2">{isLoading ? <Loader2 size={18} className="animate-spin"/> : 'SIMPAN PERUBAHAN ✨'}</button>
