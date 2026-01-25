@@ -1022,9 +1022,9 @@ const handleExportExcel = () => {
   <input 
     type="text" 
     placeholder="KETIK KATEGORI..." 
-    value={editingTransaction.category} 
+    value={addForm.category} 
     onChange={e => {
-      setEditingTransaction({...editingTransaction, category: e.target.value.toUpperCase()});
+      setAddForm({...addForm, category: e.target.value.toUpperCase()});
       setShowCategorySuggestions(true);
     }}
     onFocus={() => setShowCategorySuggestions(true)}
@@ -1032,11 +1032,10 @@ const handleExportExcel = () => {
     className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" 
   />
   
-  {/* Suggestions */}
-  {showCategorySuggestions && editingTransaction.category.trim() && (
+  {showCategorySuggestions && addForm.category.trim() && (
     <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-200 max-h-48 overflow-y-auto">
       {uniqueCategories
-        .filter(cat => cat.includes(editingTransaction.category.toUpperCase()))
+        .filter(cat => cat.includes(addForm.category.toUpperCase()))
         .slice(0, 5)
         .map(cat => (
           <button
@@ -1044,7 +1043,7 @@ const handleExportExcel = () => {
             type="button"
             onMouseDown={(e) => {
               e.preventDefault();
-              setEditingTransaction({...editingTransaction, category: cat});
+              setAddForm({...addForm, category: cat});
               setShowCategorySuggestions(false);
             }}
             className="w-full px-4 py-2 text-left text-[10px] font-black hover:bg-blue-50 transition-all text-slate-700 border-b last:border-0"
@@ -1053,11 +1052,6 @@ const handleExportExcel = () => {
           </button>
         ))
       }
-      {uniqueCategories.filter(cat => cat.includes(editingTransaction.category.toUpperCase())).length === 0 && (
-        <div className="px-4 py-2 text-[9px] font-bold text-slate-400 text-center">
-          Ketik kategori baru atau pilih yang sudah ada
-        </div>
-      )}
     </div>
   )}
 </div>
@@ -1086,9 +1080,9 @@ const handleExportExcel = () => {
   <input 
     type="text" 
     placeholder="KETIK KATEGORI..." 
-    value={addForm.category} 
+    value={editingTransaction.category} 
     onChange={e => {
-      setAddForm({...addForm, category: e.target.value.toUpperCase()});
+      setEditingTransaction({...editingTransaction, category: e.target.value.toUpperCase()});
       setShowCategorySuggestions(true);
     }}
     onFocus={() => setShowCategorySuggestions(true)}
@@ -1096,11 +1090,10 @@ const handleExportExcel = () => {
     className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" 
   />
   
-  {/* Suggestions (hanya muncul saat mengetik) */}
-  {showCategorySuggestions && addForm.category.trim() && (
+  {showCategorySuggestions && editingTransaction.category.trim() && (
     <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-200 max-h-48 overflow-y-auto">
       {uniqueCategories
-        .filter(cat => cat.includes(addForm.category.toUpperCase()))
+        .filter(cat => cat.includes(editingTransaction.category.toUpperCase()))
         .slice(0, 5)
         .map(cat => (
           <button
@@ -1108,7 +1101,7 @@ const handleExportExcel = () => {
             type="button"
             onMouseDown={(e) => {
               e.preventDefault();
-              setAddForm({...addForm, category: cat});
+              setEditingTransaction({...editingTransaction, category: cat});
               setShowCategorySuggestions(false);
             }}
             className="w-full px-4 py-2 text-left text-[10px] font-black hover:bg-blue-50 transition-all text-slate-700 border-b last:border-0"
@@ -1117,11 +1110,6 @@ const handleExportExcel = () => {
           </button>
         ))
       }
-      {uniqueCategories.filter(cat => cat.includes(addForm.category.toUpperCase())).length === 0 && (
-        <div className="px-4 py-2 text-[9px] font-bold text-slate-400 text-center">
-          Ketik kategori baru atau pilih yang sudah ada
-        </div>
-      )}
     </div>
   )}
 </div>
