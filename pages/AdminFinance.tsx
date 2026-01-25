@@ -343,7 +343,7 @@ useEffect(() => {
     const txId = `TX-INC-${Date.now()}`;
     try {
       await supabase.from('student_payments').update({ status: 'VERIFIED' }).eq('id', p.id);
-      await supabase.from('transactions').insert({ id: txId, type: 'INCOME', category: 'SPP_SISWA', amount: p.amount, date: getWIBDate(), description: `SPP MASUK: ${p.studentName} | ${p.className}`.toUpperCase() });
+      await supabase.from('transactions').insert({ id: txId, type: 'INCOME', category: 'SPP SISWA', amount: p.amount, date: getWIBDate(), description: `SPP MASUK: ${p.studentName} | ${p.className}`.toUpperCase() });
       if (refreshAllData) await refreshAllData();
       
       setHighlightTx({ id: txId, type: 'INCOME' });
@@ -504,7 +504,7 @@ const handleExportExcel = () => {
     try {
       const { packageId, teacherId } = selectedPayout;
       await supabase.from('attendance').update({ paymentstatus: 'PAID', receiptdata: payForm.receiptData }).eq('packageid', packageId).eq('teacherid', teacherId).eq('paymentstatus', 'UNPAID');
-      await supabase.from('transactions').insert({ id: txId, type: 'EXPENSE', category: 'HONOR_GURU', amount: selectedPayout.amount, date: getWIBDate(), description: `HONOR CAIR: ${selectedPayout.teacherName} | ${selectedPayout.className}`.toUpperCase() });
+      await supabase.from('transactions').insert({ id: txId, type: 'EXPENSE', category: 'HONOR GURU', amount: selectedPayout.amount, date: getWIBDate(), description: `HONOR CAIR: ${selectedPayout.teacherName} | ${selectedPayout.className}`.toUpperCase() });
       if (refreshAllData) await refreshAllData();
       
       setSelectedPayout(null); setPayForm({ receiptData: '' }); 
@@ -698,13 +698,13 @@ const handleExportExcel = () => {
           <option value="ALL">SEMUA KATEGORI</option>
           
           {/* 3 Kategori Utama (Fixed) */}
-          <option value="SPP_SISWA">💰 SPP SISWA</option>
-          <option value="HONOR_GURU">👨‍🏫 HONOR GURU</option>
+          <option value="SPP SISWA">💰 SPP SISWA</option>
+          <option value="HONOR GURU">👨‍🏫 HONOR GURU</option>
           <option value="UMUM">📦 UMUM</option>
           
           {/* Kategori Lain (Auto-detect) */}
           {uniqueCategories
-            .filter(cat => cat !== 'SPP_SISWA' && cat !== 'HONOR_GURU' && cat !== 'UMUM')
+            .filter(cat => cat !== 'SPP SISWA' && cat !== 'HONOR GURU' && cat !== 'UMUM')
             .map(cat => (
               <option key={cat} value={cat}>
                 🔹 {cat}
