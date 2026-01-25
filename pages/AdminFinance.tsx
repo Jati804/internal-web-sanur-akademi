@@ -151,10 +151,11 @@ const fetchLedgerData = async () => {
 console.log('🔍 Filter aktif:', ledgerFilters);
   
   try {
-    let query = supabase
-      .from('transactions')
-      .select('*', { count: 'exact' })
-      .order('id', { ascending: false });
+let query = supabase
+  .from('transactions')
+  .select('*', { count: 'exact' })
+  .order('date', { ascending: false })  // ✅ Sort by TANGGAL dulu
+  .order('id', { ascending: false });   // ✅ Kalau tanggal sama, baru sort by ID
     
     // Search filter
     if (ledgerSearch.trim()) {
@@ -367,11 +368,51 @@ useEffect(() => {
       }).eq('id', editingTransaction.id);
       
       if (error) throw error;
-      if (refreshAllData) await refreshAllData();
-      setHighlightTx({ id: editingTransaction.id, type: editingTransaction.type });
-      setEditingTransaction(null);
-    } catch (e: any) { alert(e.message); } finally { setIsLoading(false); }
+if (refreshAllData) await refreshAllData();
+await fetchLedgerData();  // ✅ TAMBAHIN INI! Refresh data ledger
+setHighlightTx({ id: editingTransaction.id, type: editingTransaction.type });
+setEditingTransaction(null);
+} catch (e: any) { 
+  console.error('❌ Error update:', e);  // ✅ Log ke console
+  alert('Gagal update: ' + e.message); 
+} finally { 
+  setIsLoading(false); 
+}
   };
+
+// 🆕 TAMBAHKAN FUNGSI INI DI SINI (PERSIS DI ATAS handleImportCSV)
+  const normalizeDate = (dateStr: string): string => {
+    let parts: string[];
+    
+    // 1. Deteksi separator (/ atau -)
+    if (dateStr.includes('/')) {
+      parts = dateStr.split('/');
+    } else if (dateStr.includes('-')) {
+      parts = dateStr.split('-');
+    } else {
+      return dateStr;
+    }
+    
+    let year: string, month: string, day: string;
+    
+    // 2. Deteksi format berdasarkan panjang angka pertama
+    if (parts[0].length === 4) {
+      // Format: YYYY-MM-DD atau YYYY/MM/DD
+      [year, month, day] = parts;
+    } else {
+      // Format: MM/DD/YYYY atau DD/MM/YYYY
+      [month, day, year] = parts;
+    }
+    
+    // 3. Handle tahun 2 digit
+    if (year.length === 2) {
+      year = '20' + year;
+    }
+    
+    // 4. Return format YYYY-MM-DD
+    return `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+  };
+
 
   const handleImportCSV = async () => {
     if (!importText.trim()) return;
@@ -385,8 +426,11 @@ useEffect(() => {
         const parts = line.split(delimiter).map(p => p.trim().replace(/^["']|["']$/g, ''));
         if (parts.length < 5) return null;
         const [date, desc, cat, type, amt] = parts;
-        const cleanAmount = parseInt(amt.replace(/[^\d]/g, '')) || 0;
-        return { id: `TX-IMP-${Date.now()}-${Math.random().toString(36).substring(7)}`, date: date.trim(), description: desc.trim().toUpperCase(), category: (cat.trim() || 'UMUM').toUpperCase(), type: (type.trim().toUpperCase().includes('INCOME') || type.trim().toUpperCase().includes('MASUK')) ? 'INCOME' : 'EXPENSE', amount: cleanAmount };
+const cleanAmount = parseInt(amt.replace(/[^\d]/g, '')) || 0;
+return { 
+  id: `TX-IMP-${Date.now()}-${Math.random().toString(36).substring(7)}`, 
+  date: normalizeDate(date.trim()),
+description: desc.trim().toUpperCase(), category: (cat.trim() || 'UMUM').toUpperCase(), type: (type.trim().toUpperCase().includes('INCOME') || type.trim().toUpperCase().includes('MASUK')) ? 'INCOME' : 'EXPENSE', amount: cleanAmount };
       }).filter(x => x !== null);
       if (payload.length === 0) throw new Error("Format data tidak terbaca.");
       const { error } = await supabase.from('transactions').insert(payload);
@@ -407,9 +451,15 @@ useEffect(() => {
     } catch (e: any) { alert(e.message); } finally { setIsLoading(false); }
   };
 
-  const handleExportExcel = () => {
-    const headers = "TANGGAL,DESKRIPSI,KATEGORI,TIPE,NOMINAL\n";
-    const rows = filteredLedger.map(t => `"${t.date}","${t.description}","${t.category}","${t.type}","${t.amount}"`).join("\n");
+const handleExportExcel = () => {
+  const headers = "TANGGAL,DESKRIPSI,KATEGORI,TIPE,NOMINAL\n";
+  const rows = filteredLedger.map(t => {
+    // ✅ Konversi YYYY-MM-DD jadi MM/DD/YYYY
+    const [year, month, day] = t.date.split('-');
+    const americanDate = `${month}/${day}/${year}`;
+    
+    return `"${americanDate}","${t.description}","${t.category}","${t.type}","${t.amount}"`;
+  }).join("\n");
     const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
