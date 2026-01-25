@@ -440,16 +440,23 @@ description: desc.trim().toUpperCase(), category: (cat.trim() || 'UMUM').toUpper
     } catch (e: any) { alert("Gagal: " + e.message); } finally { setIsLoading(false); }
   };
 
-  const handleDeleteTx = async () => {
-    if (!confirmDeleteTx) return;
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.from('transactions').delete().eq('id', confirmDeleteTx.id);
-      if (error) throw error;
-      if (refreshAllData) await refreshAllData();
-      setConfirmDeleteTx(null);
-    } catch (e: any) { alert(e.message); } finally { setIsLoading(false); }
-  };
+const handleDeleteTx = async () => {
+  if (!confirmDeleteTx) return;
+  setIsLoading(true);
+  try {
+    const { error } = await supabase.from('transactions').delete().eq('id', confirmDeleteTx.id);
+    if (error) throw error;
+    if (refreshAllData) await refreshAllData();
+    await fetchLedgerData();
+    setConfirmDeleteTx(null);
+    alert('✅ Transaksi berhasil dihapus!');  // ✅ Notifikasi sukses
+  } catch (e: any) { 
+    console.error('❌ Error delete:', e);
+    alert('Gagal hapus: ' + e.message); 
+  } finally { 
+    setIsLoading(false); 
+  }
+};
 
 const handleExportExcel = () => {
   const headers = "TANGGAL,DESKRIPSI,KATEGORI,TIPE,NOMINAL\n";
