@@ -54,6 +54,12 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
     currentSession: number;
   } | null>(null);
 
+  // State untuk autocomplete
+const [showStudentSuggestions, setShowStudentSuggestions] = useState(false);
+const [showTeacherSuggestions, setShowTeacherSuggestions] = useState(false);
+const [studentInputValue, setStudentInputValue] = useState('');
+const [teacherInputValue, setTeacherInputValue] = useState('');
+
   useEffect(() => {
     if (editData) {
       const match = editData.className?.match(/(.*) \((.*)\) - (.*)/);
@@ -71,6 +77,9 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
       setIsDelegating(editData.teacherId !== user.id);
       setActivePackageId(editData.packageId || null);
       setActiveOriginalTeacherId(editData.originalTeacherId || null);
+      // Isi input autocomplete juga
+setStudentInputValue(editData.studentsAttended?.[0] === 'REGULER' ? '' : (editData.studentsAttended?.[0] || ''));
+setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id === editData.teacherId)?.name || '') : '');
     }
   }, [editData, user.id]);
 
@@ -332,15 +341,68 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             </div>
 
             {form.category === 'PRIVATE' && (
-              <div className="md:col-span-2 space-y-4 animate-in slide-in-from-top-2">
-                 <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><Users size={14} className="text-blue-500"/> Nama Siswa <span className="text-rose-500 font-black">*WAJIB UNTUK PRIVATE</span></label>
-                 <select value={form.studentName} onChange={e => setForm({...form, studentName: e.target.value})} className="w-full px-8 py-6 bg-slate-50 border-2 border-transparent focus:border-blue-500 rounded-[2rem] font-black text-xs uppercase outline-none transition-all shadow-inner h-[72px]">
-                    <option value="">-- PILIH NAMA SISWA --</option>
-                    {studentAccounts.map(s => <option key={s.id} value={s.name}>{s.name.toUpperCase()}</option>)}
-                 </select>
-                 <p className="text-[8px] font-bold text-slate-400 uppercase ml-4 tracking-widest italic">Tiap siswa private punya kotak gaji terpisah ✨</p>
-              </div>
-            )}
+  <div className="md:col-span-2 space-y-4 animate-in slide-in-from-top-2 relative">
+     <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2">
+       <Users size={14} className="text-blue-500"/> Nama Siswa <span className="text-rose-500 font-black">*WAJIB UNTUK PRIVATE</span>
+     </label>
+     
+     <div className="relative">
+       <input 
+         type="text"
+         placeholder="KETIK NAMA SISWA..."
+         value={studentInputValue}
+         onChange={(e) => {
+           const val = e.target.value.toUpperCase();
+           setStudentInputValue(val);
+           setShowStudentSuggestions(true);
+           
+           // Cek apakah yang diketik ada di database
+           const matchedStudent = studentAccounts.find(s => s.name.toUpperCase() === val);
+           if (matchedStudent) {
+             setForm({...form, studentName: matchedStudent.name});
+           } else {
+             setForm({...form, studentName: ''}); // Reset kalau nggak match
+           }
+         }}
+         onFocus={() => setShowStudentSuggestions(true)}
+         onBlur={() => setTimeout(() => setShowStudentSuggestions(false), 200)}
+         className="w-full px-8 py-6 bg-slate-50 border-2 border-transparent focus:border-blue-500 rounded-[2rem] font-black text-xs uppercase outline-none transition-all shadow-inner h-[72px]"
+       />
+       
+       {/* Dropdown Suggestions */}
+       {showStudentSuggestions && studentInputValue.trim() && (
+         <div className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-2xl border-2 border-blue-100 max-h-60 overflow-y-auto">
+           {studentAccounts
+             .filter(s => s.name.toUpperCase().includes(studentInputValue.toUpperCase()))
+             .slice(0, 8)
+             .map(student => (
+               <button
+                 key={student.id}
+                 type="button"
+                 onMouseDown={(e) => {
+                   e.preventDefault();
+                   setStudentInputValue(student.name.toUpperCase());
+                   setForm({...form, studentName: student.name});
+                   setShowStudentSuggestions(false);
+                 }}
+                 className="w-full px-6 py-4 text-left text-[11px] font-black hover:bg-blue-50 transition-all text-slate-700 border-b last:border-0 uppercase"
+               >
+                 {student.name.toUpperCase()}
+               </button>
+             ))
+           }
+           {studentAccounts.filter(s => s.name.toUpperCase().includes(studentInputValue.toUpperCase())).length === 0 && (
+             <div className="px-6 py-4 text-[10px] font-bold text-rose-500 uppercase italic text-center">
+               ❌ Nama "{studentInputValue}" tidak ditemukan!
+             </div>
+           )}
+         </div>
+       )}
+     </div>
+     
+     <p className="text-[8px] font-bold text-slate-400 uppercase ml-4 tracking-widest italic">Tiap siswa private punya kotak gaji terpisah ✨</p>
+  </div>
+)}
 
             <div className="md:col-span-2 space-y-6 pt-4">
                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 flex items-center gap-2"><Hash size={14} className="text-blue-500"/> Sesi Terdeteksi Otomatis (1-6)</label>
@@ -402,14 +464,66 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                </div>
 
                {isDelegating && (
-                  <div className="mt-8 space-y-4 animate-in slide-in-from-top-4">
-                     <label className="text-[9px] font-black text-rose-500 uppercase ml-4 tracking-widest flex items-center gap-2"><UserPlus size={12}/> Pilih Rekan Yang Menggantikan Kakak:</label>
-                     <select value={form.targetTeacherId} onChange={e => setForm({...form, targetTeacherId: e.target.value})} className="w-full px-8 py-6 bg-white border-2 border-transparent focus:border-rose-500 rounded-[2rem] font-black text-[11px] uppercase outline-none shadow-sm transition-all h-[72px] appearance-none">
-                        <option value="">-- PILIH NAMA TEMAN --</option>
-                        {teachers.filter(t => t.id !== user.id && t.role === 'TEACHER').map(t => <option key={t.id} value={t.id}>{t.name.toUpperCase()}</option>)}
-                     </select>
-                  </div>
-               )}
+  <div className="mt-8 space-y-4 animate-in slide-in-from-top-4 relative">
+     <label className="text-[9px] font-black text-rose-500 uppercase ml-4 tracking-widest flex items-center gap-2">
+       <UserPlus size={12}/> Pilih Rekan Yang Menggantikan Kakak:
+     </label>
+     
+     <div className="relative">
+       <input 
+         type="text"
+         placeholder="KETIK NAMA TEMAN..."
+         value={teacherInputValue}
+         onChange={(e) => {
+           const val = e.target.value.toUpperCase();
+           setTeacherInputValue(val);
+           setShowTeacherSuggestions(true);
+           
+           // Cek apakah yang diketik ada di database
+           const matchedTeacher = teachers.find(t => t.name.toUpperCase() === val && t.id !== user.id && t.role === 'TEACHER');
+           if (matchedTeacher) {
+             setForm({...form, targetTeacherId: matchedTeacher.id});
+           } else {
+             setForm({...form, targetTeacherId: ''}); // Reset kalau nggak match
+           }
+         }}
+         onFocus={() => setShowTeacherSuggestions(true)}
+         onBlur={() => setTimeout(() => setShowTeacherSuggestions(false), 200)}
+         className="w-full px-8 py-6 bg-white border-2 border-transparent focus:border-rose-500 rounded-[2rem] font-black text-[11px] uppercase outline-none shadow-sm transition-all h-[72px]"
+       />
+       
+       {/* Dropdown Suggestions */}
+       {showTeacherSuggestions && teacherInputValue.trim() && (
+         <div className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-2xl border-2 border-rose-100 max-h-60 overflow-y-auto">
+           {teachers
+             .filter(t => t.id !== user.id && t.role === 'TEACHER' && t.name.toUpperCase().includes(teacherInputValue.toUpperCase()))
+             .slice(0, 8)
+             .map(teacher => (
+               <button
+                 key={teacher.id}
+                 type="button"
+                 onMouseDown={(e) => {
+                   e.preventDefault();
+                   setTeacherInputValue(teacher.name.toUpperCase());
+                   setForm({...form, targetTeacherId: teacher.id});
+                   setShowTeacherSuggestions(false);
+                 }}
+                 className="w-full px-6 py-4 text-left text-[11px] font-black hover:bg-rose-50 transition-all text-slate-700 border-b last:border-0 uppercase"
+               >
+                 {teacher.name.toUpperCase()}
+               </button>
+             ))
+           }
+           {teachers.filter(t => t.id !== user.id && t.role === 'TEACHER' && t.name.toUpperCase().includes(teacherInputValue.toUpperCase())).length === 0 && (
+             <div className="px-6 py-4 text-[10px] font-bold text-rose-500 uppercase italic text-center">
+               ❌ Nama "{teacherInputValue}" tidak ditemukan!
+             </div>
+           )}
+         </div>
+       )}
+     </div>
+  </div>
+)}
             </div>
          </div>
 
