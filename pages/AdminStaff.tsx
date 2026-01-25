@@ -242,6 +242,11 @@ useEffect(() => {
             <p className="text-[10px] font-bold text-slate-500 uppercase leading-relaxed tracking-wide italic">
                "Fitur edit <span className="text-slate-800 font-black">NAMA, USERNAME, & PIN</span> bisa dilakukan di sini. Sistem akan otomatis menyinkronkan nama baru ke seluruh riwayat & histori sesi tanpa menghapus data lama. ✨"
             </p>
+            {activeTab === 'TEACHERS' && (
+               <p className="text-[10px] font-black text-orange-600 uppercase italic pt-1 flex items-center justify-center md:justify-start gap-2">
+                  <AlertCircle size={14} /> Khusus Pengajar: Akun sistem diturunkan! Jika ada pergantian guru, cukup ganti nama & username agar tetap sinkron dengan riwayat mengajar.
+               </p>
+             )}
             {activeTab === 'STUDENTS' && (
               <p className="text-[10px] font-black text-rose-600 uppercase italic pt-1 flex items-center justify-center md:justify-start gap-2">
                  <Zap size={14} /> Khusus Siswa: Disarankan hapus manual akun user setelah 3 bulan lulus dari kelas terakhir agar sistem tetap ringan!
@@ -285,11 +290,11 @@ useEffect(() => {
 </div>
                  </div>
                  <div className="flex justify-end gap-3">
-                    <button onClick={() => handleOpenEdit(u)} className={`p-4 ${roleTheme.light} ${roleTheme.text} rounded-2xl hover:${roleTheme.bg} hover:text-white transition-all shadow-sm`}><Edit3 size={20}/></button>
-                    {activeTab !== 'ADMINS' && (
-                      <button onClick={() => setShowDeleteConfirm(u)} className="p-4 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-600 hover:text-white transition-all shadow-sm"><Trash2 size={20}/></button>
-                    )}
-                 </div>
+                 <button onClick={() => handleOpenEdit(u)} className={`p-4 ${roleTheme.light} ${roleTheme.text} rounded-2xl hover:${roleTheme.bg} hover:text-white transition-all shadow-sm`}><Edit3 size={20}/></button>
+                 {activeTab === 'STUDENTS' && (
+                    <button onClick={() => setShowDeleteConfirm(u)} className="p-4 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-600 hover:text-white transition-all shadow-sm"><Trash2 size={20}/></button>
+                  )}
+              </div>
               </div>
             ))}
          </div>
