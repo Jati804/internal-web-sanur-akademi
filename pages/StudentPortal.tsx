@@ -439,12 +439,6 @@ const executeFinalRequestReport = async () => {
   .edit-mode-highlight {
     animation: highlightFade 4s ease-out forwards;
   }
-/* 📱 Sembunyikan emoticon di HP aja */
-@media screen and (max-width: 576px) {
-  .hide-on-mobile {
-    display: none !important;
-  }
-}
 `}</style>
 
       <div className="max-w-6xl mx-auto space-y-8 pb-40 px-4 animate-in fade-in duration-700">
@@ -484,12 +478,8 @@ const executeFinalRequestReport = async () => {
          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-10">
             <div className="space-y-6 text-center md:text-left flex-1">
                <div className="inline-flex items-center gap-3 px-6 py-2 bg-white/20 backdrop-blur-md rounded-full border border-white/30"><Stars size={18} className="text-yellow-300" /><span className="text-[10px] font-black uppercase tracking-[0.2em]">Sanur Student Portal</span></div>
-<h1 className="text-5xl md:text-7xl font-black uppercase italic tracking-normal Kalimat leading-none">
-  {isPaymentView ? "RIWAYAT BAYAR " : "RUANG BELAJAR "} 
-  <br/>
-  <span className="text-yellow-300">{firstName} <span className="hide-on-mobile">✨</span></span>
-</h1>
-               <div className="min-h-[60px] flex items-center justify-center md:justify-start"><p className="text-sm font-bold italic text-emerald-50 Kalimat leading-relaxed max-w-xl">"{motivationalQuotes[quoteIndex].replace(/[✨💫⭐🔥🎯]/g, '')}"</p></div>
+               <h1 className="text-5xl md:text-7xl font-black uppercase italic tracking-normal Kalimat leading-none">{isPaymentView ? "RIWAYAT BAYAR " : "RUANG BELAJAR "} <br/><span className="text-yellow-300">{firstName} ✨</span></h1>
+               <div className="min-h-[60px] flex items-center justify-center md:justify-start"><p className="text-sm font-bold italic text-emerald-50 Kalimat leading-relaxed max-w-xl">"{motivationalQuotes[quoteIndex]}"</p></div>
             </div>
             <div className="w-44 h-44 bg-white/10 backdrop-blur-xl rounded-[3.5rem] flex items-center justify-center shadow-2xl shrink-0 group/icon cursor-pointer active:scale-90 transition-all duration-300">
                {isPaymentView ? (
