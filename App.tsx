@@ -262,6 +262,7 @@ const AppContent = ({
 // Fix: Added missing App component which coordinates the central state and provides it to AppContent
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
   const [attendanceLogs, setAttendanceLogs] = useState<Attendance[]>([]);
   const [teachers, setTeachers] = useState<User[]>([]);
   const [studentAccounts, setStudentAccounts] = useState<User[]>([]);
@@ -392,12 +393,51 @@ if (salesCon) setSalesContacts(salesCon.map((s: any) => ({
   }, []);
 
   useEffect(() => {
+    const checkDevice = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    
+    checkDevice();
+    window.addEventListener('resize', checkDevice);
+    
+    return () => window.removeEventListener('resize', checkDevice);
+  }, []);
+
+  useEffect(() => {
     const savedUser = localStorage.getItem('sanur_user');
     if (savedUser) setUser(JSON.parse(savedUser));
     refreshAllData();
   }, [refreshAllData]);
 
-  return (
+ if (isMobile) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-600 to-emerald-600 flex items-center justify-center p-6">
+        <div className="bg-white rounded-[3rem] p-10 max-w-md text-center space-y-6 shadow-2xl">
+          <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center mx-auto">
+            <svg className="w-10 h-10 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          
+          <h1 className="text-2xl font-black text-slate-800 uppercase italic tracking-tight">
+            Mohon Maaf
+          </h1>
+          
+          <p className="text-sm font-bold text-slate-600 leading-relaxed">
+            Untuk saat ini, <span className="text-blue-600 font-black">Sistem Internal SANUR Akademi Inspirasi</span> hanya dapat diakses melalui <span className="text-emerald-600 font-black">tablet atau laptop/komputer</span>.
+          </p>
+          
+          <div className="pt-4 border-t border-slate-100">
+            <p className="text-xs font-bold text-slate-400 italic leading-relaxed">
+              Versi mobile akan segera hadir di masa mendatang. Terima kasih atas pengertiannya! ✨
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  } 
+ 
+ return (
     <Router>
       <AppContent 
   user={user} setUser={setUser}
