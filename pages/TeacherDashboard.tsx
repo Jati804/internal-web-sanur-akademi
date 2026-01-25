@@ -176,6 +176,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
     if (isDetecting) return;
     if (!form.subject || !form.room) return alert("Pilih Matpel & Ruangan dulu ya! ✨");
     if (form.category === 'PRIVATE' && !form.studentName) return alert("Pilih Nama Siswa dulu untuk kelas Private! ✨");
+    if (isDelegating && !form.targetTeacherId) return alert("Pilih Nama Teman yang menggantikan dulu ya! ✨");
     
     // ⭐ VALIDASI OWNERSHIP SEBELUM SUBMIT!
     if (activePackageId && activeOriginalTeacherId && activeOriginalTeacherId !== user.id) {
