@@ -319,9 +319,17 @@ useEffect(() => {
                     <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">PIN 6 DIGIT KEAMANAN</label>
                     <input type="text" placeholder="MISAL: 051020" value={formData.pin} onChange={e => setFormData({...formData, pin: e.target.value.replace(/\D/g, '')})} maxLength={6} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
                  </div>
-                 <button onClick={handleSave} disabled={isLocalSyncing} className={`w-full py-6 ${roleTheme.bg} text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3`}>
-                    {isLocalSyncing ? <Loader2 size={18} className="animate-spin" /> : <ShieldAlert size={18}/>} {showModal === 'ADD' ? 'BUAT AKSES BARU ✨' : 'UPDATE AKSES & HISTORI ✨'}
-                 </button>
+<button onClick={handleSave} disabled={isLocalSyncing} className={`w-full py-6 ${roleTheme.bg} text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3`}>
+   {isLocalSyncing ? (
+      <>
+         <Loader2 size={18} className="animate-spin" /> MENYINKRONKAN DATA... ⚡
+      </>
+   ) : (
+      <>
+         <ShieldAlert size={18}/> {showModal === 'ADD' ? 'BUAT AKSES BARU ✨' : 'UPDATE AKSES & HISTORI ✨'}
+      </>
+   )}
+</button>
               </div>
            </div>
         </div>
@@ -340,7 +348,17 @@ useEffect(() => {
               </div>
               <div className="flex gap-4">
                  <button onClick={() => setShowDeleteConfirm(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase tracking-widest active:scale-95 transition-all">BATAL</button>
-                 <button onClick={executeDelete} disabled={isLocalSyncing} className="flex-1 py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl shadow-rose-200 active:scale-95 transition-all flex items-center justify-center gap-2">{isLocalSyncing ? <Loader2 size={18} className="animate-spin" /> : <Check size={18} />} IYA, HAPUS</button>
+<button onClick={executeDelete} disabled={isLocalSyncing} className="flex-1 py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl shadow-rose-200 active:scale-95 transition-all flex items-center justify-center gap-2">
+   {isLocalSyncing ? (
+      <>
+         <Loader2 size={18} className="animate-spin" /> MENGHAPUS... ⚡
+      </>
+   ) : (
+      <>
+         <Check size={18} /> IYA, HAPUS
+      </>
+   )}
+</button>
               </div>
            </div>
         </div>
