@@ -1,7 +1,6 @@
 // FORCE REBUILD - CLEAR CACHE v3.1 - ANTI PORTRAIT MODE
 import React, { useState, useEffect, useCallback } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
-import { registerServiceWorker } from './registerSW';
 const { HashRouter, Routes, Route, Navigate, Link, useLocation, useNavigate } = ReactRouterDOM as any;
 const Router = HashRouter;
 
@@ -446,11 +445,6 @@ if (salesCon) setSalesContacts(salesCon.map((s: any) => ({
     }
   }, []);
 
-  // Register Service Worker untuk PWA
-  useEffect(() => {
-    registerServiceWorker();
-  }, []);
-  
   useEffect(() => {
     const savedUser = localStorage.getItem('sanur_user');
     if (savedUser) setUser(JSON.parse(savedUser));
