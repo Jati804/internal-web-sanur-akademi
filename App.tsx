@@ -1,5 +1,4 @@
-
-// FORCE REBUILD - CLEAR CACHE v3.0
+// FORCE REBUILD - CLEAR CACHE v3.1 - ANTI PORTRAIT MODE
 import React, { useState, useEffect, useCallback } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
 const { HashRouter, Routes, Route, Navigate, Link, useLocation, useNavigate } = ReactRouterDOM as any;
@@ -9,7 +8,7 @@ import {
   LayoutDashboard, Receipt, Menu, CreditCard, BookOpen, Book, UserCog, 
   ClipboardCheck, Wallet, GraduationCap, Power, 
   Settings as SettingsIcon, Database, X,
-  Sparkles, HelpCircle, Info
+  Sparkles, HelpCircle, Info, RotateCw
 } from 'lucide-react';
 
 import { supabase } from './services/supabase.ts';
@@ -37,7 +36,7 @@ const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }
   const colors: any = {
     blue: isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-blue-600',
     emerald: isActive ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:text-emerald-600',
-    orange: isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-blue-600', // Diseragamkan ke biru
+    orange: isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-blue-600',
   };
   return (
     <Link 
@@ -113,12 +112,40 @@ const GuideModal = ({ role, onClose }: { role: string, onClose: () => void }) =>
           <div className="pt-4 border-t border-slate-50">
              <div className="bg-slate-50 p-4 rounded-2xl flex items-center gap-3">
                 <Info size={16} className="text-slate-400 shrink-0" />
-                <p className="text-[9px] font-black text-slate-400 uppercase leading-tight italic">Hubungi Admin jika ada kendala teknis lebih lanjut ya Kak! âœ¨</p>
+                <p className="text-[9px] font-black text-slate-400 uppercase leading-tight italic">Hubungi Admin jika ada kendala teknis lebih lanjut ya Kak! ✨</p>
              </div>
           </div>
         </div>
         <div className="p-6 bg-white border-t border-slate-50 shrink-0">
-          <button onClick={onClose} className={`w-full py-4 ${content.color} text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all`}>SAYA MENGERTI âœ¨</button>
+          <button onClick={onClose} className={`w-full py-4 ${content.color} text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all`}>SAYA MENGERTI ✨</button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// 🔥 MODAL ANTI PORTRAIT - NUTUPIN LAYAR KALO PORTRAIT
+const PortraitBlocker = () => {
+  return (
+    <div className="fixed inset-0 z-[999999] bg-gradient-to-br from-blue-600 via-purple-600 to-emerald-600 flex items-center justify-center p-8">
+      <div className="text-center text-white space-y-8 max-w-md animate-in fade-in">
+        <div className="relative">
+          <div className="text-9xl animate-bounce">📱</div>
+          <RotateCw size={48} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white animate-spin" style={{ animationDuration: '3s' }} />
+        </div>
+        <div className="space-y-4">
+          <h1 className="text-3xl font-black uppercase tracking-wider leading-tight">PUTAR LAYAR<br/>KE HORIZONTAL</h1>
+          <div className="h-1 w-24 bg-white/50 rounded-full mx-auto"></div>
+          <p className="text-base font-bold opacity-90 leading-relaxed">
+            Untuk pengalaman terbaik,<br/>
+            gunakan mode <span className="font-black text-yellow-300">LANDSCAPE</span> ya Kak! ✨
+          </p>
+        </div>
+        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
+          <p className="text-xs font-bold opacity-80 uppercase tracking-wide">
+            📲 Tablet & HP: Wajib Horizontal<br/>
+            💻 Desktop: Otomatis OK
+          </p>
         </div>
       </div>
     </div>
@@ -131,6 +158,37 @@ const AppContent = ({
   const navigate = useNavigate();
   const location = useLocation();
   const [showGuide, setShowGuide] = useState(false);
+  
+  // 🔥 STATE DETEKSI PORTRAIT
+  const [isPortrait, setIsPortrait] = useState(false);
+
+  // 🔥 DETEKSI ORIENTASI LAYAR
+  useEffect(() => {
+    const checkOrientation = () => {
+      const width = window.innerWidth;
+      const height = window.innerHeight;
+      
+      // Deteksi: Tablet/HP (≤1024px) DAN Portrait (tinggi > lebar)
+      const isMobileTablet = width <= 1024;
+      const isPortraitMode = height > width;
+      
+      setIsPortrait(isMobileTablet && isPortraitMode);
+    };
+    
+    checkOrientation();
+    window.addEventListener('resize', checkOrientation);
+    window.addEventListener('orientationchange', checkOrientation);
+    
+    return () => {
+      window.removeEventListener('resize', checkOrientation);
+      window.removeEventListener('orientationchange', checkOrientation);
+    };
+  }, []);
+
+  // 🔥 KALO PORTRAIT -> TAMPILKAN BLOCKER (PRIORITAS TERTINGGI)
+  if (isPortrait) {
+    return <PortraitBlocker />;
+  }
   
   const closeSidebar = () => setIsSidebarOpen(false);
 
@@ -259,7 +317,6 @@ const AppContent = ({
   );
 };
 
-// Fix: Added missing App component which coordinates the central state and provides it to AppContent
 const App = () => {
   const [user, setUser] = useState<User | null>(null);
   const [attendanceLogs, setAttendanceLogs] = useState<Attendance[]>([]);
@@ -279,7 +336,6 @@ const App = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [connectionError, setConnectionError] = useState(false);
 
-  // Fix: Implemented refreshAllData to synchronize all state with Supabase
   const refreshAllData = useCallback(async () => {
     setIsSyncing(true);
     try {
@@ -291,7 +347,7 @@ const App = () => {
   { data: trans },
   { data: stuPay },
   { data: stuProf },
-  { data: salesCon },  // âœ… TAMBAHIN INI!
+  { data: salesCon },
   { data: settings }
 ] = await Promise.all([
   supabase.from('attendance').select('*'),
@@ -301,7 +357,7 @@ const App = () => {
   supabase.from('transactions').select('*'),
   supabase.from('student_payments').select('*'),
   supabase.from('student_profiles').select('*'),
-  supabase.from('sales_contacts').select('*'), // âœ… DAN INI!
+  supabase.from('sales_contacts').select('*'),
   supabase.from('settings').select('*')
 ]);
 
@@ -311,7 +367,7 @@ const App = () => {
         teacherName: a.teachername,
         clockIn: a.clockin,
         className: a.classname,
-        level: a.level, // FIXED: Menambahkan pemetaan level agar terdeteksi di dashboard
+        level: a.level,
         sessionCategory: a.sessioncategory,
         packageId: a.packageid,
         sessionNumber: a.sessionnumber,
@@ -327,7 +383,6 @@ const App = () => {
         originalTeacherId: a.originalteacherid
       })));
 
-        // âœ… TAMBAHIN INI DI BAWAHNYA
 if (stuAtt) setStudentAttendanceLogs(stuAtt.map((s: any) => ({
   ...s,
   packageId: s.packageid,
@@ -358,7 +413,6 @@ if (stuAtt) setStudentAttendanceLogs(stuAtt.map((s: any) => ({
   enrolledClass: p.enrolledclass
 })));
 
-// âœ… TAMBAHIN SEMUA INI DI BAWAHNYA!
 if (salesCon) setSalesContacts(salesCon.map((s: any) => ({
   ...s,
   institutionName: s.institution_name,
@@ -384,7 +438,7 @@ if (salesCon) setSalesContacts(salesCon.map((s: any) => ({
       }
       setConnectionError(false);
     } catch (e) {
-    console.error('âŒ FETCH ERROR:', e); // âœ… TAMBAHIN INI
+    console.error('❌ FETCH ERROR:', e);
     setConnectionError(true);
     } finally {
       setIsSyncing(false);
@@ -408,7 +462,7 @@ if (salesCon) setSalesContacts(salesCon.map((s: any) => ({
   transactions={transactions} setTransactions={setTransactions}
   studentPayments={studentPayments} setStudentPayments={setStudentPayments}
   studentProfiles={studentProfiles} setStudentProfiles={setStudentProfiles}
-  salesContacts={salesContacts} setSalesContacts={setSalesContacts}  // âœ… HARUS ADA!
+  salesContacts={salesContacts} setSalesContacts={setSalesContacts}
   subjects={subjects} setSubjects={setSubjects}
   classes={classes} setClasses={setClasses}
   levels={levels} setLevels={setLevels}
