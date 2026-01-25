@@ -447,11 +447,10 @@ const handleDeleteTx = async () => {
     const { error } = await supabase.from('transactions').delete().eq('id', confirmDeleteTx.id);
     if (error) throw error;
     if (refreshAllData) await refreshAllData();
-    await fetchLedgerData();
+    await fetchLedgerData();  // ✅ TAMBAHIN INI! Refresh data ledger
     setConfirmDeleteTx(null);
-    alert('✅ Transaksi berhasil dihapus!');  // ✅ Notifikasi sukses
   } catch (e: any) { 
-    console.error('❌ Error delete:', e);
+    console.error('❌ Error delete:', e);  // ✅ Log error
     alert('Gagal hapus: ' + e.message); 
   } finally { 
     setIsLoading(false); 
