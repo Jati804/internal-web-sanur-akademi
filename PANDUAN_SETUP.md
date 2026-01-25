@@ -1,7 +1,8 @@
 
-# 📜 Gabungan SQL Final SANUR (Update Jan 2026 - Versi Transparansi Gaji)
+# 📜 Gabungan SQL Final SANUR (Update 25 Jan 2026 - TERAKHIR)
 
 Gunakan kode di bawah ini di **SQL Editor Supabase** (Klik "New Query", paste, lalu "Run").
+
 
 -- ========================================
 -- SANUR AKADEMI - DATABASE SETUP
