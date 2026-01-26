@@ -221,7 +221,8 @@ if (ledgerFilters.period === 'CUSTOM') {
       orConditions.push(`and(date.gte.${startStr},date.lte.${endStr})`);
     }
     
-    query = query.or(orConditions.join(','));
+      query = query.or(orConditions.join(','));
+    }
   }
 }
 
