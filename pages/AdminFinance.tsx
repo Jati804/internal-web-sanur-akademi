@@ -54,7 +54,7 @@ const [ledgerFilters, setLedgerFilters] = useState({
   period: 'ALL',
   category: 'ALL',
   type: 'ALL',
-  customYear: new Date().getFullYear(),
+  customYear: null,
   customMonth: null // ✅ Pakai null, bukan 'ALL'
 });
 const [showAdvancedFilter, setShowAdvancedFilter] = useState(false);
@@ -192,6 +192,8 @@ if (ledgerFilters.period !== 'ALL') {
   
   // Filter CUSTOM tetap sama (udah bener)
   if (ledgerFilters.period === 'CUSTOM') {
+  // ✅ Cek dulu: kalau ada tahun yang dipilih
+  if (ledgerFilters.customYear !== null) {
     const year = ledgerFilters.customYear;
     const yearStart = new Date(year, 0, 1);
     const yearEnd = new Date(year, 11, 31);
@@ -200,6 +202,7 @@ if (ledgerFilters.period !== 'ALL') {
     
     query = query.gte('date', startStr).lte('date', endStr);
     
+    // ✅ Kalau ada bulan juga, filter lagi
     if (ledgerFilters.customMonth !== null) {
       const monthNum = parseInt(ledgerFilters.customMonth);
       const monthStart = new Date(year, monthNum, 1);
@@ -654,7 +657,7 @@ const handleExportExcel = () => {
   
   <button 
     onClick={() => {
-      setLedgerFilters({period: 'ALL', category: 'ALL', type: 'ALL', customYear: new Date().getFullYear(), customMonth: null});
+      setLedgerFilters({period: 'ALL', category: 'ALL', type: 'ALL', customYear: null, customMonth: null});
       setCurrentPage(1);
     }}
     className="px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-wider bg-rose-50 text-rose-600 hover:bg-rose-100 transition-all"
@@ -723,18 +726,23 @@ const handleExportExcel = () => {
         {/* Pilih Tahun */}
         <div>
           <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-2 block">Tahun:</label>
-          <select 
-            value={ledgerFilters.customYear} 
-            onChange={(e) => {
-     setLedgerFilters({...ledgerFilters, period: 'CUSTOM', customYear: parseInt(e.target.value)});
-     setCurrentPage(1);
-   }}
-            className="w-full px-4 py-3 bg-slate-50 rounded-2xl text-[10px] font-black uppercase outline-none border-2 border-transparent focus:border-blue-500 transition-all"
-          >
-            {[2034, 2033, 2032, 2031, 2030, 2029, 2028, 2027, 2026, 2025, 2024].map(year => (
-              <option key={year} value={year}>{year}</option>
-            ))}
-          </select>
+<select 
+  value={ledgerFilters.customYear === null ? '' : ledgerFilters.customYear} 
+  onChange={(e) => {
+    setLedgerFilters({
+      ...ledgerFilters, 
+      period: 'CUSTOM', 
+      customYear: e.target.value === '' ? null : parseInt(e.target.value)
+    });
+    setCurrentPage(1);
+  }}
+  className="w-full px-4 py-3 bg-slate-50 rounded-2xl text-[10px] font-black uppercase outline-none border-2 border-transparent focus:border-blue-500 transition-all"
+>
+  <option value="">SEMUA TAHUN</option>
+  {[2034, 2033, 2032, 2031, 2030, 2029, 2028, 2027, 2026, 2025, 2024].map(year => (
+    <option key={year} value={year}>{year}</option>
+  ))}
+</select>
         </div>
         
         {/* Pilih Bulan */}
