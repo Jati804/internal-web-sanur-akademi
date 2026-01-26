@@ -175,6 +175,13 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
       resetForm();
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
+// Auto scroll ke riwayat pembayaran
+setTimeout(() => {
+  const riwayatSection = document.getElementById('riwayat-pembayaran');
+  if (riwayatSection) {
+    riwayatSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+}, 500);  
     } catch (e: any) { alert(e.message); } finally { setLoading(false); }
   };
 
@@ -617,7 +624,7 @@ const executeFinalRequestReport = async () => {
               <button onClick={handleLaporBayar} disabled={loading} className="w-full py-8 bg-emerald-600 text-white rounded-[3rem] font-black text-xs uppercase tracking-[0.3em] shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-4">{loading ? <Loader2 size={24} className="animate-spin" /> : <><Rocket size={24} /> {isEditing ? 'UPDATE LAPORAN ✨' : 'KIRIM LAPORAN ✨'}</>}</button>
            </div>
 
-           <div className="space-y-8">
+           <div id="riwayat-pembayaran" className="space-y-8">
               <div className="flex items-center gap-4 px-6"><div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl"><History size={24}/></div><h3 className="text-2xl font-black text-slate-800 uppercase italic">Riwayat Pembayaran</h3></div>
               <div className="grid grid-cols-1 gap-6">
                  {myPayments.map((p, i) => (
