@@ -585,7 +585,6 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
          </div>
       )}
     </div>
-    </>
   );
 };
 
