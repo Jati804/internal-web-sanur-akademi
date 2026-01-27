@@ -277,6 +277,14 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
       const sName = selectedPackage.studentsAttended?.[0] || 'SISWA';
       const topics = reportForm.sessions.map(s => (s.material || '').toUpperCase());
       const scores = reportForm.sessions.map(s => Number(s.score) || 0);
+      
+      console.log('💾 SAVING REPORT DATA:');
+      console.log('  Student Name:', sName);
+      console.log('  Topics:', topics);
+      console.log('  Scores:', scores);
+      console.log('  Periode:', selectedPeriode);
+      console.log('  Narrative:', reportForm.narrative);
+      
       const payload = { 
         status: 'REPORT_READY', 
         sessionnumber: 6, 
@@ -287,8 +295,13 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
         periode: selectedPeriode, // ✅ SIMPAN PERIODE
         date: isEditMode ? selectedPackage.date : new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()) 
       };
+      
+      console.log('💾 FULL PAYLOAD:', payload);
+      
       await supabase.from('attendance').update(payload).eq('id', selectedPackage.id);
       await refreshAllData();
+      
+      console.log('✅ SAVE SUCCESS!');
       
       setLastActionedId(selectedPackage.id);
       setSelectedPackage(null);
@@ -627,6 +640,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
                const isPass = avg >= 80;
                const isReadyToSend = req.status === 'REPORT_READY';
                const isNewlyActioned = req.id === lastActionedId;
+               const periode = req.periode || 1; // ✅ AMBIL PERIODE
 
                return (
                   <div 
@@ -634,11 +648,19 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
                     id={`history-card-${req.id}`}
                     className={`bg-white p-12 md:p-14 rounded-[4rem] shadow-xl border-2 transition-all flex flex-col relative ${isNewlyActioned ? 'border-blue-500 shadow-blue-100' : isReadyToSend ? 'border-amber-400 bg-amber-50/10' : 'border-slate-100 hover:border-emerald-500'}`}
                   >
-                     {isNewlyActioned && (
-                        <div className="absolute -top-3 -right-3 px-6 py-2 bg-blue-600 text-white rounded-full font-black text-[9px] uppercase tracking-widest shadow-xl animate-bounce z-20">
-                           TERBARU ✨
+                     {/* ✅ BADGE CONTAINER - KANAN ATAS */}
+                     <div className="absolute -top-3 -right-3 flex flex-col gap-2 items-end z-20">
+                        {isNewlyActioned && (
+                           <div className="px-6 py-2 bg-blue-600 text-white rounded-full font-black text-[9px] uppercase tracking-widest shadow-xl animate-bounce">
+                              TERBARU ✨
+                           </div>
+                        )}
+                        {/* ✅ BADGE PERIODE */}
+                        <div className="px-5 py-2 bg-purple-600 text-white rounded-full font-black text-[9px] uppercase tracking-widest shadow-lg flex items-center gap-2">
+                           <Calendar size={12} strokeWidth={3} />
+                           PERIODE {periode}
                         </div>
-                     )}
+                     </div>
                      <div className="flex justify-between items-start mb-10">
                         <div className={`w-16 h-16 rounded-3xl flex items-center justify-center shadow-inner shrink-0 ${isPass ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'}`}>{isPass ? <BadgeCheck size={40}/> : <AlertCircle size={40}/>}</div>
                         <div className="flex flex-col items-end gap-2">
