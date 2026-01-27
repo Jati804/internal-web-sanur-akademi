@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, Attendance } from '../types';
 import { supabase } from '../services/supabase.ts';
@@ -250,31 +249,43 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
     setActiveDownloadId(req.id);
     
     try {
-      const pdf = new jsPDF({ orientation: 'p', unit: 'px', format: 'a4', hotfixes: ["px_rendering"] });
-      const pw = pdf.internal.pageSize.getWidth();
-      const ph = pdf.internal.pageSize.getHeight();
-      const captureOptions = { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: 794, height: 1123, logging: false };
-      
-      const capturePage = async (pageId: string) => {
-        const el = document.getElementById(pageId);
-        if (!el) return null;
-        const canvas = await html2canvas(el, captureOptions);
-        return canvas.toDataURL('image/png', 1.0);
-      };
+      // 🎯 HALAMAN 1: LANDSCAPE (Sertifikat Horizontal)
+      const pdf = new jsPDF({ orientation: 'l', unit: 'px', format: 'a4', hotfixes: ["px_rendering"] });
+      const pw1 = pdf.internal.pageSize.getWidth();
+      const ph1 = pdf.internal.pageSize.getHeight();
+      const captureOptionsLandscape = { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: 1123, height: 794, logging: false };
 
       setDownloadProgress(20);
-      const img1 = await capturePage(`cert-render-${req.id}`);
-      if (img1) pdf.addImage(img1, 'PNG', 0, 0, pw, ph, undefined, 'FAST');
+      const el1 = document.getElementById(`cert-render-${req.id}`);
+      if (el1) {
+        const canvas1 = await html2canvas(el1, captureOptionsLandscape);
+        const img1 = canvas1.toDataURL('image/png', 1.0);
+        pdf.addImage(img1, 'PNG', 0, 0, pw1, ph1, undefined, 'FAST');
+      }
       setDownloadProgress(45);
       
+      // 🎯 HALAMAN 2: PORTRAIT (Transkrip Nilai)
       pdf.addPage('a4', 'p');
-      const img2 = await capturePage(`transcript-render-${req.id}`);
-      if (img2) pdf.addImage(img2, 'PNG', 0, 0, pw, ph, undefined, 'FAST');
+      const pw2 = pdf.internal.pageSize.getWidth();
+      const ph2 = pdf.internal.pageSize.getHeight();
+      const captureOptionsPortrait = { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: 794, height: 1123, logging: false };
+      
+      const el2 = document.getElementById(`transcript-render-${req.id}`);
+      if (el2) {
+        const canvas2 = await html2canvas(el2, captureOptionsPortrait);
+        const img2 = canvas2.toDataURL('image/png', 1.0);
+        pdf.addImage(img2, 'PNG', 0, 0, pw2, ph2, undefined, 'FAST');
+      }
       setDownloadProgress(75);
       
+      // 🎯 HALAMAN 3: PORTRAIT (Milestone)
       pdf.addPage('a4', 'p');
-      const img3 = await capturePage(`milestone-render-${req.id}`);
-      if (img3) pdf.addImage(img3, 'PNG', 0, 0, pw, ph, undefined, 'FAST');
+      const el3 = document.getElementById(`milestone-render-${req.id}`);
+      if (el3) {
+        const canvas3 = await html2canvas(el3, captureOptionsPortrait);
+        const img3 = canvas3.toDataURL('image/png', 1.0);
+        pdf.addImage(img3, 'PNG', 0, 0, pw2, ph2, undefined, 'FAST');
+      }
       setDownloadProgress(95);
       
       pdf.save(`Rapot_Sanur_${req.studentsAttended?.[0]}.pdf`);
