@@ -98,8 +98,10 @@
 <body class="bg-slate-50 text-slate-900">
     <div id="root"></div>
     <script>
-      // 🎯 AUTO REDIRECT KE VERIFY KALO BUKA ROOT
-      if (window.location.hash === '' || window.location.hash === '#/') {
+      // 🎯 AUTO REDIRECT - FUTURE PROOF!
+      // Hanya redirect di domain Vercel (.vercel.app)
+      const isVercelDomain = window.location.hostname.includes('vercel.app');
+      if (isVercelDomain && (window.location.hash === '' || window.location.hash === '#/')) {
         window.location.hash = '#/verify';
       }
     </script>
