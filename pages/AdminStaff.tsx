@@ -249,7 +249,7 @@ useEffect(() => {
              )}
             {activeTab === 'STUDENTS' && (
               <p className="text-[10px] font-black text-rose-600 uppercase italic pt-1 flex items-center justify-center md:justify-start gap-2">
-                 <Zap size={14} /> Khusus Siswa: Akun siswa hanya boleh ganti Nama selama kelas berjalan dan rapot belum diterbitkan (untuk username dan PIN tetap bisa di ubah walaupun siswa sudah menerima rapot). Disarankan hapus manual akun user setelah 3 bulan lulus dari kelas terakhir agar sistem tetap ringan!
+                 <Zap size={14} /> Khusus Siswa: Akun siswa hanya boleh ganti Nama selama kelas berjalan dan rapot belum diterbitkan (untuk username dan PIN tetap bisa di ubah walaupun siswa sudah menerima rapot). Disarankan hapus manual akun setelah 3 bulan siswa lulus dari kelas terakhir agar sistem tetap ringan!
               </p>
             )}
          </div>
