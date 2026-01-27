@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { ShieldCheck, CheckCircle2, BookOpen, Stars, Loader2, XCircle, User, Calendar, Award, Zap } from 'lucide-react';
 import * as ReactRouterDOM from 'react-router-dom';
@@ -61,11 +60,30 @@ const VerifyCertificate: React.FC = () => {
   
   const studentName = reportData?.studentsAttended?.[0] || "SISWA";
 
+  // 🎨 THEME COLORS - Hijau kalau lulus, Oren kalau tidak lulus
+  const themeColors = isPass ? {
+    primary: 'emerald',
+    bgLight: 'bg-emerald-50',
+    bgMedium: 'bg-emerald-100',
+    bgDark: 'bg-emerald-600',
+    text: 'text-emerald-600',
+    textDark: 'text-emerald-500',
+    ring: 'ring-emerald-50'
+  } : {
+    primary: 'orange',
+    bgLight: 'bg-orange-50',
+    bgMedium: 'bg-orange-100',
+    bgDark: 'bg-orange-600',
+    text: 'text-orange-600',
+    textDark: 'text-orange-500',
+    ring: 'ring-orange-50'
+  };
+
   return (
     <div className="min-h-screen bg-[#FDFDFF] flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Background Ornaments */}
-      <div className="absolute top-0 left-0 w-80 h-80 bg-blue-50 rounded-full blur-[100px] -ml-40 -mt-40 opacity-50"></div>
-      <div className="absolute bottom-0 right-0 w-80 h-80 bg-emerald-50 rounded-full blur-[100px] -mr-40 -mb-40 opacity-50"></div>
+      <div className={`absolute top-0 left-0 w-80 h-80 ${isPass ? 'bg-emerald-50' : 'bg-orange-50'} rounded-full blur-[100px] -ml-40 -mt-40 opacity-50`}></div>
+      <div className={`absolute bottom-0 right-0 w-80 h-80 ${isPass ? 'bg-emerald-50' : 'bg-orange-50'} rounded-full blur-[100px] -mr-40 -mb-40 opacity-50`}></div>
 
       <div className="max-w-xl w-full bg-white rounded-[4rem] shadow-2xl p-10 md:p-16 border border-slate-50 text-center relative z-10 animate-in fade-in">
          
@@ -89,18 +107,18 @@ const VerifyCertificate: React.FC = () => {
            </div>
          ) : (
            <>
-              <div className={`w-24 h-24 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-lg ring-8 ${isPass ? 'bg-emerald-100 text-emerald-600 ring-emerald-50' : 'bg-blue-100 text-blue-600 ring-blue-50'}`}>
+              <div className={`w-24 h-24 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-lg ring-8 ${themeColors.bgMedium} ${themeColors.text} ${themeColors.ring}`}>
                 <ShieldCheck size={56} />
               </div>
               
               <div className="space-y-4 mb-12">
-                <div className="flex items-center justify-center gap-2 text-blue-600 mb-2">
+                <div className={`flex items-center justify-center gap-2 ${themeColors.text} mb-2`}>
                    <Stars size={20} fill="currentColor" />
                    <span className="text-[10px] font-black uppercase tracking-[0.5em]">Verified Authentic</span>
                    <Stars size={20} fill="currentColor" />
                 </div>
                 <h1 className="text-4xl font-black text-slate-800 tracking-tighter uppercase italic leading-none">
-                   Sertifikat <span className={isPass ? 'text-emerald-600' : 'text-blue-600'}>Tervalidasi</span>
+                   Sertifikat <span className={themeColors.text}>{isPass ? 'Tervalidasi' : 'Tervalidasi'}</span>
                 </h1>
                 <p className="text-slate-400 font-bold text-[9px] uppercase tracking-widest px-4">
                    Dokumen ini adalah asli dan tercatat secara resmi di database Sanur Akademi Inspirasi.
@@ -109,7 +127,7 @@ const VerifyCertificate: React.FC = () => {
 
               <div className="bg-slate-50 rounded-[3rem] p-8 md:p-10 mb-10 border-2 border-dashed border-slate-200 text-left space-y-8">
                  <div className="flex items-center gap-5">
-                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-blue-600 shadow-sm shrink-0"><User size={24} /></div>
+                    <div className={`w-12 h-12 bg-white rounded-2xl flex items-center justify-center ${themeColors.text} shadow-sm shrink-0`}><User size={24} /></div>
                     <div>
                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Nama Siswa</p>
                       <p className="text-xl font-black text-slate-800 uppercase italic leading-tight">{studentName}</p>
@@ -117,12 +135,12 @@ const VerifyCertificate: React.FC = () => {
                  </div>
 
                  <div className="flex items-center gap-5">
-                    <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-blue-600 shadow-sm shrink-0"><BookOpen size={24} /></div>
+                    <div className={`w-12 h-12 bg-white rounded-2xl flex items-center justify-center ${themeColors.text} shadow-sm shrink-0`}><BookOpen size={24} /></div>
                     <div>
                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Program & Level</p>
                       <p className="text-sm font-black text-slate-800 uppercase italic leading-tight">{reportData.className}</p>
                       <div className="flex items-center gap-2 mt-1.5">
-                         <span className="px-3 py-0.5 bg-blue-600 text-white rounded-full text-[7px] font-black uppercase tracking-widest">{reportData.sessionCategory}</span>
+                         <span className={`px-3 py-0.5 ${themeColors.bgDark} text-white rounded-full text-[7px] font-black uppercase tracking-widest`}>{reportData.sessionCategory}</span>
                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">6 Sesi Selesai</span>
                       </div>
                     </div>
@@ -149,11 +167,11 @@ const VerifyCertificate: React.FC = () => {
                  
                  <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
-                       <Zap size={20} className={isPass ? 'text-emerald-500' : 'text-blue-500'} />
+                       <Zap size={20} className={themeColors.textDark} />
                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Status Kelulusan</p>
                     </div>
-                    <div className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2 ${isPass ? 'bg-emerald-600 text-white' : 'bg-blue-600 text-white'}`}>
-                       <CheckCircle2 size={14} /> {isPass ? "LULUS & KOMPETEN ✨" : "PESERTA PELATIHAN ✨"}
+                    <div className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2 ${themeColors.bgDark} text-white`}>
+                       <CheckCircle2 size={14} /> {isPass ? "LULUS & KOMPETEN ✨" : "PESERTA PELATIHAN"}
                     </div>
                  </div>
               </div>
