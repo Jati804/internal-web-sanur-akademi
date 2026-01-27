@@ -32,20 +32,24 @@ const MilestoneView = ({ studentAttendanceLogs, studentName, packageId, periode 
     )
     .sort((a,b) => (a.sessionnumber || 0) - (b.sessionnumber || 0));
 
+  // ✅ HITUNG SESSION NUMBERS DINAMIS SESUAI TINGKAT
+  const startSession = (periode - 1) * 6 + 1;
+  const sessionNumbers = Array.from({ length: 6 }, (_, i) => startSession + i);
+
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3 text-slate-400 border-b border-slate-100 pb-2">
         <ClipboardList size={16} />
-        <p className="text-[10px] font-black uppercase tracking-widest">Milestone Pembelajaran Siswa - Periode {periode}</p>
+        <p className="text-[10px] font-black uppercase tracking-widest">Milestone Pembelajaran Siswa - Tingkat {periode}</p>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {[1,2,3,4,5,6].map(num => {
-          const log = sortedLogs.find(l => l.sessionnumber === num);
+        {sessionNumbers.map((sessionNum, idx) => {
+          const log = sortedLogs.find(l => l.sessionnumber === (idx + 1)); // ✅ TETAP CARI DI 1-6
           return (
-            <div key={num} className={`p-4 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all ${log ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-transparent opacity-40'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black italic text-[10px] ${log ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-200 text-slate-400'}`}>0{num}</div>
+            <div key={sessionNum} className={`p-4 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all ${log ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-transparent opacity-40'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black italic text-[10px] ${log ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-200 text-slate-400'}`}>{sessionNum < 10 ? `0${sessionNum}` : sessionNum}</div>
               <div className="text-center">
-                <p className="text-[9px] font-black text-slate-800 uppercase italic leading-none">Sesi {num}</p>
+                <p className="text-[9px] font-black text-slate-800 uppercase italic leading-none">Sesi {sessionNum}</p>
                 <p className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter mt-1">{log ? formatDateToDMY(log.date) : 'Kosong'}</p>
               </div>
               {log && <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center text-emerald-600 shadow-sm"><Check size={12} strokeWidth={4}/></div>}
@@ -81,7 +85,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [historySearchTerm, setHistorySearchTerm] = useState('');
   const [selectedYear, setSelectedYear] = useState('2026'); // ✅ TAMBAH INI
-  const [selectedPeriode, setSelectedPeriode] = useState(1); // ✅ STATE PERIODE
+  const [selectedTingkat, setSelectedTingkat] = useState(1);
   
   // Efek Highlight untuk kartu yang baru saja dikerjakan
   useEffect(() => {
@@ -166,9 +170,9 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
     setIsEditMode(isEdit);
     setShowErrors(false);
     
-    // ✅ LOAD PERIODE DARI DATABASE
-    const periode = req.periode || 1;
-    setSelectedPeriode(periode);
+    // ✅ LOAD TINGKAT DARI DATABASE
+    const tingkat = req.periode || 1;
+    setSelectedTingkat(tingkat);
     
     const sName = req.studentsAttended?.[0] || 'SISWA';
     if (isEdit || req.status === 'REPORT_READY') {
@@ -176,8 +180,8 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
       const existingScores = (req.studentScores?.[sName] || Array(6).fill(90)) as number[];
       const existingNarrative = req.studentNarratives?.[sName] || req.reportNarrative || '';
       
-      // ✅ UPDATE SESSION NUMBERS SESUAI PERIODE
-      const startSession = (periode - 1) * 6 + 1;
+      // ✅ UPDATE SESSION NUMBERS SESUAI TINGKAT
+      const startSession = (tingkat - 1) * 6 + 1;
       setReportForm({ 
         sessions: Array.from({ length: 6 }, (_, i) => ({ 
           num: startSession + i, 
@@ -188,7 +192,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
       });
     } else {
       // ✅ SESSION NUMBERS UNTUK FORM BARU
-      const startSession = (periode - 1) * 6 + 1;
+      const startSession = (tingkat - 1) * 6 + 1;
       setReportForm({ 
         sessions: Array.from({ length: 6 }, (_, i) => ({ 
           num: startSession + i, 
@@ -248,7 +252,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
         studentscores: { [sName]: scores }, 
         studentnarratives: { [sName]: reportForm.narrative }, 
         reportnarrative: reportForm.narrative, 
-        periode: selectedPeriode, // ✅ SIMPAN PERIODE
+        periode: selectedTingkat, // ✅ SIMPAN TINGKAT
         date: isEditMode ? selectedPackage.date : new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()) 
       };
       await supabase.from('attendance').update(payload).eq('id', selectedPackage.id);
@@ -473,18 +477,18 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
             <div className="p-8 md:p-14 space-y-16">
                {/* ✅ SECTION PILIH PERIODE */}
                <section className="space-y-4">
-                  <div className="flex items-center gap-3 text-purple-600"><Calendar size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Pilih Periode Kurikulum</h4></div>
+                  <div className="flex items-center gap-3 text-purple-600"><Calendar size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Pilih Tingkat Kurikulum</h4></div>
                   <div className="bg-gradient-to-br from-purple-50 to-blue-50 p-8 rounded-[3rem] border-2 border-purple-100 space-y-6">
                      <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
                         <div className="flex-1">
-                           <p className="text-[10px] font-black text-purple-800 uppercase tracking-wider mb-2">PERIODE PEMBELAJARAN</p>
-                           <select
-                              value={selectedPeriode}
-                              onChange={(e) => {
-                                 const newPeriode = Number(e.target.value);
-                                 setSelectedPeriode(newPeriode);
-                                 // Update session numbers
-                                 const startSession = (newPeriode - 1) * 6 + 1;
+                        <p className="text-[10px] font-black text-purple-800 uppercase tracking-wider mb-2">TINGKAT KURIKULUM</p>
+                        <select
+                         value={selectedTingkat}
+                           onChange={(e) => {
+                             const newTingkat = Number(e.target.value);
+                              setSelectedTingkat(newTingkat);
+                               // Update session numbers
+                                const startSession = (newTingkat - 1) * 6 + 1;
                                  setReportForm(prev => ({
                                     ...prev,
                                     sessions: prev.sessions.map((s, i) => ({
@@ -496,20 +500,20 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
                               className="w-full md:w-64 px-6 py-4 bg-white text-purple-600 rounded-2xl font-black text-sm uppercase cursor-pointer shadow-lg hover:shadow-xl transition-all border-2 border-purple-200"
                            >
                               {[1, 2, 3, 4, 5, 6].map(p => (
-                                 <option key={p} value={p}>PERIODE {p}</option>
+                                 <option key={p} value={p}>TINGKAT {p}</option>
                               ))}
                            </select>
                         </div>
                         <div className="text-center md:text-right">
                            <p className="text-[9px] font-black text-purple-600 uppercase tracking-widest mb-1">RANGE SESI</p>
                            <p className="text-2xl font-black text-purple-800 italic">
-                              {((selectedPeriode - 1) * 6 + 1)} - {(selectedPeriode * 6)}
+                              {((selectedTingkat - 1) * 6 + 1)} - {(selectedTingkat * 6)}
                            </p>
                         </div>
                      </div>
                      <div className="bg-white/60 p-6 rounded-2xl border border-purple-100">
                         <p className="text-[10px] font-bold text-slate-600 leading-relaxed">
-                           <span className="font-black text-purple-600">PERIODE {selectedPeriode}</span> mencakup sesi {((selectedPeriode - 1) * 6 + 1)} sampai {(selectedPeriode * 6)}. Pastikan materi yang diisi sesuai dengan kurikulum periode ini.
+                           <span className="font-black text-purple-600">TINGKAT {selectedTingkat}</span> mencakup materi sesi {((selectedTingkat - 1) * 6 + 1)} sampai {(selectedTingkat * 6)} dalam kurikulum. Ini adalah tingkatan pembelajaran, bukan nomor paket siswa.
                         </p>
                      </div>
                   </div>
@@ -524,7 +528,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
             studentAttendanceLogs={studentAttendanceLogs} 
             studentName={selectedPackage.studentsAttended?.[0] || ''} 
             packageId={selectedPackage.packageId}
-            periode={selectedPeriode}
+            periode={selectedTingkat}
          />
       ) : (
          <div className="text-center py-8">
@@ -624,19 +628,12 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
                     id={`history-card-${req.id}`}
                     className={`bg-white p-12 md:p-14 rounded-[4rem] shadow-xl border-2 transition-all flex flex-col relative ${isNewlyActioned ? 'border-blue-500 shadow-blue-100' : isReadyToSend ? 'border-amber-400 bg-amber-50/10' : 'border-slate-100 hover:border-emerald-500'}`}
                   >
-                     {/* ✅ BADGE CONTAINER */}
-                     <div className="absolute -top-3 -right-3 flex flex-col gap-2 items-end z-20">
-                        {isNewlyActioned && (
-                           <div className="px-6 py-2 bg-blue-600 text-white rounded-full font-black text-[9px] uppercase tracking-widest shadow-xl animate-bounce">
-                              TERBARU ✨
-                           </div>
-                        )}
-                        {/* ✅ BADGE PERIODE */}
-                        <div className="px-5 py-2 bg-purple-600 text-white rounded-full font-black text-[9px] uppercase tracking-widest shadow-lg flex items-center gap-2">
-                           <Calendar size={12} strokeWidth={3} />
-                           PERIODE {periode}
+                    {/* ✅ BADGE CONTAINER */}
+                     {isNewlyActioned && (
+                        <div className="absolute -top-3 -right-3 px-6 py-2 bg-blue-600 text-white rounded-full font-black text-[9px] uppercase tracking-widest shadow-xl animate-bounce z-20">
+                           TERBARU ✨
                         </div>
-                     </div>
+                     )}
                      
                      <div className="flex justify-between items-start mb-10">
                         <div className={`w-16 h-16 rounded-3xl flex items-center justify-center shadow-inner shrink-0 ${isPass ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'}`}>{isPass ? <BadgeCheck size={40}/> : <AlertCircle size={40}/>}</div>
@@ -657,14 +654,14 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
                               <p className={`text-3xl font-black italic ${isPass ? 'text-emerald-600' : 'text-orange-600'}`}>{avg}</p>
                            </div>
                            
-                           {/* ✅ PERIODE DI TENGAH */}
-                           <div className="text-center border-x-2 border-slate-200 px-2">
-                              <p className="text-[8px] font-black text-purple-600 uppercase tracking-wider mb-1">Periode</p>
-                              <p className="text-2xl font-black text-purple-600 italic">{periode}</p>
-                              <p className="text-[7px] font-bold text-slate-400 uppercase mt-1">
-                                 Sesi {((periode - 1) * 6 + 1)}-{(periode * 6)}
-                              </p>
-                           </div>
+                            {/* ✅ TINGKAT DI TENGAH */}
+                            <div className="text-center border-x-2 border-slate-200 px-2">
+                               <p className="text-[8px] font-black text-purple-600 uppercase tracking-wider mb-1">Tingkat</p>
+                               <p className="text-2xl font-black text-purple-600 italic">{periode}</p>
+                               <p className="text-[7px] font-bold text-slate-400 uppercase mt-1">
+                                  Sesi {((periode - 1) * 6 + 1)}-{(periode * 6)}
+                               </p>
+                            </div>
                            
                            {/* TANGGAL */}
                            <div className="text-right">
