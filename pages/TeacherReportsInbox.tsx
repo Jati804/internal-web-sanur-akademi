@@ -385,7 +385,6 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
   });
 
   return (
-    <>
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-purple-50 p-6 md:p-12 font-sans">
       <div className="max-w-[1800px] mx-auto">
         <div className="mb-14">
@@ -813,7 +812,6 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
          </div>
       )}
     </div>
-    </>
   );
 };
 
