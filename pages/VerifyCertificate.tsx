@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ShieldCheck, CheckCircle2, BookOpen, Stars, Loader2, XCircle, User, Calendar, Award, Zap } from 'lucide-react';
+import { ShieldCheck, CheckCircle2, BookOpen, Stars, Loader2, XCircle, User, Calendar, Award, Zap, Crown } from 'lucide-react';
 import * as ReactRouterDOM from 'react-router-dom';
 import { supabase } from '../services/supabase.ts';
 import { Attendance } from '../types';
@@ -60,16 +60,19 @@ const VerifyCertificate: React.FC = () => {
   
   const studentName = reportData?.studentsAttended?.[0] || "SISWA";
 
-  // 🎨 THEME COLORS - BIRU DOMINAN kalau lulus, Oren kalau tidak lulus
+  // 🎨 THEME COLORS - BLUE-GOLD untuk lulus, Orange untuk tidak lulus
   const themeColors = isPass ? {
     primary: 'blue',
     bgLight: 'bg-blue-50',
     bgMedium: 'bg-blue-100',
     bgDark: 'bg-blue-600',
     text: 'text-blue-600',
-    textDark: 'text-blue-500',
-    ring: 'ring-blue-50',
-    accent: 'text-emerald-500' // Aksen hijau untuk icon tertentu
+    textDark: 'text-blue-700',
+    ring: 'ring-blue-100',
+    gold: 'text-amber-500',
+    goldBg: 'bg-amber-500',
+    goldLight: 'bg-amber-50',
+    gradient: 'bg-gradient-to-br from-blue-600 via-blue-700 to-amber-600'
   } : {
     primary: 'orange',
     bgLight: 'bg-orange-50',
@@ -78,16 +81,32 @@ const VerifyCertificate: React.FC = () => {
     text: 'text-orange-600',
     textDark: 'text-orange-500',
     ring: 'ring-orange-50',
-    accent: 'text-orange-500'
+    gold: 'text-orange-500',
+    goldBg: 'bg-orange-600',
+    goldLight: 'bg-orange-50',
+    gradient: 'bg-orange-600'
   };
 
   return (
     <div className="min-h-screen bg-[#FDFDFF] flex flex-col items-center justify-center p-6 relative overflow-hidden">
-      {/* Background Ornaments */}
-      <div className={`absolute top-0 left-0 w-80 h-80 ${isPass ? 'bg-blue-50' : 'bg-orange-50'} rounded-full blur-[100px] -ml-40 -mt-40 opacity-50`}></div>
-      <div className={`absolute bottom-0 right-0 w-80 h-80 ${isPass ? 'bg-blue-50' : 'bg-orange-50'} rounded-full blur-[100px] -mr-40 -mb-40 opacity-50`}></div>
+      {/* Background Ornaments - Enhanced for Gold Theme */}
+      {isPass ? (
+        <>
+          <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-100 via-blue-50 to-amber-50 rounded-full blur-[120px] -ml-48 -mt-48 opacity-60 animate-pulse"></div>
+          <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-br from-amber-100 via-amber-50 to-blue-50 rounded-full blur-[120px] -mr-48 -mb-48 opacity-60 animate-pulse"></div>
+          {/* Gold sparkles effect */}
+          <div className="absolute top-1/4 right-1/4 w-2 h-2 bg-amber-400 rounded-full animate-ping"></div>
+          <div className="absolute bottom-1/3 left-1/3 w-2 h-2 bg-amber-400 rounded-full animate-ping" style={{animationDelay: '0.5s'}}></div>
+          <div className="absolute top-1/3 left-1/4 w-1 h-1 bg-blue-400 rounded-full animate-ping" style={{animationDelay: '1s'}}></div>
+        </>
+      ) : (
+        <>
+          <div className="absolute top-0 left-0 w-80 h-80 bg-orange-50 rounded-full blur-[100px] -ml-40 -mt-40 opacity-50"></div>
+          <div className="absolute bottom-0 right-0 w-80 h-80 bg-orange-50 rounded-full blur-[100px] -mr-40 -mb-40 opacity-50"></div>
+        </>
+      )}
 
-      <div className="max-w-xl w-full bg-white rounded-[4rem] shadow-2xl p-10 md:p-16 border border-slate-50 text-center relative z-10 animate-in fade-in">
+      <div className={`max-w-xl w-full bg-white rounded-[4rem] shadow-2xl p-10 md:p-16 border-2 ${isPass ? 'border-amber-200' : 'border-slate-50'} text-center relative z-10 animate-in fade-in`}>
          
          {loading ? (
            <div className="py-20 flex flex-col items-center gap-6">
@@ -109,55 +128,102 @@ const VerifyCertificate: React.FC = () => {
            </div>
          ) : (
            <>
-              <div className={`w-24 h-24 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-lg ring-8 ${themeColors.bgMedium} ${themeColors.text} ${themeColors.ring}`}>
-                <ShieldCheck size={56} />
-              </div>
+              {/* MAIN BADGE - Enhanced Gold Design for Pass */}
+              {isPass ? (
+                <div className="relative w-32 h-32 mx-auto mb-10">
+                  {/* Gold glow ring */}
+                  <div className="absolute inset-0 bg-gradient-to-br from-amber-400 to-amber-600 rounded-[2.5rem] blur-xl opacity-40 animate-pulse"></div>
+                  {/* Main badge */}
+                  <div className="relative w-32 h-32 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 rounded-[2.5rem] flex items-center justify-center shadow-2xl ring-8 ring-amber-100">
+                    {/* Inner glow */}
+                    <div className="absolute inset-2 bg-gradient-to-br from-amber-400/20 to-transparent rounded-[2rem]"></div>
+                    <ShieldCheck size={64} className="relative z-10 text-amber-300 drop-shadow-lg" />
+                    {/* Gold crown accent */}
+                    <div className="absolute -top-3 -right-3 w-8 h-8 bg-amber-500 rounded-full flex items-center justify-center shadow-lg">
+                      <Crown size={16} className="text-white" />
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className={`w-24 h-24 rounded-[2.5rem] flex items-center justify-center mx-auto mb-10 shadow-lg ring-8 ${themeColors.bgMedium} ${themeColors.text} ${themeColors.ring}`}>
+                  <ShieldCheck size={56} />
+                </div>
+              )}
               
               <div className="space-y-4 mb-12">
-                <div className={`flex items-center justify-center gap-2 ${themeColors.text} mb-2`}>
-                   <Stars size={20} fill="currentColor" />
-                   <span className="text-[10px] font-black uppercase tracking-[0.5em]">Verified Authentic</span>
-                   <Stars size={20} fill="currentColor" />
+                {/* Verified Authentic Badge */}
+                <div className={`flex items-center justify-center gap-2 mb-2 ${isPass ? 'text-amber-600' : themeColors.text}`}>
+                   <Stars size={20} fill="currentColor" className={isPass ? 'animate-pulse' : ''} />
+                   <span className="text-[10px] font-black uppercase tracking-[0.5em]">
+                     {isPass ? 'Certified Authentic' : 'Verified Authentic'}
+                   </span>
+                   <Stars size={20} fill="currentColor" className={isPass ? 'animate-pulse' : ''} />
                 </div>
+                
+                {/* Title */}
                 <h1 className="text-4xl font-black text-slate-800 tracking-tighter uppercase italic leading-none">
-                   Sertifikat <span className={themeColors.text}>{isPass ? 'Tervalidasi' : 'Tervalidasi'}</span>
+                   Sertifikat <span className={isPass ? 'text-transparent bg-clip-text bg-gradient-to-r from-blue-600 via-blue-700 to-amber-600' : themeColors.text}>Tervalidasi</span>
                 </h1>
+                
                 <p className="text-slate-400 font-bold text-[9px] uppercase tracking-widest px-4">
                    Dokumen ini adalah asli dan tercatat secara resmi di database Sanur Akademi Inspirasi.
                 </p>
               </div>
 
-              <div className="bg-slate-50 rounded-[3rem] p-8 md:p-10 mb-10 border-2 border-dashed border-slate-200 text-left space-y-8">
-                 <div className="flex items-center gap-5">
-                    <div className={`w-12 h-12 bg-white rounded-2xl flex items-center justify-center ${themeColors.text} shadow-sm shrink-0`}><User size={24} /></div>
+              {/* CONTENT CARD */}
+              <div className={`${isPass ? 'bg-gradient-to-br from-slate-50 to-blue-50/30' : 'bg-slate-50'} rounded-[3rem] p-8 md:p-10 mb-10 border-2 ${isPass ? 'border-amber-100' : 'border-dashed border-slate-200'} text-left space-y-8 relative overflow-hidden`}>
+                 
+                 {/* Gold corner decoration for pass */}
+                 {isPass && (
+                   <>
+                     <div className="absolute top-0 right-0 w-24 h-24 bg-gradient-to-br from-amber-400/10 to-transparent rounded-bl-[3rem]"></div>
+                     <div className="absolute bottom-0 left-0 w-24 h-24 bg-gradient-to-tr from-blue-400/10 to-transparent rounded-tr-[3rem]"></div>
+                   </>
+                 )}
+                 
+                 {/* Student Name */}
+                 <div className="flex items-center gap-5 relative z-10">
+                    <div className={`w-12 h-12 ${isPass ? 'bg-gradient-to-br from-blue-600 to-blue-700' : 'bg-white'} rounded-2xl flex items-center justify-center ${isPass ? 'text-amber-300' : themeColors.text} shadow-lg shrink-0`}>
+                      <User size={24} />
+                    </div>
                     <div>
                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Nama Siswa</p>
                       <p className="text-xl font-black text-slate-800 uppercase italic leading-tight">{studentName}</p>
                     </div>
                  </div>
 
-                 <div className="flex items-center gap-5">
-                    <div className={`w-12 h-12 bg-white rounded-2xl flex items-center justify-center ${themeColors.text} shadow-sm shrink-0`}><BookOpen size={24} /></div>
+                 {/* Program & Level */}
+                 <div className="flex items-center gap-5 relative z-10">
+                    <div className={`w-12 h-12 ${isPass ? 'bg-gradient-to-br from-blue-600 to-blue-700' : 'bg-white'} rounded-2xl flex items-center justify-center ${isPass ? 'text-amber-300' : themeColors.text} shadow-lg shrink-0`}>
+                      <BookOpen size={24} />
+                    </div>
                     <div>
                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Program & Level</p>
                       <p className="text-sm font-black text-slate-800 uppercase italic leading-tight">{reportData.className}</p>
                       <div className="flex items-center gap-2 mt-1.5">
-                         <span className={`px-3 py-0.5 ${themeColors.bgDark} text-white rounded-full text-[7px] font-black uppercase tracking-widest`}>{reportData.sessionCategory}</span>
+                         <span className={`px-3 py-0.5 ${isPass ? 'bg-gradient-to-r from-amber-500 to-amber-600' : themeColors.bgDark} text-white rounded-full text-[7px] font-black uppercase tracking-widest shadow-md`}>
+                           {reportData.sessionCategory}
+                         </span>
                          <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">6 Sesi Selesai</span>
                       </div>
                     </div>
                  </div>
 
-                 <div className="grid grid-cols-2 gap-4">
+                 {/* Date & ID Grid */}
+                 <div className="grid grid-cols-2 gap-4 relative z-10">
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 shadow-sm shrink-0"><Calendar size={20} /></div>
+                        <div className={`w-10 h-10 ${isPass ? 'bg-blue-100' : 'bg-white'} rounded-xl flex items-center justify-center ${isPass ? 'text-blue-600' : 'text-slate-400'} shadow-sm shrink-0`}>
+                          <Calendar size={20} />
+                        </div>
                         <div>
                           <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Tgl Terbit</p>
                           <p className="text-[10px] font-black text-slate-800 uppercase leading-none">{formatDateToDMY(reportData.date)}</p>
                         </div>
                     </div>
                     <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-slate-400 shadow-sm shrink-0"><Award size={20} /></div>
+                        <div className={`w-10 h-10 ${isPass ? 'bg-amber-100' : 'bg-white'} rounded-xl flex items-center justify-center ${isPass ? 'text-amber-600' : 'text-slate-400'} shadow-sm shrink-0`}>
+                          <Award size={20} />
+                        </div>
                         <div>
                           <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Ref ID</p>
                           <p className="text-[10px] font-black text-slate-800 uppercase leading-none">{reportData.id.substring(0,8).toUpperCase()}</p>
@@ -165,21 +231,37 @@ const VerifyCertificate: React.FC = () => {
                     </div>
                  </div>
 
-                 <div className="h-px bg-slate-200 w-full"></div>
+                 <div className={`h-px ${isPass ? 'bg-gradient-to-r from-transparent via-slate-200 to-transparent' : 'bg-slate-200'} w-full`}></div>
                  
-                 <div className="flex items-center justify-between">
+                 {/* Status Badge - Enhanced for Pass */}
+                 <div className="flex items-center justify-between relative z-10">
                     <div className="flex items-center gap-3">
-                       <Zap size={20} className={themeColors.textDark} />
+                       <Zap size={20} className={isPass ? 'text-amber-500' : themeColors.textDark} />
                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Status Kelulusan</p>
                     </div>
-                    <div className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2 ${themeColors.bgDark} text-white`}>
-                       <CheckCircle2 size={14} className={isPass ? 'text-emerald-300' : ''} /> {isPass ? "LULUS & KOMPETEN ✨" : "PESERTA PELATIHAN"}
-                    </div>
+                    
+                    {isPass ? (
+                      <div className="relative">
+                        {/* Gold glow */}
+                        <div className="absolute inset-0 bg-gradient-to-r from-amber-400 to-amber-600 rounded-full blur-md opacity-40"></div>
+                        {/* Badge */}
+                        <div className="relative px-6 py-2 bg-gradient-to-r from-amber-500 via-amber-600 to-amber-500 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2 text-white">
+                           <CheckCircle2 size={14} className="text-blue-100" /> LULUS & KOMPETEN ✨
+                        </div>
+                      </div>
+                    ) : (
+                      <div className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2 ${themeColors.bgDark} text-white`}>
+                         <CheckCircle2 size={14} /> PESERTA PELATIHAN
+                      </div>
+                    )}
                  </div>
               </div>
 
+              {/* Footer Buttons */}
               <div className="flex flex-col gap-4">
-                 <Link to="/" className="w-full py-5 bg-slate-900 text-white rounded-3xl font-black text-[10px] uppercase shadow-2xl active:scale-95 transition-all">KEMBALI KE PORTAL</Link>
+                 <Link to="/" className={`w-full py-5 ${isPass ? 'bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 hover:from-blue-800 hover:to-blue-800' : 'bg-slate-900'} text-white rounded-3xl font-black text-[10px] uppercase shadow-2xl active:scale-95 transition-all`}>
+                   KEMBALI KE PORTAL
+                 </Link>
                  <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.4em]">© SANUR AKADEMI INSPIRASI</p>
               </div>
            </>
