@@ -1,704 +1,316 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { User, Attendance } from '../types';
-import { supabase } from '../services/supabase.ts';
-import ReportTemplate, { formatDateToDMY } from '../ReportTemplate.tsx';
+import React from 'react';
+import { Attendance } from './types';
 import { 
-  GraduationCap, Search, X, Loader2, Check, Sparkles,
-  History, Trophy, Edit3, CheckCircle2, UserCheck, Layout, BookOpen, Printer,
-  Quote, BadgeCheck, ClipboardList, Star, Calendar, Clock, AlertCircle, Trash2,
-  FileEdit, ChevronRight, Zap, Info, Send, SendHorizonal, Save, AlertTriangle, FileDown, FileCheck,
-  Filter // ✅ TAMBAH INI KALAU BELUM ADA
+  GraduationCap, BadgeCheck, Layout, 
+  ClipboardList, Quote
 } from 'lucide-react';
 
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
-
-interface TeacherReportsInboxProps {
-  user: User;
-  logs: Attendance[];
-  studentAttendanceLogs: any[]; // ✅ TAMBAHAN BARU
-  studentAccounts: User[];
-  refreshAllData: () => Promise<void>;
+interface ReportTemplateProps {
+  reportLog: Attendance; 
+  allLogs: Attendance[]; 
+  studentAttendanceLogs: any[];
+  studentName: string;
 }
 
-const MilestoneView = ({ studentAttendanceLogs, studentName, packageId }: { studentAttendanceLogs: any[], studentName: string, packageId: string }) => {
-  const sNameNorm = studentName.toUpperCase().trim();
-  const pkgIdNorm = packageId.toUpperCase().trim();
-
-  const sortedLogs = [...(studentAttendanceLogs || [])] // ✅ TAMBAH FALLBACK [] KALO UNDEFINED
-    .filter(l => 
-      (l.packageid || '').toUpperCase().trim() === pkgIdNorm && 
-      (l.studentname || '').toUpperCase().trim() === sNameNorm
-    )
-    .sort((a,b) => (a.sessionnumber || 0) - (b.sessionnumber || 0)); // ✅ HAPUS TITIK KOMA KEDUA
-
-  return (
-    <div className="space-y-6">
-      <div className="flex items-center gap-3 text-slate-400 border-b border-slate-100 pb-2">
-        <ClipboardList size={16} />
-        <p className="text-[10px] font-black uppercase tracking-widest">Milestone Pembelajaran Siswa</p>
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {[1,2,3,4,5,6].map(num => {
-          const log = sortedLogs.find(l => l.sessionnumber === num); // ✅ LOWERCASE
-          return (
-            <div key={num} className={`p-4 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all ${log ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-transparent opacity-40'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black italic text-[10px] ${log ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-200 text-slate-400'}`}>0{num}</div>
-              <div className="text-center">
-                <p className="text-[9px] font-black text-slate-800 uppercase italic leading-none">Sesi {num}</p>
-                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter mt-1">{log ? formatDateToDMY(log.date) : 'Kosong'}</p>
-              </div>
-              {log && <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center text-emerald-600 shadow-sm"><Check size={12} strokeWidth={4}/></div>}
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
+export const formatDateToDMY = (dateStr: string) => {
+  if (!dateStr || !dateStr.includes('-')) return dateStr;
+  const parts = dateStr.split('-');
+  if (parts.length !== 3) return dateStr;
+  return `${parts[2]}/${parts[1]}/${parts[0]}`;
 };
 
-const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, studentAttendanceLogs, studentAccounts, refreshAllData }) => {
+export const SESSION_COLORS = ['text-blue-500', 'text-emerald-500', 'text-orange-500', 'text-rose-500', 'text-purple-500', 'text-amber-500'];
+
+const ASSETS = { 
+  LOGO: "https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png" 
+};
+
+const getDirectValue = (dataObj: any, defaultValue: any) => {
+  if (!dataObj || typeof dataObj !== 'object') return defaultValue;
+  const keys = Object.keys(dataObj);
+  if (keys.length === 0) return defaultValue;
+  return dataObj[keys[0]] || defaultValue;
+};
+
+const ReportTemplate: React.FC<ReportTemplateProps> = ({ 
+  reportLog, 
+  allLogs, 
+  studentAttendanceLogs,
+  studentName 
+}) => {
+  // 1. DATA GURU
+  const rawScores = getDirectValue(reportLog.studentScores, Array(6).fill(0));
+  const scores: number[] = Array.isArray(rawScores) ? rawScores : Array(6).fill(0);
   
-  // ✅ TAMBAH INI DI BARIS PALING ATAS
-  console.log('🔍 CHECK DATA MASUK:', {
-    studentAttendanceLogs,
-    isArray: Array.isArray(studentAttendanceLogs),
-    length: studentAttendanceLogs?.length
-  });
-
-  const [activeStep, setActiveStep] = useState<'ANTREAN' | 'WORKSPACE' | 'HISTORY'>('ANTREAN');
-  const [selectedPackage, setSelectedPackage] = useState<any | null>(null);
-  const [lastActionedId, setLastActionedId] = useState<string | null>(null);
-  const [activeDownloadId, setActiveDownloadId] = useState<string | null>(null);
-  const [downloadProgress, setDownloadProgress] = useState(0);
-  const [showMilestoneFor, setShowMilestoneFor] = useState<any | null>(null);
-  const [confirmReject, setConfirmReject] = useState<any | null>(null);
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [showErrors, setShowErrors] = useState(false);
-  const [reportForm, setReportForm] = useState({ sessions: Array.from({ length: 6 }, (_, i) => ({ num: i + 1, material: '', score: 90 })), narrative: '' });
+  const rawTopics = getDirectValue(reportLog.studentTopics, Array(6).fill("MATERI BELUM DIISI"));
+  const topics: string[] = Array.isArray(rawTopics) ? rawTopics : Array(6).fill("MATERI BELUM DIISI");
   
-  // FIXED: Menggunakan state ID agar loading tidak terjadi secara massal
-  const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
-  const [historySearchTerm, setHistorySearchTerm] = useState('');
-  const [selectedYear, setSelectedYear] = useState('2026'); // ✅ TAMBAH INI
-  const [selectedPeriode, setSelectedPeriode] = useState(1); // ✅ TAMBAH STATE PERIODE
-  const [historyPeriodeFilter, setHistoryPeriodeFilter] = useState<number | 'all'>('all'); // ✅ FILTER PERIODE UNTUK HISTORY
+  const nar = getDirectValue(reportLog.studentNarratives, "") || reportLog.reportNarrative || "ULASAN BELUM TERSEDIA.";
   
-  // Efek Highlight untuk kartu yang baru saja dikerjakan
-  useEffect(() => {
-    if (activeStep === 'HISTORY' && lastActionedId) {
-      setTimeout(() => {
-        const element = document.getElementById(`history-card-${lastActionedId}`);
-        if (element) {
-          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
-          element.classList.add('ring-4', 'ring-blue-500', 'ring-offset-8', 'scale-[1.03]', 'z-50');
-          setTimeout(() => {
-            element.classList.remove('ring-4', 'ring-blue-500', 'ring-offset-8', 'scale-[1.03]');
-          }, 4000);
-        }
-      }, 400);
-    }
-  }, [activeStep, lastActionedId]);
-
-  // ✅ Auto scroll modal ke tengah viewport (body bebas scroll)
-  useEffect(() => {
-    const hasModal = !!(
-      activeDownloadId || 
-      showMilestoneFor || 
-      confirmReject
-    );
-    
-    if (hasModal) {
-      // Tunggu dikit biar DOM modal udah ada, baru scroll
-      const timer = setTimeout(() => {
-        const modalElement = document.querySelector('[data-modal-container]');
-        if (modalElement) {
-          modalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 150);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [activeDownloadId, showMilestoneFor, confirmReject]);
-
-  const reportRequests = useMemo(() => {
-  const requests = logs.filter(l => 
-    (l.status === 'REPORT_REQUEST' || l.status === 'REPORT_PROCESSING') && 
-    l.teacherId === user.id &&
-    l.teacherId !== 'SISWA_MANDIRI' // ✅ FILTER ABSEN SISWA MANDIRI
-  );
-  return requests.filter(req => {
-      const studentNameInRequest = (req.studentsAttended?.[0] || '').toUpperCase().trim();
-      return studentAccounts.some(acc => acc.name.toUpperCase().trim() === studentNameInRequest);
-  });
-}, [logs, user.id, studentAccounts]);
-
-  const publishedReports = useMemo(() => {
-  const baseReports = logs.filter(l => 
-    (l.status === 'SESSION_LOG' || l.status === 'REPORT_READY') && 
-    l.sessionNumber === 6 && 
-    l.teacherId === user.id &&
-    l.teacherId !== 'SISWA_MANDIRI' &&
-    (l.packageId || '').startsWith('PAY-') &&
-    l.date.startsWith(selectedYear) // ✅ FILTER TAHUN
-  );
+  const totalScore = scores.reduce((a, b) => a + b, 0);
+  const avg = scores.length > 0 ? Math.round(totalScore / 6) : 0;
+  const isPass = avg >= 80;
   
-  // ✅ FILTER BERDASARKAN PERIODE
-  const filteredByPeriode = historyPeriodeFilter === 'all' 
-    ? baseReports 
-    : baseReports.filter(l => (l.periode || 1) === historyPeriodeFilter);
-    
-  // LOGIKA SORTING (sama kayak sebelumnya)
-  const sorted = [...filteredByPeriode].sort((a, b) => {
-      if (a.id === lastActionedId) return -1;
-      if (b.id === lastActionedId) return 1;
-      const dateCompare = new Date(b.date).getTime() - new Date(a.date).getTime();
-      if (dateCompare !== 0) return dateCompare;
-      return b.id.localeCompare(a.id);
-  });
+  const matpelMatch = reportLog.className?.match(/(.*) \((.*)\) - (.*)/);
+  const subject = matpelMatch ? matpelMatch[1] : (reportLog.className || "PROGRAM SANUR");
+  const level = matpelMatch ? matpelMatch[2] : (reportLog.level || 'BASIC');
+  
+  // ✅ AMBIL PERIODE DARI DATABASE
+  const periode = reportLog.periode || 1;
+  const startSession = (periode - 1) * 6 + 1;
+  const sessionNumbers = Array.from({ length: 6 }, (_, i) => startSession + i);
+  
+  // 2. DATA SISWA ONLY (Untuk Milestone)
+const sNameNorm = studentName.toUpperCase().trim();
+const pkgIdNorm = (reportLog.packageId || '').toUpperCase().trim();
 
-  if (!historySearchTerm.trim()) return sorted;
+const studentOnlyLogs = [...(studentAttendanceLogs || [])]
+  .filter(l => 
+    (l.packageid || '').toUpperCase().trim() === pkgIdNorm && 
+    (l.studentname || '').toUpperCase().trim() === sNameNorm
+  )
+  .sort((a, b) => (a.sessionnumber || 0) - (b.sessionnumber || 0));
 
-  const term = historySearchTerm.toLowerCase();
-  return sorted.filter(req => {
-      const sName = (req.studentsAttended?.[0] || '').toLowerCase();
-      const cName = (req.className || '').toLowerCase();
-      return sName.includes(term) || cName.includes(term);
-  });
-}, [logs, user.id, historySearchTerm, lastActionedId, selectedYear, historyPeriodeFilter]); // ✅ TAMBAH historyPeriodeFilter DI DEPENDENCY
+  // LOGIKA QR CODE
+  const statusLabel = isPass ? "LULUS & KOMPETEN" : "PESERTA PELATIHAN";
+  const verifyUrl = `https://sanur-verify.vercel.app/#/verify?id=${reportLog.id}`;
+  const finalQrData = verifyUrl;
 
-  const handleOpenWorkspace = (req: any, isEdit: boolean = false) => {
-    setSelectedPackage(req);
-    setIsEditMode(isEdit);
-    setShowErrors(false);
-    
-    // ✅ LOAD PERIODE DARI DATABASE
-    const savedPeriode = req.periode || 1;
-    setSelectedPeriode(savedPeriode);
-    
-    const sName = req.studentsAttended?.[0] || 'SISWA';
-    if (isEdit || req.status === 'REPORT_READY') {
-      const existingTopics = (req.studentTopics?.[sName] || Array(6).fill('')) as string[];
-      const existingScores = (req.studentScores?.[sName] || Array(6).fill(90)) as number[];
-      const existingNarrative = req.studentNarratives?.[sName] || req.reportNarrative || '';
-      setReportForm({ sessions: Array.from({ length: 6 }, (_, i) => ({ num: i + 1, material: existingTopics[i] || '', score: existingScores[i] || 90 })), narrative: existingNarrative });
-    } else {
-      setReportForm({ sessions: Array.from({ length: 6 }, (_, i) => ({ num: i + 1, material: '', score: 90 })), narrative: '' });
-    }
-    setActiveStep('WORKSPACE');
+  // ✅ HALAMAN 1: LANDSCAPE (1123x794px)
+  const PAGE_LANDSCAPE: React.CSSProperties = {
+    width: '1123px',
+    height: '794px',
+    backgroundColor: 'white',
+    position: 'relative',
+    overflow: 'hidden',
+    boxSizing: 'border-box',
+    display: 'flex',
+    flexDirection: 'column'
   };
 
-  const handleAcceptRequest = async (req: any) => {
-    setActionLoadingId(req.id);
-    try {
-      await supabase.from('attendance').update({ status: 'REPORT_PROCESSING' }).eq('id', req.id);
-      await refreshAllData();
-      handleOpenWorkspace(req, false);
-    } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
-  };
-
-  const handleRejectRequest = async () => {
-    if (!confirmReject) return;
-    setActionLoadingId(confirmReject.id);
-    try {
-      await supabase.from('attendance').update({ status: 'REPORT_REJECTED' }).eq('id', confirmReject.id);
-      await refreshAllData();
-      setConfirmReject(null);
-    } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
-  };
-
-  const avgScore = useMemo(() => {
-    const total = reportForm.sessions.reduce((acc, s) => acc + (Number(s.score) || 0), 0);
-    return Math.round(total / 6);
-  }, [reportForm.sessions]);
-
-  const handleSaveReportToReady = async () => {
-    const isMaterialEmpty = reportForm.sessions.some(s => !s.material.trim());
-    const isNarrativeEmpty = !reportForm.narrative.trim();
-
-    if (isMaterialEmpty || isNarrativeEmpty) {
-      setShowErrors(true);
-      const errEl = document.getElementById('error-notif-required');
-      if (errEl) errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return alert("Waduh Kak! Materi sesi dan Narasi Evaluasi wajib diisi yaa agar rapot siswa sempurna ✨");
-    }
-
-    setActionLoadingId(selectedPackage.id);
-    try {
-      const sName = selectedPackage.studentsAttended?.[0] || 'SISWA';
-      const topics = reportForm.sessions.map(s => (s.material || '').toUpperCase());
-      const scores = reportForm.sessions.map(s => Number(s.score) || 0);
-      const payload = { 
-        status: 'REPORT_READY', 
-        sessionnumber: 6, 
-        studenttopics: { [sName]: topics }, 
-        studentscores: { [sName]: scores }, 
-        studentnarratives: { [sName]: reportForm.narrative }, 
-        reportnarrative: reportForm.narrative, 
-        periode: selectedPeriode, // ✅ SIMPAN PERIODE
-        date: isEditMode ? selectedPackage.date : new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()) 
-      };
-      await supabase.from('attendance').update(payload).eq('id', selectedPackage.id);
-      await refreshAllData();
-      
-      setLastActionedId(selectedPackage.id);
-      setSelectedPackage(null);
-      setSelectedPeriode(1); // ✅ RESET PERIODE
-      setActiveStep('HISTORY');
-    } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
-  };
-
-  const handleSendReportToStudent = async (req: any) => {
-    setActionLoadingId(req.id);
-    try {
-      await supabase.from('attendance').update({ status: 'SESSION_LOG' }).eq('id', req.id);
-      await refreshAllData();
-      setLastActionedId(req.id); // Set sebagai yang terakhir diaksi agar loncat ke depan
-      alert("Rapot Berhasil Dikirim ke Siswa! ✨");
-    } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
-  };
-
-  const handleDownloadPDF = async (req: any) => {
-    setDownloadProgress(5);
-    setActiveDownloadId(req.id);
-    
-    try {
-      // 🎯 HALAMAN 1: LANDSCAPE (Sertifikat Horizontal)
-      const pdf = new jsPDF({ orientation: 'l', unit: 'px', format: 'a4', hotfixes: ["px_rendering"] });
-      const pw1 = pdf.internal.pageSize.getWidth();
-      const ph1 = pdf.internal.pageSize.getHeight();
-      const captureOptionsLandscape = { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: 1123, height: 794, logging: false };
-
-      setDownloadProgress(20);
-      const el1 = document.getElementById(`cert-render-${req.id}`);
-      if (el1) {
-        const canvas1 = await html2canvas(el1, captureOptionsLandscape);
-        const img1 = canvas1.toDataURL('image/png', 1.0);
-        pdf.addImage(img1, 'PNG', 0, 0, pw1, ph1, undefined, 'FAST');
-      }
-      setDownloadProgress(45);
-      
-      // 🎯 HALAMAN 2: PORTRAIT (Transkrip Nilai)
-      pdf.addPage('a4', 'p');
-      const pw2 = pdf.internal.pageSize.getWidth();
-      const ph2 = pdf.internal.pageSize.getHeight();
-      const captureOptionsPortrait = { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: 794, height: 1123, logging: false };
-      
-      const el2 = document.getElementById(`transcript-render-${req.id}`);
-      if (el2) {
-        const canvas2 = await html2canvas(el2, captureOptionsPortrait);
-        const img2 = canvas2.toDataURL('image/png', 1.0);
-        pdf.addImage(img2, 'PNG', 0, 0, pw2, ph2, undefined, 'FAST');
-      }
-      setDownloadProgress(75);
-      
-      // 🎯 HALAMAN 3: PORTRAIT (Milestone)
-      pdf.addPage('a4', 'p');
-      const el3 = document.getElementById(`milestone-render-${req.id}`);
-      if (el3) {
-        const canvas3 = await html2canvas(el3, captureOptionsPortrait);
-        const img3 = canvas3.toDataURL('image/png', 1.0);
-        pdf.addImage(img3, 'PNG', 0, 0, pw2, ph2, undefined, 'FAST');
-      }
-      setDownloadProgress(95);
-      
-      pdf.save(`Rapot_Sanur_${req.studentsAttended?.[0]}.pdf`);
-      setDownloadProgress(100);
-      
-      await new Promise(r => setTimeout(r, 500));
-    } catch (e) { 
-      alert("Gagal proses PDF."); 
-    } finally { 
-      setActiveDownloadId(null); 
-      setDownloadProgress(0);
-    }
+  // HALAMAN 2 & 3: PORTRAIT (794x1123px)
+  const PAGE_PORTRAIT: React.CSSProperties = {
+    width: '794px',
+    height: '1123px',
+    backgroundColor: 'white',
+    position: 'relative',
+    overflow: 'hidden',
+    boxSizing: 'border-box',
+    display: 'flex',
+    flexDirection: 'column'
   };
 
   return (
-    <>
-      <style>{`
-        @keyframes modalFadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
+    <div id={`report-pabrik-${reportLog.id}`} style={{ width: '1123px' }}>
+      
+      {/* ✅ HALAMAN 1: SERTIFIKAT LANDSCAPE - SIMPLIFIED */}
+      <div id={`cert-render-${reportLog.id}`} style={{ ...PAGE_LANDSCAPE, border: `25px double ${isPass ? '#1e3a8a' : '#ea580c'}` }}>
+        <div style={{ width: '100%', height: '100%', border: '4px solid #f1f5f9', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', position: 'relative', padding: '50px 80px' }}>
+          
+          {/* HEADER - LOGO AJA */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '50px' }}>
+            <img src={ASSETS.LOGO} style={{ maxWidth: '240px', maxHeight: '80px', objectFit: 'contain' }} />
+          </div>
 
-        @keyframes modalZoomIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-      `}</style>
+          {/* KONTEN UTAMA */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
+            <h2 style={{ fontSize: '38px', fontFamily: 'serif', fontStyle: 'italic', color: isPass ? '#1e3a8a' : '#ea580c', margin: '0 0 25px 0' }}>
+              {isPass ? 'Sertifikat Kelulusan' : 'Capaian Pembelajaran'}
+            </h2>
+            
+            <p style={{ fontSize: '14px', fontFamily: 'serif', fontStyle: 'italic', color: '#64748b', margin: '0 0 15px 0' }}>
+              Diberikan kepada:
+            </p>
+            
+            <div style={{ display: 'inline-block', marginBottom: '40px' }}>
+              <h3 style={{ fontSize: '34px', fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0, lineHeight: 1.1 }}>
+                {studentName.toUpperCase()}
+              </h3>
+              <div style={{ width: '100%', height: '4px', backgroundColor: isPass ? '#dbeafe' : '#ffedd5', marginTop: '10px', borderRadius: '10px' }}></div>
+            </div>
+            
+            <p style={{ fontSize: '12px', fontFamily: 'serif', fontStyle: 'italic', color: '#475569', lineHeight: '1.7', margin: '0 0 40px 0', padding: '0 100px' }}>
+              {isPass 
+                ? "Telah menunjukkan kompetensi luar biasa dan berhasil menyelesaikan seluruh kurikulum pelatihan intensif dengan hasil memuaskan pada program:" 
+                : "Telah berpartisipasi aktif dan menyelesaikan modul pelatihan intensif dengan dedikasi tinggi guna meningkatkan kompetensi pada program:"}
+            </p>
 
-      <div className="max-w-7xl mx-auto space-y-12 pb-40 px-4 animate-in fade-in duration-700">
-      {/* LOADING MODAL TENGAH - DENGAN REAL PROGRESS BAR */}
-      {activeDownloadId && (
-        <div data-modal-container className="fixed inset-0 z-[300000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-           <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-12 shadow-2xl flex flex-col items-center text-center space-y-8 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-              <div className="w-20 h-20 bg-blue-600 text-white rounded-[2.2rem] flex items-center justify-center shadow-xl animate-bounce">
-                <FileDown size={40} />
-              </div>
-              <div className="space-y-3">
-                <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Memproses PDF</h4>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-relaxed px-4">Mengonversi sertifikat & transkrip... ✨</p>
-              </div>
-              
-              <div className="w-full space-y-3">
-                <div className="flex justify-between items-center px-1">
-                   <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Progress</span>
-                   <span className="text-[11px] font-black text-blue-600 italic">{downloadProgress}%</span>
-                </div>
-                <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 shadow-inner">
-                   <div 
-                     className="h-full bg-blue-600 rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(37,99,235,0.3)]" 
-                     style={{ width: `${downloadProgress}%` }}
-                   ></div>
-                </div>
-              </div>
-           </div>
+            {/* ✅ KOTAK HANYA UNTUK SUBJECT & LEVEL */}
+            <div style={{ background: isPass ? 'linear-gradient(135deg, #1e3a8a, #0f172a)' : 'linear-gradient(135deg, #ea580c, #0f172a)', width: '700px', padding: '30px 20px', borderRadius: '35px', border: '4px solid white', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 12px 30px -8px rgba(0,0,0,0.15)', marginBottom: '50px' }}>
+               <p style={{ fontSize: '22px', fontWeight: '900', color: 'white', textTransform: 'uppercase', fontStyle: 'italic', margin: 0, lineHeight: 1.2 }}>{subject}</p>
+               <div style={{ width: '100%', height: '1px', backgroundColor: 'rgba(255,255,255,0.2)', margin: '12px 0' }}></div>
+               <p style={{ fontSize: '16px', fontWeight: '900', color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.3em', margin: 0 }}>LEVEL {level}</p>
+            </div>
+          </div>
+
+          {/* ✅ FOOTER - CUMA TANGGAL TERBIT + QR CODE */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '30px', borderTop: '2px solid #f1f5f9' }}>
+            <div>
+              <p style={{ fontSize: '9px', fontWeight: '900', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '3px' }}>Tanggal Terbit</p>
+              <p style={{ fontSize: '13px', fontWeight: '900', color: '#64748b', fontStyle: 'italic' }}>{formatDateToDMY(reportLog.date)}</p>
+            </div>
+            <div style={{ textAlign: 'center' }}>
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(finalQrData)}`} 
+                style={{ width: '80px', height: '80px', border: '3px solid #f1f5f9', borderRadius: '12px' }} 
+              />
+              <p style={{ fontSize: '7px', fontWeight: '900', color: '#cbd5e1', textTransform: 'uppercase', marginTop: '5px' }}>Verifikasi</p>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ fontSize: '9px', fontWeight: '900', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '3px' }}>ID Sertifikat</p>
+              <p style={{ fontSize: '11px', fontWeight: '900', color: '#64748b', fontStyle: 'italic' }}>{reportLog.id.substring(0, 12).toUpperCase()}</p>
+            </div>
+          </div>
         </div>
-      )}
-
-      <header className="flex flex-col md:flex-row md:items-end justify-between gap-10 px-2">
-        <div className="space-y-4">
-           <h2 className="text-4xl font-black text-slate-800 tracking-tight leading-none uppercase italic">Portal <span className="text-orange-600">Rapot</span></h2>
-           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Terbitkan Sertifikat & Rapot Digital Siswa ✨</p>
-        </div>
-      </header>
-
-      <div className="flex bg-slate-100 p-2 rounded-full w-full max-w-xl mx-auto shadow-inner border border-slate-100">
-         <button onClick={() => setActiveStep('ANTREAN')} className={`flex-1 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeStep === 'ANTREAN' ? 'bg-white text-orange-600 shadow-md' : 'text-slate-400'}`}>Antrean ({reportRequests.length})</button>
-         <button onClick={() => setActiveStep('WORKSPACE')} disabled={!selectedPackage} className={`flex-1 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeStep === 'WORKSPACE' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-400 disabled:opacity-30'}`}>Workspace</button>
-         <button onClick={() => setActiveStep('HISTORY')} className={`flex-1 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeStep === 'HISTORY' ? 'bg-white text-emerald-600 shadow-md' : 'text-slate-400'}`}>Histori</button>
       </div>
 
-      {activeStep === 'HISTORY' && (
-  <div className="max-w-5xl mx-auto">
-     <div className="flex items-center gap-3 bg-white border-2 border-slate-100 rounded-3xl shadow-xl p-2 pr-3">
-        {/* Search Input */}
-        <div className="flex-1 relative">
-           <div className="absolute left-6 top-1/2 -translate-y-1/2 text-emerald-500"><Search size={18} /></div>
-           <input 
-              type="text" 
-              placeholder="CARI SISWA / KELAS..." 
-              value={historySearchTerm} 
-              onChange={(e) => setHistorySearchTerm(e.target.value.toUpperCase())} 
-              className="w-full pl-14 pr-4 py-4 bg-transparent font-black text-[10px] uppercase outline-none" 
-           />
+      {/* ✅ HALAMAN 2: TRANSKRIP (PORTRAIT) - PERIODE HIGHLIGHTED */}
+      <div id={`transcript-render-${reportLog.id}`} style={{ ...PAGE_PORTRAIT, padding: '70px 60px' }}>
+        <div style={{ position: 'absolute', top: 0, right: 0, width: '350px', height: '350px', backgroundColor: '#eff6ff', borderRadius: '999px', marginRight: '-175px', marginTop: '-175px', opacity: 0.4 }}></div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px', position: 'relative', zIndex: 10 }}>
+          <div style={{ width: '52px', height: '52px', backgroundColor: '#0f172a', color: 'white', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(6deg)' }}><Layout size={26}/></div>
+          <div>
+            <h1 style={{ fontSize: '34px', fontWeight: '900', fontStyle: 'italic', color: '#1e293b', textTransform: 'uppercase', letterSpacing: '-0.05em', lineHeight: 1 }}>Transkrip <span style={{ color: isPass ? '#2563eb' : '#ea580c' }}>Nilai</span></h1>
+          </div>
+        </div>
+        
+        {/* ✅ PERIODE HIGHLIGHTED */}
+        <div style={{ backgroundColor: isPass ? '#eff6ff' : '#fff7ed', padding: '16px 30px', borderRadius: '25px', marginBottom: '35px', position: 'relative', zIndex: 10, border: `3px solid ${isPass ? '#dbeafe' : '#ffedd5'}` }}>
+          <p style={{ fontSize: '13px', fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', textTransform: 'uppercase', letterSpacing: '0.3em', textAlign: 'center', margin: 0 }}>
+            📚 PERIODE {periode} — SESI {sessionNumbers[0]} s/d {sessionNumbers[5]}
+          </p>
         </div>
 
-        {/* Divider */}
-        <div className="w-px h-8 bg-slate-200"></div>
-
-        {/* Filter Tahun - Integrated */}
-        <div className="relative group shrink-0">
-           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500"><Filter size={14} /></div>
-           <select 
-              value={selectedYear} 
-              onChange={(e) => setSelectedYear(e.target.value)} 
-              className="pl-9 pr-3 py-3 bg-transparent font-black text-[10px] uppercase outline-none appearance-none cursor-pointer min-w-[100px] text-center"
-           >
-              {Array.from({ length: 11 }, (_, i) => (2024 + i).toString()).map(y => (
-                <option key={y} value={y}>{y}</option>
+        <div style={{ backgroundColor: 'white', borderRadius: '35px', border: '3px solid #f1f5f9', overflow: 'hidden', marginBottom: '30px', position: 'relative', zIndex: 10 }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr style={{ backgroundColor: '#0f172a', color: 'white' }}>
+                <th style={{ padding: '12px', textAlign: 'center', fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em', width: '90px', borderRight: '1px solid rgba(255,255,255,0.1)' }}>Sesi</th>
+                <th style={{ padding: '12px', textAlign: 'left', fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Materi & Modul Kurikulum</th>
+                <th style={{ padding: '12px', textAlign: 'center', fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em', width: '120px' }}>Nilai</th>
+              </tr>
+            </thead>
+            <tbody>
+              {/* ✅ GANTI NOMOR SESI JADI DINAMIS */}
+              {sessionNumbers.map((sessionNum, i) => (
+                <tr key={i} style={{ borderBottom: '1px solid #f1f5f9', height: '78px' }}>
+                  <td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', verticalAlign: 'middle' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
+                        <span style={{ fontWeight: '900', color: '#e2e8f0', fontSize: '20px', fontStyle: 'italic' }}>{sessionNum < 10 ? `0${sessionNum}` : sessionNum}</span>
+                    </div>
+                  </td>
+                  <td style={{ padding: '0 35px', verticalAlign: 'middle' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+                        <span style={{ fontWeight: '900', color: '#1e293b', fontSize: '20px', textTransform: 'uppercase', fontStyle: 'italic', letterSpacing: '-0.01em', lineHeight: 1.1, display: 'block' }}>{topics[i] || "MATERI PEMBELAJARAN"}</span>
+                    </div>
+                  </td>
+                  <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', height: '100%' }}>
+                      <span style={{ fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', fontSize: '20px', fontStyle: 'italic' }}>{scores[i] || 0}</span>
+                      <span style={{ color: '#cbd5e1', fontWeight: '700', fontSize: '11px' }}>/100</span>
+                    </div>
+                  </td>
+                </tr>
               ))}
-           </select>
+            </tbody>
+          </table>
         </div>
 
-        {/* Divider */}
-        <div className="w-px h-8 bg-slate-200"></div>
-
-        {/* ✅ FILTER PERIODE BARU - Integrated */}
-        <div className="relative group shrink-0">
-           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500"><Calendar size={14} /></div>
-           <select 
-              value={historyPeriodeFilter} 
-              onChange={(e) => setHistoryPeriodeFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))} 
-              className="pl-9 pr-3 py-3 bg-transparent font-black text-[10px] uppercase outline-none appearance-none cursor-pointer min-w-[130px] text-center"
-           >
-              <option value="all">SEMUA PERIODE</option>
-              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-                <option key={num} value={num}>
-                  PERIODE {num}
-                </option>
-              ))}
-           </select>
+        {/* Footer Transkrip */}
+        <div style={{ padding: '30px 40px', backgroundColor: '#0f172a', borderRadius: '42px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
+          <div style={{ position: 'absolute', top: 0, right: 0, width: '230px', height: '230px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '999px', marginRight: '-115px', marginTop: '-115px' }}></div>
+          <div style={{ position: 'relative', zIndex: 10 }}>
+            <p style={{ fontSize: '9px', fontWeight: '900', color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.5em', marginBottom: '4px' }}>Evaluasi Kumulatif</p>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px' }}>
+              <p style={{ fontSize: '15px', fontWeight: '900', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>RATA-RATA:</p>
+              <h4 style={{ fontSize: '60px', fontWeight: '900', fontStyle: 'italic', letterSpacing: '-0.05em' }}>{avg}</h4>
+              <span style={{ fontSize: '18px', color: 'rgba(255,255,255,0.3)', fontWeight: '900', fontStyle: 'italic' }}>/ 100</span>
+            </div>
+          </div>
+          
+          <div style={{ 
+            backgroundColor: 'rgba(255,255,255,0.1)', 
+            padding: '18px 24px', 
+            borderRadius: '25px', 
+            border: '1px solid rgba(255,255,255,0.2)', 
+            borderBottom: `6px solid ${isPass ? '#10b981' : '#f97316'}`,
+            textAlign: 'center', 
+            minWidth: '190px', 
+            position: 'relative', 
+            zIndex: 10 
+          }}>
+            <p style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#93c5fd', marginBottom: '5px' }}>Status Capaian</p>
+            <p style={{ fontSize: '17px', fontWeight: '900', fontStyle: 'italic', textTransform: 'uppercase' }}>{isPass ? 'KOMPETEN' : 'REMEDIAL'}</p>
+          </div>
         </div>
-     </div>
-  </div>
-)}
+      </div>
 
-      {activeStep === 'ANTREAN' && (
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            {reportRequests.map((req, i) => (
-              <div key={i} className="bg-white p-12 md:p-14 rounded-[4rem] shadow-xl border border-slate-100 flex flex-col justify-between hover:border-orange-500 transition-all">
-                 <div>
-                   <div className="flex justify-between items-start mb-10">
-                      <div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-3xl flex items-center justify-center shadow-inner"><GraduationCap size={40}/></div>
-                      <span className="px-6 py-2 bg-orange-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-md">KLAIM BARU</span>
-                   </div>
-                   <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-2 Kalimat leading-tight">{req.studentsAttended?.[0]}</h4>
-                   <p className="text-[11px] font-bold text-blue-600 uppercase mb-10 Kalimat leading-relaxed">{req.className}</p>
-                   <button onClick={() => setShowMilestoneFor(req)} className="w-full py-5 mb-5 bg-slate-50 text-slate-500 rounded-3xl font-black text-[10px] uppercase flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all border border-transparent shadow-sm"><History size={18}/> LIHAT MILESTONE</button>
-                 </div>
-                 <div className="space-y-4">
-                    <button 
-                      onClick={() => handleAcceptRequest(req)} 
-                      disabled={!!actionLoadingId}
-                      className="w-full py-6 bg-slate-900 text-white rounded-[2rem] font-black text-[12px] uppercase tracking-widest shadow-xl active:scale-95 transition-all hover:bg-black flex items-center justify-center gap-3"
-                    >
-                      {actionLoadingId === req.id ? <Loader2 className="animate-spin" size={20} /> : 'TERIMA & ISI RAPOT ✍️'}
-                    </button>
-                    <button 
-                      onClick={() => setConfirmReject(req)} 
-                      disabled={!!actionLoadingId}
-                      className="w-full py-5 bg-rose-50 text-rose-500 rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all border border-rose-100"
-                    >
-                      TOLAK PERMINTAAN
-                    </button>
-                 </div>
-              </div>
-            ))}
-         </div>
-      )}
-      
-      {activeStep === 'WORKSPACE' && selectedPackage && (
-         <div className="bg-white rounded-[4rem] shadow-2xl border-4 border-blue-600 overflow-hidden animate-in zoom-in space-y-0">
-            <div className="p-10 bg-blue-600 text-white flex flex-col md:flex-row justify-between items-center gap-6">
-               <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md shadow-inner shrink-0 rotate-3"><GraduationCap size={32} /></div>
-                  <div className="text-center md:text-left"><h3 className="text-2xl font-black uppercase italic leading-none">{isEditMode ? 'Edit Rapot Siswa' : 'Ruang Kerja Penilaian'}</h3><p className="text-[11px] font-black uppercase tracking-widest mt-2 opacity-80">{selectedPackage.studentsAttended?.[0]} — {selectedPackage.className}</p></div>
-               </div>
-               <div className="flex items-center gap-4">
-                  {/* ✅ DROPDOWN PERIODE */}
-                  <div className="bg-white/20 backdrop-blur-md px-6 py-3 rounded-2xl flex items-center gap-3 border border-white/30">
-                     <label className="text-[10px] font-black uppercase tracking-widest opacity-80">Periode:</label>
-                     <select 
-                        value={selectedPeriode} 
-                        onChange={(e) => setSelectedPeriode(Number(e.target.value))}
-                        className="bg-white text-blue-600 px-4 py-2 rounded-xl font-black text-[11px] uppercase outline-none cursor-pointer shadow-inner"
-                     >
-                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-                           <option key={num} value={num}>
-                              {num} (Sesi {(num - 1) * 6 + 1}-{num * 6})
-                           </option>
-                        ))}
-                     </select>
-                  </div>
-                  <button onClick={() => { setSelectedPackage(null); setIsEditMode(false); setActiveStep('ANTREAN'); setShowErrors(false); setSelectedPeriode(1); }} className="p-4 bg-white/20 rounded-2xl hover:bg-white/40 transition-all"><X/></button>
-               </div>
-            </div>
-            <div className="p-8 md:p-14 space-y-16">
-               <section className="space-y-4">
-   <div className="flex items-center gap-3 text-blue-600"><History size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Langkah Pembelajaran (Milestone)</h4></div>
-   <div className="bg-slate-50 p-8 rounded-[3rem] border border-slate-100">
-      {/* ✅ TAMBAH PENGECEKAN INI */}
-      {studentAttendanceLogs && Array.isArray(studentAttendanceLogs) ? (
-         <MilestoneView 
-            studentAttendanceLogs={studentAttendanceLogs} 
-            studentName={selectedPackage.studentsAttended?.[0] || ''} 
-            packageId={selectedPackage.packageId} 
-         />
-      ) : (
-         <div className="text-center py-8">
-            <p className="text-slate-400 text-sm font-bold">Loading milestone data...</p>
-         </div>
-      )}
-   </div>
-</section>
-               <section className="flex flex-col items-center">
-                  <div className="bg-slate-900 p-12 rounded-[4rem] text-white text-center shadow-2xl relative overflow-hidden w-full max-w-lg">
-                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
-                     <p className="text-[10px] uppercase font-black text-slate-400 mb-2 relative z-10">Skor Rata-Rata Akhir</p>
-                     <h4 className="text-8xl font-black italic text-emerald-400 relative z-10">{avgScore}</h4>
-                     <p className="text-[11px] font-black uppercase tracking-widest mt-6 text-emerald-500 opacity-60 relative z-10">{avgScore >= 80 ? 'KOMPETENSI: LULUS' : 'KOMPETENSI: REMEDIAL'}</p>
-                  </div>
-               </section>
-               <section className="space-y-6">
-                  <div className="flex items-center gap-3 text-blue-600"><BookOpen size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Detail Materi & Nilai Tiap Sesi - Periode {selectedPeriode}</h4></div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                     {reportForm.sessions.map((s, i) => {
-                        const actualSessionNum = (selectedPeriode - 1) * 6 + s.num;
-                        return (
-                        <div key={i} className={`flex flex-col gap-4 p-8 rounded-[2.5rem] border-2 transition-all shadow-inner ${showErrors && !s.material.trim() ? 'border-rose-500 bg-rose-50/30 ring-2 ring-rose-200' : 'border-transparent bg-slate-50 focus-within:border-blue-500'}`}>
-                           <div className="flex justify-between items-center border-b border-slate-200 pb-4">
-                              <span className="w-10 h-10 bg-white rounded-xl flex items-center justify-center font-black text-blue-600 italic shadow-sm shrink-0">{actualSessionNum < 10 ? `0${actualSessionNum}` : actualSessionNum}</span>
-                              <div className="text-right"><label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Skor Sesi</label><input type="number" value={s.score} onChange={e => { const n = [...reportForm.sessions]; n[i].score = parseInt(e.target.value) || 0; setReportForm({...reportForm, sessions: n}); }} className="w-16 bg-transparent text-right font-black text-blue-600 text-2xl outline-none" /></div>
-                           </div>
-                           <div className="space-y-2">
-                              <div className="flex justify-between items-center ml-2">
-                                <label className="text-[8px] font-black text-slate-400 uppercase Kalimat tracking-widest flex items-center gap-1">
-                                  Materi Pembelajaran 
-                                  <span className={`font-black px-1.5 py-0.5 rounded-md text-[6px] border ${showErrors && !s.material.trim() ? 'bg-rose-500 text-white border-rose-600 animate-pulse' : 'bg-rose-50 text-rose-500 border-rose-100'}`}>WAJIB DIISI ✨</span>
-                                </label>
-                                <span className={`text-[7px] font-black ${s.material.length >= 35 ? 'text-rose-500' : 'text-slate-300'}`}>{s.material.length}/35</span>
-                              </div>
-                              <input 
-                                type="text" 
-                                placeholder="MISAL: PENGENALAN TOOLS..." 
-                                value={s.material} 
-                                maxLength={35} 
-                                onChange={e => { 
-                                  const n = [...reportForm.sessions]; 
-                                  n[i].material = e.target.value; 
-                                  setReportForm({...reportForm, sessions: n}); 
-                                }} 
-                                className={`w-full px-5 py-3 rounded-xl font-black uppercase text-[10px] outline-none transition-all border ${showErrors && !s.material.trim() ? 'bg-rose-50 border-rose-500 placeholder:text-rose-300' : 'bg-white border-slate-200 focus:border-blue-500'}`} 
-                              />
-                           </div>
-                        </div>
-                     )})}
-                  </div>
-               </section>
-               <section className="space-y-6">
-                  <div className="flex items-center gap-3 text-blue-600">
-                    <Quote size={20} />
-                    <h4 className="text-xs font-black uppercase tracking-widest">Narasi Evaluasi</h4>
-                    <span className={`font-black px-2 py-0.5 rounded-full text-[7px] border uppercase tracking-widest ${showErrors && !reportForm.narrative.trim() ? 'bg-rose-500 text-white border-rose-600 animate-pulse' : 'bg-rose-50 text-rose-500 border-rose-100'}`}>WAJIB DIISI KAK! ✨</span>
-                  </div>
-                  <div className={`p-10 rounded-[3rem] border-2 transition-all shadow-inner space-y-4 ${showErrors && !reportForm.narrative.trim() ? 'border-rose-500 bg-rose-50/30 ring-2 ring-rose-200' : 'border-slate-100 bg-slate-50'}`}>
-                     <div className="flex justify-end pr-8 mb-[-2rem] Kalimat relative z-10"><span className={`text-[10px] font-black px-3 py-1 rounded-full ${reportForm.narrative.length >= 200 ? 'bg-rose-500 text-white' : 'bg-blue-600 text-white shadow-md'}`}>{reportForm.narrative.length}/200</span></div>
-                     <textarea 
-                        placeholder="TULISKAN CATATAN PERKEMBANGAN SISWA... ✨" 
-                        value={reportForm.narrative} 
-                        maxLength={200} 
-                        onChange={e => setReportForm({...reportForm, narrative: e.target.value})} 
-                        rows={6} 
-                        className={`w-full p-10 bg-white rounded-[2rem] font-bold text-sm outline-none border-2 transition-all ${showErrors && !reportForm.narrative.trim() ? 'border-rose-500 shadow-rose-100' : 'border-transparent focus:border-blue-500 shadow-sm'}`} 
-                     />
-                  </div>
-               </section>
-               <section className="pt-10">
-                  <button 
-                    id="error-notif-required" 
-                    onClick={handleSaveReportToReady} 
-                    disabled={!!actionLoadingId} 
-                    className="w-full py-10 bg-blue-600 text-white rounded-[3rem] font-black text-[14px] uppercase tracking-[0.4em] shadow-2xl hover:bg-blue-700 transition-all flex items-center justify-center gap-5"
-                  >
-                     {actionLoadingId === selectedPackage.id ? <Loader2 size={32} className="animate-spin" /> : <><Save size={32} /> SIMPAN HASIL PENILAIAN ✨</>}
-                  </button>
-               </section>
-            </div>
-         </div>
-      )}
-
-      {activeStep === 'HISTORY' && (
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-            {publishedReports.map((req, i) => {
-               const sName = req.studentsAttended?.[0] || 'SISWA';
-               const scores = (Array.isArray(req.studentScores?.[sName]) ? req.studentScores?.[sName] : Array(6).fill(90)) as number[];
-               const avg = Math.round(scores.reduce((a:number,b:number)=>a+b,0)/6);
-               const isPass = avg >= 80;
-               const isReadyToSend = req.status === 'REPORT_READY';
-               const isNewlyActioned = req.id === lastActionedId;
-
+      {/* ✅ HALAMAN 3: MILESTONE (PORTRAIT) - TANPA TULISAN PERIODE */}
+      <div id={`milestone-render-${reportLog.id}`} style={{ ...PAGE_PORTRAIT, padding: '70px 80px' }}>
+        <div style={{ position: 'absolute', top: 0, left: 0, width: '350px', height: '350px', backgroundColor: isPass ? '#eff6ff' : '#fff7ed', borderRadius: '999px', marginLeft: '-175px', marginTop: '-175px', opacity: 0.5 }}></div>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '35px', position: 'relative', zIndex: 10 }}>
+          <div style={{ width: '52px', height: '52px', backgroundColor: isPass ? '#1e3a8a' : '#7c2d12', color: 'white', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(6deg)' }}><BadgeCheck size={26}/></div>
+          <div>
+            <h1 style={{ fontSize: '34px', fontWeight: '900', fontStyle: 'italic', color: '#1e293b', textTransform: 'uppercase', letterSpacing: '-0.05em' }}>Langkah <span style={{ color: isPass ? '#2563eb' : '#ea580c' }}>Pembelajaran</span></h1>
+          </div>
+        </div>
+        
+        <div style={{ marginBottom: '40px', position: 'relative', zIndex: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '18px', color: isPass ? '#2563eb' : '#ea580c', borderBottom: '3px solid #f8fafc', paddingBottom: '10px', marginBottom: '25px' }}>
+            <ClipboardList size={22}/>
+            <h3 style={{ fontSize: '15px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.4em' }}>Log Presensi Mandiri Siswa</h3>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {/* ✅ GANTI NOMOR SESI JADI DINAMIS (TANPA TULISAN PERIODE) */}
+            {sessionNumbers.map((sessionNum, idx) => { 
+               const studentLog = studentOnlyLogs.find(x => x.sessionnumber === sessionNum);
                return (
-                  <div 
-                    key={i} 
-                    id={`history-card-${req.id}`}
-                    className={`bg-white p-12 md:p-14 rounded-[4rem] shadow-xl border-2 transition-all flex flex-col relative ${isNewlyActioned ? 'border-blue-500 shadow-blue-100' : isReadyToSend ? 'border-amber-400 bg-amber-50/10' : 'border-slate-100 hover:border-emerald-500'}`}
-                  >
-                     {isNewlyActioned && (
-                        <div className="absolute -top-3 -right-3 px-6 py-2 bg-blue-600 text-white rounded-full font-black text-[9px] uppercase tracking-widest shadow-xl animate-bounce z-20">
-                           TERBARU ✨
-                        </div>
-                     )}
-                     <div className="flex justify-between items-start mb-10">
-                        <div className={`w-16 h-16 rounded-3xl flex items-center justify-center shadow-inner shrink-0 ${isPass ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'}`}>{isPass ? <BadgeCheck size={40}/> : <AlertCircle size={40}/>}</div>
-                        <div className="flex flex-col items-end gap-2">
-                           <span className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-md flex items-center justify-center ${isPass ? 'bg-emerald-600 text-white' : 'bg-orange-500 text-white'}`}>{isPass ? 'LULUS' : 'REMEDIAL'}</span>
-                           {isReadyToSend && <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest animate-pulse italic">SIAP DIKIRIM ✨</span>}
-                        </div>
-                     </div>
-                     <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-1 truncate">{sName}</h4>
-                     <p className="text-[11px] font-bold text-blue-600 uppercase mb-10 Kalimat leading-relaxed">{req.className}</p>
-                     <div className="bg-slate-50 p-8 rounded-[2.5rem] mb-10 flex justify-between items-center"><div><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Rerata</p><p className={`text-3xl font-black italic ${isPass ? 'text-emerald-600' : 'text-orange-600'}`}>{avg}</p></div><div className="text-right"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{isReadyToSend ? 'Selesai Nilai' : 'Terkirim'}</p><p className="text-[11px] font-black text-slate-800 uppercase tracking-normal">{formatDateToDMY(req.date)}</p></div></div>
-                     
-                     <div className="space-y-4 mt-auto">
-                        {isReadyToSend ? (
-                           <>
-                              <button 
-                                onClick={() => handleSendReportToStudent(req)} 
-                                disabled={!!actionLoadingId} 
-                                className="w-full py-6 bg-emerald-600 text-white rounded-[2.5rem] font-black text-[12px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 active:scale-95 group"
-                              >
-                                 {actionLoadingId === req.id ? <Loader2 size={20} className="animate-spin" /> : <><SendHorizonal size={20} className="group-hover:translate-x-2 transition-transform"/> KIRIM RAPOT KE SISWA ✨</>}
-                              </button>
-                              <button onClick={() => handleOpenWorkspace(req, true)} className="w-full py-4 bg-white border-2 border-slate-100 text-slate-400 rounded-[2rem] font-black text-[10px] uppercase flex items-center justify-center gap-2 hover:border-blue-500 hover:text-blue-500 transition-all">
-                                 <FileEdit size={16}/> EDIT PENILAIAN
-                              </button>
-                           </>
-                        ) : (
-                           <>
-                              <div className="w-full py-4 bg-emerald-50 text-emerald-600 rounded-[2rem] font-black text-[10px] uppercase flex items-center justify-center gap-3 border-2 border-emerald-100 shadow-sm mb-2">
-                                 <CheckCircle2 size={18}/> SUDAH DITERIMA SISWA ✨
-                              </div>
-                              <div className="grid grid-cols-2 gap-3">
-                                 <button onClick={() => handleOpenWorkspace(req, true)} className="py-4 bg-slate-50 text-slate-400 rounded-2xl font-black text-[9px] uppercase flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                                    <FileEdit size={16}/> EDIT
-                                 </button>
-                                 <button onClick={() => handleDownloadPDF(req)} disabled={activeDownloadId === req.id} className="py-4 bg-slate-900 text-white rounded-2xl font-black text-[9px] uppercase flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-xl">
-                                    {activeDownloadId === req.id ? <Loader2 className="animate-spin" size={16}/> : <Printer size={16}/>} CETAK
-                                 </button>
-                              </div>
-                           </>
-                        )}
-                     </div>
-                  </div>
-               );
+                 <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '40px', padding: '10px 40px', borderBottom: '1px solid #f8fafc' }}>
+                   <div style={{ fontWeight: '900', fontSize: '18px', textTransform: 'uppercase', fontStyle: 'italic', width: '85px' }} className={SESSION_COLORS[idx] || 'text-slate-400'}>SESI {sessionNum}</div>
+                   <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                     <p style={{ fontSize: '12px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.1em' }}>
+                        {studentLog ? formatDateToDMY(studentLog.date) : "BELUM ABSEN"}
+                     </p>
+                     <p style={{ fontSize: '10px', fontWeight: '900', color: '#1e293b', textTransform: 'uppercase', fontStyle: 'italic' }}>
+                        {studentLog ? "DURASI: 2 JAM / 120 MENIT" : "—"}
+                     </p>
+                   </div>
+                 </div>
+               ); 
             })}
-            {publishedReports.length === 0 && (
-               <div className="col-span-full py-40 text-center bg-white rounded-[4rem] border-2 border-dashed border-slate-100 opacity-30">
-                  <History size={64} className="mx-auto mb-6 text-slate-300" />
-                  <p className="font-black text-[11px] uppercase tracking-[0.4em] italic leading-relaxed text-center">Belum ada histori rapot. ✨</p>
-               </div>
-            )}
-         </div>
-      )}
-
-      {/* RENDER PDF HIDDEN MENGGUNAKAN MASTER TEMPLATE */}
-<div className="fixed left-[-9999px] top-0 pointer-events-none">
-   {publishedReports.map((req) => (
-      <ReportTemplate 
-        key={req.id} 
-        reportLog={req} 
-        allLogs={logs}
-        studentAttendanceLogs={studentAttendanceLogs} // ✅ INI HARUS ADA!
-        studentName={req.studentsAttended?.[0] || 'SISWA'} 
-      />
-   ))}
-</div>
-
-      {showMilestoneFor && (
-        <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-           <div className="bg-white w-full max-w-2xl rounded-[4rem] p-12 shadow-2xl relative overflow-hidden space-y-10 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-              <button onClick={() => setShowMilestoneFor(null)} className="absolute top-10 right-10 p-3 bg-slate-50 text-slate-400 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
-              <div className="flex items-center gap-6"><div className="w-16 h-16 bg-blue-600 text-white rounded-[2rem] flex items-center justify-center shadow-xl rotate-3"><History size={32} /></div><div><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Milestone Belajar</h4><p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-2">{showMilestoneFor.studentsAttended?.[0]}</p></div></div>
-              <MilestoneView studentAttendanceLogs={studentAttendanceLogs} studentName={showMilestoneFor.studentsAttended?.[0] || ''} packageId={showMilestoneFor.packageId} />
-              <button onClick={() => setShowMilestoneFor(null)} className="w-full py-5 bg-slate-900 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-[0.3em] shadow-xl">TUTUP MILESTONE ✨</button>
-           </div>
+          </div>
         </div>
-      )}
 
-      {confirmReject && (
-         <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-            <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-               <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm animate-pulse"><AlertCircle size={48} /></div>
-               <div className="space-y-2"><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Tolak Permintaan?</h4><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest Kalimat leading-relaxed px-4">Siswa akan diminta memilih pengajar lain untuk klaim rapot mereka.</p></div>
-               <div className="flex gap-4"><button onClick={() => setConfirmReject(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase">BATAL</button><button onClick={handleRejectRequest} disabled={!!actionLoadingId} className="flex-1 py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl flex items-center justify-center gap-2">{actionLoadingId === confirmReject.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18}/>} IYA, TOLAK</button></div>
-            </div>
-         </div>
-      )}
+        <div style={{ display: 'flex', flexDirection: 'column', flex: 1, marginBottom: '55px', position: 'relative', zIndex: 10 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '18px', color: isPass ? '#2563eb' : '#f97316', borderBottom: '3px solid #f8fafc', paddingBottom: '10px', marginBottom: '20px' }}>
+            <Quote size={22}/>
+            <h3 style={{ fontSize: '15px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.4em' }}>Ulasan Pengajar</h3>
+          </div>
+          <div style={{ flex: 1, backgroundColor: isPass ? '#f0f9ff' : '#fff7ed', borderRadius: '42px', border: '4px solid #f1f5f9', padding: '35px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
+             <p style={{ 
+               fontSize: '17px', 
+               fontFamily: 'serif', 
+               fontStyle: 'italic', 
+               color: '#334155', 
+               lineHeight: '1.6', 
+               padding: '0 32px',
+               wordBreak: 'break-word',
+               overflowWrap: 'anywhere',
+               whiteSpace: 'pre-wrap',
+               maxWidth: '100%',
+               boxSizing: 'border-box'
+             }}>"{nar}"</p>
+          </div>
+        </div>
+        
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', paddingTop: '35px', position: 'relative', zIndex: 10, borderTop: '2px solid #f1f5f9', opacity: 0.6 }}>
+          <p style={{ fontSize: '13px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.8em', color: '#94a3b8', textAlign: 'center' }}>Sanur Akademi Inspirasi</p>
+        </div>
+      </div>
     </div>
-    </>
   );
 };
 
-export default TeacherReportsInbox;
+export default ReportTemplate;
