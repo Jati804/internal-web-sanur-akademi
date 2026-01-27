@@ -97,14 +97,12 @@
 </head>
 <body class="bg-slate-50 text-slate-900">
     <div id="root"></div>
-
-<script>
-     // Auto redirect ke verify kalau buka root
-     if (window.location.hash === '' || window.location.hash === '#/') {
-       window.location.hash = '#/verify';
-     }
-   </script>
-    
+    <script>
+      // 🎯 AUTO REDIRECT KE VERIFY KALO BUKA ROOT
+      if (window.location.hash === '' || window.location.hash === '#/') {
+        window.location.hash = '#/verify';
+      }
+    </script>
     <script type="module" src="/index.tsx"></script>
 <script>
   if ('serviceWorker' in navigator) {
@@ -118,4 +116,3 @@
 </script>
 </body>
 </html>
-
