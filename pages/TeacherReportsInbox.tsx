@@ -149,18 +149,25 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
       packageId: l.packageId,
       date: l.date,
       studentsAttended: l.studentsAttended,
-      className: l.className
+      className: l.className,
+      hasScores: !!l.studentScores,
+      hasTopics: !!l.studentTopics
     });
   });
   
   const baseReports = logs.filter(l => {
+    // ✅ FILTER YANG LEBIH PERMISIF - terima semua rapor yang:
+    // 1. Status sudah REPORT_READY atau SESSION_LOG
+    // 2. ATAU yang sudah punya nilai/materi (berarti sudah dikerjakan)
+    const hasBeenWorkedOn = !!(l.studentScores || l.studentTopics);
+    const isReadyOrSent = l.status === 'SESSION_LOG' || l.status === 'REPORT_READY';
+    
     const checks = {
-      status: l.status === 'SESSION_LOG' || l.status === 'REPORT_READY',
-      sessionNumber: l.sessionNumber === 6,
+      statusOrWorked: isReadyOrSent || hasBeenWorkedOn,
       teacherId: l.teacherId === user.id,
       notMandiri: l.teacherId !== 'SISWA_MANDIRI',
       packageId: (l.packageId || '').startsWith('PAY-'),
-      year: l.date.startsWith(selectedYear)
+      year: l.date?.startsWith(selectedYear) || false
     };
     
     const passed = Object.values(checks).every(v => v);
@@ -173,7 +180,9 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
         sessionNumber: l.sessionNumber,
         teacherId: l.teacherId,
         packageId: l.packageId,
-        date: l.date
+        date: l.date,
+        hasScores: !!l.studentScores,
+        hasTopics: !!l.studentTopics
       }
     });
     
@@ -205,7 +214,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
   
   console.log('🔍 FINAL RESULT (with search):', filtered.length);
   return filtered;
-}, [logs, user.id, historySearchTerm, lastActionedId, selectedYear]); // ✅ TAMBAH selectedYear DI DEPENDENCY
+}, [logs, user.id, historySearchTerm, lastActionedId, selectedYear]);
 
   const handleOpenWorkspace = (req: any, isEdit: boolean = false) => {
     setSelectedPackage(req);
