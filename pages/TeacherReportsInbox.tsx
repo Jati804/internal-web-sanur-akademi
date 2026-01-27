@@ -82,6 +82,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
   const [historySearchTerm, setHistorySearchTerm] = useState('');
   const [selectedYear, setSelectedYear] = useState('2026'); // ✅ TAMBAH INI
   const [selectedPeriode, setSelectedPeriode] = useState(1); // ✅ TAMBAH STATE PERIODE
+  const [historyPeriodeFilter, setHistoryPeriodeFilter] = useState<number | 'all'>('all'); // ✅ FILTER PERIODE UNTUK HISTORY
   
   // Efek Highlight untuk kartu yang baru saja dikerjakan
   useEffect(() => {
@@ -139,11 +140,16 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
     l.teacherId === user.id &&
     l.teacherId !== 'SISWA_MANDIRI' &&
     (l.packageId || '').startsWith('PAY-') &&
-    l.date.startsWith(selectedYear) // ✅ TAMBAH FILTER TAHUN
+    l.date.startsWith(selectedYear) // ✅ FILTER TAHUN
   );
+  
+  // ✅ FILTER BERDASARKAN PERIODE
+  const filteredByPeriode = historyPeriodeFilter === 'all' 
+    ? baseReports 
+    : baseReports.filter(l => (l.periode || 1) === historyPeriodeFilter);
     
   // LOGIKA SORTING (sama kayak sebelumnya)
-  const sorted = [...baseReports].sort((a, b) => {
+  const sorted = [...filteredByPeriode].sort((a, b) => {
       if (a.id === lastActionedId) return -1;
       if (b.id === lastActionedId) return 1;
       const dateCompare = new Date(b.date).getTime() - new Date(a.date).getTime();
@@ -159,7 +165,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
       const cName = (req.className || '').toLowerCase();
       return sName.includes(term) || cName.includes(term);
   });
-}, [logs, user.id, historySearchTerm, lastActionedId, selectedYear]); // ✅ TAMBAH selectedYear DI DEPENDENCY
+}, [logs, user.id, historySearchTerm, lastActionedId, selectedYear, historyPeriodeFilter]); // ✅ TAMBAH historyPeriodeFilter DI DEPENDENCY
 
   const handleOpenWorkspace = (req: any, isEdit: boolean = false) => {
     setSelectedPackage(req);
@@ -402,6 +408,26 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
            >
               {Array.from({ length: 11 }, (_, i) => (2024 + i).toString()).map(y => (
                 <option key={y} value={y}>{y}</option>
+              ))}
+           </select>
+        </div>
+
+        {/* Divider */}
+        <div className="w-px h-8 bg-slate-200"></div>
+
+        {/* ✅ FILTER PERIODE BARU - Integrated */}
+        <div className="relative group shrink-0">
+           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500"><Calendar size={14} /></div>
+           <select 
+              value={historyPeriodeFilter} 
+              onChange={(e) => setHistoryPeriodeFilter(e.target.value === 'all' ? 'all' : Number(e.target.value))} 
+              className="pl-9 pr-3 py-3 bg-transparent font-black text-[10px] uppercase outline-none appearance-none cursor-pointer min-w-[130px] text-center"
+           >
+              <option value="all">SEMUA PERIODE</option>
+              {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                <option key={num} value={num}>
+                  PERIODE {num}
+                </option>
               ))}
            </select>
         </div>
