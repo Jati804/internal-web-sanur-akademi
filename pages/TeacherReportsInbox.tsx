@@ -7,7 +7,7 @@ import {
   History, Trophy, Edit3, CheckCircle2, UserCheck, Layout, BookOpen, Printer,
   Quote, BadgeCheck, ClipboardList, Star, Calendar, Clock, AlertCircle, Trash2,
   FileEdit, ChevronRight, Zap, Info, Send, SendHorizonal, Save, AlertTriangle, FileDown, FileCheck,
-  Filter
+  Filter // ✅ TAMBAH INI KALAU BELUM ADA
 } from 'lucide-react';
 
 import html2canvas from 'html2canvas';
@@ -16,7 +16,7 @@ import { jsPDF } from 'jspdf';
 interface TeacherReportsInboxProps {
   user: User;
   logs: Attendance[];
-  studentAttendanceLogs: any[];
+  studentAttendanceLogs: any[]; // ✅ TAMBAHAN BARU
   studentAccounts: User[];
   refreshAllData: () => Promise<void>;
 }
@@ -24,10 +24,6 @@ interface TeacherReportsInboxProps {
 const MilestoneView = ({ studentAttendanceLogs, studentName, packageId, periode = 1 }: { studentAttendanceLogs: any[], studentName: string, packageId: string, periode?: number }) => {
   const sNameNorm = studentName.toUpperCase().trim();
   const pkgIdNorm = packageId.toUpperCase().trim();
-
-  // ✅ HITUNG SESSION NUMBERS BERDASARKAN PERIODE
-  const startSession = (periode - 1) * 6 + 1;
-  const sessionNumbers = Array.from({ length: 6 }, (_, i) => startSession + i);
 
   const sortedLogs = [...(studentAttendanceLogs || [])]
     .filter(l => 
@@ -43,13 +39,13 @@ const MilestoneView = ({ studentAttendanceLogs, studentName, packageId, periode 
         <p className="text-[10px] font-black uppercase tracking-widest">Milestone Pembelajaran Siswa - Periode {periode}</p>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
-        {sessionNumbers.map(sessionNum => {
-          const log = sortedLogs.find(l => l.sessionnumber === sessionNum);
+        {[1,2,3,4,5,6].map(num => {
+          const log = sortedLogs.find(l => l.sessionnumber === num);
           return (
-            <div key={sessionNum} className={`p-4 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all ${log ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-transparent opacity-40'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black italic text-[10px] ${log ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-200 text-slate-400'}`}>{sessionNum < 10 ? `0${sessionNum}` : sessionNum}</div>
+            <div key={num} className={`p-4 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all ${log ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-transparent opacity-40'}`}>
+              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black italic text-[10px] ${log ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-200 text-slate-400'}`}>0{num}</div>
               <div className="text-center">
-                <p className="text-[9px] font-black text-slate-800 uppercase italic leading-none">Sesi {sessionNum}</p>
+                <p className="text-[9px] font-black text-slate-800 uppercase italic leading-none">Sesi {num}</p>
                 <p className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter mt-1">{log ? formatDateToDMY(log.date) : 'Kosong'}</p>
               </div>
               {log && <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center text-emerald-600 shadow-sm"><Check size={12} strokeWidth={4}/></div>}
@@ -63,6 +59,7 @@ const MilestoneView = ({ studentAttendanceLogs, studentName, packageId, periode 
 
 const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, studentAttendanceLogs, studentAccounts, refreshAllData }) => {
   
+  // ✅ TAMBAH INI DI BARIS PALING ATAS
   console.log('🔍 CHECK DATA MASUK:', {
     studentAttendanceLogs,
     isArray: Array.isArray(studentAttendanceLogs),
@@ -80,11 +77,13 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
   const [showErrors, setShowErrors] = useState(false);
   const [reportForm, setReportForm] = useState({ sessions: Array.from({ length: 6 }, (_, i) => ({ num: i + 1, material: '', score: 90 })), narrative: '' });
   
+  // FIXED: Menggunakan state ID agar loading tidak terjadi secara massal
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   const [historySearchTerm, setHistorySearchTerm] = useState('');
-  const [selectedYear, setSelectedYear] = useState('2026');
+  const [selectedYear, setSelectedYear] = useState('2026'); // ✅ TAMBAH INI
   const [selectedPeriode, setSelectedPeriode] = useState(1); // ✅ STATE PERIODE
   
+  // Efek Highlight untuk kartu yang baru saja dikerjakan
   useEffect(() => {
     if (activeStep === 'HISTORY' && lastActionedId) {
       setTimeout(() => {
@@ -100,6 +99,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
     }
   }, [activeStep, lastActionedId]);
 
+  // ✅ Auto scroll modal ke tengah viewport (body bebas scroll)
   useEffect(() => {
     const hasModal = !!(
       activeDownloadId || 
@@ -108,6 +108,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
     );
     
     if (hasModal) {
+      // Tunggu dikit biar DOM modal udah ada, baru scroll
       const timer = setTimeout(() => {
         const modalElement = document.querySelector('[data-modal-container]');
         if (modalElement) {
@@ -119,549 +120,503 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
     }
   }, [activeDownloadId, showMilestoneFor, confirmReject]);
 
-  // ✅ FILTER YANG BENAR - ANTREAN HANYA YANG BELUM DIKERJAKAN
-  const pendingRequests = logs.filter(l => 
-    l.teacherName === user.fullName &&
-    l.status === 'REPORTED' // ✅ HANYA STATUS REPORTED
+  const reportRequests = useMemo(() => {
+  const requests = logs.filter(l => 
+    (l.status === 'REPORT_REQUEST' || l.status === 'REPORT_PROCESSING') && 
+    l.teacherId === user.id &&
+    l.teacherId !== 'SISWA_MANDIRI' // ✅ FILTER ABSEN SISWA MANDIRI
   );
+  return requests.filter(req => {
+      const studentNameInRequest = (req.studentsAttended?.[0] || '').toUpperCase().trim();
+      return studentAccounts.some(acc => acc.name.toUpperCase().trim() === studentNameInRequest);
+  });
+}, [logs, user.id, studentAccounts]);
 
-  // ✅ WORKSPACE - YANG SEDANG DIKERJAKAN (REPORT_READY)
-  const workspaceReports = logs.filter(l => 
-    l.teacherName === user.fullName &&
-    l.status === 'REPORT_READY' // ✅ YANG BELUM PUBLISHED
-  );
-
-  // ✅ HISTORY - YANG SUDAH SELESAI (PUBLISHED)
   const publishedReports = useMemo(() => {
-    return logs
-      .filter(l => 
-        l.teacherName === user.fullName &&
-        l.status === 'PUBLISHED' // ✅ HANYA YANG SUDAH PUBLISHED
-      )
-      .filter(r => {
-        const yearMatch = r.date?.startsWith(selectedYear);
-        const searchTerm = historySearchTerm.toLowerCase();
-        const matchesSearch = !searchTerm || 
-          (r.studentsAttended?.[0]?.toLowerCase().includes(searchTerm)) ||
-          (r.className?.toLowerCase().includes(searchTerm));
-        return yearMatch && matchesSearch;
-      })
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [logs, user.fullName, selectedYear, historySearchTerm]);
-
-  const handleRejectRequest = async () => {
-    if (!confirmReject) return;
+  const baseReports = logs.filter(l => 
+    (l.status === 'SESSION_LOG' || l.status === 'REPORT_READY') && 
+    l.sessionNumber === 6 && 
+    l.teacherId === user.id &&
+    l.teacherId !== 'SISWA_MANDIRI' &&
+    (l.packageId || '').startsWith('PAY-') &&
+    l.date.startsWith(selectedYear) // ✅ TAMBAH FILTER TAHUN
+  );
     
-    setActionLoadingId(confirmReject.id);
-    try {
-      const { error } = await supabase
-        .from('reportrequests')
-        .update({ status: 'OPEN', teacherName: null })
-        .eq('id', confirmReject.id);
-        
-      if (error) throw error;
-      
-      await refreshAllData();
-      setConfirmReject(null);
-    } catch (e) {
-      console.error('Reject error:', e);
-      alert('Gagal menolak permintaan');
-    } finally {
-      setActionLoadingId(null);
-    }
-  };
+  // LOGIKA SORTING (sama kayak sebelumnya)
+  const sorted = [...baseReports].sort((a, b) => {
+      if (a.id === lastActionedId) return -1;
+      if (b.id === lastActionedId) return 1;
+      const dateCompare = new Date(b.date).getTime() - new Date(a.date).getTime();
+      if (dateCompare !== 0) return dateCompare;
+      return b.id.localeCompare(a.id);
+  });
 
-  const handleAcceptRequest = async (log: any) => {
-    setActionLoadingId(log.id);
-    try {
-      const { error } = await supabase
-        .from('reportrequests')
-        .update({ status: 'ACCEPTED' })
-        .eq('id', log.id);
-        
-      if (error) throw error;
-      
-      await refreshAllData();
-      handleOpenWorkspace(log, false);
-    } catch (e) {
-      console.error('Accept error:', e);
-      alert('Gagal menerima permintaan');
-    } finally {
-      setActionLoadingId(null);
-    }
-  };
+  if (!historySearchTerm.trim()) return sorted;
 
-  const handleOpenWorkspace = (pkg: any, isEditMode: boolean) => {
-    setSelectedPackage(pkg);
-    setIsEditMode(isEditMode);
+  const term = historySearchTerm.toLowerCase();
+  return sorted.filter(req => {
+      const sName = (req.studentsAttended?.[0] || '').toLowerCase();
+      const cName = (req.className || '').toLowerCase();
+      return sName.includes(term) || cName.includes(term);
+  });
+}, [logs, user.id, historySearchTerm, lastActionedId, selectedYear]); // ✅ TAMBAH selectedYear DI DEPENDENCY
+
+  const handleOpenWorkspace = (req: any, isEdit: boolean = false) => {
+    setSelectedPackage(req);
+    setIsEditMode(isEdit);
+    setShowErrors(false);
     
-    // ✅ SET PERIODE DARI DATABASE
-    const periode = pkg.periode || 1;
+    // ✅ LOAD PERIODE DARI DATABASE
+    const periode = req.periode || 1;
     setSelectedPeriode(periode);
     
-    // ✅ HITUNG SESSION NUMBERS BERDASARKAN PERIODE
-    const startSession = (periode - 1) * 6 + 1;
-    
-    if (isEditMode && pkg.studentTopics && pkg.studentScores) {
-      const getDirectValue = (dataObj: any, defaultValue: any) => {
-        if (!dataObj || typeof dataObj !== 'object') return defaultValue;
-        const keys = Object.keys(dataObj);
-        if (keys.length === 0) return defaultValue;
-        return dataObj[keys[0]] || defaultValue;
-      };
-      
-      const rawTopics = getDirectValue(pkg.studentTopics, Array(6).fill(''));
-      const rawScores = getDirectValue(pkg.studentScores, Array(6).fill(90));
-      const topics = Array.isArray(rawTopics) ? rawTopics : Array(6).fill('');
-      const scores = Array.isArray(rawScores) ? rawScores : Array(6).fill(90);
+    const sName = req.studentsAttended?.[0] || 'SISWA';
+    if (isEdit || req.status === 'REPORT_READY') {
+      const existingTopics = (req.studentTopics?.[sName] || Array(6).fill('')) as string[];
+      const existingScores = (req.studentScores?.[sName] || Array(6).fill(90)) as number[];
+      const existingNarrative = req.studentNarratives?.[sName] || req.reportNarrative || '';
       
       // ✅ UPDATE SESSION NUMBERS SESUAI PERIODE
-      setReportForm({
-        sessions: scores.map((score, i) => ({
-          num: startSession + i, // ✅ DINAMIS SESUAI PERIODE
-          material: topics[i] || '',
-          score: score || 90
-        })),
-        narrative: pkg.reportNarrative || ''
+      const startSession = (periode - 1) * 6 + 1;
+      setReportForm({ 
+        sessions: Array.from({ length: 6 }, (_, i) => ({ 
+          num: startSession + i, 
+          material: existingTopics[i] || '', 
+          score: existingScores[i] || 90 
+        })), 
+        narrative: existingNarrative 
       });
     } else {
-      // ✅ RESET FORM DENGAN SESSION NUMBERS YANG BENAR
-      setReportForm({
-        sessions: Array.from({ length: 6 }, (_, i) => ({
-          num: startSession + i, // ✅ DINAMIS SESUAI PERIODE
-          material: '',
-          score: 90
-        })),
-        narrative: ''
+      // ✅ SESSION NUMBERS UNTUK FORM BARU
+      const startSession = (periode - 1) * 6 + 1;
+      setReportForm({ 
+        sessions: Array.from({ length: 6 }, (_, i) => ({ 
+          num: startSession + i, 
+          material: '', 
+          score: 90 
+        })), 
+        narrative: '' 
       });
     }
-    
-    setShowErrors(false);
     setActiveStep('WORKSPACE');
   };
 
-  const handleSaveReport = async () => {
-    const hasEmptyMaterial = reportForm.sessions.some(s => !s.material.trim());
-    const hasEmptyNarrative = !reportForm.narrative.trim();
-    
-    if (hasEmptyMaterial || hasEmptyNarrative) {
+  const handleAcceptRequest = async (req: any) => {
+    setActionLoadingId(req.id);
+    try {
+      await supabase.from('attendance').update({ status: 'REPORT_PROCESSING' }).eq('id', req.id);
+      await refreshAllData();
+      handleOpenWorkspace(req, false);
+    } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
+  };
+
+  const handleRejectRequest = async () => {
+    if (!confirmReject) return;
+    setActionLoadingId(confirmReject.id);
+    try {
+      await supabase.from('attendance').update({ status: 'REPORT_REJECTED' }).eq('id', confirmReject.id);
+      await refreshAllData();
+      setConfirmReject(null);
+    } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
+  };
+
+  const avgScore = useMemo(() => {
+    const total = reportForm.sessions.reduce((acc, s) => acc + (Number(s.score) || 0), 0);
+    return Math.round(total / 6);
+  }, [reportForm.sessions]);
+
+  const handleSaveReportToReady = async () => {
+    const isMaterialEmpty = reportForm.sessions.some(s => !s.material.trim());
+    const isNarrativeEmpty = !reportForm.narrative.trim();
+
+    if (isMaterialEmpty || isNarrativeEmpty) {
       setShowErrors(true);
-      return;
+      const errEl = document.getElementById('error-notif-required');
+      if (errEl) errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return alert("Waduh Kak! Materi sesi dan Narasi Evaluasi wajib diisi yaa agar rapot siswa sempurna ✨");
     }
-    
-    if (!selectedPackage) return;
-    
+
     setActionLoadingId(selectedPackage.id);
     try {
-      const teacherKey = selectedPackage.teacherName || user.fullName;
-      
-      const { error } = await supabase
-        .from('reportrequests')
-        .update({ 
-          studentTopics: { [teacherKey]: reportForm.sessions.map(s => s.material) },
-          studentScores: { [teacherKey]: reportForm.sessions.map(s => s.score) },
-          reportNarrative: reportForm.narrative,
-          status: 'REPORT_READY',
-          periode: selectedPeriode // ✅ SIMPAN PERIODE
-        })
-        .eq('id', selectedPackage.id);
-        
-      if (error) throw error;
-      
+      const sName = selectedPackage.studentsAttended?.[0] || 'SISWA';
+      const topics = reportForm.sessions.map(s => (s.material || '').toUpperCase());
+      const scores = reportForm.sessions.map(s => Number(s.score) || 0);
+      const payload = { 
+        status: 'REPORT_READY', 
+        sessionnumber: 6, 
+        studenttopics: { [sName]: topics }, 
+        studentscores: { [sName]: scores }, 
+        studentnarratives: { [sName]: reportForm.narrative }, 
+        reportnarrative: reportForm.narrative, 
+        periode: selectedPeriode, // ✅ SIMPAN PERIODE
+        date: isEditMode ? selectedPackage.date : new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()) 
+      };
+      await supabase.from('attendance').update(payload).eq('id', selectedPackage.id);
       await refreshAllData();
+      
       setLastActionedId(selectedPackage.id);
       setSelectedPackage(null);
       setActiveStep('HISTORY');
-    } catch (e) {
-      console.error('Save error:', e);
-      alert('Gagal menyimpan rapot');
-    } finally {
-      setActionLoadingId(null);
-    }
+    } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
   };
 
-  const handleSendReportToStudent = async (log: any) => {
-    setActionLoadingId(log.id);
+  const handleSendReportToStudent = async (req: any) => {
+    setActionLoadingId(req.id);
     try {
-      const { error } = await supabase
-        .from('reportrequests')
-        .update({ status: 'PUBLISHED' })
-        .eq('id', log.id);
-        
-      if (error) throw error;
-      
+      await supabase.from('attendance').update({ status: 'SESSION_LOG' }).eq('id', req.id);
       await refreshAllData();
-      setLastActionedId(log.id);
-    } catch (e) {
-      console.error('Send error:', e);
-      alert('Gagal mengirim rapot');
-    } finally {
-      setActionLoadingId(null);
-    }
+      setLastActionedId(req.id); // Set sebagai yang terakhir diaksi agar loncat ke depan
+      alert("Rapot Berhasil Dikirim ke Siswa! ✨");
+    } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
   };
 
-  const handleDownloadPDF = async (reportLog: any) => {
-    setActiveDownloadId(reportLog.id);
-    setDownloadProgress(0);
-
+  const handleDownloadPDF = async (req: any) => {
+    setDownloadProgress(5);
+    setActiveDownloadId(req.id);
+    
     try {
-      const containerElement = document.getElementById(`report-pabrik-${reportLog.id}`);
-      if (!containerElement) throw new Error("Container not found");
+      // 🎯 HALAMAN 1: LANDSCAPE (Sertifikat Horizontal)
+      const pdf = new jsPDF({ orientation: 'l', unit: 'px', format: 'a4', hotfixes: ["px_rendering"] });
+      const pw1 = pdf.internal.pageSize.getWidth();
+      const ph1 = pdf.internal.pageSize.getHeight();
+      const captureOptionsLandscape = { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: 1123, height: 794, logging: false };
 
-      const pages = [
-        { id: `cert-render-${reportLog.id}`, w: 1123, h: 794 },
-        { id: `transcript-render-${reportLog.id}`, w: 794, h: 1123 },
-        { id: `milestone-render-${reportLog.id}`, w: 794, h: 1123 }
-      ];
-
-      const pdf = new jsPDF({ orientation: 'landscape', unit: 'px', format: [1123, 794] });
-      let isFirstPage = true;
-
-      for (const page of pages) {
-        const element = document.getElementById(page.id);
-        if (!element) continue;
-
-        const canvas = await html2canvas(element, {
-          scale: 2,
-          useCORS: true,
-          logging: false,
-          backgroundColor: '#ffffff'
-        });
-
-        const imgData = canvas.toDataURL('image/png');
-
-        if (!isFirstPage) {
-          pdf.addPage([page.w, page.h], page.w > page.h ? 'landscape' : 'portrait');
-        }
-        isFirstPage = false;
-
-        pdf.addImage(imgData, 'PNG', 0, 0, page.w, page.h, '', 'FAST');
+      setDownloadProgress(20);
+      const el1 = document.getElementById(`cert-render-${req.id}`);
+      if (el1) {
+        const canvas1 = await html2canvas(el1, captureOptionsLandscape);
+        const img1 = canvas1.toDataURL('image/png', 1.0);
+        pdf.addImage(img1, 'PNG', 0, 0, pw1, ph1, undefined, 'FAST');
       }
-
-      const studentName = reportLog.studentsAttended?.[0] || 'Student';
-      const fileName = `RAPOT_${studentName.replace(/\s+/g, '_')}_${reportLog.date}.pdf`;
-      pdf.save(fileName);
-
-    } catch (error) {
-      console.error('PDF generation error:', error);
-      alert('Gagal membuat PDF');
-    } finally {
-      setActiveDownloadId(null);
+      setDownloadProgress(45);
+      
+      // 🎯 HALAMAN 2: PORTRAIT (Transkrip Nilai)
+      pdf.addPage('a4', 'p');
+      const pw2 = pdf.internal.pageSize.getWidth();
+      const ph2 = pdf.internal.pageSize.getHeight();
+      const captureOptionsPortrait = { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: 794, height: 1123, logging: false };
+      
+      const el2 = document.getElementById(`transcript-render-${req.id}`);
+      if (el2) {
+        const canvas2 = await html2canvas(el2, captureOptionsPortrait);
+        const img2 = canvas2.toDataURL('image/png', 1.0);
+        pdf.addImage(img2, 'PNG', 0, 0, pw2, ph2, undefined, 'FAST');
+      }
+      setDownloadProgress(75);
+      
+      // 🎯 HALAMAN 3: PORTRAIT (Milestone)
+      pdf.addPage('a4', 'p');
+      const el3 = document.getElementById(`milestone-render-${req.id}`);
+      if (el3) {
+        const canvas3 = await html2canvas(el3, captureOptionsPortrait);
+        const img3 = canvas3.toDataURL('image/png', 1.0);
+        pdf.addImage(img3, 'PNG', 0, 0, pw2, ph2, undefined, 'FAST');
+      }
+      setDownloadProgress(95);
+      
+      pdf.save(`Rapot_Sanur_${req.studentsAttended?.[0]}.pdf`);
+      setDownloadProgress(100);
+      
+      await new Promise(r => setTimeout(r, 500));
+    } catch (e) { 
+      alert("Gagal proses PDF."); 
+    } finally { 
+      setActiveDownloadId(null); 
       setDownloadProgress(0);
     }
   };
 
-  // ✅ HANDLER UNTUK GANTI PERIODE
-  const handlePeriodeChange = (newPeriode: number) => {
-    setSelectedPeriode(newPeriode);
-    
-    // ✅ UPDATE SESSION NUMBERS
-    const startSession = (newPeriode - 1) * 6 + 1;
-    setReportForm(prev => ({
-      ...prev,
-      sessions: prev.sessions.map((s, i) => ({
-        ...s,
-        num: startSession + i
-      }))
-    }));
-  };
-
-  console.log('📊 DEBUG PUBLISHED REPORTS - START', {
-    totalLogs: logs.length,
-    teacherName: user.fullName,
-    allStatuses: [...new Set(logs.map(l => l.status))],
-  });
-
-  publishedReports.forEach((req, i) => {
-    const rawScores = req.studentScores?.[req.teacherName || user.fullName];
-    console.log(`REPORT ${i + 1}:`, {
-      id: req.id,
-      studentName: req.studentsAttended?.[0],
-      periode: req.periode,
-      status: req.status,
-      rawScores,
-      studentTopics: req.studentTopics?.[req.teacherName || user.fullName]
-    });
-  });
-
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-purple-50 p-6 md:p-12 font-sans">
-      <div className="max-w-[1800px] mx-auto">
-        <div className="mb-14">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-10">
-            <div className="flex items-center gap-6">
-              <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-[2rem] flex items-center justify-center shadow-2xl shadow-blue-200 rotate-3">
-                <GraduationCap size={44} />
-              </div>
-              <div>
-                <h2 className="text-4xl md:text-5xl font-black text-slate-800 uppercase italic leading-none mb-2">
-                  Rapot <span className="text-blue-600">Siswa</span>
-                </h2>
-                <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.4em]">Panel Pengajar Sanur</p>
-              </div>
-            </div>
-          </div>
+    <>
+      <style>{`
+        @keyframes modalFadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
 
-          <div className="flex flex-wrap gap-4">
-            {(['ANTREAN', 'WORKSPACE', 'HISTORY'] as const).map(step => (
-              <button
-                key={step}
-                onClick={() => setActiveStep(step)}
-                className={`px-10 py-5 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.3em] transition-all shadow-lg flex items-center gap-3 ${
-                  activeStep === step
-                    ? 'bg-slate-900 text-white scale-105 shadow-2xl shadow-slate-200'
-                    : 'bg-white text-slate-300 hover:text-blue-600 hover:border-blue-600'
-                }`}
-              >
-                {step === 'ANTREAN' && <Star className={activeStep === step ? 'animate-spin' : ''} size={18} />}
-                {step === 'WORKSPACE' && <Edit3 size={18} />}
-                {step === 'HISTORY' && <History size={18} />}
-                {step}
-                {step === 'ANTREAN' && pendingRequests.length > 0 && (
-                  <span className="bg-rose-500 text-white px-3 py-1 rounded-full text-[9px] font-black animate-pulse">{pendingRequests.length}</span>
-                )}
-                {step === 'WORKSPACE' && workspaceReports.length > 0 && (
-                  <span className="bg-amber-500 text-white px-3 py-1 rounded-full text-[9px] font-black">{workspaceReports.length}</span>
-                )}
-              </button>
-            ))}
-          </div>
+        @keyframes modalZoomIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+      `}</style>
+
+      <div className="max-w-7xl mx-auto space-y-12 pb-40 px-4 animate-in fade-in duration-700">
+      {/* LOADING MODAL TENGAH - DENGAN REAL PROGRESS BAR */}
+      {activeDownloadId && (
+        <div data-modal-container className="fixed inset-0 z-[300000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+           <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-12 shadow-2xl flex flex-col items-center text-center space-y-8 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+              <div className="w-20 h-20 bg-blue-600 text-white rounded-[2.2rem] flex items-center justify-center shadow-xl animate-bounce">
+                <FileDown size={40} />
+              </div>
+              <div className="space-y-3">
+                <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Memproses PDF</h4>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-relaxed px-4">Mengonversi sertifikat & transkrip... ✨</p>
+              </div>
+              
+              <div className="w-full space-y-3">
+                <div className="flex justify-between items-center px-1">
+                   <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Progress</span>
+                   <span className="text-[11px] font-black text-blue-600 italic">{downloadProgress}%</span>
+                </div>
+                <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 shadow-inner">
+                   <div 
+                     className="h-full bg-blue-600 rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(37,99,235,0.3)]" 
+                     style={{ width: `${downloadProgress}%` }}
+                   ></div>
+                </div>
+              </div>
+           </div>
+        </div>
+      )}
+
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-10 px-2">
+        <div className="space-y-4">
+           <h2 className="text-4xl font-black text-slate-800 tracking-tight leading-none uppercase italic">Portal <span className="text-orange-600">Rapot</span></h2>
+           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Terbitkan Sertifikat & Rapot Digital Siswa ✨</p>
+        </div>
+      </header>
+
+      <div className="flex bg-slate-100 p-2 rounded-full w-full max-w-xl mx-auto shadow-inner border border-slate-100">
+         <button onClick={() => setActiveStep('ANTREAN')} className={`flex-1 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeStep === 'ANTREAN' ? 'bg-white text-orange-600 shadow-md' : 'text-slate-400'}`}>Antrean ({reportRequests.length})</button>
+         <button onClick={() => setActiveStep('WORKSPACE')} disabled={!selectedPackage} className={`flex-1 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeStep === 'WORKSPACE' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-400 disabled:opacity-30'}`}>Workspace</button>
+         <button onClick={() => setActiveStep('HISTORY')} className={`flex-1 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeStep === 'HISTORY' ? 'bg-white text-emerald-600 shadow-md' : 'text-slate-400'}`}>Histori</button>
+      </div>
+
+      {activeStep === 'HISTORY' && (
+  <div className="max-w-5xl mx-auto">
+     <div className="flex items-center gap-3 bg-white border-2 border-slate-100 rounded-3xl shadow-xl p-2 pr-3">
+        {/* Search Input */}
+        <div className="flex-1 relative">
+           <div className="absolute left-6 top-1/2 -translate-y-1/2 text-emerald-500"><Search size={18} /></div>
+           <input 
+              type="text" 
+              placeholder="CARI SISWA / KELAS..." 
+              value={historySearchTerm} 
+              onChange={(e) => setHistorySearchTerm(e.target.value.toUpperCase())} 
+              className="w-full pl-14 pr-4 py-4 bg-transparent font-black text-[10px] uppercase outline-none" 
+           />
         </div>
 
-        {activeStep === 'ANTREAN' && (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-            {pendingRequests.map((req, i) => {
-              const sName = req.studentsAttended?.[0] || 'Siswa';
-              const matchedStudent = studentAccounts.find(s => s.fullName === sName);
-              const avatarUrl = matchedStudent?.avatarUrl || `https://api.dicebear.com/7.x/avataaars/svg?seed=${sName}`;
-              
-              return (
-                <div key={i} className="bg-white p-10 md:p-12 rounded-[4rem] shadow-xl border-2 border-slate-100 hover:border-blue-500 transition-all flex flex-col">
-                  <div className="flex items-start justify-between mb-8">
-                    <div className="flex items-center gap-5">
-                      <img src={avatarUrl} className="w-16 h-16 rounded-[1.5rem] shadow-lg border-4 border-slate-50"/>
-                      <div>
-                        <h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">{sName}</h4>
-                        <p className="text-[9px] font-bold text-blue-600 uppercase tracking-wider mt-1">{req.className}</p>
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-6 rounded-[2.5rem] mb-8 space-y-3">
-                    <div className="flex justify-between items-center">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Package ID</p>
-                      <p className="text-[10px] font-black text-slate-800 uppercase">{req.packageId}</p>
-                    </div>
-                    <div className="flex justify-between items-center">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Permintaan</p>
-                      <p className="text-[10px] font-black text-slate-800 uppercase">{formatDateToDMY(req.date)}</p>
-                    </div>
-                  </div>
+        {/* Divider */}
+        <div className="w-px h-8 bg-slate-200"></div>
 
-                  <div className="flex gap-3 mt-auto">
+        {/* Filter Tahun - Integrated */}
+        <div className="relative group shrink-0">
+           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500"><Filter size={14} /></div>
+           <select 
+              value={selectedYear} 
+              onChange={(e) => setSelectedYear(e.target.value)} 
+              className="pl-9 pr-3 py-3 bg-transparent font-black text-[10px] uppercase outline-none appearance-none cursor-pointer min-w-[100px] text-center"
+           >
+              {Array.from({ length: 11 }, (_, i) => (2024 + i).toString()).map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+           </select>
+        </div>
+     </div>
+  </div>
+)}
+
+      {activeStep === 'ANTREAN' && (
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            {reportRequests.map((req, i) => (
+              <div key={i} className="bg-white p-12 md:p-14 rounded-[4rem] shadow-xl border border-slate-100 flex flex-col justify-between hover:border-orange-500 transition-all">
+                 <div>
+                   <div className="flex justify-between items-start mb-10">
+                      <div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-3xl flex items-center justify-center shadow-inner"><GraduationCap size={40}/></div>
+                      <span className="px-6 py-2 bg-orange-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-md">KLAIM BARU</span>
+                   </div>
+                   <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-2 Kalimat leading-tight">{req.studentsAttended?.[0]}</h4>
+                   <p className="text-[11px] font-bold text-blue-600 uppercase mb-10 Kalimat leading-relaxed">{req.className}</p>
+                   <button onClick={() => setShowMilestoneFor(req)} className="w-full py-5 mb-5 bg-slate-50 text-slate-500 rounded-3xl font-black text-[10px] uppercase flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all border border-transparent shadow-sm"><History size={18}/> LIHAT MILESTONE</button>
+                 </div>
+                 <div className="space-y-4">
                     <button 
-                      onClick={() => handleAcceptRequest(req)}
+                      onClick={() => handleAcceptRequest(req)} 
                       disabled={!!actionLoadingId}
-                      className="flex-1 py-5 bg-emerald-600 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-[0.2em] shadow-xl shadow-emerald-100 hover:bg-emerald-700 transition-all flex items-center justify-center gap-2 active:scale-95"
+                      className="w-full py-6 bg-slate-900 text-white rounded-[2rem] font-black text-[12px] uppercase tracking-widest shadow-xl active:scale-95 transition-all hover:bg-black flex items-center justify-center gap-3"
                     >
-                      {actionLoadingId === req.id ? <Loader2 className="animate-spin" size={18}/> : <><Check size={18}/> TERIMA</>}
+                      {actionLoadingId === req.id ? <Loader2 className="animate-spin" size={20} /> : 'TERIMA & ISI RAPOT ✍️'}
                     </button>
                     <button 
-                      onClick={() => setConfirmReject(req)}
-                      className="px-6 py-5 bg-rose-50 text-rose-600 rounded-[2rem] font-black hover:bg-rose-600 hover:text-white transition-all flex items-center justify-center shadow-sm"
+                      onClick={() => setConfirmReject(req)} 
+                      disabled={!!actionLoadingId}
+                      className="w-full py-5 bg-rose-50 text-rose-500 rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all border border-rose-100"
                     >
-                      <X size={18}/>
+                      TOLAK PERMINTAAN
                     </button>
-                  </div>
-                </div>
-              );
-            })}
-            {pendingRequests.length === 0 && (
-              <div className="col-span-full py-40 text-center bg-white rounded-[4rem] border-2 border-dashed border-slate-100 opacity-30">
-                <Star size={64} className="mx-auto mb-6 text-slate-300" />
-                <p className="font-black text-[11px] uppercase tracking-[0.4em] italic text-slate-300">Tidak ada permintaan baru. ✨</p>
+                 </div>
               </div>
-            )}
-          </div>
-        )}
-
-        {activeStep === 'WORKSPACE' && selectedPackage && (
-          <div className="max-w-5xl mx-auto">
-            <div className="bg-white rounded-[4rem] shadow-2xl border-2 border-slate-100 p-12 md:p-16 space-y-12">
-              
-              {/* ✅ HEADER DENGAN INFO PERIODE */}
-              <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 pb-10 border-b-2 border-slate-100">
-                <div>
-                  <h3 className="text-3xl font-black text-slate-800 uppercase italic mb-2">{selectedPackage.studentsAttended?.[0]}</h3>
-                  <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest">{selectedPackage.className}</p>
-                  <p className="text-[9px] font-bold text-slate-400 uppercase tracking-wider mt-1">Package: {selectedPackage.packageId}</p>
-                </div>
-                
-                {/* ✅ DROPDOWN PERIODE */}
-                <div className="flex flex-col items-end gap-3">
-                  <label className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Pilih Periode</label>
-                  <select
-                    value={selectedPeriode}
-                    onChange={(e) => handlePeriodeChange(Number(e.target.value))}
-                    className="px-6 py-3 bg-purple-600 text-white rounded-2xl font-black text-[11px] uppercase cursor-pointer shadow-lg hover:bg-purple-700 transition-all"
+            ))}
+         </div>
+      )}
+      
+      {activeStep === 'WORKSPACE' && selectedPackage && (
+         <div className="bg-white rounded-[4rem] shadow-2xl border-4 border-blue-600 overflow-hidden animate-in zoom-in space-y-0">
+            <div className="p-10 bg-blue-600 text-white flex flex-col md:flex-row justify-between items-center gap-6">
+               <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md shadow-inner shrink-0 rotate-3"><GraduationCap size={32} /></div>
+                  <div className="text-center md:text-left"><h3 className="text-2xl font-black uppercase italic leading-none">{isEditMode ? 'Edit Rapot Siswa' : 'Ruang Kerja Penilaian'}</h3><p className="text-[11px] font-black uppercase tracking-widest mt-2 opacity-80">{selectedPackage.studentsAttended?.[0]} — {selectedPackage.className}</p></div>
+               </div>
+               <button onClick={() => { setSelectedPackage(null); setIsEditMode(false); setActiveStep('ANTREAN'); setShowErrors(false); }} className="p-4 bg-white/20 rounded-2xl hover:bg-white/40 transition-all"><X/></button>
+            </div>
+            <div className="p-8 md:p-14 space-y-16">
+               {/* ✅ SECTION PILIH PERIODE */}
+               <section className="space-y-4">
+                  <div className="flex items-center gap-3 text-purple-600"><Calendar size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Pilih Periode Kurikulum</h4></div>
+                  <div className="bg-gradient-to-br from-purple-50 to-blue-50 p-8 rounded-[3rem] border-2 border-purple-100 space-y-6">
+                     <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+                        <div className="flex-1">
+                           <p className="text-[10px] font-black text-purple-800 uppercase tracking-wider mb-2">PERIODE PEMBELAJARAN</p>
+                           <select
+                              value={selectedPeriode}
+                              onChange={(e) => {
+                                 const newPeriode = Number(e.target.value);
+                                 setSelectedPeriode(newPeriode);
+                                 // Update session numbers
+                                 const startSession = (newPeriode - 1) * 6 + 1;
+                                 setReportForm(prev => ({
+                                    ...prev,
+                                    sessions: prev.sessions.map((s, i) => ({
+                                       ...s,
+                                       num: startSession + i
+                                    }))
+                                 }));
+                              }}
+                              className="w-full md:w-64 px-6 py-4 bg-white text-purple-600 rounded-2xl font-black text-sm uppercase cursor-pointer shadow-lg hover:shadow-xl transition-all border-2 border-purple-200"
+                           >
+                              {[1, 2, 3, 4, 5, 6].map(p => (
+                                 <option key={p} value={p}>PERIODE {p}</option>
+                              ))}
+                           </select>
+                        </div>
+                        <div className="text-center md:text-right">
+                           <p className="text-[9px] font-black text-purple-600 uppercase tracking-widest mb-1">RANGE SESI</p>
+                           <p className="text-2xl font-black text-purple-800 italic">
+                              {((selectedPeriode - 1) * 6 + 1)} - {(selectedPeriode * 6)}
+                           </p>
+                        </div>
+                     </div>
+                     <div className="bg-white/60 p-6 rounded-2xl border border-purple-100">
+                        <p className="text-[10px] font-bold text-slate-600 leading-relaxed">
+                           <span className="font-black text-purple-600">PERIODE {selectedPeriode}</span> mencakup sesi {((selectedPeriode - 1) * 6 + 1)} sampai {(selectedPeriode * 6)}. Pastikan materi yang diisi sesuai dengan kurikulum periode ini.
+                        </p>
+                     </div>
+                  </div>
+               </section>
+               
+               <section className="space-y-4">
+   <div className="flex items-center gap-3 text-blue-600"><History size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Langkah Pembelajaran (Milestone)</h4></div>
+   <div className="bg-slate-50 p-8 rounded-[3rem] border border-slate-100">
+      {/* ✅ TAMBAH PENGECEKAN INI */}
+      {studentAttendanceLogs && Array.isArray(studentAttendanceLogs) ? (
+         <MilestoneView 
+            studentAttendanceLogs={studentAttendanceLogs} 
+            studentName={selectedPackage.studentsAttended?.[0] || ''} 
+            packageId={selectedPackage.packageId}
+            periode={selectedPeriode}
+         />
+      ) : (
+         <div className="text-center py-8">
+            <p className="text-slate-400 text-sm font-bold">Loading milestone data...</p>
+         </div>
+      )}
+   </div>
+</section>
+               <section className="flex flex-col items-center">
+                  <div className="bg-slate-900 p-12 rounded-[4rem] text-white text-center shadow-2xl relative overflow-hidden w-full max-w-lg">
+                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
+                     <p className="text-[10px] uppercase font-black text-slate-400 mb-2 relative z-10">Skor Rata-Rata Akhir</p>
+                     <h4 className="text-8xl font-black italic text-emerald-400 relative z-10">{avgScore}</h4>
+                     <p className="text-[11px] font-black uppercase tracking-widest mt-6 text-emerald-500 opacity-60 relative z-10">{avgScore >= 80 ? 'KOMPETENSI: LULUS' : 'KOMPETENSI: REMEDIAL'}</p>
+                  </div>
+               </section>
+               <section className="space-y-6">
+                  <div className="flex items-center gap-3 text-blue-600"><BookOpen size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Detail Materi & Nilai Tiap Sesi</h4></div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     {reportForm.sessions.map((s, i) => (
+                        <div key={i} className={`flex flex-col gap-4 p-8 rounded-[2.5rem] border-2 transition-all shadow-inner ${showErrors && !s.material.trim() ? 'border-rose-500 bg-rose-50/30 ring-2 ring-rose-200' : 'border-transparent bg-slate-50 focus-within:border-blue-500'}`}>
+                           <div className="flex justify-between items-center border-b border-slate-200 pb-4">
+                              <span className="w-10 h-10 bg-white rounded-xl flex items-center justify-center font-black text-blue-600 italic shadow-sm shrink-0">0{s.num}</span>
+                              <div className="text-right"><label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Skor Sesi</label><input type="number" value={s.score} onChange={e => { const n = [...reportForm.sessions]; n[i].score = parseInt(e.target.value) || 0; setReportForm({...reportForm, sessions: n}); }} className="w-16 bg-transparent text-right font-black text-blue-600 text-2xl outline-none" /></div>
+                           </div>
+                           <div className="space-y-2">
+                              <div className="flex justify-between items-center ml-2">
+                                <label className="text-[8px] font-black text-slate-400 uppercase Kalimat tracking-widest flex items-center gap-1">
+                                  Materi Pembelajaran 
+                                  <span className={`font-black px-1.5 py-0.5 rounded-md text-[6px] border ${showErrors && !s.material.trim() ? 'bg-rose-500 text-white border-rose-600 animate-pulse' : 'bg-rose-50 text-rose-500 border-rose-100'}`}>WAJIB DIISI ✨</span>
+                                </label>
+                                <span className={`text-[7px] font-black ${s.material.length >= 35 ? 'text-rose-500' : 'text-slate-300'}`}>{s.material.length}/35</span>
+                              </div>
+                              <input 
+                                type="text" 
+                                placeholder="MISAL: PENGENALAN TOOLS..." 
+                                value={s.material} 
+                                maxLength={35} 
+                                onChange={e => { 
+                                  const n = [...reportForm.sessions]; 
+                                  n[i].material = e.target.value; 
+                                  setReportForm({...reportForm, sessions: n}); 
+                                }} 
+                                className={`w-full px-5 py-3 rounded-xl font-black uppercase text-[10px] outline-none transition-all border ${showErrors && !s.material.trim() ? 'bg-rose-50 border-rose-500 placeholder:text-rose-300' : 'bg-white border-slate-200 focus:border-blue-500'}`} 
+                              />
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+               </section>
+               <section className="space-y-6">
+                  <div className="flex items-center gap-3 text-blue-600">
+                    <Quote size={20} />
+                    <h4 className="text-xs font-black uppercase tracking-widest">Narasi Evaluasi</h4>
+                    <span className={`font-black px-2 py-0.5 rounded-full text-[7px] border uppercase tracking-widest ${showErrors && !reportForm.narrative.trim() ? 'bg-rose-500 text-white border-rose-600 animate-pulse' : 'bg-rose-50 text-rose-500 border-rose-100'}`}>WAJIB DIISI KAK! ✨</span>
+                  </div>
+                  <div className={`p-10 rounded-[3rem] border-2 transition-all shadow-inner space-y-4 ${showErrors && !reportForm.narrative.trim() ? 'border-rose-500 bg-rose-50/30 ring-2 ring-rose-200' : 'border-slate-100 bg-slate-50'}`}>
+                     <div className="flex justify-end pr-8 mb-[-2rem] Kalimat relative z-10"><span className={`text-[10px] font-black px-3 py-1 rounded-full ${reportForm.narrative.length >= 200 ? 'bg-rose-500 text-white' : 'bg-blue-600 text-white shadow-md'}`}>{reportForm.narrative.length}/200</span></div>
+                     <textarea 
+                        placeholder="TULISKAN CATATAN PERKEMBANGAN SISWA... ✨" 
+                        value={reportForm.narrative} 
+                        maxLength={200} 
+                        onChange={e => setReportForm({...reportForm, narrative: e.target.value})} 
+                        rows={6} 
+                        className={`w-full p-10 bg-white rounded-[2rem] font-bold text-sm outline-none border-2 transition-all ${showErrors && !reportForm.narrative.trim() ? 'border-rose-500 shadow-rose-100' : 'border-transparent focus:border-blue-500 shadow-sm'}`} 
+                     />
+                  </div>
+               </section>
+               <section className="pt-10">
+                  <button 
+                    id="error-notif-required" 
+                    onClick={handleSaveReportToReady} 
+                    disabled={!!actionLoadingId} 
+                    className="w-full py-10 bg-blue-600 text-white rounded-[3rem] font-black text-[14px] uppercase tracking-[0.4em] shadow-2xl hover:bg-blue-700 transition-all flex items-center justify-center gap-5"
                   >
-                    {[1, 2, 3, 4, 5, 6].map(p => (
-                      <option key={p} value={p}>PERIODE {p}</option>
-                    ))}
-                  </select>
-                  <p className="text-[8px] font-bold text-slate-400 uppercase">
-                    SESI {((selectedPeriode - 1) * 6 + 1)} - {(selectedPeriode * 6)}
-                  </p>
-                </div>
-              </div>
-
-              {/* INFO SESI */}
-              <div className="bg-gradient-to-br from-purple-50 to-blue-50 p-8 rounded-[3rem] border-2 border-purple-100">
-                <div className="flex items-center gap-3 mb-4">
-                  <Calendar className="text-purple-600" size={20} />
-                  <h4 className="text-[11px] font-black text-purple-800 uppercase tracking-widest">Info Periode</h4>
-                </div>
-                <p className="text-[10px] font-bold text-slate-600 leading-relaxed">
-                  Anda sedang mengisi <span className="text-purple-600 font-black">PERIODE {selectedPeriode}</span> dengan sesi {((selectedPeriode - 1) * 6 + 1)} sampai {(selectedPeriode * 6)}. Pastikan materi dan nilai yang diisi sesuai dengan sesi pembelajaran periode ini.
-                </p>
-              </div>
-
-              {/* SESSION FORMS */}
-              <div className="space-y-6">
-                <div className="flex items-center gap-3 text-slate-400 border-b border-slate-100 pb-3">
-                  <BookOpen size={18}/>
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em]">Materi & Nilai Per Sesi</h4>
-                </div>
-
-                {reportForm.sessions.map((session, idx) => (
-                  <div key={idx} className="bg-slate-50 p-8 rounded-[2.5rem] space-y-4">
-                    <div className="flex items-center gap-4 mb-4">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-2xl flex items-center justify-center font-black text-[12px] italic shadow-lg">
-                        {session.num < 10 ? `0${session.num}` : session.num}
-                      </div>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">SESI {session.num}</p>
-                    </div>
-                    
-                    <div>
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-2">Materi Pembelajaran</label>
-                      <input
-                        type="text"
-                        placeholder="Contoh: Pengenalan Interface Microsoft Word"
-                        value={session.material}
-                        onChange={(e) => {
-                          const newSessions = [...reportForm.sessions];
-                          newSessions[idx].material = e.target.value;
-                          setReportForm({ ...reportForm, sessions: newSessions });
-                        }}
-                        className={`w-full px-6 py-4 rounded-2xl border-2 font-bold text-[11px] uppercase ${showErrors && !session.material.trim() ? 'border-rose-500 bg-rose-50' : 'border-slate-200 bg-white'}`}
-                      />
-                      {showErrors && !session.material.trim() && (
-                        <p className="text-[9px] font-bold text-rose-600 mt-2 flex items-center gap-2"><AlertTriangle size={12}/> Materi wajib diisi</p>
-                      )}
-                    </div>
-
-                    <div>
-                      <label className="text-[9px] font-black text-slate-400 uppercase tracking-wider block mb-2">Nilai (0-100)</label>
-                      <input
-                        type="number"
-                        min="0"
-                        max="100"
-                        value={session.score}
-                        onChange={(e) => {
-                          const newSessions = [...reportForm.sessions];
-                          newSessions[idx].score = Math.min(100, Math.max(0, parseInt(e.target.value) || 0));
-                          setReportForm({ ...reportForm, sessions: newSessions });
-                        }}
-                        className="w-full px-6 py-4 rounded-2xl border-2 border-slate-200 bg-white font-black text-[14px]"
-                      />
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              {/* NARRATIVE */}
-              <div className="space-y-4">
-                <div className="flex items-center gap-3 text-slate-400 border-b border-slate-100 pb-3">
-                  <Quote size={18}/>
-                  <h4 className="text-[10px] font-black uppercase tracking-[0.4em]">Ulasan Pengajar</h4>
-                </div>
-                <textarea
-                  placeholder="Tuliskan ulasan Anda tentang performa siswa selama pembelajaran..."
-                  value={reportForm.narrative}
-                  onChange={(e) => setReportForm({ ...reportForm, narrative: e.target.value })}
-                  rows={6}
-                  className={`w-full px-8 py-6 rounded-[2.5rem] border-2 font-serif italic text-[13px] leading-relaxed ${showErrors && !reportForm.narrative.trim() ? 'border-rose-500 bg-rose-50' : 'border-slate-200 bg-white'}`}
-                />
-                {showErrors && !reportForm.narrative.trim() && (
-                  <p className="text-[9px] font-bold text-rose-600 flex items-center gap-2"><AlertTriangle size={12}/> Ulasan wajib diisi</p>
-                )}
-              </div>
-
-              {/* ACTIONS */}
-              <div className="flex gap-4 pt-8">
-                <button
-                  onClick={() => {
-                    setSelectedPackage(null);
-                    setActiveStep('ANTREAN');
-                  }}
-                  className="flex-1 py-6 bg-slate-100 text-slate-400 rounded-[2rem] font-black text-[11px] uppercase tracking-[0.3em] hover:bg-slate-200 transition-all"
-                >
-                  BATAL
-                </button>
-                <button
-                  onClick={handleSaveReport}
-                  disabled={!!actionLoadingId}
-                  className="flex-1 py-6 bg-gradient-to-r from-emerald-600 to-blue-600 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-[0.3em] shadow-2xl shadow-emerald-100 hover:scale-105 transition-all flex items-center justify-center gap-3 group"
-                >
-                  {actionLoadingId ? <Loader2 className="animate-spin" size={20}/> : <><Save size={20} className="group-hover:scale-110 transition-transform"/> SIMPAN RAPOT ✨</>}
-                </button>
-              </div>
+                     {actionLoadingId === selectedPackage.id ? <Loader2 size={32} className="animate-spin" /> : <><Save size={32} /> SIMPAN HASIL PENILAIAN ✨</>}
+                  </button>
+               </section>
             </div>
-          </div>
-        )}
+         </div>
+      )}
 
-        {activeStep === 'WORKSPACE' && !selectedPackage && (
-          <div className="max-w-5xl mx-auto py-40 text-center bg-white rounded-[4rem] border-2 border-dashed border-slate-100 opacity-30">
-            <Edit3 size={64} className="mx-auto mb-6 text-slate-300" />
-            <p className="font-black text-[11px] uppercase tracking-[0.4em] italic text-slate-300">Pilih rapot dari antrean untuk mulai mengisi. ✨</p>
-          </div>
-        )}
-
-        {activeStep === 'HISTORY' && (
-          <div className="space-y-10">
-            <div className="flex flex-col md:flex-row gap-4 items-start md:items-center">
-              <div className="relative flex-1">
-                <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20}/>
-                <input
-                  type="text"
-                  placeholder="Cari nama siswa atau kelas..."
-                  value={historySearchTerm}
-                  onChange={(e) => setHistorySearchTerm(e.target.value)}
-                  className="w-full pl-16 pr-6 py-5 rounded-[2rem] border-2 border-slate-200 font-bold text-[11px] uppercase bg-white"
-                />
-              </div>
-              <select
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
-                className="px-8 py-5 bg-slate-900 text-white rounded-[2rem] font-black text-[11px] uppercase cursor-pointer shadow-lg"
-              >
-                <option value="2026">2026</option>
-                <option value="2025">2025</option>
-                <option value="2024">2024</option>
-              </select>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-8">
-              {publishedReports.map((req, i) => {
-               const sName = req.studentsAttended?.[0] || 'Siswa';
-               const teacherKey = req.teacherName || user.fullName;
-               const rawScores = req.studentScores?.[teacherKey];
-               const scores = Array.isArray(rawScores) ? rawScores : (rawScores && typeof rawScores === 'object' ? Object.values(rawScores) : Array(6).fill(0));
+      {activeStep === 'HISTORY' && (
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            {publishedReports.map((req, i) => {
+               const sName = req.studentsAttended?.[0] || 'SISWA';
+               const scores = (Array.isArray(req.studentScores?.[sName]) ? req.studentScores?.[sName] : Array(6).fill(90)) as number[];
                const avg = Math.round(scores.reduce((a:number,b:number)=>a+b,0)/6);
                const isPass = avg >= 80;
                const isReadyToSend = req.status === 'REPORT_READY';
                const isNewlyActioned = req.id === lastActionedId;
-               const periode = req.periode || 1;
+               const periode = req.periode || 1; // ✅ AMBIL PERIODE
 
                return (
                   <div 
@@ -669,19 +624,20 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
                     id={`history-card-${req.id}`}
                     className={`bg-white p-12 md:p-14 rounded-[4rem] shadow-xl border-2 transition-all flex flex-col relative ${isNewlyActioned ? 'border-blue-500 shadow-blue-100' : isReadyToSend ? 'border-amber-400 bg-amber-50/10' : 'border-slate-100 hover:border-emerald-500'}`}
                   >
+                     {/* ✅ BADGE CONTAINER */}
                      <div className="absolute -top-3 -right-3 flex flex-col gap-2 items-end z-20">
                         {isNewlyActioned && (
                            <div className="px-6 py-2 bg-blue-600 text-white rounded-full font-black text-[9px] uppercase tracking-widest shadow-xl animate-bounce">
                               TERBARU ✨
                            </div>
                         )}
+                        {/* ✅ BADGE PERIODE */}
                         <div className="px-5 py-2 bg-purple-600 text-white rounded-full font-black text-[9px] uppercase tracking-widest shadow-lg flex items-center gap-2">
                            <Calendar size={12} strokeWidth={3} />
                            PERIODE {periode}
                         </div>
                      </div>
                      
-                     {/* ✅ KOTAK INFO DENGAN PERIODE DI TENGAH */}
                      <div className="flex justify-between items-start mb-10">
                         <div className={`w-16 h-16 rounded-3xl flex items-center justify-center shadow-inner shrink-0 ${isPass ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'}`}>{isPass ? <BadgeCheck size={40}/> : <AlertCircle size={40}/>}</div>
                         <div className="flex flex-col items-end gap-2">
@@ -689,11 +645,10 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
                            {isReadyToSend && <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest animate-pulse italic">SIAP DIKIRIM ✨</span>}
                         </div>
                      </div>
-                     
                      <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-1 truncate">{sName}</h4>
                      <p className="text-[11px] font-bold text-blue-600 uppercase mb-10 leading-relaxed">{req.className}</p>
                      
-                     {/* ✅ KOTAK DENGAN INFO PERIODE DI TENGAH */}
+                     {/* ✅ INFO BOX DENGAN PERIODE DI TENGAH */}
                      <div className="bg-slate-50 p-8 rounded-[2.5rem] mb-10">
                         <div className="grid grid-cols-3 gap-4 items-center">
                            {/* NILAI */}
@@ -738,13 +693,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
                               <div className="w-full py-4 bg-emerald-50 text-emerald-600 rounded-[2rem] font-black text-[10px] uppercase flex items-center justify-center gap-3 border-2 border-emerald-100 shadow-sm mb-2">
                                  <CheckCircle2 size={18}/> SUDAH DITERIMA SISWA ✨
                               </div>
-                              <div className="grid grid-cols-3 gap-3">
-                                 <button 
-                                    onClick={() => setShowMilestoneFor(req)} 
-                                    className="py-4 bg-blue-50 text-blue-600 rounded-2xl font-black text-[9px] uppercase flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
-                                 >
-                                    <History size={16}/> MILESTONE
-                                 </button>
+                              <div className="grid grid-cols-2 gap-3">
                                  <button onClick={() => handleOpenWorkspace(req, true)} className="py-4 bg-slate-50 text-slate-400 rounded-2xl font-black text-[9px] uppercase flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
                                     <FileEdit size={16}/> EDIT
                                  </button>
@@ -765,33 +714,26 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
                </div>
             )}
          </div>
-        </div>
       )}
 
-      {/* RENDER PDF HIDDEN */}
-      <div className="fixed left-[-9999px] top-0 pointer-events-none">
-         {publishedReports.map((req) => (
-            <ReportTemplate 
-              key={req.id} 
-              reportLog={req} 
-              allLogs={logs}
-              studentAttendanceLogs={studentAttendanceLogs}
-              studentName={req.studentsAttended?.[0] || 'SISWA'} 
-            />
-         ))}
-      </div>
+      {/* RENDER PDF HIDDEN MENGGUNAKAN MASTER TEMPLATE */}
+<div className="fixed left-[-9999px] top-0 pointer-events-none">
+   {publishedReports.map((req) => (
+      <ReportTemplate 
+        key={req.id} 
+        reportLog={req} 
+        allLogs={logs}
+        studentAttendanceLogs={studentAttendanceLogs} // ✅ INI HARUS ADA!
+        studentName={req.studentsAttended?.[0] || 'SISWA'} 
+      />
+   ))}
+</div>
 
       {showMilestoneFor && (
         <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
            <div className="bg-white w-full max-w-2xl rounded-[4rem] p-12 shadow-2xl relative overflow-hidden space-y-10 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setShowMilestoneFor(null)} className="absolute top-10 right-10 p-3 bg-slate-50 text-slate-400 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
-              <div className="flex items-center gap-6">
-                 <div className="w-16 h-16 bg-blue-600 text-white rounded-[2rem] flex items-center justify-center shadow-xl rotate-3"><History size={32} /></div>
-                 <div>
-                    <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Milestone Belajar</h4>
-                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-2">{showMilestoneFor.studentsAttended?.[0]}</p>
-                 </div>
-              </div>
+              <div className="flex items-center gap-6"><div className="w-16 h-16 bg-blue-600 text-white rounded-[2rem] flex items-center justify-center shadow-xl rotate-3"><History size={32} /></div><div><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Milestone Belajar</h4><p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-2">{showMilestoneFor.studentsAttended?.[0]}</p></div></div>
               <MilestoneView 
                 studentAttendanceLogs={studentAttendanceLogs} 
                 studentName={showMilestoneFor.studentsAttended?.[0] || ''} 
@@ -807,13 +749,13 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
          <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
             <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
                <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm animate-pulse"><AlertCircle size={48} /></div>
-               <div className="space-y-2"><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Tolak Permintaan?</h4><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4">Siswa akan diminta memilih pengajar lain untuk klaim rapot mereka.</p></div>
+               <div className="space-y-2"><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Tolak Permintaan?</h4><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest Kalimat leading-relaxed px-4">Siswa akan diminta memilih pengajar lain untuk klaim rapot mereka.</p></div>
                <div className="flex gap-4"><button onClick={() => setConfirmReject(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase">BATAL</button><button onClick={handleRejectRequest} disabled={!!actionLoadingId} className="flex-1 py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl flex items-center justify-center gap-2">{actionLoadingId === confirmReject.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18}/>} IYA, TOLAK</button></div>
             </div>
          </div>
       )}
-      </div>
     </div>
+    </>
   );
 };
 
