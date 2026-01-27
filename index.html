@@ -34,7 +34,7 @@
     
     @media screen and (min-width: 768px) and (max-width: 1024px) {
       @media (orientation: portrait) {
-        body::before {
+        body:not(.hide-rotation-reminder)::before {
           content: "🔄 Putar layar ke horizontal untuk pengalaman terbaik";
           position: fixed;
           top: 0;
@@ -103,6 +103,11 @@
       const isVercelDomain = window.location.hostname.includes('vercel.app');
       if (isVercelDomain && (window.location.hash === '' || window.location.hash === '#/')) {
         window.location.hash = '#/verify';
+      }
+
+      // 🔄 Sembunyikan pengumuman putar layar HANYA di domain Vercel
+      if (isVercelDomain) {
+        document.body.classList.add('hide-rotation-reminder');
       }
     </script>
     <script type="module" src="/index.tsx"></script>
