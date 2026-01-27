@@ -133,14 +133,49 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
 }, [logs, user.id, studentAccounts]);
 
   const publishedReports = useMemo(() => {
-  const baseReports = logs.filter(l => 
-    (l.status === 'SESSION_LOG' || l.status === 'REPORT_READY') && 
-    l.sessionNumber === 6 && 
-    l.teacherId === user.id &&
-    l.teacherId !== 'SISWA_MANDIRI' &&
-    (l.packageId || '').startsWith('PAY-') &&
-    l.date.startsWith(selectedYear) // ✅ FILTER TAHUN
-  );
+  console.log('🔍 DEBUG PUBLISHED REPORTS - START');
+  console.log('Total logs:', logs.length);
+  console.log('Selected Year:', selectedYear);
+  console.log('User ID:', user.id);
+  
+  const baseReports = logs.filter(l => {
+    const checks = {
+      status: l.status === 'SESSION_LOG' || l.status === 'REPORT_READY',
+      sessionNumber: l.sessionNumber === 6,
+      teacherId: l.teacherId === user.id,
+      notMandiri: l.teacherId !== 'SISWA_MANDIRI',
+      packageId: (l.packageId || '').startsWith('PAY-'),
+      year: l.date.startsWith(selectedYear)
+    };
+    
+    const passed = Object.values(checks).every(v => v);
+    
+    if (!passed) {
+      console.log('❌ Filtered out:', {
+        id: l.id,
+        status: l.status,
+        sessionNumber: l.sessionNumber,
+        teacherId: l.teacherId,
+        packageId: l.packageId,
+        date: l.date,
+        checks
+      });
+    }
+    
+    return passed;
+  });
+  
+  console.log('✅ Base reports after filter:', baseReports.length);
+  baseReports.forEach(r => {
+    console.log('  Report:', {
+      id: r.id,
+      status: r.status,
+      sessionNumber: r.sessionNumber,
+      student: r.studentsAttended?.[0],
+      class: r.className,
+      date: r.date
+    });
+  });
     
   // LOGIKA SORTING (sama kayak sebelumnya)
   const sorted = [...baseReports].sort((a, b) => {
@@ -151,14 +186,20 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
       return b.id.localeCompare(a.id);
   });
 
-  if (!historySearchTerm.trim()) return sorted;
+  if (!historySearchTerm.trim()) {
+    console.log('🔍 FINAL RESULT (no search):', sorted.length);
+    return sorted;
+  }
 
   const term = historySearchTerm.toLowerCase();
-  return sorted.filter(req => {
+  const filtered = sorted.filter(req => {
       const sName = (req.studentsAttended?.[0] || '').toLowerCase();
       const cName = (req.className || '').toLowerCase();
       return sName.includes(term) || cName.includes(term);
   });
+  
+  console.log('🔍 FINAL RESULT (with search):', filtered.length);
+  return filtered;
 }, [logs, user.id, historySearchTerm, lastActionedId, selectedYear]); // ✅ TAMBAH selectedYear DI DEPENDENCY
 
   const handleOpenWorkspace = (req: any, isEdit: boolean = false) => {
