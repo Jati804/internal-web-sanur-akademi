@@ -168,7 +168,13 @@ const AppContent = ({
       const width = window.innerWidth;
       const height = window.innerHeight;
       
-      // Deteksi: Tablet/HP (≤1024px) DAN Portrait (tinggi > lebar)
+      // 🎯 KHUSUS HALAMAN VERIFY: BOLEH PORTRAIT & LANDSCAPE
+      if (location.pathname === '/verify') {
+        setIsPortrait(false); // Gak tampilkan blocker
+        return;
+      }
+      
+      // Halaman lain: Tetep wajib landscape (horizontal)
       const isMobileTablet = width <= 1024;
       const isPortraitMode = height > width;
       
@@ -183,7 +189,7 @@ const AppContent = ({
       window.removeEventListener('resize', checkOrientation);
       window.removeEventListener('orientationchange', checkOrientation);
     };
-  }, []);
+  }, [location.pathname]);
 
   // 🔥 KALO PORTRAIT -> TAMPILKAN BLOCKER (PRIORITAS TERTINGGI)
   if (isPortrait) {
@@ -289,6 +295,7 @@ const AppContent = ({
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-12">
           <div className="max-w-7xl mx-auto">
             <Routes>
+              <Route path="/verify" element={<VerifyCertificate />} />
               <Route path="/admin" element={<AdminDashboard user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} setAttendanceLogs={setAttendanceLogs} teachers={teachers} transactions={transactions} studentProfiles={studentProfiles} />} />
               <Route path="/admin/finance" element={<AdminFinance attendanceLogs={attendanceLogs} transactions={transactions} studentPayments={studentPayments} refreshAllData={refreshAllData} />} />
               <Route path="/admin/buku-induk" element={<AdminInventory studentProfiles={studentProfiles} setStudentProfiles={setStudentProfiles} salesContacts={salesContacts} setSalesContacts={setSalesContacts} refreshAllData={refreshAllData} />} />
