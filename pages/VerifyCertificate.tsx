@@ -60,15 +60,16 @@ const VerifyCertificate: React.FC = () => {
   
   const studentName = reportData?.studentsAttended?.[0] || "SISWA";
 
-  // 🎨 THEME COLORS - Hijau kalau lulus, Oren kalau tidak lulus
+  // 🎨 THEME COLORS - BIRU DOMINAN kalau lulus, Oren kalau tidak lulus
   const themeColors = isPass ? {
-    primary: 'emerald',
-    bgLight: 'bg-emerald-50',
-    bgMedium: 'bg-emerald-100',
-    bgDark: 'bg-emerald-600',
-    text: 'text-emerald-600',
-    textDark: 'text-emerald-500',
-    ring: 'ring-emerald-50'
+    primary: 'blue',
+    bgLight: 'bg-blue-50',
+    bgMedium: 'bg-blue-100',
+    bgDark: 'bg-blue-600',
+    text: 'text-blue-600',
+    textDark: 'text-blue-500',
+    ring: 'ring-blue-50',
+    accent: 'text-emerald-500' // Aksen hijau untuk icon tertentu
   } : {
     primary: 'orange',
     bgLight: 'bg-orange-50',
@@ -76,14 +77,15 @@ const VerifyCertificate: React.FC = () => {
     bgDark: 'bg-orange-600',
     text: 'text-orange-600',
     textDark: 'text-orange-500',
-    ring: 'ring-orange-50'
+    ring: 'ring-orange-50',
+    accent: 'text-orange-500'
   };
 
   return (
     <div className="min-h-screen bg-[#FDFDFF] flex flex-col items-center justify-center p-6 relative overflow-hidden">
       {/* Background Ornaments */}
-      <div className={`absolute top-0 left-0 w-80 h-80 ${isPass ? 'bg-emerald-50' : 'bg-orange-50'} rounded-full blur-[100px] -ml-40 -mt-40 opacity-50`}></div>
-      <div className={`absolute bottom-0 right-0 w-80 h-80 ${isPass ? 'bg-emerald-50' : 'bg-orange-50'} rounded-full blur-[100px] -mr-40 -mb-40 opacity-50`}></div>
+      <div className={`absolute top-0 left-0 w-80 h-80 ${isPass ? 'bg-blue-50' : 'bg-orange-50'} rounded-full blur-[100px] -ml-40 -mt-40 opacity-50`}></div>
+      <div className={`absolute bottom-0 right-0 w-80 h-80 ${isPass ? 'bg-blue-50' : 'bg-orange-50'} rounded-full blur-[100px] -mr-40 -mb-40 opacity-50`}></div>
 
       <div className="max-w-xl w-full bg-white rounded-[4rem] shadow-2xl p-10 md:p-16 border border-slate-50 text-center relative z-10 animate-in fade-in">
          
@@ -171,7 +173,7 @@ const VerifyCertificate: React.FC = () => {
                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Status Kelulusan</p>
                     </div>
                     <div className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2 ${themeColors.bgDark} text-white`}>
-                       <CheckCircle2 size={14} /> {isPass ? "LULUS & KOMPETEN ✨" : "PESERTA PELATIHAN"}
+                       <CheckCircle2 size={14} className={isPass ? 'text-emerald-300' : ''} /> {isPass ? "LULUS & KOMPETEN ✨" : "PESERTA PELATIHAN"}
                     </div>
                  </div>
               </div>
