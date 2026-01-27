@@ -125,6 +125,7 @@ const VerifyCertificate: React.FC = () => {
                    {error || "ID Sertifikat tidak valid atau sudah dihapus dari sistem kami."}
                  </p>
               </div>
+           </div>
          ) : (
            <>
               {/* MAIN BADGE - Enhanced Cyan Design for Pass */}
@@ -254,11 +255,8 @@ const VerifyCertificate: React.FC = () => {
                  </div>
               </div>
 
-              {/* Footer - NO BUTTON */}
-              <div className="flex flex-col gap-4">
-                 <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.4em]">© SANUR AKADEMI INSPIRASI</p>
-              </div>
-
+              {/* Footer - Copyright Only, No Button */}
+              <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.4em] mt-8">© SANUR AKADEMI INSPIRASI</p>
            </>
          )}
       </div>
