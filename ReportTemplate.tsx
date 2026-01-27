@@ -94,16 +94,14 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])] // ✅ TAMBAH FALLBAC
     backgroundColor: 'white',
     position: 'relative',
     overflow: 'hidden',
-    boxSizing: 'border-box',
-    display: 'flex',
-    flexDirection: 'row' // HORIZONTAL LAYOUT
+    boxSizing: 'border-box'
   };
 
   return (
     <div id={`report-pabrik-${reportLog.id}`} style={{ width: '1123px' }}>
       
       {/* ========================================
-          HALAMAN 1: SERTIFIKAT HORIZONTAL - PREMIUM DESIGN
+          HALAMAN 1: SERTIFIKAT HORIZONTAL - FIXED & STABLE VERSION
           ======================================== */}
       <div id={`cert-render-${reportLog.id}`} style={{ 
         ...PAGE_STYLE_HORIZONTAL, 
@@ -112,489 +110,387 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])] // ✅ TAMBAH FALLBAC
           : 'linear-gradient(135deg, #ea580c 0%, #f97316 50%, #ea580c 100%)',
         padding: '30px'
       }}>
+        {/* INNER WHITE CONTAINER */}
         <div style={{ 
           width: '100%', 
           height: '100%', 
           backgroundColor: 'white',
-          borderRadius: '30px',
-          boxShadow: '0 30px 60px rgba(0,0,0,0.3)',
-          display: 'flex', 
-          flexDirection: 'column',
-          boxSizing: 'border-box', 
+          borderRadius: '20px',
+          boxShadow: '0 20px 50px rgba(0,0,0,0.25)',
           position: 'relative',
           overflow: 'hidden'
         }}>
           
-          {/* Decorative Elements */}
+          {/* BACKGROUND DECORATION */}
           <div style={{ 
             position: 'absolute', 
-            top: '-200px', 
-            right: '-200px', 
-            width: '500px', 
-            height: '500px', 
+            top: '-100px', 
+            right: '-100px', 
+            width: '300px', 
+            height: '300px', 
             background: isPass 
-              ? 'radial-gradient(circle, rgba(59,130,246,0.1) 0%, transparent 70%)'
-              : 'radial-gradient(circle, rgba(249,115,22,0.1) 0%, transparent 70%)',
+              ? 'radial-gradient(circle, rgba(59,130,246,0.08) 0%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(249,115,22,0.08) 0%, transparent 70%)',
             borderRadius: '50%'
           }}></div>
           
           <div style={{ 
             position: 'absolute', 
-            bottom: '-150px', 
-            left: '-150px', 
-            width: '400px', 
-            height: '400px', 
+            bottom: '-100px', 
+            left: '-100px', 
+            width: '300px', 
+            height: '300px', 
             background: isPass 
-              ? 'radial-gradient(circle, rgba(30,58,138,0.08) 0%, transparent 70%)'
-              : 'radial-gradient(circle, rgba(234,88,12,0.08) 0%, transparent 70%)',
+              ? 'radial-gradient(circle, rgba(30,58,138,0.06) 0%, transparent 70%)'
+              : 'radial-gradient(circle, rgba(234,88,12,0.06) 0%, transparent 70%)',
             borderRadius: '50%'
           }}></div>
 
-          {/* Pattern Background */}
+          {/* CONTENT WRAPPER */}
           <div style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            opacity: 0.03,
-            backgroundImage: `repeating-linear-gradient(45deg, ${isPass ? '#1e3a8a' : '#ea580c'} 0, ${isPass ? '#1e3a8a' : '#ea580c'} 1px, transparent 0, transparent 50%)`,
-            backgroundSize: '10px 10px'
-          }}></div>
-
-          {/* HEADER SECTION */}
-          <div style={{ 
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '40px 60px 30px',
             position: 'relative',
             zIndex: 10,
-            borderBottom: `3px solid ${isPass ? '#eff6ff' : '#fff7ed'}`
+            width: '100%',
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '40px 60px'
           }}>
-            {/* Logo & Institution */}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '30px' }}>
-              <div style={{
-                width: '90px',
-                height: '90px',
-                background: isPass 
-                  ? 'linear-gradient(135deg, #1e3a8a, #3b82f6)'
-                  : 'linear-gradient(135deg, #ea580c, #f97316)',
-                borderRadius: '20px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: isPass 
-                  ? '0 10px 30px rgba(30,58,138,0.3)'
-                  : '0 10px 30px rgba(234,88,12,0.3)',
-                transform: 'rotate(-5deg)'
-              }}>
-                <img 
-                  src={ASSETS.LOGO} 
-                  style={{ 
-                    maxWidth: '70px', 
-                    maxHeight: '50px', 
-                    objectFit: 'contain',
-                    filter: 'brightness(0) invert(1)',
-                    transform: 'rotate(5deg)'
-                  }} 
-                />
-              </div>
-              
-              <div>
-                <h1 style={{ 
-                  fontSize: '20px', 
-                  fontWeight: '900', 
-                  letterSpacing: '0.2em', 
-                  color: '#0f172a', 
-                  textTransform: 'uppercase', 
-                  margin: 0,
-                  lineHeight: 1.2
-                }}>
-                  SANUR AKADEMI
-                </h1>
-                <p style={{
-                  fontSize: '13px',
-                  fontWeight: '700',
-                  letterSpacing: '0.3em',
-                  color: '#64748b',
-                  textTransform: 'uppercase',
-                  margin: '5px 0 0 0'
-                }}>
-                  INSPIRASI
-                </p>
+
+            {/* HEADER SECTION */}
+            <div style={{ 
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              paddingBottom: '25px',
+              borderBottom: `2px solid ${isPass ? '#eff6ff' : '#fff7ed'}`
+            }}>
+              {/* Logo & Institution */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '25px' }}>
                 <div style={{
                   width: '80px',
-                  height: '3px',
+                  height: '80px',
                   background: isPass 
-                    ? 'linear-gradient(90deg, #3b82f6, transparent)'
-                    : 'linear-gradient(90deg, #f97316, transparent)',
-                  borderRadius: '10px',
-                  marginTop: '8px'
-                }}></div>
+                    ? 'linear-gradient(135deg, #1e3a8a, #3b82f6)'
+                    : 'linear-gradient(135deg, #ea580c, #f97316)',
+                  borderRadius: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 8px 20px rgba(0,0,0,0.15)'
+                }}>
+                  <img 
+                    src={ASSETS.LOGO} 
+                    alt="Logo"
+                    style={{ 
+                      width: '60px', 
+                      height: 'auto', 
+                      objectFit: 'contain',
+                      filter: 'brightness(0) invert(1)'
+                    }} 
+                  />
+                </div>
+                
+                <div>
+                  <h1 style={{ 
+                    fontSize: '18px', 
+                    fontWeight: '900', 
+                    letterSpacing: '0.2em', 
+                    color: '#0f172a', 
+                    textTransform: 'uppercase', 
+                    margin: 0,
+                    lineHeight: 1.2
+                  }}>
+                    SANUR AKADEMI
+                  </h1>
+                  <p style={{
+                    fontSize: '12px',
+                    fontWeight: '700',
+                    letterSpacing: '0.3em',
+                    color: '#64748b',
+                    textTransform: 'uppercase',
+                    margin: '4px 0 0 0'
+                  }}>
+                    INSPIRASI
+                  </p>
+                </div>
+              </div>
+
+              {/* QR Code Badge */}
+              <div style={{ 
+                background: isPass ? '#eff6ff' : '#fff7ed',
+                padding: '15px',
+                borderRadius: '20px',
+                border: `3px solid ${isPass ? '#dbeafe' : '#ffedd5'}`,
+                boxShadow: '0 8px 20px rgba(0,0,0,0.08)',
+                textAlign: 'center'
+              }}>
+                <img 
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(finalQrData)}`}
+                  style={{ width: '100px', height: '100px', display: 'block' }}
+                  alt="QR Code"
+                />
+                <p style={{ 
+                  fontSize: '8px', 
+                  fontWeight: '900', 
+                  color: isPass ? '#1e3a8a' : '#7c2d12',
+                  marginTop: '8px',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.1em'
+                }}>
+                  Scan Verifikasi
+                </p>
               </div>
             </div>
 
-            {/* QR Code Badge */}
+            {/* MAIN CONTENT SECTION */}
             <div style={{ 
-              background: isPass ? '#eff6ff' : '#fff7ed',
-              padding: '20px',
-              borderRadius: '25px',
-              border: `4px solid ${isPass ? '#dbeafe' : '#ffedd5'}`,
-              boxShadow: '0 10px 25px rgba(0,0,0,0.08)',
-              textAlign: 'center'
+              flex: 1,
+              display: 'flex', 
+              flexDirection: 'column', 
+              justifyContent: 'center', 
+              alignItems: 'center',
+              padding: '30px 60px'
             }}>
-              <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=110x110&data=${encodeURIComponent(finalQrData)}`}
-                style={{ width: '110px', height: '110px', display: 'block' }}
-                alt="QR Code"
-              />
-              <p style={{ 
-                fontSize: '9px', 
-                fontWeight: '900', 
-                color: isPass ? '#1e3a8a' : '#7c2d12',
-                marginTop: '10px',
-                textTransform: 'uppercase',
-                letterSpacing: '0.15em'
-              }}>
-                Scan Verifikasi
-              </p>
-            </div>
-          </div>
-
-          {/* MAIN CONTENT SECTION */}
-          <div style={{ 
-            flex: 1,
-            display: 'flex', 
-            flexDirection: 'column', 
-            justifyContent: 'center', 
-            alignItems: 'center',
-            padding: '20px 80px',
-            boxSizing: 'border-box',
-            position: 'relative',
-            zIndex: 10
-          }}>
-            
-            {/* Certificate Type Badge */}
-            <div style={{
-              display: 'inline-block',
-              padding: '10px 30px',
-              background: isPass 
-                ? 'linear-gradient(135deg, rgba(30,58,138,0.1), rgba(59,130,246,0.1))'
-                : 'linear-gradient(135deg, rgba(234,88,12,0.1), rgba(249,115,22,0.1))',
-              borderRadius: '50px',
-              border: `2px solid ${isPass ? '#dbeafe' : '#ffedd5'}`,
-              marginBottom: '15px'
-            }}>
-              <p style={{
-                fontSize: '11px',
-                fontWeight: '900',
-                color: isPass ? '#1e3a8a' : '#7c2d12',
-                textTransform: 'uppercase',
-                letterSpacing: '0.2em',
-                margin: 0
-              }}>
-                {isPass ? '★ Sertifikat Resmi ★' : '★ Capaian Pembelajaran ★'}
-              </p>
-            </div>
-
-            {/* Title */}
-            <h2 style={{ 
-              fontSize: '52px', 
-              fontFamily: 'serif', 
-              fontStyle: 'italic', 
-              color: isPass ? '#1e3a8a' : '#ea580c',
-              margin: '0 0 8px 0',
-              fontWeight: '900',
-              letterSpacing: '-0.02em',
-              textShadow: isPass 
-                ? '0 2px 20px rgba(30,58,138,0.15)'
-                : '0 2px 20px rgba(234,88,12,0.15)'
-            }}>
-              {isPass ? 'Certificate of Achievement' : 'Participation Certificate'}
-            </h2>
-            
-            <p style={{ 
-              fontSize: '15px', 
-              fontFamily: 'serif', 
-              fontStyle: 'italic', 
-              color: '#64748b', 
-              margin: '0 0 25px 0',
-              fontWeight: '600'
-            }}>
-              Diberikan dengan bangga kepada:
-            </p>
-            
-            {/* Student Name - Premium Style */}
-            <div style={{ 
-              position: 'relative',
-              marginBottom: '25px'
-            }}>
-              {/* Decorative Lines */}
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: '-120px',
-                width: '100px',
-                height: '2px',
-                background: isPass 
-                  ? 'linear-gradient(90deg, transparent, #bfdbfe)'
-                  : 'linear-gradient(90deg, transparent, #fed7aa)',
-                transform: 'translateY(-50%)'
-              }}></div>
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                right: '-120px',
-                width: '100px',
-                height: '2px',
-                background: isPass 
-                  ? 'linear-gradient(90deg, #bfdbfe, transparent)'
-                  : 'linear-gradient(90deg, #fed7aa, transparent)',
-                transform: 'translateY(-50%)'
-              }}></div>
-
-              <h3 style={{ 
-                fontSize: '46px', 
-                fontWeight: '900', 
-                background: isPass 
-                  ? 'linear-gradient(135deg, #1e3a8a, #3b82f6, #1e3a8a)'
-                  : 'linear-gradient(135deg, #ea580c, #f97316, #ea580c)',
-                WebkitBackgroundClip: 'text',
-                WebkitTextFillColor: 'transparent',
-                backgroundClip: 'text',
-                textTransform: 'uppercase', 
-                letterSpacing: '0.08em', 
-                margin: 0, 
-                lineHeight: 1.2,
-                textAlign: 'center',
-                textShadow: '0 4px 20px rgba(0,0,0,0.1)'
-              }}>
-                {studentName.toUpperCase()}
-              </h3>
               
-              <div style={{ 
-                width: '100%', 
-                height: '4px', 
-                background: isPass 
-                  ? 'linear-gradient(90deg, transparent, #3b82f6, transparent)'
-                  : 'linear-gradient(90deg, transparent, #f97316, transparent)',
-                marginTop: '15px', 
-                borderRadius: '10px',
-                boxShadow: isPass 
-                  ? '0 2px 10px rgba(59,130,246,0.3)'
-                  : '0 2px 10px rgba(249,115,22,0.3)'
-              }}></div>
-            </div>
-            
-            {/* Description Text */}
-            <p style={{ 
-              fontSize: '13px', 
-              fontFamily: 'serif', 
-              fontStyle: 'italic', 
-              color: '#475569', 
-              lineHeight: '1.9', 
-              margin: '0 0 30px 0', 
-              padding: '0 40px',
-              textAlign: 'center',
-              maxWidth: '850px',
-              fontWeight: '500'
-            }}>
-              {isPass 
-                ? "Telah menunjukkan kompetensi luar biasa dan berhasil menyelesaikan seluruh kurikulum pelatihan intensif dengan hasil memuaskan pada program:" 
-                : "Telah berpartisipasi aktif dan menyelesaikan modul pelatihan intensif dengan dedikasi tinggi guna meningkatkan kompetensi pada program:"}
-            </p>
-
-            {/* Program Badge - Enhanced */}
-            <div style={{ 
-              position: 'relative',
-              marginBottom: '30px'
-            }}>
-              {/* Glow Effect */}
+              {/* Certificate Type Badge */}
               <div style={{
-                position: 'absolute',
-                inset: '-10px',
+                padding: '8px 25px',
                 background: isPass 
-                  ? 'linear-gradient(135deg, rgba(59,130,246,0.3), rgba(30,58,138,0.3))'
-                  : 'linear-gradient(135deg, rgba(249,115,22,0.3), rgba(124,45,18,0.3))',
-                borderRadius: '45px',
-                filter: 'blur(20px)',
-                opacity: 0.6
-              }}></div>
+                  ? 'rgba(30,58,138,0.08)'
+                  : 'rgba(234,88,12,0.08)',
+                borderRadius: '40px',
+                border: `2px solid ${isPass ? '#dbeafe' : '#ffedd5'}`,
+                marginBottom: '20px'
+              }}>
+                <p style={{
+                  fontSize: '10px',
+                  fontWeight: '900',
+                  color: isPass ? '#1e3a8a' : '#7c2d12',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.2em',
+                  margin: 0
+                }}>
+                  {isPass ? '★ Sertifikat Resmi ★' : '★ Capaian Pembelajaran ★'}
+                </p>
+              </div>
 
+              {/* Title */}
+              <h2 style={{ 
+                fontSize: '44px', 
+                fontFamily: 'serif', 
+                fontStyle: 'italic', 
+                color: isPass ? '#1e3a8a' : '#ea580c',
+                margin: '0 0 10px 0',
+                fontWeight: '900',
+                letterSpacing: '-0.01em'
+              }}>
+                {isPass ? 'Certificate of Achievement' : 'Participation Certificate'}
+              </h2>
+              
+              <p style={{ 
+                fontSize: '13px', 
+                fontFamily: 'serif', 
+                fontStyle: 'italic', 
+                color: '#64748b', 
+                margin: '0 0 25px 0',
+                fontWeight: '600'
+              }}>
+                Diberikan dengan bangga kepada:
+              </p>
+              
+              {/* Student Name */}
               <div style={{ 
-                position: 'relative',
+                marginBottom: '25px',
+                textAlign: 'center'
+              }}>
+                <h3 style={{ 
+                  fontSize: '40px', 
+                  fontWeight: '900', 
+                  background: isPass 
+                    ? 'linear-gradient(135deg, #1e3a8a, #3b82f6)'
+                    : 'linear-gradient(135deg, #ea580c, #f97316)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text',
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.05em', 
+                  margin: 0, 
+                  lineHeight: 1.2
+                }}>
+                  {studentName.toUpperCase()}
+                </h3>
+                
+                <div style={{ 
+                  width: '400px', 
+                  height: '3px', 
+                  background: isPass 
+                    ? 'linear-gradient(90deg, transparent, #3b82f6, transparent)'
+                    : 'linear-gradient(90deg, transparent, #f97316, transparent)',
+                  marginTop: '12px',
+                  marginLeft: 'auto',
+                  marginRight: 'auto',
+                  borderRadius: '10px'
+                }}></div>
+              </div>
+              
+              {/* Description Text */}
+              <p style={{ 
+                fontSize: '12px', 
+                fontFamily: 'serif', 
+                fontStyle: 'italic', 
+                color: '#475569', 
+                lineHeight: '1.8', 
+                margin: '0 0 25px 0', 
+                padding: '0 40px',
+                textAlign: 'center',
+                maxWidth: '750px',
+                fontWeight: '500'
+              }}>
+                {isPass 
+                  ? "Telah menunjukkan kompetensi luar biasa dan berhasil menyelesaikan seluruh kurikulum pelatihan intensif dengan hasil memuaskan pada program:" 
+                  : "Telah berpartisipasi aktif dan menyelesaikan modul pelatihan intensif dengan dedikasi tinggi guna meningkatkan kompetensi pada program:"}
+              </p>
+
+              {/* Program Badge */}
+              <div style={{ 
                 background: isPass 
                   ? 'linear-gradient(135deg, #1e3a8a, #0f172a)' 
                   : 'linear-gradient(135deg, #ea580c, #7c2d12)', 
+                maxWidth: '700px',
                 width: '100%',
-                maxWidth: '750px',
-                padding: '35px 45px', 
-                borderRadius: '35px', 
-                border: '5px solid white', 
-                display: 'flex', 
-                flexDirection: 'column', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                boxShadow: '0 20px 50px rgba(0,0,0,0.25)'
+                padding: '30px 40px', 
+                borderRadius: '28px', 
+                border: '4px solid white', 
+                textAlign: 'center',
+                boxShadow: '0 15px 40px rgba(0,0,0,0.2)',
+                marginBottom: '10px'
               }}>
-                {/* Decorative Stars */}
-                <div style={{ 
-                  position: 'absolute', 
-                  top: '15px', 
-                  left: '25px',
-                  fontSize: '16px',
-                  opacity: 0.3
-                }}>✦</div>
-                <div style={{ 
-                  position: 'absolute', 
-                  top: '15px', 
-                  right: '25px',
-                  fontSize: '16px',
-                  opacity: 0.3
-                }}>✦</div>
-
                 <p style={{ 
-                  fontSize: '28px', 
+                  fontSize: '26px', 
                   fontWeight: '900', 
                   color: 'white', 
                   textTransform: 'uppercase', 
                   fontStyle: 'italic', 
                   margin: 0, 
                   lineHeight: 1.3,
-                  textAlign: 'center',
-                  letterSpacing: '0.05em',
-                  textShadow: '0 2px 10px rgba(0,0,0,0.3)'
+                  letterSpacing: '0.03em'
                 }}>
                   {subject}
                 </p>
                 
                 <div style={{ 
-                  width: '50%', 
+                  width: '40%', 
                   height: '2px', 
-                  background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent)', 
-                  margin: '18px 0' 
+                  background: 'rgba(255,255,255,0.5)', 
+                  margin: '15px auto' 
                 }}></div>
                 
                 <p style={{ 
-                  fontSize: '17px', 
+                  fontSize: '16px', 
                   fontWeight: '900', 
-                  color: 'rgba(255,255,255,0.9)', 
+                  color: 'rgba(255,255,255,0.85)', 
                   textTransform: 'uppercase', 
-                  letterSpacing: '0.4em',
-                  margin: 0,
-                  textShadow: '0 1px 5px rgba(0,0,0,0.2)'
+                  letterSpacing: '0.3em',
+                  margin: 0
                 }}>
                   Level {level}
                 </p>
               </div>
             </div>
-          </div>
 
-          {/* FOOTER SECTION */}
-          <div style={{ 
-            display: 'flex', 
-            justifyContent: 'space-between', 
-            alignItems: 'center',
-            padding: '30px 70px',
-            borderTop: `3px solid ${isPass ? '#eff6ff' : '#fff7ed'}`,
-            position: 'relative',
-            zIndex: 10,
-            background: isPass 
-              ? 'linear-gradient(to top, rgba(239,246,255,0.3), transparent)'
-              : 'linear-gradient(to top, rgba(255,247,237,0.3), transparent)'
-          }}>
-            {/* Date */}
-            <div style={{ textAlign: 'left' }}>
-              <p style={{ 
-                fontSize: '10px', 
-                color: '#94a3b8', 
-                fontWeight: '900', 
-                textTransform: 'uppercase', 
-                letterSpacing: '0.15em', 
-                marginBottom: '8px' 
-              }}>
-                Tanggal Penerbitan
-              </p>
-              <p style={{ 
-                fontSize: '16px', 
-                fontWeight: '900', 
-                color: '#1e293b',
-                fontStyle: 'italic',
-                letterSpacing: '0.02em'
-              }}>
-                {formatDateToDMY(reportLog.createdDate || new Date().toISOString().split('T')[0])}
-              </p>
-            </div>
-
-            {/* Seal/Badge Center */}
-            <div style={{
-              width: '90px',
-              height: '90px',
-              background: isPass 
-                ? 'linear-gradient(135deg, #1e3a8a, #3b82f6)'
-                : 'linear-gradient(135deg, #ea580c, #f97316)',
-              borderRadius: '50%',
-              display: 'flex',
+            {/* FOOTER SECTION */}
+            <div style={{ 
+              display: 'flex', 
+              justifyContent: 'space-between', 
               alignItems: 'center',
-              justifyContent: 'center',
-              border: '5px solid white',
-              boxShadow: isPass 
-                ? '0 10px 30px rgba(30,58,138,0.3)'
-                : '0 10px 30px rgba(234,88,12,0.3)',
-              position: 'relative'
+              paddingTop: '25px',
+              borderTop: `2px solid ${isPass ? '#eff6ff' : '#fff7ed'}`
             }}>
-              <div style={{
-                textAlign: 'center',
-                color: 'white'
-              }}>
-                <p style={{
-                  fontSize: '28px',
-                  fontWeight: '900',
-                  margin: 0,
-                  lineHeight: 1,
+              {/* Date */}
+              <div style={{ textAlign: 'left' }}>
+                <p style={{ 
+                  fontSize: '9px', 
+                  color: '#94a3b8', 
+                  fontWeight: '900', 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.1em', 
+                  marginBottom: '6px' 
+                }}>
+                  Tanggal Penerbitan
+                </p>
+                <p style={{ 
+                  fontSize: '15px', 
+                  fontWeight: '900', 
+                  color: '#1e293b',
                   fontStyle: 'italic'
-                }}>{avg}</p>
-                <p style={{
-                  fontSize: '8px',
-                  fontWeight: '900',
-                  margin: '3px 0 0 0',
-                  letterSpacing: '0.1em',
+                }}>
+                  {formatDateToDMY(reportLog.createdDate || new Date().toISOString().split('T')[0])}
+                </p>
+              </div>
+
+              {/* Seal/Badge Center */}
+              <div style={{
+                width: '80px',
+                height: '80px',
+                background: isPass 
+                  ? 'linear-gradient(135deg, #1e3a8a, #3b82f6)'
+                  : 'linear-gradient(135deg, #ea580c, #f97316)',
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                border: '4px solid white',
+                boxShadow: '0 8px 25px rgba(0,0,0,0.2)'
+              }}>
+                <div style={{
+                  textAlign: 'center',
+                  color: 'white'
+                }}>
+                  <p style={{
+                    fontSize: '24px',
+                    fontWeight: '900',
+                    margin: 0,
+                    lineHeight: 1,
+                    fontStyle: 'italic'
+                  }}>{avg}</p>
+                  <p style={{
+                    fontSize: '7px',
+                    fontWeight: '900',
+                    margin: '2px 0 0 0',
+                    letterSpacing: '0.1em',
+                    textTransform: 'uppercase',
+                    opacity: 0.9
+                  }}>Score</p>
+                </div>
+              </div>
+
+              {/* Status */}
+              <div style={{ textAlign: 'right' }}>
+                <p style={{ 
+                  fontSize: '9px', 
+                  color: '#94a3b8', 
+                  fontWeight: '900', 
+                  textTransform: 'uppercase', 
+                  letterSpacing: '0.1em', 
+                  marginBottom: '6px' 
+                }}>
+                  Status Kelulusan
+                </p>
+                <p style={{ 
+                  fontSize: '18px', 
+                  fontWeight: '900', 
+                  color: isPass ? '#10b981' : '#f97316',
+                  fontStyle: 'italic',
                   textTransform: 'uppercase',
-                  opacity: 0.9
-                }}>Score</p>
+                  letterSpacing: '0.05em'
+                }}>
+                  {statusLabel}
+                </p>
               </div>
             </div>
 
-            {/* Status - Text Only (No Box) */}
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ 
-                fontSize: '10px', 
-                color: '#94a3b8', 
-                fontWeight: '900', 
-                textTransform: 'uppercase', 
-                letterSpacing: '0.15em', 
-                marginBottom: '8px' 
-              }}>
-                Status Kelulusan
-              </p>
-              <p style={{ 
-                fontSize: '20px', 
-                fontWeight: '900', 
-                color: isPass ? '#10b981' : '#f97316',
-                fontStyle: 'italic',
-                textTransform: 'uppercase',
-                letterSpacing: '0.08em',
-                textShadow: isPass 
-                  ? '0 2px 15px rgba(16,185,129,0.3)'
-                  : '0 2px 15px rgba(249,115,22,0.3)',
-                lineHeight: 1
-              }}>
-                {statusLabel}
-              </p>
-            </div>
           </div>
-
         </div>
       </div>
 
