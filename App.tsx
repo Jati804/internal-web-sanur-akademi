@@ -159,6 +159,11 @@ const AppContent = ({
   const location = useLocation();
   const [showGuide, setShowGuide] = useState(false);
   
+  // 🎯 DETEKSI DOMAIN - FUTURE PROOF!
+  // Vercel domain (.vercel.app) = verify only
+  // Domain lain apapun = full feature
+  const isVercelDomain = window.location.hostname.includes('vercel.app');
+  
   // 🔥 STATE DETEKSI PORTRAIT
   const [isPortrait, setIsPortrait] = useState(false);
 
@@ -209,6 +214,16 @@ const AppContent = ({
         l.teacherId === user?.id
       ).length : 0;
 
+  // 🎯 VERCEL DOMAIN: Hanya tampilkan verify page, block semua yang lain
+  if (isVercelDomain) {
+    if (location.pathname === '/verify') {
+      return <VerifyCertificate />;
+    }
+    // Kalau bukan /verify di Vercel domain, paksa redirect ke /verify
+    return <Navigate to="/verify" replace />;
+  }
+  
+  // 🎯 DOMAIN UTAMA (sanurakademi.it.com): Handle /verify secara normal
   if (location.pathname === '/verify') return <VerifyCertificate />;
   
   if (!user) return (
@@ -295,7 +310,6 @@ const AppContent = ({
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-12">
           <div className="max-w-7xl mx-auto">
             <Routes>
-              <Route path="/verify" element={<VerifyCertificate />} />
               <Route path="/admin" element={<AdminDashboard user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} setAttendanceLogs={setAttendanceLogs} teachers={teachers} transactions={transactions} studentProfiles={studentProfiles} />} />
               <Route path="/admin/finance" element={<AdminFinance attendanceLogs={attendanceLogs} transactions={transactions} studentPayments={studentPayments} refreshAllData={refreshAllData} />} />
               <Route path="/admin/buku-induk" element={<AdminInventory studentProfiles={studentProfiles} setStudentProfiles={setStudentProfiles} salesContacts={salesContacts} setSalesContacts={setSalesContacts} refreshAllData={refreshAllData} />} />
