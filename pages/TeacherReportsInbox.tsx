@@ -138,6 +138,21 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
   console.log('Selected Year:', selectedYear);
   console.log('User ID:', user.id);
   
+  // ✅ TAMPILKAN SEMUA LOGS DULU
+  console.log('📋 ALL LOGS:');
+  logs.forEach((l, idx) => {
+    console.log(`  Log ${idx + 1}:`, {
+      id: l.id,
+      status: l.status,
+      sessionNumber: l.sessionNumber,
+      teacherId: l.teacherId,
+      packageId: l.packageId,
+      date: l.date,
+      studentsAttended: l.studentsAttended,
+      className: l.className
+    });
+  });
+  
   const baseReports = logs.filter(l => {
     const checks = {
       status: l.status === 'SESSION_LOG' || l.status === 'REPORT_READY',
@@ -150,32 +165,22 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
     
     const passed = Object.values(checks).every(v => v);
     
-    if (!passed) {
-      console.log('❌ Filtered out:', {
-        id: l.id,
+    console.log(passed ? '✅ PASSED' : '❌ FAILED', {
+      id: l.id,
+      allChecks: checks,
+      data: {
         status: l.status,
         sessionNumber: l.sessionNumber,
         teacherId: l.teacherId,
         packageId: l.packageId,
-        date: l.date,
-        checks
-      });
-    }
+        date: l.date
+      }
+    });
     
     return passed;
   });
   
   console.log('✅ Base reports after filter:', baseReports.length);
-  baseReports.forEach(r => {
-    console.log('  Report:', {
-      id: r.id,
-      status: r.status,
-      sessionNumber: r.sessionNumber,
-      student: r.studentsAttended?.[0],
-      class: r.className,
-      date: r.date
-    });
-  });
     
   // LOGIKA SORTING (sama kayak sebelumnya)
   const sorted = [...baseReports].sort((a, b) => {
