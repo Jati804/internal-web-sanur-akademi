@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Attendance } from './types';
 import { 
@@ -146,7 +145,7 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])] // ✅ TAMBAH FALLBAC
               </div>
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                  <div style={{ padding: '6px', border: '3px solid #f1f5f9', borderRadius: '15px', backgroundColor: 'white' }}>
-                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${finalQrData}`} style={{ width: '65px', height: '65px' }} />
+                    <img src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(finalQrData)}`} style={{ width: '65px', height: '65px' }} />
                  </div>
                  <p style={{ fontSize: '7px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', marginTop: '8px' }}>Verifikasi Digital Resmi</p>
               </div>
