@@ -73,9 +73,8 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])] // ✅ TAMBAH FALLBAC
 
   // LOGIKA QR CODE: Teks Informasi
   const statusLabel = isPass ? "LULUS & KOMPETEN" : "PESERTA PELATIHAN";
-  const qrRawText = `SANUR AKADEMI INSPIRASI\nVERIFIKASI DIGITAL RESMI\n--------------------------\nNama: ${studentName.toUpperCase()}\nProgram: ${subject.toUpperCase()}\nLevel: ${level.toUpperCase()}\nTipe: ${reportLog.sessionCategory || 'REGULER'}\nTanggal: ${formatDateToDMY(reportLog.date)}\nStatus: ${statusLabel}\nID Ref: SN-${reportLog.id.substring(0,8).toUpperCase()}`;
-  
-  const finalQrData = encodeURIComponent(qrRawText);
+  const verifyUrl = `https://sanur-verify.vercel.app/verify?id=${reportLog.id}`;
+  const finalQrData = verifyUrl;
 
   // STYLE LOCK: Ukuran A4 standar (794x1123px)
   const PAGE_STYLE: React.CSSProperties = {
