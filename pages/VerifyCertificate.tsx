@@ -125,8 +125,6 @@ const VerifyCertificate: React.FC = () => {
                    {error || "ID Sertifikat tidak valid atau sudah dihapus dari sistem kami."}
                  </p>
               </div>
-              <Link to="/" className="inline-block w-full py-5 bg-slate-900 text-white rounded-3xl font-black text-[10px] uppercase shadow-2xl">KEMBALI KE PORTAL</Link>
-           </div>
          ) : (
            <>
               {/* MAIN BADGE - Enhanced Cyan Design for Pass */}
@@ -256,11 +254,8 @@ const VerifyCertificate: React.FC = () => {
                  </div>
               </div>
 
-              {/* Footer Buttons */}
+              {/* Footer */}
               <div className="flex flex-col gap-4">
-                 <Link to="/" className={`w-full py-5 ${isPass ? 'bg-gradient-to-r from-blue-900 via-blue-800 to-blue-900 hover:from-blue-800 hover:to-blue-800' : 'bg-slate-900'} text-white rounded-3xl font-black text-[10px] uppercase shadow-2xl active:scale-95 transition-all`}>
-                   KEMBALI KE PORTAL
-                 </Link>
                  <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.4em]">© SANUR AKADEMI INSPIRASI</p>
               </div>
            </>
