@@ -2,8 +2,14 @@
   "redirects": [
     {
       "source": "/",
-      "destination": "/verify",
+      "destination": "/#/verify",
       "permanent": false
+    }
+  ],
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
