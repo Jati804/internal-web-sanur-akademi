@@ -105,8 +105,7 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])]
       
       {/* ✅ HALAMAN 1: SERTIFIKAT LANDSCAPE - SIMPLIFIED */}
       <div id={`cert-render-${reportLog.id}`} style={{ ...PAGE_LANDSCAPE, border: `25px double ${isPass ? '#1e3a8a' : '#ea580c'}` }}>
-        {/* ✅ PERUBAHAN 3: Border luar lebih gelap dari #f1f5f9 jadi #94a3b8 */}
-        <div style={{ width: '100%', height: '100%', border: '4px solid #94a3b8', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', position: 'relative', padding: '50px 80px' }}>
+        <div style={{ width: '100%', height: '100%', border: '4px solid #f1f5f9', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', position: 'relative', padding: '50px 80px' }}>
           
           {/* HEADER - LOGO AJA */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '50px' }}>
@@ -137,85 +136,49 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])]
             </p>
 
             {/* ✅ KOTAK HANYA UNTUK SUBJECT & LEVEL */}
-            {/* ✅ PERUBAHAN 1: marginBottom dari 15px jadi 8px biar level naik ke atas */}
-            <div style={{ backgroundColor: isPass ? '#1e40af' : '#c2410c', padding: '25px 60px', borderRadius: '50px', marginBottom: '8px', boxShadow: '0 10px 20px rgba(0,0,0,0.1)', position: 'relative', overflow: 'hidden' }}>
-              <div style={{ position: 'absolute', top: 0, right: 0, width: '120px', height: '120px', backgroundColor: 'rgba(255,255,255,0.1)', borderRadius: '999px', marginRight: '-60px', marginTop: '-60px' }}></div>
-              <h4 style={{ fontSize: '22px', fontWeight: '900', color: 'white', textTransform: 'uppercase', textAlign: 'center', letterSpacing: '0.2em', margin: 0, position: 'relative', zIndex: 10 }}>
-                {subject}
-              </h4>
-              {/* ✅ PERUBAHAN 2: HAPUS borderTop biar nggak ada garis tengah */}
-              <div style={{ padding: '18px 0', marginTop: '18px' }}>
-                <p style={{ fontSize: '12px', fontWeight: '900', color: 'rgba(255,255,255,0.9)', textTransform: 'uppercase', letterSpacing: '0.3em', textAlign: 'center', margin: 0 }}>
-                  LEVEL {level}
-                </p>
-              </div>
+            <div style={{ background: isPass ? 'linear-gradient(135deg, #1e3a8a, #0f172a)' : 'linear-gradient(135deg, #ea580c, #0f172a)', width: '700px', padding: '30px 20px', borderRadius: '35px', border: '4px solid white', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 12px 30px -8px rgba(0,0,0,0.15)', marginBottom: '50px' }}>
+               <p style={{ fontSize: '22px', fontWeight: '900', color: 'white', textTransform: 'uppercase', fontStyle: 'italic', margin: 0, lineHeight: 1.2 }}>{subject}</p>
+               <div style={{ width: '100%', height: '1px', backgroundColor: 'rgba(255,255,255,0.2)', margin: '12px 0' }}></div>
+               <p style={{ fontSize: '16px', fontWeight: '900', color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.3em', margin: 0 }}>LEVEL {level}</p>
             </div>
           </div>
 
-          {/* ✅ PERUBAHAN 4 & 5: Hapus garis footer & Bikin bilah colorful untuk QR */}
-          <div style={{ position: 'relative', zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '20px' }}>
-            
-            {/* ✅ BILAH COLORFUL KIRI UNTUK QR CODE */}
-            <div style={{ 
-              width: '140px', 
-              height: '160px', 
-              background: 'linear-gradient(135deg, #6366f1, #8b5cf6, #ec4899, #f59e0b)', 
-              borderRadius: '30px', 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              boxShadow: '0 8px 16px rgba(0,0,0,0.15)',
-              position: 'relative'
-            }}>
-              <div style={{ 
-                backgroundColor: 'white', 
-                padding: '12px', 
-                borderRadius: '18px', 
-                boxShadow: '0 4px 12px rgba(0,0,0,0.2)' 
-              }}>
-                <img 
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=90x90&data=${finalQrData}`} 
-                  style={{ width: '90px', height: '90px', display: 'block' }} 
-                  alt="QR Code"
-                />
-              </div>
+          {/* ✅ FOOTER - CUMA TANGGAL TERBIT + QR CODE */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '30px', borderTop: '2px solid #f1f5f9' }}>
+            <div>
+              <p style={{ fontSize: '9px', fontWeight: '900', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '3px' }}>Tanggal Terbit</p>
+              <p style={{ fontSize: '13px', fontWeight: '900', color: '#64748b', fontStyle: 'italic' }}>{formatDateToDMY(reportLog.date)}</p>
             </div>
-
-            {/* INFO REQ & TANGGAL TERBIT */}
-            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '6px' }}>
-              <p style={{ fontSize: '10px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.15em', margin: 0 }}>
-                REQ: {reportLog.id || 'N/A'}
-              </p>
-              <p style={{ fontSize: '10px', fontWeight: '900', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.1em', margin: 0 }}>
-                Tanggal Terbit: {reportLog.createdDate ? formatDateToDMY(reportLog.createdDate) : 'N/A'}
-              </p>
+            <div style={{ textAlign: 'center' }}>
+              <img 
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(finalQrData)}`} 
+                style={{ width: '80px', height: '80px', border: '3px solid #f1f5f9', borderRadius: '12px' }} 
+              />
+              <p style={{ fontSize: '7px', fontWeight: '900', color: '#cbd5e1', textTransform: 'uppercase', marginTop: '5px' }}>Verifikasi</p>
+            </div>
+            <div style={{ textAlign: 'right' }}>
+              <p style={{ fontSize: '9px', fontWeight: '900', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '3px' }}>ID Sertifikat</p>
+              <p style={{ fontSize: '11px', fontWeight: '900', color: '#64748b', fontStyle: 'italic' }}>{reportLog.id.substring(0, 12).toUpperCase()}</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* ✅ HALAMAN 2: TRANSKRIP NILAI (PORTRAIT) */}
-      <div id={`transkrip-render-${reportLog.id}`} style={{ ...PAGE_PORTRAIT, padding: '60px 70px' }}>
-        <div style={{ position: 'absolute', top: 0, left: 0, width: '350px', height: '350px', backgroundColor: isPass ? '#eff6ff' : '#fff7ed', borderRadius: '999px', marginLeft: '-175px', marginTop: '-175px', opacity: 0.5 }}></div>
+      {/* ✅ HALAMAN 2: TRANSKRIP (PORTRAIT) - PERIODE HIGHLIGHTED */}
+      <div id={`transcript-render-${reportLog.id}`} style={{ ...PAGE_PORTRAIT, padding: '70px 60px' }}>
+        <div style={{ position: 'absolute', top: 0, right: 0, width: '350px', height: '350px', backgroundColor: '#eff6ff', borderRadius: '999px', marginRight: '-175px', marginTop: '-175px', opacity: 0.4 }}></div>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '45px', position: 'relative', zIndex: 10 }}>
-          <div style={{ width: '52px', height: '52px', backgroundColor: isPass ? '#1e3a8a' : '#7c2d12', color: 'white', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(6deg)' }}><Layout size={26}/></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px', position: 'relative', zIndex: 10 }}>
+          <div style={{ width: '52px', height: '52px', backgroundColor: '#0f172a', color: 'white', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(6deg)' }}><Layout size={26}/></div>
           <div>
-            <h1 style={{ fontSize: '34px', fontWeight: '900', fontStyle: 'italic', color: '#1e293b', textTransform: 'uppercase', letterSpacing: '-0.05em' }}>Transkrip <span style={{ color: isPass ? '#2563eb' : '#ea580c' }}>Nilai</span></h1>
+            <h1 style={{ fontSize: '34px', fontWeight: '900', fontStyle: 'italic', color: '#1e293b', textTransform: 'uppercase', letterSpacing: '-0.05em', lineHeight: 1 }}>Transkrip <span style={{ color: isPass ? '#2563eb' : '#ea580c' }}>Nilai</span></h1>
           </div>
         </div>
-
-        {/* ✅ PERUBAHAN 6 & 7: Ganti PERIODE jadi TINGKAT KURIKULUM & Hapus box background */}
-        <div style={{ padding: '20px 0', textAlign: 'center', marginBottom: '30px', position: 'relative', zIndex: 10 }}>
-          <p style={{ 
-            fontSize: '15px', 
-            fontWeight: '900', 
-            color: isPass ? '#2563eb' : '#ea580c', 
-            textTransform: 'uppercase', 
-            letterSpacing: '0.3em', 
-            margin: 0 
-          }}>
-            📚 TINGKAT KURIKULUM — SESI {sessionNumbers[0]} s/d {sessionNumbers[5]}
+        
+        {/* ✅ PERIODE HIGHLIGHTED */}
+        <div style={{ backgroundColor: isPass ? '#eff6ff' : '#fff7ed', padding: '16px 30px', borderRadius: '25px', marginBottom: '35px', position: 'relative', zIndex: 10, border: `3px solid ${isPass ? '#dbeafe' : '#ffedd5'}` }}>
+          <p style={{ fontSize: '13px', fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', textTransform: 'uppercase', letterSpacing: '0.3em', textAlign: 'center', margin: 0 }}>
+            📚 PERIODE {periode} — SESI {sessionNumbers[0]} s/d {sessionNumbers[5]}
           </p>
         </div>
 
