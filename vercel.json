@@ -1,11 +1,4 @@
 {
-  "redirects": [
-    {
-      "source": "/",
-      "destination": "/#/verify",
-      "permanent": false
-    }
-  ],
   "rewrites": [
     {
       "source": "/(.*)",
