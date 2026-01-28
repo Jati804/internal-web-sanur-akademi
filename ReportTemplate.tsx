@@ -211,7 +211,7 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])]
         
 <div style={{ marginBottom: '30px', position: 'relative', zIndex: 10 }}>
   <p style={{ fontSize: '13px', fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', textTransform: 'uppercase', letterSpacing: '0.3em', textAlign: 'center', margin: 0 }}>
-    📚 PERIODE {periode} — SESI {sessionNumbers[0]} s/d {sessionNumbers[5]}
+    📚 TINGKAT KURIKULUM {periode} — SESI {sessionNumbers[0]} s/d {sessionNumbers[5]}
   </p>
 </div>
 
