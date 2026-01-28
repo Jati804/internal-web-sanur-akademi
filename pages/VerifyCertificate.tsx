@@ -164,7 +164,7 @@ const VerifyCertificate: React.FC = () => {
                 </h1>
                 
                 <p className="text-slate-400 font-bold text-[9px] uppercase tracking-widest px-4">
-                   Dokumen ini adalah asli dan tercatat secara resmi di database Sanur Akademi Inspirasi.
+                   Dokumen ini adalah asli dan tercatat secara resmi di database Sanur Akademi Inspirasi
                 </p>
               </div>
 
@@ -257,7 +257,7 @@ const VerifyCertificate: React.FC = () => {
               </div>
 
               {/* Footer - Copyright Only, No Button */}
-              <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.4em] mt-8">Â© SANUR AKADEMI INSPIRASI</p>
+              <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.4em] mt-8">© SANUR AKADEMI INSPIRASI</p>
            </>
          )}
       </div>
