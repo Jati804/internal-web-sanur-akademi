@@ -299,7 +299,7 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])]
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             {/* ✅ GANTI NOMOR SESI JADI DINAMIS (TANPA TULISAN PERIODE) */}
             {sessionNumbers.map((sessionNum, idx) => { 
-               const studentLog = studentOnlyLogs.find(x => x.sessionnumber === sessionNum);
+               const studentLog = studentOnlyLogs.find(x => x.sessionnumber === (idx + 1));
                return (
                  <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '40px', padding: '10px 40px', borderBottom: '1px solid #f8fafc' }}>
                    <div style={{ fontWeight: '900', fontSize: '18px', textTransform: 'uppercase', fontStyle: 'italic', width: '85px' }} className={SESSION_COLORS[idx] || 'text-slate-400'}>SESI {sessionNum}</div>
