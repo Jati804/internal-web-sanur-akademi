@@ -105,7 +105,44 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])]
       
       {/* ✅ HALAMAN 1: SERTIFIKAT LANDSCAPE - SIMPLIFIED */}
       <div id={`cert-render-${reportLog.id}`} style={{ ...PAGE_LANDSCAPE, border: `25px double ${isPass ? '#1e3a8a' : '#ea580c'}` }}>
-        <div style={{ width: '100%', height: '100%', border: '4px solid #f1f5f9', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', position: 'relative', padding: '50px 80px' }}>
+        <div style={{ width: '100%', height: '100%', border: '4px solid #cbd5e1', display: 'flex', flexDirection: 'row', boxSizing: 'border-box', position: 'relative' }}>
+
+{/* SIDEBAR KIRI UNTUK QR CODE */}
+<div style={{ 
+  width: '140px', 
+  background: 'linear-gradient(180deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)', 
+  display: 'flex', 
+  flexDirection: 'column', 
+  alignItems: 'center', 
+  justifyContent: 'center',
+  padding: '30px 15px'
+}}>
+  <div style={{ 
+    backgroundColor: 'white', 
+    padding: '12px', 
+    borderRadius: '15px',
+    boxShadow: '0 4px 12px rgba(0,0,0,0.2)'
+  }}>
+    <img 
+      src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(finalQrData)}`} 
+      style={{ width: '100px', height: '100px', display: 'block' }}
+    />
+  </div>
+  <p style={{ 
+    fontSize: '8px', 
+    fontWeight: '900', 
+    color: 'white', 
+    textAlign: 'center', 
+    marginTop: '12px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.1em'
+  }}>
+    Scan untuk verifikasi
+  </p>
+</div>
+
+{/* KONTEN UTAMA */}
+<div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '50px 80px' }}>
           
           {/* HEADER - LOGO AJA */}
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '50px' }}>
@@ -139,30 +176,25 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])]
             <div style={{ background: isPass ? 'linear-gradient(135deg, #1e3a8a, #0f172a)' : 'linear-gradient(135deg, #ea580c, #0f172a)', width: '700px', padding: '30px 20px', borderRadius: '35px', border: '4px solid white', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 12px 30px -8px rgba(0,0,0,0.15)', marginBottom: '50px' }}>
                <p style={{ fontSize: '22px', fontWeight: '900', color: 'white', textTransform: 'uppercase', fontStyle: 'italic', margin: 0, lineHeight: 1.2 }}>{subject}</p>
                <div style={{ width: '100%', height: '1px', backgroundColor: 'rgba(255,255,255,0.2)', margin: '12px 0' }}></div>
-               <p style={{ fontSize: '16px', fontWeight: '900', color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.3em', margin: 0 }}>LEVEL {level}</p>
+               <p style={{ fontSize: '16px', fontWeight: '900', color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.3em', margin: '-8px 0 0 0' }}>LEVEL {level}</p>
             </div>
           </div>
 
-          {/* ✅ FOOTER - CUMA TANGGAL TERBIT + QR CODE */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '30px', borderTop: '2px solid #f1f5f9' }}>
-            <div>
-              <p style={{ fontSize: '9px', fontWeight: '900', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '3px' }}>Tanggal Terbit</p>
-              <p style={{ fontSize: '13px', fontWeight: '900', color: '#64748b', fontStyle: 'italic' }}>{formatDateToDMY(reportLog.date)}</p>
-            </div>
-            <div style={{ textAlign: 'center' }}>
-              <img 
-                src={`https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(finalQrData)}`} 
-                style={{ width: '80px', height: '80px', border: '3px solid #f1f5f9', borderRadius: '12px' }} 
-              />
-              <p style={{ fontSize: '7px', fontWeight: '900', color: '#cbd5e1', textTransform: 'uppercase', marginTop: '5px' }}>Verifikasi</p>
-            </div>
-            <div style={{ textAlign: 'right' }}>
-              <p style={{ fontSize: '9px', fontWeight: '900', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '3px' }}>ID Sertifikat</p>
-              <p style={{ fontSize: '11px', fontWeight: '900', color: '#64748b', fontStyle: 'italic' }}>{reportLog.id.substring(0, 12).toUpperCase()}</p>
-            </div>
-          </div>
-        </div>
-      </div>
+{/* ✅ FOOTER - CUMA TANGGAL TERBIT + ID SERTIFIKAT */}
+<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0', marginTop: 'auto' }}>
+  <div>
+    <p style={{ fontSize: '9px', fontWeight: '900', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '3px' }}>Tanggal Terbit</p>
+    <p style={{ fontSize: '13px', fontWeight: '900', color: '#64748b', fontStyle: 'italic' }}>{formatDateToDMY(reportLog.date)}</p>
+  </div>
+  <div style={{ textAlign: 'right' }}>
+    <p style={{ fontSize: '9px', fontWeight: '900', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '3px' }}>ID Sertifikat</p>
+    <p style={{ fontSize: '11px', fontWeight: '900', color: '#64748b', fontStyle: 'italic' }}>{reportLog.id.substring(0, 12).toUpperCase()}</p>
+  </div>
+</div>
+
+        </div> {/* Tutup konten utama */}
+        </div> {/* Tutup wrapper dengan border */}
+      </div> {/* Tutup halaman 1 */}
 
       {/* ✅ HALAMAN 2: TRANSKRIP (PORTRAIT) - PERIODE HIGHLIGHTED */}
       <div id={`transcript-render-${reportLog.id}`} style={{ ...PAGE_PORTRAIT, padding: '70px 60px' }}>
@@ -175,12 +207,12 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])]
           </div>
         </div>
         
-        {/* ✅ PERIODE HIGHLIGHTED */}
-        <div style={{ backgroundColor: isPass ? '#eff6ff' : '#fff7ed', padding: '16px 30px', borderRadius: '25px', marginBottom: '35px', position: 'relative', zIndex: 10, border: `3px solid ${isPass ? '#dbeafe' : '#ffedd5'}` }}>
-          <p style={{ fontSize: '13px', fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', textTransform: 'uppercase', letterSpacing: '0.3em', textAlign: 'center', margin: 0 }}>
-            📚 PERIODE {periode} — SESI {sessionNumbers[0]} s/d {sessionNumbers[5]}
-          </p>
-        </div>
+        
+<div style={{ marginBottom: '30px', position: 'relative', zIndex: 10 }}>
+  <p style={{ fontSize: '13px', fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', textTransform: 'uppercase', letterSpacing: '0.3em', textAlign: 'center', margin: 0 }}>
+    📚 PERIODE {periode} — SESI {sessionNumbers[0]} s/d {sessionNumbers[5]}
+  </p>
+</div>
 
         <div style={{ backgroundColor: 'white', borderRadius: '35px', border: '3px solid #f1f5f9', overflow: 'hidden', marginBottom: '30px', position: 'relative', zIndex: 10 }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
@@ -217,34 +249,34 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])]
           </table>
         </div>
 
-        {/* Footer Transkrip */}
-        <div style={{ padding: '30px 40px', backgroundColor: '#0f172a', borderRadius: '42px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
-          <div style={{ position: 'absolute', top: 0, right: 0, width: '230px', height: '230px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '999px', marginRight: '-115px', marginTop: '-115px' }}></div>
-          <div style={{ position: 'relative', zIndex: 10 }}>
-            <p style={{ fontSize: '9px', fontWeight: '900', color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.5em', marginBottom: '4px' }}>Evaluasi Kumulatif</p>
-            <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px' }}>
-              <p style={{ fontSize: '15px', fontWeight: '900', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>RATA-RATA:</p>
-              <h4 style={{ fontSize: '60px', fontWeight: '900', fontStyle: 'italic', letterSpacing: '-0.05em' }}>{avg}</h4>
-              <span style={{ fontSize: '18px', color: 'rgba(255,255,255,0.3)', fontWeight: '900', fontStyle: 'italic' }}>/ 100</span>
-            </div>
-          </div>
-          
-          <div style={{ 
-            backgroundColor: 'rgba(255,255,255,0.1)', 
-            padding: '18px 24px', 
-            borderRadius: '25px', 
-            border: '1px solid rgba(255,255,255,0.2)', 
-            borderBottom: `6px solid ${isPass ? '#10b981' : '#f97316'}`,
-            textAlign: 'center', 
-            minWidth: '190px', 
-            position: 'relative', 
-            zIndex: 10 
-          }}>
-            <p style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#93c5fd', marginBottom: '5px' }}>Status Capaian</p>
-            <p style={{ fontSize: '17px', fontWeight: '900', fontStyle: 'italic', textTransform: 'uppercase' }}>{isPass ? 'KOMPETEN' : 'REMEDIAL'}</p>
-          </div>
-        </div>
-      </div>
+{/* Footer Transkrip */}
+<div style={{ padding: '30px 40px', backgroundColor: '#0f172a', borderRadius: '42px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
+  <div style={{ position: 'absolute', top: 0, right: 0, width: '230px', height: '230px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '999px', marginRight: '-115px', marginTop: '-115px' }}></div>
+  
+  <div style={{ position: 'relative', zIndex: 10 }}>
+    <p style={{ fontSize: '9px', fontWeight: '900', color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.5em', marginBottom: '4px' }}>Evaluasi Kumulatif</p>
+    <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px' }}>
+      <p style={{ fontSize: '15px', fontWeight: '900', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>RATA-RATA:</p>
+      <h4 style={{ fontSize: '60px', fontWeight: '900', fontStyle: 'italic', letterSpacing: '-0.05em' }}>{avg}</h4>
+      <span style={{ fontSize: '18px', color: 'rgba(255,255,255,0.3)', fontWeight: '900', fontStyle: 'italic' }}>/ 100</span>
+    </div>
+  </div>
+  
+  <div style={{ 
+    backgroundColor: 'rgba(255,255,255,0.1)', 
+    padding: '18px 24px', 
+    borderRadius: '25px', 
+    border: '1px solid rgba(255,255,255,0.2)', 
+    borderBottom: `6px solid ${isPass ? '#10b981' : '#f97316'}`,
+    textAlign: 'center', 
+    minWidth: '190px', 
+    position: 'relative', 
+    zIndex: 10 
+  }}>
+    <p style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#93c5fd', marginBottom: '5px' }}>Status Capaian</p>
+    <p style={{ fontSize: '17px', fontWeight: '900', fontStyle: 'italic', textTransform: 'uppercase' }}>{isPass ? 'KOMPETEN' : 'REMEDIAL'}</p>
+  </div>
+</div>
 
       {/* ✅ HALAMAN 3: MILESTONE (PORTRAIT) - TANPA TULISAN PERIODE */}
       <div id={`milestone-render-${reportLog.id}`} style={{ ...PAGE_PORTRAIT, padding: '70px 80px' }}>
