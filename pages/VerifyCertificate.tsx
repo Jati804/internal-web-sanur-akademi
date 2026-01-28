@@ -209,8 +209,8 @@ const VerifyCertificate: React.FC = () => {
                  {/* Date & ID Grid */}
                  <div className="grid grid-cols-2 gap-4 relative z-10">
                     <div className="flex items-center gap-5">
-                        <div className={`w-10 h-10 ${isPass ? 'bg-blue-100' : 'bg-white'} rounded-xl flex items-center justify-center ${isPass ? 'text-blue-600' : 'text-slate-400'} shadow-sm shrink-0`}>
-                          <Calendar size={20} />
+                        <div className={`w-12 h-12 ${isPass ? 'bg-blue-100' : 'bg-white'} rounded-xl flex items-center justify-center ${isPass ? 'text-blue-600' : 'text-slate-400'} shadow-sm shrink-0`}>
+                          <Calendar size={24} />
                         </div>
                         <div>
                           <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Tgl Terbit</p>
@@ -218,8 +218,8 @@ const VerifyCertificate: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex items-center gap-5">
-                        <div className={`w-10 h-10 ${isPass ? 'bg-cyan-100' : 'bg-white'} rounded-xl flex items-center justify-center ${isPass ? 'text-cyan-600' : 'text-slate-400'} shadow-sm shrink-0`}>
-                          <Award size={20} />
+                        <div className={`w-12 h-12 ${isPass ? 'bg-cyan-100' : 'bg-white'} rounded-xl flex items-center justify-center ${isPass ? 'text-cyan-600' : 'text-slate-400'} shadow-sm shrink-0`}>
+                          <Award size={24} />
                         </div>
                         <div>
                           <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Ref ID</p>
