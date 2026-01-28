@@ -364,7 +364,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
               </div>
               <div className="space-y-3">
                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Memproses PDF</h4>
-                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-relaxed px-4">Mengonversi sertifikat & transkrip... ✨</p>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-relaxed px-4">Mengonversi sertifikat & transkrip ✨</p>
               </div>
               
               <div className="w-full space-y-3">
