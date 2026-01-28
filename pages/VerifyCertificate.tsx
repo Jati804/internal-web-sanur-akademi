@@ -244,7 +244,7 @@ const VerifyCertificate: React.FC = () => {
                         <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-600 rounded-full blur-md opacity-40"></div>
                         {/* Badge */}
                         <div className="relative px-6 py-2 bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2 text-white">
-                           <CheckCircle2 size={14} className="text-cyan-200" /> LULUS & KOMPETEN âœ¨
+                           <CheckCircle2 size={14} className="text-cyan-200" /> LULUS & KOMPETEN ✨¨
                         </div>
                       </div>
                     ) : (
