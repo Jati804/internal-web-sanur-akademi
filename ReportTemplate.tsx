@@ -277,6 +277,7 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])]
     <p style={{ fontSize: '17px', fontWeight: '900', fontStyle: 'italic', textTransform: 'uppercase' }}>{isPass ? 'KOMPETEN' : 'REMEDIAL'}</p>
   </div>
 </div>
+      </div>
 
       {/* ✅ HALAMAN 3: MILESTONE (PORTRAIT) - TANPA TULISAN PERIODE */}
       <div id={`milestone-render-${reportLog.id}`} style={{ ...PAGE_PORTRAIT, padding: '70px 80px' }}>
