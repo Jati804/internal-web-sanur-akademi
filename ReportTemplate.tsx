@@ -183,11 +183,11 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])]
 
 {/* ✅ FOOTER - CUMA TANGGAL TERBIT + ID SERTIFIKAT */}
 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0', marginTop: 'auto' }}>
-  <div>
+  <div style={{ textAlign: 'center' }}>
     <p style={{ fontSize: '9px', fontWeight: '900', color: isPass ? '#60a5fa' : '#fb923c', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '3px' }}>Tanggal Terbit</p>
     <p style={{ fontSize: '13px', fontWeight: '900', color: '#64748b', fontStyle: 'italic' }}>{formatDateToDMY(reportLog.date)}</p>
   </div>
-  <div style={{ textAlign: 'right' }}>
+  <div style={{ textAlign: 'center' }}>
     <p style={{ fontSize: '9px', fontWeight: '900', color: isPass ? '#60a5fa' : '#fb923c', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '3px' }}>ID Sertifikat</p>
     <p style={{ fontSize: '11px', fontWeight: '900', color: '#64748b', fontStyle: 'italic' }}>{reportLog.id.substring(0, 12).toUpperCase()}</p>
   </div>
