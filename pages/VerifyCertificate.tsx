@@ -202,7 +202,6 @@ const VerifyCertificate: React.FC = () => {
                          <span className={`px-3 py-0.5 ${isPass ? 'bg-gradient-to-r from-cyan-500 to-blue-600' : themeColors.bgDark} text-white rounded-full text-[7px] font-black uppercase tracking-widest shadow-md`}>
                            {reportData.sessionCategory}
                          </span>
-                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">6 Sesi Selesai</span>
                       </div>
                     </div>
                  </div>
@@ -224,7 +223,7 @@ const VerifyCertificate: React.FC = () => {
                         </div>
                         <div>
                           <p className="text-[7px] font-black text-slate-400 uppercase tracking-widest">Ref ID</p>
-                          <p className="text-[10px] font-black text-slate-800 uppercase leading-none">{reportData.id.substring(0,8).toUpperCase()}</p>
+                          <p className="text-[8px] font-black text-slate-800 uppercase leading-none">{reportData.id.toUpperCase()}</p>
                         </div>
                     </div>
                  </div>
