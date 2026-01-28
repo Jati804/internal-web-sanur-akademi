@@ -60,7 +60,7 @@ const VerifyCertificate: React.FC = () => {
   
   const studentName = reportData?.studentsAttended?.[0] || "SISWA";
 
-  // 🎨 THEME COLORS - BLUE-CYAN untuk lulus, Orange untuk tidak lulus
+  // ðŸŽ¨ THEME COLORS - BLUE-CYAN untuk lulus, Orange untuk tidak lulus
   const themeColors = isPass ? {
     primary: 'blue',
     bgLight: 'bg-blue-50',
@@ -202,6 +202,7 @@ const VerifyCertificate: React.FC = () => {
                          <span className={`px-3 py-0.5 ${isPass ? 'bg-gradient-to-r from-cyan-500 to-blue-600' : themeColors.bgDark} text-white rounded-full text-[7px] font-black uppercase tracking-widest shadow-md`}>
                            {reportData.sessionCategory}
                          </span>
+                         <span className="text-[8px] font-black text-slate-400 uppercase tracking-widest">6 Sesi Selesai</span>
                       </div>
                     </div>
                  </div>
@@ -243,7 +244,7 @@ const VerifyCertificate: React.FC = () => {
                         <div className="absolute inset-0 bg-gradient-to-r from-cyan-400 to-blue-600 rounded-full blur-md opacity-40"></div>
                         {/* Badge */}
                         <div className="relative px-6 py-2 bg-gradient-to-r from-blue-600 via-blue-700 to-cyan-600 rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl flex items-center gap-2 text-white">
-                           <CheckCircle2 size={14} className="text-cyan-200" /> LULUS & KOMPETEN ✨
+                           <CheckCircle2 size={14} className="text-cyan-200" /> LULUS & KOMPETEN âœ¨
                         </div>
                       </div>
                     ) : (
@@ -255,7 +256,7 @@ const VerifyCertificate: React.FC = () => {
               </div>
 
               {/* Footer - Copyright Only, No Button */}
-              <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.4em] mt-8">© SANUR AKADEMI INSPIRASI</p>
+              <p className="text-[8px] font-black text-slate-300 uppercase tracking-[0.4em] mt-8">Â© SANUR AKADEMI INSPIRASI</p>
            </>
          )}
       </div>
