@@ -199,7 +199,7 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])]
 
       {/* ✅ HALAMAN 2: TRANSKRIP (PORTRAIT) - PERIODE HIGHLIGHTED */}
       <div id={`transcript-render-${reportLog.id}`} style={{ ...PAGE_PORTRAIT, padding: '70px 60px' }}>
-        <div style={{ position: 'absolute', top: 0, right: 0, width: '350px', height: '350px', backgroundColor: '#eff6ff', borderRadius: '999px', marginRight: '-190px', marginTop: '-190px', opacity: 0.4 }}></div>
+        <div style={{ position: 'absolute', top: 0, right: 0, width: '350px', height: '350px', backgroundColor: '#eff6ff', borderRadius: '999px', marginRight: '-175px', marginTop: '-175px', opacity: 0.4 }}></div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px', position: 'relative', zIndex: 10 }}>
           <div style={{ width: '52px', height: '52px', backgroundColor: '#0f172a', color: 'white', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(6deg)' }}><Layout size={26}/></div>
@@ -252,7 +252,7 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])]
 
 {/* Footer Transkrip */}
 <div style={{ padding: '30px 40px', backgroundColor: '#0f172a', borderRadius: '42px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
-  <div style={{ position: 'absolute', top: 0, right: 0, width: '230px', height: '230px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '999px', marginRight: '-115px', marginTop: '-115px' }}></div>
+  <div style={{ position: 'absolute', top: 0, right: 0, width: '230px', height: '230px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '999px', marginRight: '-130px', marginTop: '-130px' }}></div>
   
   <div style={{ position: 'relative', zIndex: 10 }}>
     <p style={{ fontSize: '9px', fontWeight: '900', color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.5em', marginBottom: '4px' }}>Evaluasi Kumulatif</p>
