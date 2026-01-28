@@ -94,10 +94,11 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
     student_accounts: ['id', 'name', 'role', 'username', 'pin'],
     student_profiles: ['id', 'name', 'dob', 'institution', 'personalphone', 'parentphone', 'enrolledclass', 'notes'],
     transactions: ['id', 'type', 'category', 'amount', 'date', 'description'],
-    attendance: ['id', 'teacherid', 'teachername', 'date', 'clockin', 'status', 'classname', 'level', 'sessioncategory', 'duration', 'packageid', 'sessionnumber', 'studentsattended', 'studentsessions', 'studentscores', 'studenttopics', 'studentnarratives', 'earnings', 'paymentstatus', 'reportnarrative', 'receiptdata', 'substitutefor', 'originalteacherid'],
+    attendance: ['id', 'teacherid', 'teachername', 'date', 'clockin', 'status', 'classname', 'level', 'sessioncategory', 'duration', 'packageid', 'sessionnumber', 'studentsattended', 'studentsessions', 'studentscores', 'studenttopics', 'studentnarratives', 'earnings', 'paymentstatus', 'reportnarrative', 'receiptdata', 'substitutefor', 'originalteacherid', 'periode'],
     student_payments: ['id', 'studentname', 'classname', 'amount', 'date', 'status', 'note', 'receiptdata'],
-    sales_contacts: ['id', 'institution_name', 'contact_person', 'job_title', 'phone', 'email', 'last_contact_date', 'next_followup_date', 'deal_status', 'meeting_notes'],
-    student_attendance: ['id', 'packageid', 'studentname', 'sessionnumber', 'date', 'clockin', 'duration', 'classname', 'level', 'sessioncategory', 'studentscores', 'studenttopics', 'studentnarratives', 'reportnarrative'],
+    sales_contacts: ['id', 'institution_name', 'contact_person', 'job_title', 'phone', 'email', 'last_contact_date', 'next_followup_date', 'deal_status', 'meeting_notes', 'created_at'],
+    student_attendance: ['id', 'packageid', 'studentname', 'sessionnumber', 'date', 'clockin', 'duration', 'classname', 'level', 'sessioncategory', 'studentscores', 'studenttopics', 'studentnarratives', 'reportnarrative', 
+'created_at'],
     maintenance_notes: ['id', 'content', 'last_modified']
   };
 
