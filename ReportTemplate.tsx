@@ -189,7 +189,7 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])]
   </div>
   <div style={{ textAlign: 'center' }}>
     <p style={{ fontSize: '9px', fontWeight: '900', color: isPass ? '#60a5fa' : '#fb923c', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '3px' }}>ID Sertifikat</p>
-    <p style={{ fontSize: '11px', fontWeight: '900', color: '#64748b', fontStyle: 'italic' }}>{reportLog.id.substring(0, 12).toUpperCase()}</p>
+    <p style={{ fontSize: '11px', fontWeight: '900', color: '#64748b', fontStyle: 'italic' }}>{reportLog.id.toUpperCase()}</p>
   </div>
 </div>
 
