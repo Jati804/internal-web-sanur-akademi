@@ -6,7 +6,7 @@ Gunakan kode di bawah ini di **SQL Editor Supabase** (Klik "New Query", paste, l
 
 -- ========================================
 -- SANUR AKADEMI - DATABASE SETUP
--- VERSION: 2.2 (+ Transactions Sample Data)
+-- VERSION: 2.3 (+ Periode Column)
 -- ========================================
 
 -- [1] BERSIHKAN DATABASE
@@ -95,7 +95,8 @@ CREATE TABLE attendance (
   reportnarrative TEXT DEFAULT '', 
   receiptdata TEXT DEFAULT NULL,
   substitutefor TEXT DEFAULT NULL,
-  originalteacherid TEXT DEFAULT NULL
+  originalteacherid TEXT DEFAULT NULL,
+  periode INTEGER DEFAULT 1
 );
 
 -- [4B] ✅ TABEL PRESENSI SISWA MANDIRI
@@ -180,11 +181,11 @@ VALUES ('00000000-0000-0000-0000-000000000001', '');
 -- Sesi 1, 3, 4: Diajar oleh SRI (Biru)
 -- Sesi 2: SRI berhalangan, diganti oleh ANITA (ANITA jadi Orange, SRI jadi Abu Hati)
 
-INSERT INTO attendance (id, teacherid, teachername, date, clockin, status, classname, level, sessioncategory, duration, packageid, sessionnumber, studentsattended, earnings, paymentstatus, substitutefor, originalteacherid) VALUES 
-('SIM-1', 'guru-1', 'SRI ISTI UNTARI', '2026-01-01', '08:00', 'SESSION_LOG', 'Pelatihan Microsoft Word (BASIC) - Reguler 1', 'BASIC', 'REGULER', 2, 'PKG-SIMULASI-01', 1, '["REGULER"]', 180000, 'UNPAID', NULL, 'guru-1'),
-('SIM-2', 'guru-2', 'ANITA RAHMAWATI', '2026-01-02', '08:00', 'SUB_LOG', 'Pelatihan Microsoft Word (BASIC) - Reguler 1', 'BASIC', 'REGULER', 2, 'PKG-SIMULASI-01', 2, '["REGULER"]', 180000, 'UNPAID', 'SRI ISTI UNTARI', 'guru-1'),
-('SIM-3', 'guru-1', 'SRI ISTI UNTARI', '2026-01-03', '08:00', 'SESSION_LOG', 'Pelatihan Microsoft Word (BASIC) - Reguler 1', 'BASIC', 'REGULER', 2, 'PKG-SIMULASI-01', 3, '["REGULER"]', 180000, 'UNPAID', NULL, 'guru-1'),
-('SIM-4', 'guru-1', 'SRI ISTI UNTARI', '2026-01-04', '08:00', 'SESSION_LOG', 'Pelatihan Microsoft Word (BASIC) - Reguler 1', 'BASIC', 'REGULER', 2, 'PKG-SIMULASI-01', 4, '["REGULER"]', 180000, 'UNPAID', NULL, 'guru-1');
+INSERT INTO attendance (id, teacherid, teachername, date, clockin, status, classname, level, sessioncategory, duration, packageid, sessionnumber, studentsattended, earnings, paymentstatus, substitutefor, originalteacherid, periode) VALUES 
+('SIM-1', 'guru-1', 'SRI ISTI UNTARI', '2026-01-01', '08:00', 'SESSION_LOG', 'Pelatihan Microsoft Word (BASIC) - Reguler 1', 'BASIC', 'REGULER', 2, 'PKG-SIMULASI-01', 1, '["REGULER"]', 180000, 'UNPAID', NULL, 'guru-1', 1),
+('SIM-2', 'guru-2', 'ANITA RAHMAWATI', '2026-01-02', '08:00', 'SUB_LOG', 'Pelatihan Microsoft Word (BASIC) - Reguler 1', 'BASIC', 'REGULER', 2, 'PKG-SIMULASI-01', 2, '["REGULER"]', 180000, 'UNPAID', 'SRI ISTI UNTARI', 'guru-1', 1),
+('SIM-3', 'guru-1', 'SRI ISTI UNTARI', '2026-01-03', '08:00', 'SESSION_LOG', 'Pelatihan Microsoft Word (BASIC) - Reguler 1', 'BASIC', 'REGULER', 2, 'PKG-SIMULASI-01', 3, '["REGULER"]', 180000, 'UNPAID', NULL, 'guru-1', 1),
+('SIM-4', 'guru-1', 'SRI ISTI UNTARI', '2026-01-04', '08:00', 'SESSION_LOG', 'Pelatihan Microsoft Word (BASIC) - Reguler 1', 'BASIC', 'REGULER', 2, 'PKG-SIMULASI-01', 4, '["REGULER"]', 180000, 'UNPAID', NULL, 'guru-1', 1);
 
 -- [12] ✅ SIMULASI DATA SISWA MANDIRI
 -- Contoh: Siswa BUDI SANTOSO absen mandiri untuk paket PKG-STUDENT-01
@@ -283,3 +284,8 @@ ALTER TABLE maintenance_notes DISABLE ROW LEVEL SECURITY;
 -- FROM sales_contacts 
 -- WHERE (CURRENT_DATE - last_contact_date::DATE) > 7
 -- ORDER BY last_contact_date ASC;
+
+-- ✅ Cek kolom periode sudah ada:
+-- SELECT column_name, data_type, column_default 
+-- FROM information_schema.columns 
+-- WHERE table_name = 'attendance' AND column_name = 'periode';
