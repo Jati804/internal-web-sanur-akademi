@@ -128,54 +128,42 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])]
       style={{ width: '100px', height: '100px', display: 'block' }}
     />
   </div>
-<p style={{ 
-  fontSize: '10px', 
-  fontWeight: '900', 
-  color: 'white', 
-  textAlign: 'center', 
-  marginTop: '12px',
-  textTransform: 'uppercase',
-  letterSpacing: '0.1em'
-}}>
-  Scan untuk verifikasi
-</p>
+  <p style={{ 
+    fontSize: '8px', 
+    fontWeight: '900', 
+    color: 'white', 
+    textAlign: 'center', 
+    marginTop: '12px',
+    textTransform: 'uppercase',
+    letterSpacing: '0.1em'
+  }}>
+    Scan untuk verifikasi
+  </p>
 </div>
 
 {/* KONTEN UTAMA */}
-<div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '40px 60px', position: 'relative' }}>
-  
-  {/* Decorative Circles */}
-  <div style={{ position: 'absolute', top: '80px', right: '60px', width: '180px', height: '180px', borderRadius: '50%', background: isPass ? 'linear-gradient(135deg, #dbeafe, #bfdbfe)' : 'linear-gradient(135deg, #ffedd5, #fed7aa)', opacity: 0.3, zIndex: 0 }}></div>
-  <div style={{ position: 'absolute', bottom: '120px', right: '120px', width: '120px', height: '120px', borderRadius: '50%', background: isPass ? 'linear-gradient(135deg, #93c5fd, #60a5fa)' : 'linear-gradient(135deg, #fdba74, #fb923c)', opacity: 0.2, zIndex: 0 }}></div>
+<div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '50px 80px' }}>
           
-{/* HEADER - LOGO AJA */}
-<div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '50px', position: 'relative', zIndex: 1 }}>
-  <img src={ASSETS.LOGO} style={{ maxWidth: '240px', maxHeight: '80px', objectFit: 'contain' }} />
-</div>
-
-{/* Dot Pattern Corner */}
-<div style={{ position: 'absolute', top: '30px', right: '40px', width: '100px', height: '100px', opacity: 0.15, zIndex: 0, background: `radial-gradient(circle, ${isPass ? '#2563eb' : '#ea580c'} 2px, transparent 2px)`, backgroundSize: '15px 15px' }}></div>
+          {/* HEADER - LOGO AJA */}
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '50px' }}>
+            <img src={ASSETS.LOGO} style={{ maxWidth: '240px', maxHeight: '80px', objectFit: 'contain' }} />
+          </div>
 
           {/* KONTEN UTAMA */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
-<div style={{ display: 'flex', alignItems: 'center', gap: '15px', marginBottom: '25px', position: 'relative', zIndex: 1 }}>
-  <div style={{ width: '50px', height: '50px', borderRadius: '50%', background: isPass ? 'linear-gradient(135deg, #3b82f6, #8b5cf6)' : 'linear-gradient(135deg, #f97316, #ea580c)', display: 'flex', alignItems: 'center', justifyContent: 'center', boxShadow: '0 4px 12px rgba(0,0,0,0.15)' }}>
-    <span style={{ fontSize: '24px' }}>🏆</span>
-  </div>
-  <h2 style={{ fontSize: '38px', fontFamily: 'serif', fontStyle: 'italic', color: isPass ? '#1e3a8a' : '#ea580c', margin: 0 }}>
-    {isPass ? 'Sertifikat Kelulusan' : 'Capaian Pembelajaran'}
-  </h2>
-</div>
+            <h2 style={{ fontSize: '38px', fontFamily: 'serif', fontStyle: 'italic', color: isPass ? '#1e3a8a' : '#ea580c', margin: '0 0 25px 0' }}>
+              {isPass ? 'Sertifikat Kelulusan' : 'Capaian Pembelajaran'}
+            </h2>
             
             <p style={{ fontSize: '14px', fontFamily: 'serif', fontStyle: 'italic', color: '#64748b', margin: '0 0 15px 0' }}>
               Diberikan kepada:
             </p>
             
-            <div style={{ display: 'inline-block', marginBottom: '30px' }}>
+            <div style={{ display: 'inline-block', marginBottom: '40px' }}>
               <h3 style={{ fontSize: '34px', fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', textTransform: 'uppercase', letterSpacing: '0.05em', margin: 0, lineHeight: 1.1 }}>
                 {studentName.toUpperCase()}
               </h3>
-              <div style={{ width: '100%', height: '4px', background: 'linear-gradient(90deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)', marginTop: '10px', borderRadius: '10px', boxShadow: '0 2px 8px rgba(139,92,246,0.3)' }}></div>
+              <div style={{ width: '100%', height: '4px', backgroundColor: isPass ? '#dbeafe' : '#ffedd5', marginTop: '10px', borderRadius: '10px' }}></div>
             </div>
             
             <p style={{ fontSize: '12px', fontFamily: 'serif', fontStyle: 'italic', color: '#475569', lineHeight: '1.7', margin: '0 0 40px 0', padding: '0 100px' }}>
@@ -185,7 +173,7 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])]
             </p>
 
             {/* ✅ KOTAK HANYA UNTUK SUBJECT & LEVEL */}
-            <div style={{ background: isPass ? 'linear-gradient(135deg, #1e3a8a, #0f172a)' : 'linear-gradient(135deg, #ea580c, #0f172a)', width: '620px', padding: '30px 20px', borderRadius: '35px', border: '4px solid white', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: isPass ? '0 12px 40px rgba(37,99,235,0.3), 0 0 80px rgba(59,130,246,0.15)' : '0 12px 40px rgba(234,88,12,0.3), 0 0 80px rgba(249,115,22,0.15)', marginBottom: '50px', position: 'relative', zIndex: 1 }}>
+            <div style={{ background: isPass ? 'linear-gradient(135deg, #1e3a8a, #0f172a)' : 'linear-gradient(135deg, #ea580c, #0f172a)', width: '700px', padding: '30px 20px', borderRadius: '35px', border: '4px solid white', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 12px 30px -8px rgba(0,0,0,0.15)', marginBottom: '50px' }}>
                <p style={{ fontSize: '22px', fontWeight: '900', color: 'white', textTransform: 'uppercase', fontStyle: 'italic', margin: 0, lineHeight: 1.2 }}>{subject}</p>
                <div style={{ width: '100%', height: '1px', backgroundColor: 'rgba(255,255,255,0.2)', margin: '12px 0' }}></div>
                <p style={{ fontSize: '16px', fontWeight: '900', color: 'rgba(255,255,255,0.8)', textTransform: 'uppercase', letterSpacing: '0.3em', margin: '-8px 0 0 0' }}>LEVEL {level}</p>
@@ -195,11 +183,11 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])]
 {/* ✅ FOOTER - CUMA TANGGAL TERBIT + ID SERTIFIKAT */}
 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0', marginTop: 'auto' }}>
   <div>
-    <p style={{ fontSize: '9px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '3px' }}>Tanggal Terbit</p>
+    <p style={{ fontSize: '9px', fontWeight: '900', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '3px' }}>Tanggal Terbit</p>
     <p style={{ fontSize: '13px', fontWeight: '900', color: '#64748b', fontStyle: 'italic' }}>{formatDateToDMY(reportLog.date)}</p>
   </div>
   <div style={{ textAlign: 'right' }}>
-    <p style={{ fontSize: '9px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '3px' }}>ID Sertifikat</p>
+    <p style={{ fontSize: '9px', fontWeight: '900', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '3px' }}>ID Sertifikat</p>
     <p style={{ fontSize: '11px', fontWeight: '900', color: '#64748b', fontStyle: 'italic' }}>{reportLog.id.substring(0, 12).toUpperCase()}</p>
   </div>
 </div>
