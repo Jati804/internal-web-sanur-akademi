@@ -208,7 +208,7 @@ const VerifyCertificate: React.FC = () => {
 
                  {/* Date & ID Grid */}
                  <div className="grid grid-cols-2 gap-4 relative z-10">
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-5">
                         <div className={`w-10 h-10 ${isPass ? 'bg-blue-100' : 'bg-white'} rounded-xl flex items-center justify-center ${isPass ? 'text-blue-600' : 'text-slate-400'} shadow-sm shrink-0`}>
                           <Calendar size={20} />
                         </div>
@@ -217,7 +217,7 @@ const VerifyCertificate: React.FC = () => {
                           <p className="text-[10px] font-black text-slate-800 uppercase leading-none">{formatDateToDMY(reportData.date)}</p>
                         </div>
                     </div>
-                    <div className="flex items-center gap-4">
+                    <div className="flex items-center gap-5">
                         <div className={`w-10 h-10 ${isPass ? 'bg-cyan-100' : 'bg-white'} rounded-xl flex items-center justify-center ${isPass ? 'text-cyan-600' : 'text-slate-400'} shadow-sm shrink-0`}>
                           <Award size={20} />
                         </div>
@@ -234,7 +234,9 @@ const VerifyCertificate: React.FC = () => {
                  <div className="flex items-center justify-between relative z-10">
                     <div className="flex items-center gap-3">
                        <Zap size={20} className={isPass ? 'text-cyan-500' : themeColors.textDark} />
-                       <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Status Kelulusan</p>
+                       <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
+                        {isPass ? 'Status Kelulusan' : 'Status Partisipasi'}
+                       </p>
                     </div>
                     
                     {isPass ? (
