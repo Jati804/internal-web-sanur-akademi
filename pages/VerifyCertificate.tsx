@@ -19,7 +19,7 @@ const VerifyCertificate: React.FC = () => {
       if (!reportId) return;
       try {
         const { data, error: sbError } = await supabase
-          .from('attendance')
+          .from('reports')
           .select('*')
           .eq('id', reportId)
           .single();
