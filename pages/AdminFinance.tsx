@@ -89,7 +89,6 @@ useEffect(() => {
   );
   
   if (hasModal) {
-    // Tunggu dikit biar DOM modal udah ada, baru scroll
     const timer = setTimeout(() => {
       const modalElement = document.querySelector('[data-modal-container]');
       if (modalElement) {
@@ -100,6 +99,16 @@ useEffect(() => {
     return () => clearTimeout(timer);
   }
 }, [selectedPayout, confirmingSpp, showAddModal, editingTransaction, confirmDeleteTx, showImportModal, previewImg]);
+
+// ✅ TAMBAHIN INI (useEffect baru untuk baca location.state)
+useEffect(() => {
+  if (location?.state?.highlightTx) {
+    setHighlightTx(location.state.highlightTx);
+    
+    // Clear state dari history biar nggak glow lagi kalau refresh
+    window.history.replaceState({}, document.title);
+  }
+}, [location?.state]);
 
 // LOGIKA AUTO-SCROLL & GLOW SETELAH AKSI
 useEffect(() => {
