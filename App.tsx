@@ -332,7 +332,7 @@ const pendingReportsCount = Array.isArray(reports) ?
     refreshAllData={refreshAllData} 
   />
 } />
-              <Route path="/student" element={<StudentPortal user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} subjects={subjects} levels={levels} classes={classes} teachers={teachers} initialView="PROGRESS" refreshAllData={refreshAllData} />} />
+              <Route path="/student" element={<StudentPortal user={user} attendanceLogs={attendanceLogs} reports={reports} studentAttendanceLogs={studentAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} subjects={subjects} levels={levels} classes={classes} teachers={teachers} initialView="PROGRESS" refreshAllData={refreshAllData} />} />
               <Route path="/student/payments" element={<StudentPortal user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} subjects={subjects} levels={levels} classes={classes} teachers={teachers} initialView="PAYMENTS" refreshAllData={refreshAllData} />} />
               <Route path="/" element={<Navigate to={user.role === 'ADMIN' ? '/admin' : user.role === 'TEACHER' ? '/teacher' : '/student'} replace />} />
             </Routes>
