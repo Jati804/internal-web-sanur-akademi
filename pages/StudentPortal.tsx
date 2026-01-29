@@ -761,10 +761,10 @@ const completedSessions = studentAttendanceLogs
               
               const isReportPublished = !!reportLog && reportLog.status === 'SESSION_LOG';
               const isWaitingRelease = !!reportLog && reportLog.status === 'REPORT_READY';
-              const courseLogs = myLogs.filter(l => l.packageId === course.id);
-              const isRequesting = courseLogs.some(l => l.status === 'REQ');
-              const isProcessing = courseLogs.some(l => l.status === 'REPORT_PROCESSING');
-              const isRejected = courseLogs.some(l => l.status === 'REPORT_REJECTED');
+              const courseLogs = myReports.filter(r => r.packageId === course.id);  // ✅ GANTI myLogs → myReports!
+              const isRequesting = courseLogs.some(r => r.status === 'REQ');
+              const isProcessing = courseLogs.some(r => r.status === 'REPORT_PROCESSING');
+              const isRejected = courseLogs.some(r => r.status === 'REPORT_REJECTED');
               const displayMaxSess = (isReportPublished || isWaitingRelease) ? 6 : maxSess;
               const progressPercent = Math.min((displayMaxSess / 6) * 100, 100);
 
