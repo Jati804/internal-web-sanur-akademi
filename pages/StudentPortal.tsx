@@ -282,7 +282,7 @@ const executeFinalRequestReport = async () => {
       teacherid: selectedTeacherForReport, 
       teachername: (teacher?.name || 'GURU').toUpperCase(), 
       date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), 
-      status: 'REPORT_REQUEST', 
+      status: 'REQ', 
       classname: requestingReportFor.className.toUpperCase(), 
       packageid: requestingReportFor.id, 
       studentsattended: [normalizedUserName], 
@@ -735,7 +735,7 @@ const completedSessions = studentAttendanceLogs
               const isReportPublished = !!reportLog && reportLog.status === 'SESSION_LOG';
               const isWaitingRelease = !!reportLog && reportLog.status === 'REPORT_READY';
               const courseLogs = myLogs.filter(l => l.packageId === course.id);
-              const isRequesting = courseLogs.some(l => l.status === 'REPORT_REQUEST');
+              const isRequesting = courseLogs.some(l => l.status === 'REQ');
               const isProcessing = courseLogs.some(l => l.status === 'REPORT_PROCESSING');
               const isRejected = courseLogs.some(l => l.status === 'REPORT_REJECTED');
               const displayMaxSess = (isReportPublished || isWaitingRelease) ? 6 : maxSess;
