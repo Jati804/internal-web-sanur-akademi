@@ -300,14 +300,14 @@ const pendingReportsCount = Array.isArray(reports) ?
             <button onClick={() => setIsSidebarOpen(true)} className="p-3 bg-slate-50 text-slate-400 rounded-xl lg:hidden"><Menu size={24}/></button>
             <h1 className="font-black italic uppercase text-slate-800 tracking-tighter text-lg md:text-xl">PORTAL {(user?.name || 'USER').split(' ')[0]}</h1>
           </div>
-          <div className="flex items-center gap-3">
-             <button onClick={() => setShowGuide(true)} className={`flex items-center gap-3 px-6 py-3 ${roleGuideColor} text-white rounded-2xl font-black text-[10px] uppercase shadow-xl hover:opacity-90 transition-all`}>
-                <HelpCircle size={18} /> <span className="hidden md:inline">PANDUAN</span>
-             </button>
-             <button onClick={executeLogout} className="flex items-center gap-3 px-6 py-3 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl hover:bg-rose-700 transition-all">
-                <Power size={18} /> <span className="hidden sm:inline">LOGOUT</span>
-             </button>
-          </div>
+<div className="flex gap-3">
+  <button onClick={() => setShowGuide(true)} className="p-4 bg-blue-600 text-white rounded-2xl shadow-xl hover:bg-blue-700 active:scale-95 transition-all">
+    <HelpCircle size={20} />
+  </button>
+  <button onClick={handleLogout} className="p-4 bg-rose-600 text-white rounded-2xl shadow-xl hover:bg-rose-700 active:scale-95 transition-all">
+    <Power size={20} />
+  </button>
+</div>
         </header>
         
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-12">
