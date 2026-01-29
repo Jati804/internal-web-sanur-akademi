@@ -288,8 +288,8 @@ const executeFinalRequestReport = async () => {
       studentsattended: [normalizedUserName], 
       paymentstatus: 'PAID' 
     };
-    await supabase.from('attendance').delete().eq('packageid', requestingReportFor.id).eq('status', 'REPORT_REJECTED');
-    await supabase.from('attendance').insert([payload]);
+    await supabase.from('reports').delete().eq('packageid', requestingReportFor.id).eq('status', 'REPORT_REJECTED');
+    await supabase.from('reports').insert([payload]);
     if (refreshAllData) await refreshAllData();
     setRequestingReportFor(null);
     setSelectedTeacherForReport('');
