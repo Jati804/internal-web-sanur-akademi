@@ -16,6 +16,7 @@ import { jsPDF } from 'jspdf';
 interface TeacherReportsInboxProps {
   user: User;
   logs: Attendance[];
+  reports: any[]; 
   studentAttendanceLogs: any[]; // ✅ TAMBAHAN BARU
   studentAccounts: User[];
   refreshAllData: () => Promise<void>;
@@ -61,7 +62,7 @@ const MilestoneView = ({ studentAttendanceLogs, studentName, packageId, periode 
   );
 };
 
-const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, studentAttendanceLogs, studentAccounts, refreshAllData }) => {
+const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, reports, studentAttendanceLogs, studentAccounts, refreshAllData }) => {
   
   // ✅ TAMBAH INI DI BARIS PALING ATAS
   console.log('🔍 CHECK DATA MASUK:', {
@@ -125,25 +126,24 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
   }, [activeDownloadId, showMilestoneFor, confirmReject]);
 
   const reportRequests = useMemo(() => {
-  const requests = logs.filter(l => 
-    (l.status === 'REPORT_REQUEST' || l.status === 'REPORT_PROCESSING') && 
-    l.teacherId === user.id &&
-    l.teacherId !== 'SISWA_MANDIRI' // ✅ FILTER ABSEN SISWA MANDIRI
+  const requests = reports.filter(r =>
+    (r.status === 'REQ' || r.status === 'REPORT_PROCESSING') &&
+    r.teacherid === user.id
+    r.teacherid !== 'SISWA_MANDIRI' // ✅ FILTER ABSEN SISWA MANDIRI
   );
   return requests.filter(req => {
       const studentNameInRequest = (req.studentsAttended?.[0] || '').toUpperCase().trim();
       return studentAccounts.some(acc => acc.name.toUpperCase().trim() === studentNameInRequest);
   });
-}, [logs, user.id, studentAccounts]);
+}, [reports, user.id, studentAccounts]);
 
-  const publishedReports = useMemo(() => {
-  const baseReports = logs.filter(l => 
-    (l.status === 'SESSION_LOG' || l.status === 'REPORT_READY') && 
-    l.sessionNumber === 6 && 
-    l.teacherId === user.id &&
-    l.teacherId !== 'SISWA_MANDIRI' &&
-    (l.packageId || '').startsWith('PAY-') &&
-    l.date.startsWith(selectedYear) // ✅ TAMBAH FILTER TAHUN
+const publishedReports = useMemo(() => {
+  const baseReports = reports.filter(r =>  // ✅ Ganti logs → reports
+    (r.status === 'SESSION_LOG' || r.status === 'REPORT_READY') && 
+    r.sessionnumber === 6 &&  // ✅ Ganti ke huruf kecil
+    r.teacherid === user.id &&  // ✅ Ganti ke huruf kecil
+    (r.packageid || '').startsWith('PAY-') &&  // ✅ Ganti ke huruf kecil
+    r.date.startsWith(selectedYear)
   );
     
   // LOGIKA SORTING (sama kayak sebelumnya)
@@ -163,7 +163,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
       const cName = (req.className || '').toLowerCase();
       return sName.includes(term) || cName.includes(term);
   });
-}, [logs, user.id, historySearchTerm, lastActionedId, selectedYear]); // ✅ TAMBAH selectedYear DI DEPENDENCY
+}, [reports, user.id, historySearchTerm, lastActionedId, selectedYear]); // ✅ TAMBAH selectedYear DI DEPENDENCY
 
   const handleOpenWorkspace = (req: any, isEdit: boolean = false) => {
     setSelectedPackage(req);
@@ -208,7 +208,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
   const handleAcceptRequest = async (req: any) => {
     setActionLoadingId(req.id);
     try {
-      await supabase.from('attendance').update({ status: 'REPORT_PROCESSING' }).eq('id', req.id);
+      await supabase.from('reports').update({ status: 'REPORT_PROCESSING' }).eq('id', req.id);
       await refreshAllData();
       handleOpenWorkspace(req, false);
     } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
@@ -218,7 +218,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
     if (!confirmReject) return;
     setActionLoadingId(confirmReject.id);
     try {
-      await supabase.from('attendance').update({ status: 'REPORT_REJECTED' }).eq('id', confirmReject.id);
+      await supabase.from('reports').update({ status: 'REPORT_REJECTED' }).eq('id', confirmReject.id);
       await refreshAllData();
       setConfirmReject(null);
     } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
@@ -255,7 +255,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
         periode: selectedTingkat, // ✅ SIMPAN TINGKAT
         date: isEditMode ? selectedPackage.date : new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()) 
       };
-      await supabase.from('attendance').update(payload).eq('id', selectedPackage.id);
+      await supabase.from('reports').update(payload).eq('id', selectedPackage.id);
       await refreshAllData();
       
       setLastActionedId(selectedPackage.id);
@@ -267,7 +267,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, s
   const handleSendReportToStudent = async (req: any) => {
     setActionLoadingId(req.id);
     try {
-      await supabase.from('attendance').update({ status: 'SESSION_LOG' }).eq('id', req.id);
+      await supabase.from('reports').update({ status: 'SESSION_LOG' }).eq('id', req.id);
       await refreshAllData();
       setLastActionedId(req.id); // Set sebagai yang terakhir diaksi agar loncat ke depan
       alert("Rapot Berhasil Dikirim ke Siswa! ✨");
