@@ -277,34 +277,45 @@ const executeFinalRequestReport = async () => {
   setLoading(true);
   try {
     const teacher = teachers.find(t => t.id === selectedTeacherForReport);
-const payload = { 
-  id: `REQ-${Date.now()}`, 
-  teacherid: selectedTeacherForReport, 
-  teachername: (teacher?.name || 'GURU').toUpperCase(), 
-  date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), 
-  status: 'REQ',  // ✅ FIX
-  classname: requestingReportFor.className.toUpperCase(), 
-  level: requestingReportFor.level || 'BASIC',  // ✅ TAMBAH INI
-  sessioncategory: requestingReportFor.sessionCategory || 'REGULER',  // ✅ TAMBAH INI
-  packageid: requestingReportFor.id, 
-  sessionnumber: 6,  // ✅ TAMBAH INI (rapot biasanya sesi ke-6)
-  studentsattended: [normalizedUserName], 
-  studentscores: {},  // ✅ TAMBAH INI
-  studenttopics: {},  // ✅ TAMBAH INI
-  studentnarratives: {},  // ✅ TAMBAH INI
-  reportnarrative: '',  // ✅ TAMBAH INI
-  periode: requestingReportFor.periode || 1,  // ✅ TAMBAH INI
-  paymentstatus: 'PAID' 
-};
+    
+    // ✅ PAYLOAD LENGKAP SESUAI TABEL REPORTS
+    const payload = { 
+      id: `REQ-${Date.now()}`, 
+      teacherid: selectedTeacherForReport, 
+      teachername: (teacher?.name || 'GURU').toUpperCase(), 
+      date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), 
+      status: 'REQ',  // ✅ GANTI JADI 'REQ'
+      classname: requestingReportFor.className.toUpperCase(), 
+      level: requestingReportFor.level || 'BASIC',  // ✅ TAMBAH
+      sessioncategory: requestingReportFor.sessionCategory || 'REGULER',  // ✅ TAMBAH
+      packageid: requestingReportFor.id, 
+      sessionnumber: 6,  // ✅ TAMBAH
+      studentsattended: [normalizedUserName], 
+      studentscores: {},  // ✅ TAMBAH
+      studenttopics: {},  // ✅ TAMBAH
+      studentnarratives: {},  // ✅ TAMBAH
+      reportnarrative: '',  // ✅ TAMBAH
+      periode: 1  // ✅ TAMBAH (atau sesuaikan dengan tingkat siswa)
+    };
+    
+    // Hapus rejected lama (kalau ada)
     await supabase.from('reports').delete().eq('packageid', requestingReportFor.id).eq('status', 'REPORT_REJECTED');
+    
+    // Insert request baru
     await supabase.from('reports').insert([payload]);
+    
     if (refreshAllData) await refreshAllData();
     setRequestingReportFor(null);
     setSelectedTeacherForReport('');
     setShowFinalConfirmation(false);
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 2000);
-  } catch (e: any) { alert(e.message); } finally { setLoading(false); }
+  } catch (e: any) { 
+    console.error('❌ ERROR INSERT REPORT:', e);
+    alert(`Gagal mengajukan rapot: ${e.message}`); 
+  } finally { 
+    setLoading(false); 
+  }
 };
 
   const handleDownloadPDFReport = async (course: any) => {
