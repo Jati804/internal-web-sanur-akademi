@@ -16,6 +16,7 @@ import { jsPDF } from 'jspdf';
 interface StudentPortalProps {
   user: User;
   attendanceLogs: Attendance[];
+  reports: any[];  // 👈 TAMBAH INI!
   studentPayments: StudentPayment[];
   setStudentPayments: React.Dispatch<React.SetStateAction<StudentPayment[]>>;
   subjects: string[];
@@ -28,7 +29,7 @@ interface StudentPortalProps {
 }
 
 const StudentPortal: React.FC<StudentPortalProps> = ({ 
-  user, attendanceLogs, studentPayments, setStudentPayments, teachers, initialView, refreshAllData, classes, subjects, levels, studentAttendanceLogs 
+  user, attendanceLogs, reports, studentPayments, setStudentPayments, teachers, initialView, refreshAllData, classes, subjects, levels, studentAttendanceLogs 
 }) => {
   const isPaymentView = initialView === 'PAYMENTS';
   const [loading, setLoading] = useState(false);
@@ -139,26 +140,35 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
       });
   }, [studentPayments, normalizedUserName]);
 
-  const myLogs = useMemo(() => {
-    if (!Array.isArray(attendanceLogs)) return [];
-    return attendanceLogs.filter(l => 
-      Array.isArray(l.studentsAttended) && 
-      l.studentsAttended.some(s => (s || '').toUpperCase().trim() === normalizedUserName)
-    );
-  }, [attendanceLogs, normalizedUserName]);
+// 🆕 myLogs sekarang untuk attendance biasa saja (bukan rapot!)
+const myLogs = useMemo(() => {
+  if (!Array.isArray(attendanceLogs)) return [];
+  return attendanceLogs.filter(l => 
+    Array.isArray(l.studentsAttended) && 
+    l.studentsAttended.some(s => (s || '').toUpperCase().trim() === normalizedUserName)
+  );
+}, [attendanceLogs, normalizedUserName]);
 
-  // FIXED: Logic deteksi rapot sekarang WAJIB berdasarkan packageId (ID Pembayaran)
-  const findOfficialReportLog = (course: any) => {
-    const possibleReports = myLogs.filter(l => 
-      (l.packageId === course.id) && // STICT MATCH: Harus sama dengan ID Pembayaran
-      (l.status === 'SESSION_LOG' || l.status === 'REPORT_READY') && 
-      l.sessionNumber === 6 &&
-      l.teacherId !== 'SISWA_MANDIRI' && 
-      l.studentScores && 
-      Object.keys(l.studentScores).length > 0
-    );
-    return possibleReports.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-  };
+// 🆕 myReports khusus untuk data rapot dari tabel reports
+const myReports = useMemo(() => {
+  if (!Array.isArray(reports)) return [];
+  return reports.filter(r => 
+    Array.isArray(r.studentsAttended) && 
+    r.studentsAttended.some(s => (s || '').toUpperCase().trim() === normalizedUserName)
+  );
+}, [reports, normalizedUserName]);
+
+// 🆕 FIXED: Sekarang cari rapot di tabel reports, bukan attendance!
+const findOfficialReportLog = (course: any) => {
+  const possibleReports = myReports.filter(r => 
+    (r.packageId === course.id) && // Match dengan ID Pembayaran
+    (r.status === 'SESSION_LOG' || r.status === 'REPORT_READY') && // Rapot yang sudah siap
+    r.sessionNumber === 6 &&
+    r.studentScores && 
+    Object.keys(r.studentScores).length > 0
+  );
+  return possibleReports.sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+};
 
   const handleLaporBayar = async () => {
     if (!payForm.subject || !payForm.room || !payForm.amount || !payForm.receiptData) {
@@ -257,11 +267,11 @@ setTimeout(() => {
   const handleRequestReport = async () => {
   if (!selectedTeacherForReport || !requestingReportFor) return alert("Pilih Guru Pembimbing dulu ya! ✨");
   
-  // CEK: Apakah ini klaim ulang setelah rejected?
-  const isReclaimAfterRejected = myLogs.some(l => 
-    l.packageId === requestingReportFor.id && 
-    l.status === 'REPORT_REJECTED'
-  );
+// CEK: Apakah ini klaim ulang setelah rejected?
+const isReclaimAfterRejected = myReports.some(r =>  // 👈 GANTI myLogs jadi myReports
+  r.packageId === requestingReportFor.id && 
+  r.status === 'REPORT_REJECTED'
+);
   
   // Kalau klaim ulang dari rejected -> langsung eksekusi tanpa modal konfirmasi
   if (isReclaimAfterRejected) {
@@ -993,7 +1003,7 @@ const completedSessions = studentAttendanceLogs
       )}
       
       <div className="fixed left-[-9999px] top-0 pointer-events-none">
-         {verifiedCourses.map((course) => { const reportLog = findOfficialReportLog(course); return reportLog ? ( <ReportTemplate key={reportLog.id} reportLog={reportLog} allLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} studentName={normalizedUserName} /> ) : null; })}
+         {verifiedCourses.map((course) => { const reportLog = findOfficialReportLog(course); return reportLog ? ( <ReportTemplate key={reportLog.id} reportLog={reportLog} allLogs={reports} studentAttendanceLogs={studentAttendanceLogs} studentName={normalizedUserName} /> ) : null; })}
          {myPayments.map((p) => (
             <div id={`slip-digital-${p.id}`} ref={p.id === showDigitalSlip?.id ? slipRef : null} key={p.id} className="bg-white p-12 md:p-20 space-y-10 w-[700px] mx-auto overflow-hidden text-slate-900 border-8 border-double border-slate-100">
                <div className="flex justify-between items-start border-b-2 border-slate-900 pb-10"><div className="min-w-0 text-left"><h1 className="text-3xl font-black italic tracking-tighter text-slate-900 leading-none">SANUR</h1><p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1 text-left">Akademi Inspirasi</p></div><div className="text-right flex flex-col items-end"><h2 className="text-xl font-black uppercase italic text-slate-800 leading-none">KUITANSI RESMI</h2><p className="text-[10px] font-black text-slate-800 uppercase tracking-widest mt-2 whitespace-nowrap">ID: {p.id.toUpperCase()}</p></div></div>
