@@ -157,7 +157,7 @@ const AdminReceipts: React.FC = () => {
           </div>
           <div>
             <h1 className="text-4xl font-black text-slate-800 uppercase italic leading-none">Workspace Kuitansi</h1>
-            <p className="text-[11px] font-black text-blue-600 uppercase tracking-[0.3em] mt-2">Generate Bukti Pembayaran Umum</p>
+            <p className="text-[11px] font-black text-blue-600 uppercase tracking-[0.3em] mt-2">Generate Bukti/Nota Pembayaran</p>
           </div>
         </div>
       </div>
