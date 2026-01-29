@@ -1,7 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { Receipt, ShieldCheck, ClipboardList, Loader2, Download, AlertCircle, CheckCircle2, Sparkles, Plus, Trash2, X, TrendingUp, TrendingDown } from 'lucide-react';
+import { Receipt, ShieldCheck, ClipboardList, Loader2, Download, AlertCircle, CheckCircle2, Sparkles, Plus, Trash2, X, TrendingUp, TrendingDown, Database } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import { supabase } from '../services/supabase.ts';
+import * as ReactRouterDOM from 'react-router-dom';
+const { useNavigate } = ReactRouterDOM as any;
 
 const formatDateToDMY = (date: string) => {
   const d = new Date(date);
@@ -25,12 +28,15 @@ interface PaymentItem {
 }
 
 const AdminReceipts: React.FC = () => {
+  const navigate = useNavigate();
   const slipRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [generatedReceipt, setGeneratedReceipt] = useState<any | null>(null);
   const [activeTab, setActiveTab] = useState<'income' | 'expense'>('income');
+  const [savingToLedger, setSavingToLedger] = useState(false);
+  const [savedTransactionId, setSavedTransactionId] = useState<string | null>(null);
   
   const [form, setForm] = useState({
     receivedFrom: '',
@@ -95,6 +101,7 @@ const AdminReceipts: React.FC = () => {
     };
 
     setGeneratedReceipt(receipt);
+    setSavedTransactionId(null); // Reset status saved
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
 
@@ -104,6 +111,61 @@ const AdminReceipts: React.FC = () => {
         previewElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
       }
     }, 300);
+  };
+
+  const handleSaveToLedger = async () => {
+    if (!generatedReceipt) return;
+    
+    setSavingToLedger(true);
+    try {
+      // Gabungkan semua item jadi satu deskripsi
+      const itemDescriptions = generatedReceipt.items
+        .map((item: any) => item.description)
+        .join(', ');
+      
+      const fullDescription = `${generatedReceipt.receivedFrom} - ${itemDescriptions}`;
+      
+      // Siapkan data sesuai format database
+      const ledgerData = {
+        type: generatedReceipt.type.toUpperCase(), // 'INCOME' atau 'EXPENSE'
+        category: 'UMUM',
+        amount: generatedReceipt.total,
+        date: generatedReceipt.date,
+        description: fullDescription
+      };
+
+      // Insert ke database
+      const { data, error } = await supabase
+        .from('transactions')
+        .insert([ledgerData])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Simpan ID transaksi yang baru dibuat
+      setSavedTransactionId(data.id);
+      
+      // Tampilkan notif sukses sebentar
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Redirect ke Finance dengan highlight
+      navigate('/admin/finance', { 
+        state: { 
+          tab: 'LEDGER',
+          highlightTx: {
+            id: data.id,
+            type: generatedReceipt.type.toUpperCase()
+          }
+        } 
+      });
+      
+    } catch (error) {
+      console.error('Error saving to ledger:', error);
+      alert('Gagal save ke ledger. Coba lagi ya!');
+    } finally {
+      setSavingToLedger(false);
+    }
   };
 
   const handleDownloadPDF = async () => {
@@ -149,6 +211,7 @@ const AdminReceipts: React.FC = () => {
     setItems([{ id: '1', description: '', amount: '' }]);
     setGeneratedReceipt(null);
     setShowErrors(false);
+    setSavedTransactionId(null);
   };
 
   const handleTabChange = (tab: 'income' | 'expense') => {
@@ -202,7 +265,7 @@ const AdminReceipts: React.FC = () => {
             onClick={() => handleTabChange('expense')}
             className={`flex-1 py-6 rounded-[2rem] font-black text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-3 ${
               activeTab === 'expense'
-                ? 'bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-xl'
+                ? 'bg-gradient-to-r from-slate-700 to-slate-600 text-white shadow-xl'
                 : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
             }`}
           >
@@ -217,7 +280,7 @@ const AdminReceipts: React.FC = () => {
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
               activeTab === 'income' 
                 ? 'bg-emerald-50 text-emerald-600' 
-                : 'bg-rose-50 text-rose-600'
+                : 'bg-slate-100 text-slate-600'
             }`}>
               <ClipboardList size={24} />
             </div>
@@ -270,7 +333,7 @@ const AdminReceipts: React.FC = () => {
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase transition-all ${
                   activeTab === 'income'
                     ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
-                    : 'bg-rose-50 text-rose-600 hover:bg-rose-100'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                 }`}
               >
                 <Plus size={14} /> Tambah Item
@@ -321,14 +384,14 @@ const AdminReceipts: React.FC = () => {
             <div className={`rounded-2xl p-6 border-2 ${
               activeTab === 'income'
                 ? 'bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-100'
-                : 'bg-gradient-to-r from-rose-50 to-red-50 border-rose-100'
+                : 'bg-gradient-to-r from-slate-50 to-slate-100 border-slate-200'
             }`}>
               <div className="flex justify-between items-center">
                 <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
                   Total {activeTab === 'income' ? 'Pemasukan' : 'Pengeluaran'}:
                 </p>
                 <p className={`text-3xl font-black italic ${
-                  activeTab === 'income' ? 'text-emerald-600' : 'text-rose-600'
+                  activeTab === 'income' ? 'text-emerald-600' : 'text-slate-700'
                 }`}>
                   Rp {calculateTotal().toLocaleString('id-ID')}
                 </p>
@@ -382,7 +445,7 @@ const AdminReceipts: React.FC = () => {
               className={`flex-[2] py-5 rounded-2xl font-black text-[11px] uppercase tracking-wide shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed ${
                 activeTab === 'income'
                   ? 'bg-gradient-to-r from-emerald-600 to-green-600 text-white hover:shadow-emerald-200'
-                  : 'bg-gradient-to-r from-rose-600 to-red-600 text-white hover:shadow-rose-200'
+                  : 'bg-gradient-to-r from-slate-700 to-slate-600 text-white hover:shadow-slate-200'
               }`}
             >
               <Sparkles size={20} />
@@ -394,12 +457,12 @@ const AdminReceipts: React.FC = () => {
         {/* Preview Section */}
         {generatedReceipt && (
           <div id="receipt-preview" className="space-y-8">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-4">
               <div className="flex items-center gap-4">
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
                   generatedReceipt.type === 'income'
                     ? 'bg-emerald-50 text-emerald-600'
-                    : 'bg-rose-50 text-rose-600'
+                    : 'bg-slate-100 text-slate-600'
                 }`}>
                   <CheckCircle2 size={24} />
                 </div>
@@ -408,30 +471,59 @@ const AdminReceipts: React.FC = () => {
                     Preview {generatedReceipt.type === 'income' ? 'Kuitansi' : 'Bon'}
                   </h2>
                   <p className={`text-[10px] font-black uppercase tracking-widest mt-1 ${
-                    generatedReceipt.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
+                    generatedReceipt.type === 'income' ? 'text-emerald-600' : 'text-slate-600'
                   }`}>
-                    Siap untuk di-download ✨
+                    {savedTransactionId ? 'Tersimpan di Ledger ✨' : 'Siap untuk di-download'}
                   </p>
                 </div>
               </div>
               
-              <button
-                onClick={handleDownloadPDF}
-                disabled={downloading}
-                className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-wide shadow-xl hover:bg-emerald-600 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50"
-              >
-                {downloading ? (
-                  <>
-                    <Loader2 size={18} className="animate-spin" />
-                    Downloading...
-                  </>
-                ) : (
-                  <>
-                    <Download size={18} />
-                    Download PDF
-                  </>
+              <div className="flex gap-3">
+                <button
+                  onClick={handleDownloadPDF}
+                  disabled={downloading}
+                  className="px-8 py-4 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-wide shadow-xl hover:bg-slate-800 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50"
+                >
+                  {downloading ? (
+                    <>
+                      <Loader2 size={18} className="animate-spin" />
+                      Downloading...
+                    </>
+                  ) : (
+                    <>
+                      <Download size={18} />
+                      Download PDF
+                    </>
+                  )}
+                </button>
+
+                {!savedTransactionId && (
+                  <button
+                    onClick={handleSaveToLedger}
+                    disabled={savingToLedger}
+                    className="px-8 py-4 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-wide shadow-xl hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-3 disabled:opacity-50"
+                  >
+                    {savingToLedger ? (
+                      <>
+                        <Loader2 size={18} className="animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      <>
+                        <Database size={18} />
+                        Save to Ledger
+                      </>
+                    )}
+                  </button>
                 )}
-              </button>
+
+                {savedTransactionId && (
+                  <div className="px-8 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-wide shadow-xl flex items-center gap-3">
+                    <CheckCircle2 size={18} />
+                    Tersimpan! ✨
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Rendered Receipt */}
@@ -448,7 +540,7 @@ const AdminReceipts: React.FC = () => {
                   </div>
                   <div className="text-right flex flex-col items-end">
                     <h2 className={`text-xl font-black uppercase italic leading-none ${
-                      generatedReceipt.type === 'income' ? 'text-emerald-700' : 'text-rose-700'
+                      generatedReceipt.type === 'income' ? 'text-emerald-700' : 'text-slate-700'
                     }`}>
                       {generatedReceipt.type === 'income' ? 'KUITANSI RESMI' : 'BON PENGELUARAN'}
                     </h2>
@@ -495,18 +587,18 @@ const AdminReceipts: React.FC = () => {
                       
                       {/* Total Row */}
                       <div className={`grid grid-cols-12 gap-4 p-6 ${
-                        generatedReceipt.type === 'income' ? 'bg-emerald-100' : 'bg-rose-100'
+                        generatedReceipt.type === 'income' ? 'bg-emerald-100' : 'bg-slate-200'
                       }`}>
                         <div className="col-span-8 text-left">
                           <p className={`text-[13px] font-black uppercase tracking-wide ${
-                            generatedReceipt.type === 'income' ? 'text-emerald-700' : 'text-rose-700'
+                            generatedReceipt.type === 'income' ? 'text-emerald-700' : 'text-slate-700'
                           }`}>
                             TOTAL
                           </p>
                         </div>
                         <div className="col-span-4 text-right">
                           <p className={`text-[14px] font-black ${
-                            generatedReceipt.type === 'income' ? 'text-emerald-700' : 'text-rose-700'
+                            generatedReceipt.type === 'income' ? 'text-emerald-700' : 'text-slate-700'
                           }`}>
                             Rp {generatedReceipt.total.toLocaleString('id-ID')}
                           </p>
@@ -518,7 +610,7 @@ const AdminReceipts: React.FC = () => {
                     <div className="px-6 py-4 border-t border-slate-200/60">
                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Metode Pembayaran:</p>
                       <p className={`text-[11px] font-black uppercase text-left ${
-                        generatedReceipt.type === 'income' ? 'text-blue-600' : 'text-rose-600'
+                        generatedReceipt.type === 'income' ? 'text-blue-600' : 'text-slate-600'
                       }`}>
                         {generatedReceipt.paymentMethod}
                       </p>
@@ -533,14 +625,14 @@ const AdminReceipts: React.FC = () => {
                     <div className="text-right flex flex-col items-end">
                       <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] italic">Terverifikasi Digital</p>
                       <p className={`text-[10px] font-black uppercase tracking-widest mt-1 ${
-                        generatedReceipt.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
+                        generatedReceipt.type === 'income' ? 'text-emerald-600' : 'text-slate-600'
                       }`}>
                         Status: {generatedReceipt.type === 'income' ? 'LUNAS' : 'TERBAYAR'}
                       </p>
                     </div>
                   </div>
                   <p className={`text-5xl font-black italic leading-none text-left ${
-                    generatedReceipt.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
+                    generatedReceipt.type === 'income' ? 'text-emerald-600' : 'text-slate-700'
                   }`}>
                     Rp {generatedReceipt.total.toLocaleString('id-ID')}
                   </p>
