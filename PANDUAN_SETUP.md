@@ -6,10 +6,11 @@ Gunakan kode di bawah ini di **SQL Editor Supabase** (Klik "New Query", paste, l
 
 -- ========================================
 -- SANUR AKADEMI - DATABASE SETUP
--- VERSION: 2.3 (+ Periode Column)
+-- VERSION: 2.5 (Clean Attendance + Reports Table)
 -- ========================================
 
 -- [1] BERSIHKAN DATABASE
+DROP TABLE IF EXISTS reports CASCADE;
 DROP TABLE IF EXISTS attendance CASCADE;
 DROP TABLE IF EXISTS student_attendance CASCADE;
 DROP TABLE IF EXISTS student_payments CASCADE;
@@ -71,7 +72,11 @@ CREATE INDEX idx_sales_institution ON sales_contacts(institution_name);
 CREATE INDEX idx_sales_status ON sales_contacts(deal_status);
 CREATE INDEX idx_sales_followup ON sales_contacts(next_followup_date);
 
--- [4] TABEL ABSENSI & LOG SESI GURU (KHUSUS GURU!)
+-- [4] 🆕✅ TABEL ABSENSI GURU (CLEAN VERSION - HANYA UNTUK GURU!)
+-- Kolom yang DIHAPUS karena sudah pindah ke tabel lain:
+-- ❌ studentsessions, studentscores, studenttopics, studentnarratives (pindah ke student_attendance & reports)
+-- ❌ reportnarrative (pindah ke reports)
+-- ❌ receiptdata (tidak digunakan)
 CREATE TABLE attendance (
   id TEXT PRIMARY KEY, 
   teacherid TEXT DEFAULT 'SELF', 
@@ -85,19 +90,19 @@ CREATE TABLE attendance (
   duration INT DEFAULT 2,
   packageid TEXT, 
   sessionnumber INT DEFAULT 1, 
-  studentsattended JSONB DEFAULT '[]'::JSONB, 
-  studentsessions JSONB DEFAULT '{}'::JSONB, 
-  studentscores JSONB DEFAULT '{}'::JSONB, 
-  studenttopics JSONB DEFAULT '{}'::JSONB,
-  studentnarratives JSONB DEFAULT '{}'::JSONB, 
+  studentsattended JSONB DEFAULT '[]'::JSONB,
   earnings INT DEFAULT 0, 
-  paymentstatus TEXT DEFAULT 'UNPAID', 
-  reportnarrative TEXT DEFAULT '', 
-  receiptdata TEXT DEFAULT NULL,
+  paymentstatus TEXT DEFAULT 'UNPAID',
   substitutefor TEXT DEFAULT NULL,
   originalteacherid TEXT DEFAULT NULL,
   periode INTEGER DEFAULT 1
 );
+
+-- Index untuk performance
+CREATE INDEX idx_attendance_teacherid ON attendance(teacherid);
+CREATE INDEX idx_attendance_date ON attendance(date);
+CREATE INDEX idx_attendance_status ON attendance(status);
+CREATE INDEX idx_attendance_packageid ON attendance(packageid);
 
 -- [4B] ✅ TABEL PRESENSI SISWA MANDIRI
 CREATE TABLE student_attendance (
@@ -122,6 +127,50 @@ CREATE TABLE student_attendance (
 CREATE INDEX idx_student_att_pkg ON student_attendance(packageid);
 CREATE INDEX idx_student_att_date ON student_attendance(date);
 CREATE INDEX idx_student_att_student ON student_attendance(studentname);
+
+-- [4C] 🆕✅ TABEL RAPOT SISWA (TERPISAH DARI ATTENDANCE)
+CREATE TABLE reports (
+  id TEXT PRIMARY KEY,
+  teacherid TEXT NOT NULL,
+  teachername TEXT NOT NULL,
+  date TEXT NOT NULL,
+  status TEXT DEFAULT 'REQ',
+  classname TEXT NOT NULL,
+  level TEXT,
+  sessioncategory TEXT DEFAULT 'REGULER',
+  packageid TEXT NOT NULL,
+  sessionnumber INT DEFAULT 6,
+  studentsattended JSONB DEFAULT '[]'::JSONB,
+  studentscores JSONB DEFAULT '{}'::JSONB,
+  studenttopics JSONB DEFAULT '{}'::JSONB,
+  studentnarratives JSONB DEFAULT '{}'::JSONB,
+  reportnarrative TEXT DEFAULT '',
+  periode INTEGER DEFAULT 1,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+
+-- Index untuk performance tabel reports
+CREATE INDEX idx_reports_status ON reports(status);
+CREATE INDEX idx_reports_packageid ON reports(packageid);
+CREATE INDEX idx_reports_teacherid ON reports(teacherid);
+CREATE INDEX idx_reports_date ON reports(date);
+CREATE INDEX idx_reports_periode ON reports(periode);
+CREATE INDEX idx_reports_created_at ON reports(created_at);
+
+-- Trigger auto-update untuk updated_at
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+   NEW.updated_at = NOW();
+   RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_reports_updated_at 
+BEFORE UPDATE ON reports
+FOR EACH ROW
+EXECUTE FUNCTION update_updated_at_column();
 
 -- [5] TABEL BUKU KAS & SPP
 CREATE TABLE transactions (
@@ -234,7 +283,16 @@ INSERT INTO transactions (id, type, category, amount, date, description) VALUES
 ('TX-2024-06', 'INCOME', 'UMUM', 2000000, '2024-11-05', 'HIBAH DARI YAYASAN PENDIDIKAN | 11/05/2024'),
 ('TX-2024-07', 'EXPENSE', 'LISTRIK', 170000, '2024-10-05', 'BAYAR LISTRIK KANTOR OKTOBER 2024 | 10/05/2024');
 
--- [15] MATIKAN RLS (ROW LEVEL SECURITY)
+-- [15] 🆕✅ SAMPLE DATA REPORTS (RAPOT SISWA)
+-- Contoh data rapot dengan ID dan status yang sesuai:
+-- REQ-xxx dengan status 'REQ' = Request rapot yang masuk (belum dikerjakan)
+-- REP-xxx dengan status 'SESSION_LOG' = Rapot yang sudah dikirim ke siswa
+INSERT INTO reports (id, teacherid, teachername, date, status, classname, level, sessioncategory, packageid, sessionnumber, studentsattended, studentscores, studenttopics, studentnarratives, reportnarrative, periode) VALUES
+('REQ-001', 'guru-1', 'SRI ISTI UNTARI', '2026-01-25', 'REQ', 'Pelatihan Microsoft Word (BASIC) - Reguler 1', 'BASIC', 'REGULER', 'PAY-001', 6, '["AHMAD SANTOSO"]', '{}'::JSONB, '{}'::JSONB, '{}'::JSONB, '', 1),
+('REP-001', 'guru-1', 'SRI ISTI UNTARI', '2026-01-20', 'SESSION_LOG', 'Pelatihan Microsoft Excel (BASIC) - Reguler 2', 'BASIC', 'REGULER', 'PAY-002', 6, '["SITI NURHALIZA"]', '{"SITI NURHALIZA": [85, 90, 88, 92, 87, 91]}'::JSONB, '{"SITI NURHALIZA": ["Pengenalan Excel", "Formula", "Formatting", "Chart", "Filter", "Pivot"]}'::JSONB, '{"SITI NURHALIZA": "Siti sangat aktif dan antusias!"}'::JSONB, 'Siswa menunjukkan perkembangan yang sangat baik dalam memahami Excel.', 1);
+
+-- [16] MATIKAN RLS (ROW LEVEL SECURITY)
+ALTER TABLE reports DISABLE ROW LEVEL SECURITY;
 ALTER TABLE attendance DISABLE ROW LEVEL SECURITY;
 ALTER TABLE student_attendance DISABLE ROW LEVEL SECURITY;
 ALTER TABLE student_payments DISABLE ROW LEVEL SECURITY;
@@ -245,6 +303,20 @@ ALTER TABLE student_profiles DISABLE ROW LEVEL SECURITY;
 ALTER TABLE sales_contacts DISABLE ROW LEVEL SECURITY;
 ALTER TABLE settings DISABLE ROW LEVEL SECURITY;
 ALTER TABLE maintenance_notes DISABLE ROW LEVEL SECURITY;
+
+-- ========================================
+-- 📝 CHANGELOG v2.5
+-- ========================================
+-- ✅ TABEL ATTENDANCE - Dihapus 6 kolom yang tidak relevan:
+--    1. studentsessions (pindah ke student_attendance & reports)
+--    2. studentscores (pindah ke student_attendance & reports)
+--    3. studenttopics (pindah ke student_attendance & reports)
+--    4. studentnarratives (pindah ke student_attendance & reports)
+--    5. reportnarrative (pindah ke reports)
+--    6. receiptdata (tidak digunakan)
+--
+-- ✅ TABEL REPORTS - Baru ditambahkan untuk sistem rapot
+-- ✅ TABEL LAIN - Tidak ada perubahan sama sekali
 
 -- ========================================
 -- ✅ VERIFICATION QUERIES (Optional)
@@ -258,6 +330,9 @@ ALTER TABLE maintenance_notes DISABLE ROW LEVEL SECURITY;
 
 -- Cek total attendance siswa:
 -- SELECT COUNT(*) as total_student_sessions FROM student_attendance;
+
+-- 🆕 Cek total reports:
+-- SELECT COUNT(*) as total_reports FROM reports;
 
 -- Cek total sales contacts:
 -- SELECT COUNT(*) as total_sales_contacts FROM sales_contacts;
@@ -285,7 +360,20 @@ ALTER TABLE maintenance_notes DISABLE ROW LEVEL SECURITY;
 -- WHERE (CURRENT_DATE - last_contact_date::DATE) > 7
 -- ORDER BY last_contact_date ASC;
 
--- ✅ Cek kolom periode sudah ada:
+-- 🆕 Lihat semua reports:
+-- SELECT id, status, classname, studentsattended, periode, date FROM reports ORDER BY date DESC;
+
+-- 🆕 Lihat reports per status:
+-- SELECT status, COUNT(*) as total FROM reports GROUP BY status;
+
+-- 🆕 Cek struktur tabel attendance (verifikasi kolom sudah bersih):
 -- SELECT column_name, data_type, column_default 
 -- FROM information_schema.columns 
--- WHERE table_name = 'attendance' AND column_name = 'periode';
+-- WHERE table_name = 'attendance'
+-- ORDER BY ordinal_position;
+
+-- 🆕 Cek struktur tabel reports:
+-- SELECT column_name, data_type, column_default 
+-- FROM information_schema.columns 
+-- WHERE table_name = 'reports'
+-- ORDER BY ordinal_position;
