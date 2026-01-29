@@ -277,17 +277,25 @@ const executeFinalRequestReport = async () => {
   setLoading(true);
   try {
     const teacher = teachers.find(t => t.id === selectedTeacherForReport);
-    const payload = { 
-      id: `REQ-${Date.now()}`, 
-      teacherid: selectedTeacherForReport, 
-      teachername: (teacher?.name || 'GURU').toUpperCase(), 
-      date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), 
-      status: 'REQ', 
-      classname: requestingReportFor.className.toUpperCase(), 
-      packageid: requestingReportFor.id, 
-      studentsattended: [normalizedUserName], 
-      paymentstatus: 'PAID' 
-    };
+const payload = { 
+  id: `REQ-${Date.now()}`, 
+  teacherid: selectedTeacherForReport, 
+  teachername: (teacher?.name || 'GURU').toUpperCase(), 
+  date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), 
+  status: 'REQ',  // ✅ FIX
+  classname: requestingReportFor.className.toUpperCase(), 
+  level: requestingReportFor.level || 'BASIC',  // ✅ TAMBAH INI
+  sessioncategory: requestingReportFor.sessionCategory || 'REGULER',  // ✅ TAMBAH INI
+  packageid: requestingReportFor.id, 
+  sessionnumber: 6,  // ✅ TAMBAH INI (rapot biasanya sesi ke-6)
+  studentsattended: [normalizedUserName], 
+  studentscores: {},  // ✅ TAMBAH INI
+  studenttopics: {},  // ✅ TAMBAH INI
+  studentnarratives: {},  // ✅ TAMBAH INI
+  reportnarrative: '',  // ✅ TAMBAH INI
+  periode: requestingReportFor.periode || 1,  // ✅ TAMBAH INI
+  paymentstatus: 'PAID' 
+};
     await supabase.from('reports').delete().eq('packageid', requestingReportFor.id).eq('status', 'REPORT_REJECTED');
     await supabase.from('reports').insert([payload]);
     if (refreshAllData) await refreshAllData();
