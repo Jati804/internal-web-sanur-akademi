@@ -113,60 +113,67 @@ const AdminReceipts: React.FC = () => {
     }, 300);
   };
 
-  const handleSaveToLedger = async () => {
-    if (!generatedReceipt) return;
+const handleSaveToLedger = async () => {
+  if (!generatedReceipt) return;
+  
+  setSavingToLedger(true);
+  try {
+    // Gabungkan semua item jadi satu deskripsi
+    const itemDescriptions = generatedReceipt.items
+      .map((item: any) => item.description)
+      .join(', ');
     
-    setSavingToLedger(true);
-    try {
-      // Gabungkan semua item jadi satu deskripsi
-      const itemDescriptions = generatedReceipt.items
-        .map((item: any) => item.description)
-        .join(', ');
-      
-      const fullDescription = `${generatedReceipt.receivedFrom} - ${itemDescriptions}`;
-      
-      // Siapkan data sesuai format database
-      const ledgerData = {
-        type: generatedReceipt.type.toUpperCase(), // 'INCOME' atau 'EXPENSE'
-        category: 'UMUM',
-        amount: generatedReceipt.total,
-        date: generatedReceipt.date,
-        description: fullDescription
-      };
+    const fullDescription = `${generatedReceipt.receivedFrom} - ${itemDescriptions}`;
+    
+    // Siapkan data sesuai format database
+    const ledgerData = {
+      type: generatedReceipt.type.toUpperCase(),
+      category: 'UMUM',
+      amount: generatedReceipt.total,
+      date: generatedReceipt.date,
+      description: fullDescription
+    };
 
-      // Insert ke database
-      const { data, error } = await supabase
-        .from('transactions')
-        .insert([ledgerData])
-        .select()
-        .single();
+    console.log('📤 Data yang akan disave:', ledgerData); // ✅ CEK DATA DULU
 
-      if (error) throw error;
+    // Insert ke database
+    const { data, error } = await supabase
+      .from('transactions')
+      .insert([ledgerData])
+      .select()
+      .single();
 
-      // Simpan ID transaksi yang baru dibuat
-      setSavedTransactionId(data.id);
-      
-      // Tampilkan notif sukses sebentar
-      await new Promise(resolve => setTimeout(resolve, 800));
-      
-      // Redirect ke Finance dengan highlight
-      navigate('/admin/finance', { 
-        state: { 
-          tab: 'LEDGER',
-          highlightTx: {
-            id: data.id,
-            type: generatedReceipt.type.toUpperCase()
-          }
-        } 
-      });
-      
-    } catch (error) {
-      console.error('Error saving to ledger:', error);
-      alert('Gagal save ke ledger. Coba lagi ya!');
-    } finally {
-      setSavingToLedger(false);
+    console.log('📥 Response dari Supabase:', { data, error }); // ✅ CEK RESPONSE
+
+    if (error) {
+      console.error('❌ Error detail:', error); // ✅ CEK ERROR DETAIL
+      throw error;
     }
-  };
+
+    // Simpan ID transaksi yang baru dibuat
+    setSavedTransactionId(data.id);
+    
+    // Tampilkan notif sukses sebentar
+    await new Promise(resolve => setTimeout(resolve, 800));
+    
+    // Redirect ke Finance dengan highlight
+    navigate('/admin/finance', { 
+      state: { 
+        tab: 'LEDGER',
+        highlightTx: {
+          id: data.id,
+          type: generatedReceipt.type.toUpperCase()
+        }
+      } 
+    });
+    
+  } catch (error) {
+    console.error('💥 Catch error:', error); // ✅ CEK CATCH ERROR
+    alert('Gagal save ke ledger. Coba lagi ya!');
+  } finally {
+    setSavingToLedger(false);
+  }
+};
 
   const handleDownloadPDF = async () => {
     if (!slipRef.current || !generatedReceipt) return;
