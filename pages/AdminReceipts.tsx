@@ -195,24 +195,27 @@ const AdminReceipts: React.FC = () => {
               />
             </div>
 
-            {/* Nominal */}
-            <div className="space-y-3">
-              <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">
-                Nominal (Rp) *
-              </label>
-              <input
-                type="number"
-                value={form.amount}
-                onChange={(e) => setForm({...form, amount: e.target.value})}
-                placeholder="0"
-                min="0"
-                className={`w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold text-sm outline-none border-2 transition-all ${
-                  showErrors && (!form.amount || parseFloat(form.amount) <= 0) 
-                    ? 'border-rose-300 bg-rose-50' 
-                    : 'border-transparent focus:border-blue-200 focus:bg-white'
-                }`}
-              />
-            </div>
+{/* Nominal */}
+<div className="space-y-3">
+  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">
+    Nominal (Rp) *
+  </label>
+  <input
+    type="number"
+    value={form.amount}
+    onChange={(e) => {
+      const cleanValue = e.target.value.replace(/[.,]/g, '');
+      setForm({...form, amount: cleanValue});
+    }}
+    placeholder="0"
+    min="0"
+    className={`w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold text-sm outline-none border-2 transition-all ${
+      showErrors && (!form.amount || parseFloat(form.amount) <= 0) 
+        ? 'border-rose-300 bg-rose-50' 
+        : 'border-transparent focus:border-blue-200 focus:bg-white'
+    }`}
+  />
+</div>
 
             {/* Metode Pembayaran */}
             <div className="space-y-3">
