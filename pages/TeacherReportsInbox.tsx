@@ -129,7 +129,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, r
   const requests = reports.filter(r =>
     (r.status === 'REQ' || r.status === 'REPORT_PROCESSING') &&
     r.teacherid === user.id
-    r.teacherid !== 'SISWA_MANDIRI' // ✅ FILTER ABSEN SISWA MANDIRI
+    l.teacherId !== 'SISWA_MANDIRI' // ✅ FILTER ABSEN SISWA MANDIRI
   );
   return requests.filter(req => {
       const studentNameInRequest = (req.studentsAttended?.[0] || '').toUpperCase().trim();
