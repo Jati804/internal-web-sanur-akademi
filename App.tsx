@@ -16,6 +16,7 @@ import { supabase } from './services/supabase.ts';
 import LoginPage from './pages/LoginPage.tsx';
 import AdminDashboard from './pages/AdminDashboard.tsx';
 import AdminFinance from './pages/AdminFinance.tsx';
+import AdminReceipts from './pages/AdminReceipts.tsx';
 import AdminStaff from './pages/AdminStaff.tsx';
 import AdminInventory from './pages/AdminInventory.tsx';
 import AdminAcademic from './pages/AdminAcademic.tsx';
@@ -266,7 +267,8 @@ const AppContent = ({
               <>
                 <p className="px-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest">Utama</p>
                 <NavItem to="/admin" icon={LayoutDashboard} label="Dashboard" onClick={closeSidebar} />
-                <NavItem to="/admin/finance" icon={Receipt} label="Keuangan" onClick={closeSidebar} />
+                <NavItem to="/admin/finance" icon={Wallet} label="Keuangan" onClick={closeSidebar} />
+                <NavItem to="/admin/receipts" icon={Receipt} label="Kuitansi" onClick={closeSidebar} />
                 <p className="px-6 mt-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest">Manajemen</p>
                 <NavItem to="/admin/buku-induk" icon={Book} label="Buku Induk" onClick={closeSidebar} />
                 <NavItem to="/admin/staff" icon={UserCog} label="Akses User" onClick={closeSidebar} />
@@ -312,6 +314,7 @@ const AppContent = ({
             <Routes>
               <Route path="/admin" element={<AdminDashboard user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} setAttendanceLogs={setAttendanceLogs} teachers={teachers} transactions={transactions} studentProfiles={studentProfiles} />} />
               <Route path="/admin/finance" element={<AdminFinance attendanceLogs={attendanceLogs} transactions={transactions} studentPayments={studentPayments} refreshAllData={refreshAllData} />} />
+              <Route path="/admin/receipts" element={<AdminReceipts />} />
               <Route path="/admin/buku-induk" element={<AdminInventory studentProfiles={studentProfiles} setStudentProfiles={setStudentProfiles} salesContacts={salesContacts} setSalesContacts={setSalesContacts} refreshAllData={refreshAllData} />} />
               <Route path="/admin/staff" element={<AdminStaff user={user} teachers={teachers} setTeachers={setTeachers} studentAccounts={studentAccounts} setStudentAccounts={setStudentAccounts} refreshAllData={refreshAllData} />} />
               <Route path="/admin/academic" element={<AdminAcademic subjects={subjects} setSubjects={setSubjects} classes={classes} setClasses={setClasses} levels={levels} setLevels={setLevels} scheduleData={masterSchedule} setScheduleData={setMasterSchedule} salaryConfig={salaryConfig} setSalaryConfig={setSalaryConfig} />} />
