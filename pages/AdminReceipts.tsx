@@ -415,12 +415,12 @@ const AdminReceipts: React.FC = () => {
                       ))}
                       
                       {/* Total Row */}
-                      <div className="grid grid-cols-12 gap-4 p-6 bg-emerald-50/50">
+                      <div className="grid grid-cols-12 gap-4 p-6 bg-emerald-100">
                         <div className="col-span-8 text-left">
-                          <p className="text-[13px] font-black text-emerald-900 uppercase tracking-wide">TOTAL</p>
+                          <p className="text-[13px] font-black text-emerald-700 uppercase tracking-wide">TOTAL</p>
                         </div>
                         <div className="col-span-4 text-right">
-                          <p className="text-[14px] font-black text-emerald-900">Rp {generatedReceipt.total.toLocaleString('id-ID')}</p>
+                          <p className="text-[14px] font-black text-emerald-700">Rp {generatedReceipt.total.toLocaleString('id-ID')}</p>
                         </div>
                       </div>
                     </div>
@@ -428,7 +428,7 @@ const AdminReceipts: React.FC = () => {
                     {/* Payment Method */}
                     <div className="px-6 py-4 border-t border-slate-200/60">
                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Metode Pembayaran:</p>
-                      <p className="text-[11px] font-black text-slate-700 uppercase text-left">{generatedReceipt.paymentMethod}</p>
+                      <p className="text-[11px] font-black text-blue-600 uppercase text-left">{generatedReceipt.paymentMethod}</p>
                     </div>
                   </div>
                 </div>
