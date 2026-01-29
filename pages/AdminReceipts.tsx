@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Receipt, ShieldCheck, ClipboardList, Loader2, Download, AlertCircle, CheckCircle2, Sparkles, Plus, Trash2, X } from 'lucide-react';
+import { Receipt, ShieldCheck, ClipboardList, Loader2, Download, AlertCircle, CheckCircle2, Sparkles, Plus, Trash2, X, TrendingUp, TrendingDown } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
@@ -11,10 +11,11 @@ const formatDateToDMY = (date: string) => {
   return `${day}/${month}/${year}`;
 };
 
-const generateReceiptId = () => {
+const generateReceiptId = (type: 'income' | 'expense') => {
   const timestamp = Date.now().toString(36);
   const random = Math.random().toString(36).substring(2, 7);
-  return `RCP-${timestamp}-${random}`.toUpperCase();
+  const prefix = type === 'income' ? 'IN' : 'OUT';
+  return `${prefix}-${timestamp}-${random}`.toUpperCase();
 };
 
 interface PaymentItem {
@@ -29,6 +30,7 @@ const AdminReceipts: React.FC = () => {
   const [showSuccess, setShowSuccess] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
   const [generatedReceipt, setGeneratedReceipt] = useState<any | null>(null);
+  const [activeTab, setActiveTab] = useState<'income' | 'expense'>('income');
   
   const [form, setForm] = useState({
     receivedFrom: '',
@@ -79,7 +81,8 @@ const AdminReceipts: React.FC = () => {
     const validItems = items.filter(item => item.description.trim() && parseFloat(item.amount) > 0);
     
     const receipt = {
-      id: generateReceiptId(),
+      id: generateReceiptId(activeTab),
+      type: activeTab,
       receivedFrom: form.receivedFrom.trim(),
       items: validItems.map(item => ({
         description: item.description.trim(),
@@ -126,7 +129,8 @@ const AdminReceipts: React.FC = () => {
       const imgHeight = (canvas.height * imgWidth) / canvas.width;
       
       pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-      pdf.save(`KUITANSI_${generatedReceipt.id}_${generatedReceipt.receivedFrom.replace(/\s+/g, '_')}.pdf`);
+      const docType = generatedReceipt.type === 'income' ? 'KUITANSI' : 'BON';
+      pdf.save(`${docType}_${generatedReceipt.id}_${generatedReceipt.receivedFrom.replace(/\s+/g, '_')}.pdf`);
       
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -147,6 +151,11 @@ const AdminReceipts: React.FC = () => {
     setShowErrors(false);
   };
 
+  const handleTabChange = (tab: 'income' | 'expense') => {
+    setActiveTab(tab);
+    handleReset();
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-purple-50/20 p-8">
       {/* Header */}
@@ -157,7 +166,7 @@ const AdminReceipts: React.FC = () => {
           </div>
           <div>
             <h1 className="text-4xl font-black text-slate-800 uppercase italic leading-none">Workspace Kuitansi</h1>
-            <p className="text-[11px] font-black text-blue-600 uppercase tracking-[0.3em] mt-2">Generate Bukti/Nota Pembayaran</p>
+            <p className="text-[11px] font-black text-blue-600 uppercase tracking-[0.3em] mt-2">Generate Bukti Pembayaran</p>
           </div>
         </div>
       </div>
@@ -167,33 +176,67 @@ const AdminReceipts: React.FC = () => {
         <div className="fixed top-8 right-8 z-[100000] bg-emerald-600 text-white px-8 py-6 rounded-[2rem] shadow-2xl flex items-center gap-4 animate-bounce">
           <CheckCircle2 size={28} strokeWidth={3} />
           <div>
-            <p className="font-black text-sm uppercase">Kuitansi Berhasil Dibuat! ✨</p>
+            <p className="font-black text-sm uppercase">
+              {activeTab === 'income' ? 'Kuitansi' : 'Bon'} Berhasil Dibuat! ✨
+            </p>
             <p className="text-[10px] font-bold opacity-90 mt-1">Scroll ke bawah untuk lihat & download</p>
           </div>
         </div>
       )}
 
       <div className="max-w-6xl mx-auto space-y-12">
+        {/* Tab Switcher */}
+        <div className="bg-white rounded-[3rem] shadow-2xl border-2 border-slate-100 p-3 flex gap-3">
+          <button
+            onClick={() => handleTabChange('income')}
+            className={`flex-1 py-6 rounded-[2rem] font-black text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-3 ${
+              activeTab === 'income'
+                ? 'bg-gradient-to-r from-emerald-600 to-green-600 text-white shadow-xl'
+                : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
+            }`}
+          >
+            <TrendingUp size={20} />
+            Pemasukan
+          </button>
+          <button
+            onClick={() => handleTabChange('expense')}
+            className={`flex-1 py-6 rounded-[2rem] font-black text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-3 ${
+              activeTab === 'expense'
+                ? 'bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-xl'
+                : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
+            }`}
+          >
+            <TrendingDown size={20} />
+            Pengeluaran
+          </button>
+        </div>
+
         {/* Form Input */}
         <div className="bg-white rounded-[4rem] shadow-2xl border-2 border-slate-100 p-12 space-y-8">
           <div className="flex items-center gap-4 pb-6 border-b-2 border-slate-100">
-            <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center">
+            <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+              activeTab === 'income' 
+                ? 'bg-emerald-50 text-emerald-600' 
+                : 'bg-rose-50 text-rose-600'
+            }`}>
               <ClipboardList size={24} />
             </div>
-            <h2 className="text-2xl font-black text-slate-800 uppercase italic">Data Kuitansi</h2>
+            <h2 className="text-2xl font-black text-slate-800 uppercase italic">
+              Data {activeTab === 'income' ? 'Kuitansi' : 'Bon Pengeluaran'}
+            </h2>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Diterima Dari */}
+            {/* Diterima Dari / Dibayar Kepada */}
             <div className="space-y-3">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">
-                Diterima Dari *
+                {activeTab === 'income' ? 'Diterima Dari *' : 'Dibayar Kepada *'}
               </label>
               <input
                 type="text"
                 value={form.receivedFrom}
                 onChange={(e) => setForm({...form, receivedFrom: e.target.value})}
-                placeholder="Nama Pembayar"
+                placeholder={activeTab === 'income' ? 'Nama Pembayar' : 'Nama Penerima/Vendor'}
                 className={`w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold text-sm outline-none border-2 transition-all ${
                   showErrors && !form.receivedFrom.trim() 
                     ? 'border-rose-300 bg-rose-50' 
@@ -205,7 +248,7 @@ const AdminReceipts: React.FC = () => {
             {/* Tanggal */}
             <div className="space-y-3">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">
-                Tanggal Pembayaran *
+                Tanggal {activeTab === 'income' ? 'Pembayaran' : 'Pengeluaran'} *
               </label>
               <input
                 type="date"
@@ -220,11 +263,15 @@ const AdminReceipts: React.FC = () => {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">
-                Item Pembayaran *
+                Item {activeTab === 'income' ? 'Pembayaran' : 'Pengeluaran'} *
               </label>
               <button
                 onClick={addItem}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl font-black text-[9px] uppercase hover:bg-blue-100 transition-all"
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase transition-all ${
+                  activeTab === 'income'
+                    ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+                    : 'bg-rose-50 text-rose-600 hover:bg-rose-100'
+                }`}
               >
                 <Plus size={14} /> Tambah Item
               </button>
@@ -271,10 +318,18 @@ const AdminReceipts: React.FC = () => {
             </div>
 
             {/* Total Display */}
-            <div className="bg-gradient-to-r from-emerald-50 to-blue-50 rounded-2xl p-6 border-2 border-emerald-100">
+            <div className={`rounded-2xl p-6 border-2 ${
+              activeTab === 'income'
+                ? 'bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-100'
+                : 'bg-gradient-to-r from-rose-50 to-red-50 border-rose-100'
+            }`}>
               <div className="flex justify-between items-center">
-                <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Total Pembayaran:</p>
-                <p className="text-3xl font-black text-emerald-600 italic">
+                <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
+                  Total {activeTab === 'income' ? 'Pemasukan' : 'Pengeluaran'}:
+                </p>
+                <p className={`text-3xl font-black italic ${
+                  activeTab === 'income' ? 'text-emerald-600' : 'text-rose-600'
+                }`}>
                   Rp {calculateTotal().toLocaleString('id-ID')}
                 </p>
               </div>
@@ -306,7 +361,9 @@ const AdminReceipts: React.FC = () => {
               <AlertCircle size={24} className="text-rose-600 shrink-0 mt-1" />
               <div>
                 <p className="text-sm font-black text-rose-800 uppercase">Data Belum Lengkap!</p>
-                <p className="text-[11px] font-bold text-rose-600 mt-1">Mohon isi nama pembayar dan minimal 1 item pembayaran dengan nominal yang valid.</p>
+                <p className="text-[11px] font-bold text-rose-600 mt-1">
+                  Mohon isi nama {activeTab === 'income' ? 'pembayar' : 'penerima'} dan minimal 1 item dengan nominal yang valid.
+                </p>
               </div>
             </div>
           )}
@@ -322,10 +379,14 @@ const AdminReceipts: React.FC = () => {
             <button
               onClick={handleGenerate}
               disabled={!isFormValid()}
-              className="flex-[2] py-5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-wide shadow-2xl hover:shadow-blue-200 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed"
+              className={`flex-[2] py-5 rounded-2xl font-black text-[11px] uppercase tracking-wide shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed ${
+                activeTab === 'income'
+                  ? 'bg-gradient-to-r from-emerald-600 to-green-600 text-white hover:shadow-emerald-200'
+                  : 'bg-gradient-to-r from-rose-600 to-red-600 text-white hover:shadow-rose-200'
+              }`}
             >
               <Sparkles size={20} />
-              Generate Kuitansi
+              Generate {activeTab === 'income' ? 'Kuitansi' : 'Bon'}
             </button>
           </div>
         </div>
@@ -335,12 +396,22 @@ const AdminReceipts: React.FC = () => {
           <div id="receipt-preview" className="space-y-8">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-emerald-50 text-emerald-600 rounded-2xl flex items-center justify-center">
+                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
+                  generatedReceipt.type === 'income'
+                    ? 'bg-emerald-50 text-emerald-600'
+                    : 'bg-rose-50 text-rose-600'
+                }`}>
                   <CheckCircle2 size={24} />
                 </div>
                 <div>
-                  <h2 className="text-2xl font-black text-slate-800 uppercase italic">Preview Kuitansi</h2>
-                  <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-1">Siap untuk di-download ✨</p>
+                  <h2 className="text-2xl font-black text-slate-800 uppercase italic">
+                    Preview {generatedReceipt.type === 'income' ? 'Kuitansi' : 'Bon'}
+                  </h2>
+                  <p className={`text-[10px] font-black uppercase tracking-widest mt-1 ${
+                    generatedReceipt.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
+                  }`}>
+                    Siap untuk di-download ✨
+                  </p>
                 </div>
               </div>
               
@@ -376,7 +447,11 @@ const AdminReceipts: React.FC = () => {
                     <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1 text-left">Akademi Inspirasi</p>
                   </div>
                   <div className="text-right flex flex-col items-end">
-                    <h2 className="text-xl font-black uppercase italic text-slate-800 leading-none">KUITANSI RESMI</h2>
+                    <h2 className={`text-xl font-black uppercase italic leading-none ${
+                      generatedReceipt.type === 'income' ? 'text-emerald-700' : 'text-rose-700'
+                    }`}>
+                      {generatedReceipt.type === 'income' ? 'KUITANSI RESMI' : 'BON PENGELUARAN'}
+                    </h2>
                     <p className="text-[10px] font-black text-slate-800 uppercase tracking-widest mt-2 whitespace-nowrap">ID: {generatedReceipt.id}</p>
                   </div>
                 </div>
@@ -384,7 +459,9 @@ const AdminReceipts: React.FC = () => {
                 {/* Info Section */}
                 <div className="grid grid-cols-12 gap-10">
                   <div className="col-span-8 pr-6 border-r border-slate-50 text-left">
-                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Diterima Dari:</p>
+                    <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">
+                      {generatedReceipt.type === 'income' ? 'Diterima Dari:' : 'Dibayar Kepada:'}
+                    </p>
                     <p className="text-lg font-black text-slate-900 uppercase italic text-left">{generatedReceipt.receivedFrom}</p>
                   </div>
                   <div className="col-span-4 text-right">
@@ -393,11 +470,13 @@ const AdminReceipts: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Payment Details - NOTA STYLE */}
+                {/* Payment Details */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-3 text-slate-400 border-b-2 border-slate-50 pb-2">
                     <ClipboardList size={14} />
-                    <p className="text-[10px] font-black uppercase tracking-[0.3em]">Rincian Pembayaran</p>
+                    <p className="text-[10px] font-black uppercase tracking-[0.3em]">
+                      Rincian {generatedReceipt.type === 'income' ? 'Pembayaran' : 'Pengeluaran'}
+                    </p>
                   </div>
                   
                   {/* Items Table */}
@@ -415,12 +494,22 @@ const AdminReceipts: React.FC = () => {
                       ))}
                       
                       {/* Total Row */}
-                      <div className="grid grid-cols-12 gap-4 p-6 bg-emerald-100">
+                      <div className={`grid grid-cols-12 gap-4 p-6 ${
+                        generatedReceipt.type === 'income' ? 'bg-emerald-100' : 'bg-rose-100'
+                      }`}>
                         <div className="col-span-8 text-left">
-                          <p className="text-[13px] font-black text-emerald-700 uppercase tracking-wide">TOTAL</p>
+                          <p className={`text-[13px] font-black uppercase tracking-wide ${
+                            generatedReceipt.type === 'income' ? 'text-emerald-700' : 'text-rose-700'
+                          }`}>
+                            TOTAL
+                          </p>
                         </div>
                         <div className="col-span-4 text-right">
-                          <p className="text-[14px] font-black text-emerald-700">Rp {generatedReceipt.total.toLocaleString('id-ID')}</p>
+                          <p className={`text-[14px] font-black ${
+                            generatedReceipt.type === 'income' ? 'text-emerald-700' : 'text-rose-700'
+                          }`}>
+                            Rp {generatedReceipt.total.toLocaleString('id-ID')}
+                          </p>
                         </div>
                       </div>
                     </div>
@@ -428,7 +517,11 @@ const AdminReceipts: React.FC = () => {
                     {/* Payment Method */}
                     <div className="px-6 py-4 border-t border-slate-200/60">
                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Metode Pembayaran:</p>
-                      <p className="text-[11px] font-black text-blue-600 uppercase text-left">{generatedReceipt.paymentMethod}</p>
+                      <p className={`text-[11px] font-black uppercase text-left ${
+                        generatedReceipt.type === 'income' ? 'text-blue-600' : 'text-rose-600'
+                      }`}>
+                        {generatedReceipt.paymentMethod}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -439,10 +532,16 @@ const AdminReceipts: React.FC = () => {
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">VERIFIKASI SISTEM:</p>
                     <div className="text-right flex flex-col items-end">
                       <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] italic">Terverifikasi Digital</p>
-                      <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-1">Status: LUNAS</p>
+                      <p className={`text-[10px] font-black uppercase tracking-widest mt-1 ${
+                        generatedReceipt.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
+                      }`}>
+                        Status: {generatedReceipt.type === 'income' ? 'LUNAS' : 'TERBAYAR'}
+                      </p>
                     </div>
                   </div>
-                  <p className="text-5xl font-black text-emerald-600 italic leading-none text-left">
+                  <p className={`text-5xl font-black italic leading-none text-left ${
+                    generatedReceipt.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
+                  }`}>
                     Rp {generatedReceipt.total.toLocaleString('id-ID')}
                   </p>
                 </div>
@@ -451,7 +550,10 @@ const AdminReceipts: React.FC = () => {
                 <div className="pt-10 border-t border-slate-100 flex justify-between items-end gap-10">
                   <div className="max-w-xs text-left">
                     <p className="text-[10px] font-bold text-slate-400 italic text-left">
-                      "Kuitansi ini sah sebagai bukti pembayaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal."
+                      "{generatedReceipt.type === 'income' 
+                        ? 'Kuitansi ini sah sebagai bukti pembayaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal.'
+                        : 'Bon ini sah sebagai bukti pengeluaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal.'
+                      }"
                     </p>
                   </div>
                   <div className="text-center flex flex-col items-center shrink-0">
