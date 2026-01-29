@@ -98,60 +98,46 @@ const GuideModal = ({ role, onClose }: { role: string, onClose: () => void }) =>
             <HelpCircle size={24} />
             <h3 className="text-lg font-black uppercase italic tracking-tighter">Panduan Sistem</h3>
           </div>
-          <button onClick={onClose} className="p-2 bg-white/20 rounded-full hover:bg-white/40 transition-all"><X size={18}/></button>
+          <button onClick={onClose} className="p-2 text-white/60 hover:text-white hover:bg-white/10 rounded-xl transition-colors"><X size={20}/></button>
         </div>
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-6">
+        <div className="p-8 space-y-6 overflow-y-auto">
           {content.steps.map((s, i) => (
-            <div key={i} className="flex gap-4">
-              <div className={`w-8 h-8 rounded-full ${content.color} text-white flex items-center justify-center font-black italic shrink-0 text-xs shadow-md`}>0{i+1}</div>
-              <div className="space-y-1">
-                <h4 className={`text-xs font-black uppercase tracking-widest ${content.text}`}>{s.title}</h4>
-                <p className="text-[10px] font-bold text-slate-400 uppercase leading-relaxed uppercase">{s.desc}</p>
+            <div key={i} className="flex gap-4 items-start">
+              <div className={`w-8 h-8 ${content.color} text-white rounded-full flex items-center justify-center shrink-0 font-black text-xs shadow-lg`}>{i+1}</div>
+              <div className="space-y-1 flex-1">
+                <h4 className={`text-[11px] font-black uppercase ${content.text} tracking-widest leading-tight`}>{s.title}</h4>
+                <p className="text-[10px] font-bold text-slate-600 leading-relaxed">{s.desc}</p>
               </div>
             </div>
           ))}
-          <div className="pt-4 border-t border-slate-50">
-             <div className="bg-slate-50 p-4 rounded-2xl flex items-center gap-3">
-                <Info size={16} className="text-slate-400 shrink-0" />
-                <p className="text-[9px] font-black text-slate-400 uppercase leading-tight italic">Hubungi Admin jika ada kendala teknis lebih lanjut ya Kak! ✨</p>
-             </div>
-          </div>
         </div>
-        <div className="p-6 bg-white border-t border-slate-50 shrink-0">
-          <button onClick={onClose} className={`w-full py-4 ${content.color} text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all`}>SAYA MENGERTI ✨</button>
+        <div className="p-6 bg-slate-50 text-center border-t border-slate-100 shrink-0">
+          <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic">Tetap semangat menggunakan Sanur! ✨</p>
         </div>
       </div>
     </div>
   );
 };
 
-// 🔥 MODAL ANTI PORTRAIT - NUTUPIN LAYAR KALO PORTRAIT
-const PortraitBlocker = () => {
-  return (
-    <div className="fixed inset-0 z-[999999] bg-gradient-to-br from-blue-600 via-purple-600 to-emerald-600 flex items-center justify-center p-8">
-      <div className="text-center text-white space-y-8 max-w-md animate-in fade-in">
-        <div className="relative">
-          <div className="text-9xl animate-bounce">📱</div>
-          <RotateCw size={48} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white animate-spin" style={{ animationDuration: '3s' }} />
-        </div>
-        <div className="space-y-4">
-          <h1 className="text-3xl font-black uppercase tracking-wider leading-tight">PUTAR LAYAR<br/>KE HORIZONTAL</h1>
-          <div className="h-1 w-24 bg-white/50 rounded-full mx-auto"></div>
-          <p className="text-base font-bold opacity-90 leading-relaxed">
-            Untuk pengalaman terbaik,<br/>
-            gunakan mode <span className="font-black text-yellow-300">LANDSCAPE</span> ya Kak! ✨
-          </p>
-        </div>
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-          <p className="text-xs font-bold opacity-80 uppercase tracking-wide">
-            📲 Tablet & HP: Wajib Horizontal<br/>
-            💻 Desktop: Otomatis OK
-          </p>
-        </div>
+const PortraitBlocker = () => (
+  <div className="fixed inset-0 z-[500000] bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 flex flex-col items-center justify-center px-6 text-white">
+    <div className="max-w-md text-center space-y-8 animate-in fade-in zoom-in duration-700">
+      <div className="w-32 h-32 mx-auto bg-white/10 backdrop-blur-xl rounded-[3rem] flex items-center justify-center shadow-2xl rotate-3 animate-bounce border-4 border-white/20">
+        <RotateCw size={64} className="text-blue-400" />
+      </div>
+      <div className="space-y-3">
+        <h1 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">Putar Layar!</h1>
+        <p className="text-sm md:text-base font-bold text-blue-200 leading-relaxed">Aplikasi ini dioptimalkan untuk mode <span className="text-yellow-300 font-black">LANDSCAPE</span> (horizontal) di tablet & HP.</p>
+      </div>
+      <div className="bg-white/10 backdrop-blur-xl border-2 border-white/20 rounded-3xl p-6">
+        <p className="text-xs font-bold text-slate-200 leading-relaxed">💡 Putar perangkat ke kanan atau kiri untuk melanjutkan.</p>
       </div>
     </div>
-  );
-};
+    <div className="absolute bottom-10 text-center">
+      <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.5em] italic">Sanur Internal Portal</p>
+    </div>
+  </div>
+);
 
 const AppContent = ({ 
   user, setUser, attendanceLogs, setAttendanceLogs, studentAttendanceLogs, setStudentAttendanceLogs, teachers, setTeachers, studentAccounts, setStudentAccounts, transactions, setTransactions, studentPayments, setStudentPayments, studentProfiles, setStudentProfiles, salesContacts, setSalesContacts, reports, setReports, subjects, setSubjects, classes, setClasses, levels, setLevels, masterSchedule, setMasterSchedule, salaryConfig, setSalaryConfig, isSidebarOpen, setIsSidebarOpen, isSyncing, connectionError, refreshAllData
@@ -298,24 +284,29 @@ const pendingReportsCount = Array.isArray(reports) ?
         <header className="h-24 bg-white border-b border-slate-100 flex items-center justify-between px-8 md:px-12 sticky top-0 z-[1000] shadow-sm shrink-0">
           <div className="flex items-center gap-4">
             <button onClick={() => setIsSidebarOpen(true)} className="p-3 bg-slate-50 text-slate-400 rounded-xl lg:hidden"><Menu size={24}/></button>
-            <h1 className="font-black italic uppercase text-slate-800 tracking-tighter text-lg md:text-xl">PORTAL {(user?.name || 'USER').split(' ')[0]}</h1>
+            <div className="hidden md:flex items-center gap-3">
+              <div className={`w-10 h-10 ${roleGuideColor} text-white rounded-2xl flex items-center justify-center shadow-md shrink-0`}>
+                {user.role === 'ADMIN' ? <LayoutDashboard size={20}/> : user.role === 'TEACHER' ? <ClipboardCheck size={20}/> : <GraduationCap size={20}/>}
+              </div>
+              <div>
+                <h2 className="font-black text-slate-800 text-base uppercase italic tracking-tighter leading-none">{user.name}</h2>
+                <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{user.role}</p>
+              </div>
+            </div>
           </div>
+          
           <div className="flex items-center gap-3">
-             <button onClick={() => setShowGuide(true)} className={`flex items-center gap-3 px-6 py-3 ${roleGuideColor} text-white rounded-2xl font-black text-[10px] uppercase shadow-xl hover:opacity-90 transition-all`}>
-                <HelpCircle size={18} /> <span className="hidden md:inline">PANDUAN</span>
-             </button>
-             <button onClick={executeLogout} className="flex items-center gap-3 px-6 py-3 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl hover:bg-rose-700 transition-all">
-                <Power size={18} /> <span className="hidden sm:inline">LOGOUT</span>
-             </button>
+            <button onClick={() => setShowGuide(true)} className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-blue-50 hover:text-blue-600 transition-colors"><HelpCircle size={20}/></button>
+            <button onClick={executeLogout} className="p-3 bg-slate-50 text-slate-400 rounded-xl hover:bg-rose-50 hover:text-rose-500 transition-colors"><Power size={20}/></button>
           </div>
         </header>
-        
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-12">
-          <div className="max-w-7xl mx-auto">
+
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+          <div className="p-8 md:p-12">
             <Routes>
-              <Route path="/admin" element={<AdminDashboard user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} setAttendanceLogs={setAttendanceLogs} teachers={teachers} transactions={transactions} studentProfiles={studentProfiles} />} />
-              <Route path="/admin/finance" element={<AdminFinance attendanceLogs={attendanceLogs} transactions={transactions} studentPayments={studentPayments} refreshAllData={refreshAllData} />} />
-              <Route path="/admin/receipts" element={<AdminReceipts />} />
+              <Route path="/admin" element={<AdminDashboard user={user} logs={attendanceLogs} teachers={teachers} studentAccounts={studentAccounts} salaryConfig={salaryConfig} transactions={transactions} />} />
+              <Route path="/admin/finance" element={<AdminFinance logs={attendanceLogs} transactions={transactions} setTransactions={setTransactions} teachers={teachers} refreshAllData={refreshAllData} />} />
+              <Route path="/admin/receipts" element={<AdminReceipts studentPayments={studentPayments} setStudentPayments={setStudentPayments} refreshAllData={refreshAllData} />} />
               <Route path="/admin/buku-induk" element={<AdminInventory studentProfiles={studentProfiles} setStudentProfiles={setStudentProfiles} salesContacts={salesContacts} setSalesContacts={setSalesContacts} refreshAllData={refreshAllData} />} />
               <Route path="/admin/staff" element={<AdminStaff user={user} teachers={teachers} setTeachers={setTeachers} studentAccounts={studentAccounts} setStudentAccounts={setStudentAccounts} refreshAllData={refreshAllData} />} />
               <Route path="/admin/academic" element={<AdminAcademic subjects={subjects} setSubjects={setSubjects} classes={classes} setClasses={setClasses} levels={levels} setLevels={setLevels} scheduleData={masterSchedule} setScheduleData={setMasterSchedule} salaryConfig={salaryConfig} setSalaryConfig={setSalaryConfig} />} />
@@ -332,8 +323,8 @@ const pendingReportsCount = Array.isArray(reports) ?
     refreshAllData={refreshAllData} 
   />
 } />
-              <Route path="/student" element={<StudentPortal user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} subjects={subjects} levels={levels} classes={classes} teachers={teachers} initialView="PROGRESS" refreshAllData={refreshAllData} />} />
-              <Route path="/student/payments" element={<StudentPortal user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} subjects={subjects} levels={levels} classes={classes} teachers={teachers} initialView="PAYMENTS" refreshAllData={refreshAllData} />} />
+              <Route path="/student" element={<StudentPortal user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} subjects={subjects} levels={levels} classes={classes} teachers={teachers} reports={reports} initialView="PROGRESS" refreshAllData={refreshAllData} />} />
+              <Route path="/student/payments" element={<StudentPortal user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} subjects={subjects} levels={levels} classes={classes} teachers={teachers} reports={reports} initialView="PAYMENTS" refreshAllData={refreshAllData} />} />
               <Route path="/" element={<Navigate to={user.role === 'ADMIN' ? '/admin' : user.role === 'TEACHER' ? '/teacher' : '/student'} replace />} />
             </Routes>
           </div>
