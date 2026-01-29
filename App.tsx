@@ -210,10 +210,11 @@ const AppContent = ({
     navigate('/', { replace: true });
   };
 
-  const pendingReportsCount = Array.isArray(attendanceLogs) ? attendanceLogs.filter((l: Attendance) => 
-        (l.status === 'REPORT_REQUEST' || l.status === 'REPORT_PROCESSING') && 
-        l.teacherId === user?.id
-      ).length : 0;
+const pendingReportsCount = Array.isArray(reports) ? 
+  reports.filter((r: any) => 
+    r.status === 'REQ' && 
+    r.teacherId === user?.id
+  ).length : 0;
 
   // 🎯 VERCEL DOMAIN: Hanya tampilkan verify page, block semua yang lain
   if (isVercelDomain) {
