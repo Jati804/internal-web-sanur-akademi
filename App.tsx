@@ -225,7 +225,7 @@ const pendingReportsCount = Array.isArray(reports) ?
     return <Navigate to="/verify" replace />;
   }
   
-  // 🎯 DOMAIN UTAMA (sanurakademi.it.com): Handle /verify secara normal
+  // 🎯 DOMAIN UTAMA Handle /verify secara normal
   if (location.pathname === '/verify') return <VerifyCertificate />;
   
   if (!user) return (
