@@ -320,8 +320,13 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])]
         <div style={{ display: 'flex', flexDirection: 'column', flex: 1, marginBottom: '55px', position: 'relative', zIndex: 10 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '18px', color: isPass ? '#2563eb' : '#f97316', borderBottom: '3px solid #f8fafc', paddingBottom: '10px', marginBottom: '20px' }}>
             <Quote size={22}/>
-            <h3 style={{ fontSize: '15px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.4em' }}>Ulasan Pengajar</h3>
-          </div>
+<h3 style={{ fontSize: '15px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.4em' }}>Ulasan Pengajar</h3>
+</div>
+
+{/* Nama Pengajar */}
+<p style={{ fontSize: '13px', color: '#64748b', fontStyle: 'italic', marginTop: '10px', marginBottom: '15px', textAlign: 'center', fontWeight: '600' }}>
+  oleh: <span style={{ color: '#1e293b', fontWeight: '800' }}>{reportLog.teacherName}</span>
+</p>
           <div style={{ flex: 1, backgroundColor: isPass ? '#f0f9ff' : '#fff7ed', borderRadius: '42px', border: '4px solid #f1f5f9', padding: '35px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
              <p style={{ 
                fontSize: '17px', 
