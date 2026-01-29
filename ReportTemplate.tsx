@@ -324,7 +324,7 @@ const studentOnlyLogs = [...(studentAttendanceLogs || [])]
 </div>
 
 {/* Nama Pengajar */}
-<p style={{ fontSize: '13px', color: '#64748b', fontStyle: 'italic', marginTop: '10px', marginBottom: '15px', textAlign: 'center', fontWeight: '600' }}>
+<p style={{ fontSize: '13px', color: '#64748b', fontStyle: 'italic', marginTop: '10px', marginBottom: '15px', textAlign: 'center', fontWeight: '600', textTransform: 'uppercase' }}>
   oleh: <span style={{ color: '#1e293b', fontWeight: '800' }}>{reportLog.teacherName}</span>
 </p>
           <div style={{ flex: 1, backgroundColor: isPass ? '#f0f9ff' : '#fff7ed', borderRadius: '42px', border: '4px solid #f1f5f9', padding: '35px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
