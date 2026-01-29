@@ -113,67 +113,73 @@ const AdminReceipts: React.FC = () => {
     }, 300);
   };
 
-const handleSaveToLedger = async () => {
-  if (!generatedReceipt) return;
-  
-  setSavingToLedger(true);
-  try {
-    // Gabungkan semua item jadi satu deskripsi
-    const itemDescriptions = generatedReceipt.items
-      .map((item: any) => item.description)
-      .join(', ');
+  const handleSaveToLedger = async () => {
+    if (!generatedReceipt) return;
     
-    const fullDescription = `${generatedReceipt.receivedFrom} - ${itemDescriptions}`;
-    
-    // Siapkan data sesuai format database
-    const ledgerData = {
-      type: generatedReceipt.type.toUpperCase(),
-      category: 'UMUM',
-      amount: generatedReceipt.total,
-      date: generatedReceipt.date,
-      description: fullDescription
-    };
+    setSavingToLedger(true);
+    try {
+      // Generate ID dengan format TX-IMP-timestamp-random
+      const timestamp = Date.now();
+      const random = Math.random().toString(36).substring(2, 7);
+      const generatedId = `TX-IMP-${timestamp}-${random}`;
+      
+      // Gabungkan semua item jadi satu deskripsi
+      const itemDescriptions = generatedReceipt.items
+        .map((item: any) => item.description)
+        .join(', ');
+      
+      const fullDescription = `${generatedReceipt.receivedFrom} - ${itemDescriptions}`;
+      
+      // Siapkan data sesuai format database
+      const ledgerData = {
+        id: generatedId, // ✅ Tambahin ID manual
+        type: generatedReceipt.type.toUpperCase(), // 'INCOME' atau 'EXPENSE'
+        category: 'UMUM',
+        amount: generatedReceipt.total,
+        date: generatedReceipt.date,
+        description: fullDescription
+      };
 
-    console.log('📤 Data yang akan disave:', ledgerData); // ✅ CEK DATA DULU
+      console.log('📤 Data yang akan disave:', ledgerData);
 
-    // Insert ke database
-    const { data, error } = await supabase
-      .from('transactions')
-      .insert([ledgerData])
-      .select()
-      .single();
+      // Insert ke database
+      const { data, error } = await supabase
+        .from('transactions')
+        .insert([ledgerData])
+        .select()
+        .single();
 
-    console.log('📥 Response dari Supabase:', { data, error }); // ✅ CEK RESPONSE
+      console.log('📥 Response dari Supabase:', { data, error });
 
-    if (error) {
-      console.error('❌ Error detail:', error); // ✅ CEK ERROR DETAIL
-      throw error;
+      if (error) {
+        console.error('❌ Error detail:', error);
+        throw error;
+      }
+
+      // Simpan ID transaksi yang baru dibuat
+      setSavedTransactionId(data.id);
+      
+      // Tampilkan notif sukses sebentar
+      await new Promise(resolve => setTimeout(resolve, 800));
+      
+      // Redirect ke Finance dengan highlight
+      navigate('/admin/finance', { 
+        state: { 
+          tab: 'LEDGER',
+          highlightTx: {
+            id: data.id,
+            type: generatedReceipt.type.toUpperCase()
+          }
+        } 
+      });
+      
+    } catch (error) {
+      console.error('💥 Catch error:', error);
+      alert('Gagal save ke ledger. Coba lagi ya!');
+    } finally {
+      setSavingToLedger(false);
     }
-
-    // Simpan ID transaksi yang baru dibuat
-    setSavedTransactionId(data.id);
-    
-    // Tampilkan notif sukses sebentar
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
-    // Redirect ke Finance dengan highlight
-    navigate('/admin/finance', { 
-      state: { 
-        tab: 'LEDGER',
-        highlightTx: {
-          id: data.id,
-          type: generatedReceipt.type.toUpperCase()
-        }
-      } 
-    });
-    
-  } catch (error) {
-    console.error('💥 Catch error:', error); // ✅ CEK CATCH ERROR
-    alert('Gagal save ke ledger. Coba lagi ya!');
-  } finally {
-    setSavingToLedger(false);
-  }
-};
+  };
 
   const handleDownloadPDF = async () => {
     if (!slipRef.current || !generatedReceipt) return;
@@ -272,7 +278,7 @@ const handleSaveToLedger = async () => {
             onClick={() => handleTabChange('expense')}
             className={`flex-1 py-6 rounded-[2rem] font-black text-sm uppercase tracking-wide transition-all flex items-center justify-center gap-3 ${
               activeTab === 'expense'
-                ? 'bg-gradient-to-r from-slate-700 to-slate-600 text-white shadow-xl'
+                ? 'bg-gradient-to-r from-rose-600 to-red-600 text-white shadow-xl'
                 : 'bg-slate-50 text-slate-400 hover:bg-slate-100'
             }`}
           >
@@ -287,7 +293,7 @@ const handleSaveToLedger = async () => {
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
               activeTab === 'income' 
                 ? 'bg-emerald-50 text-emerald-600' 
-                : 'bg-slate-100 text-slate-600'
+                : 'bg-rose-50 text-rose-600'
             }`}>
               <ClipboardList size={24} />
             </div>
@@ -340,7 +346,7 @@ const handleSaveToLedger = async () => {
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase transition-all ${
                   activeTab === 'income'
                     ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
-                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                    : 'bg-rose-50 text-rose-600 hover:bg-rose-100'
                 }`}
               >
                 <Plus size={14} /> Tambah Item
@@ -391,14 +397,14 @@ const handleSaveToLedger = async () => {
             <div className={`rounded-2xl p-6 border-2 ${
               activeTab === 'income'
                 ? 'bg-gradient-to-r from-emerald-50 to-green-50 border-emerald-100'
-                : 'bg-gradient-to-r from-slate-50 to-slate-100 border-slate-200'
+                : 'bg-gradient-to-r from-rose-50 to-red-50 border-rose-100'
             }`}>
               <div className="flex justify-between items-center">
                 <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">
                   Total {activeTab === 'income' ? 'Pemasukan' : 'Pengeluaran'}:
                 </p>
                 <p className={`text-3xl font-black italic ${
-                  activeTab === 'income' ? 'text-emerald-600' : 'text-slate-700'
+                  activeTab === 'income' ? 'text-emerald-600' : 'text-rose-600'
                 }`}>
                   Rp {calculateTotal().toLocaleString('id-ID')}
                 </p>
@@ -452,7 +458,7 @@ const handleSaveToLedger = async () => {
               className={`flex-[2] py-5 rounded-2xl font-black text-[11px] uppercase tracking-wide shadow-2xl active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed ${
                 activeTab === 'income'
                   ? 'bg-gradient-to-r from-emerald-600 to-green-600 text-white hover:shadow-emerald-200'
-                  : 'bg-gradient-to-r from-slate-700 to-slate-600 text-white hover:shadow-slate-200'
+                  : 'bg-gradient-to-r from-rose-600 to-red-600 text-white hover:shadow-rose-200'
               }`}
             >
               <Sparkles size={20} />
@@ -469,7 +475,7 @@ const handleSaveToLedger = async () => {
                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center ${
                   generatedReceipt.type === 'income'
                     ? 'bg-emerald-50 text-emerald-600'
-                    : 'bg-slate-100 text-slate-600'
+                    : 'bg-rose-50 text-rose-600'
                 }`}>
                   <CheckCircle2 size={24} />
                 </div>
@@ -478,7 +484,7 @@ const handleSaveToLedger = async () => {
                     Preview {generatedReceipt.type === 'income' ? 'Kuitansi' : 'Bon'}
                   </h2>
                   <p className={`text-[10px] font-black uppercase tracking-widest mt-1 ${
-                    generatedReceipt.type === 'income' ? 'text-emerald-600' : 'text-slate-600'
+                    generatedReceipt.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
                   }`}>
                     {savedTransactionId ? 'Tersimpan di Ledger ✨' : 'Siap untuk di-download'}
                   </p>
@@ -616,9 +622,7 @@ const handleSaveToLedger = async () => {
                     {/* Payment Method */}
                     <div className="px-6 py-4 border-t border-slate-200/60">
                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Metode Pembayaran:</p>
-                      <p className={`text-[11px] font-black uppercase text-left ${
-                        generatedReceipt.type === 'income' ? 'text-blue-600' : 'text-slate-600'
-                      }`}>
+                      <p className="text-[11px] font-black uppercase text-left text-blue-600">
                         {generatedReceipt.paymentMethod}
                       </p>
                     </div>
