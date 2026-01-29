@@ -154,7 +154,7 @@ const PortraitBlocker = () => {
 };
 
 const AppContent = ({ 
-  user, setUser, attendanceLogs, setAttendanceLogs, studentAttendanceLogs, setStudentAttendanceLogs, teachers, setTeachers, studentAccounts, setStudentAccounts, transactions, setTransactions, studentPayments, setStudentPayments, studentProfiles, setStudentProfiles, salesContacts, setSalesContacts, subjects, setSubjects, classes, setClasses, levels, setLevels, masterSchedule, setMasterSchedule, salaryConfig, setSalaryConfig, isSidebarOpen, setIsSidebarOpen, isSyncing, connectionError, refreshAllData
+  user, setUser, attendanceLogs, setAttendanceLogs, studentAttendanceLogs, setStudentAttendanceLogs, teachers, setTeachers, studentAccounts, setStudentAccounts, transactions, setTransactions, studentPayments, setStudentPayments, studentProfiles, setStudentProfiles, salesContacts, setSalesContacts, reports, setReports, subjects, setSubjects, classes, setClasses, levels, setLevels, masterSchedule, setMasterSchedule, salaryConfig, setSalaryConfig, isSidebarOpen, setIsSidebarOpen, isSyncing, connectionError, refreshAllData
 }: any) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -324,7 +324,8 @@ const AppContent = ({
               <Route path="/teacher/reports" element={
   <TeacherReportsInbox 
     user={user} 
-    logs={attendanceLogs} 
+    logs={attendanceLogs}
+    reports={reports}
     studentAttendanceLogs={studentAttendanceLogs} 
     studentAccounts={studentAccounts} 
     refreshAllData={refreshAllData} 
@@ -351,6 +352,7 @@ const App = () => {
   const [studentPayments, setStudentPayments] = useState<StudentPayment[]>([]);
   const [studentProfiles, setStudentProfiles] = useState<StudentProfile[]>([]);
   const [salesContacts, setSalesContacts] = useState<any[]>([]);
+  const [reports, setReports] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<string[]>(INITIAL_SUBJECTS);
   const [classes, setClasses] = useState<string[]>(CLASS_ROOM_OPTIONS);
   const [levels, setLevels] = useState<string[]>(['BASIC', 'INTERMEDIATE', 'ADVANCED']);
@@ -372,6 +374,7 @@ const App = () => {
   { data: stuPay },
   { data: stuProf },
   { data: salesCon },
+  { data: reps },
   { data: settings }
 ] = await Promise.all([
   supabase.from('attendance').select('*'),
@@ -382,6 +385,7 @@ const App = () => {
   supabase.from('student_payments').select('*'),
   supabase.from('student_profiles').select('*'),
   supabase.from('sales_contacts').select('*'),
+  supabase.from('reports').select('*'),
   supabase.from('settings').select('*')
 ]);
 
@@ -448,6 +452,22 @@ if (salesCon) setSalesContacts(salesCon.map((s: any) => ({
   meetingNotes: s.meeting_notes
 })));
 
+if (reps) setReports(reps.map((r: any) => ({
+  ...r,
+  teacherId: r.teacherid,
+  teacherName: r.teachername,
+  className: r.classname,
+  sessionCategory: r.sessioncategory,
+  packageId: r.packageid,
+  sessionNumber: r.sessionnumber,
+  studentsAttended: r.studentsattended,
+  studentScores: r.studentscores,
+  studentTopics: r.studenttopics,
+  studentNarratives: r.studentnarratives,
+  reportNarrative: r.reportnarrative,
+  periode: r.periode
+})));
+
       if (settings) {
         const acad = settings.find(s => s.key === 'academic_config');
         if (acad?.value) {
@@ -487,6 +507,7 @@ if (salesCon) setSalesContacts(salesCon.map((s: any) => ({
   studentPayments={studentPayments} setStudentPayments={setStudentPayments}
   studentProfiles={studentProfiles} setStudentProfiles={setStudentProfiles}
   salesContacts={salesContacts} setSalesContacts={setSalesContacts}
+  reports={reports} setReports={setReports}
   subjects={subjects} setSubjects={setSubjects}
   classes={classes} setClasses={setClasses}
   levels={levels} setLevels={setLevels}
