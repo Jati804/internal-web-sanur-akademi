@@ -23,12 +23,13 @@ interface StudentPortalProps {
   classes: string[];
   teachers: User[];
   studentAttendanceLogs: any[];
+  reports: any[]; // ✅ TAMBAH INI!
   initialView?: 'PROGRESS' | 'PAYMENTS';
   refreshAllData?: () => Promise<void>;
 }
 
 const StudentPortal: React.FC<StudentPortalProps> = ({ 
-  user, attendanceLogs, studentPayments, setStudentPayments, teachers, initialView, refreshAllData, classes, subjects, levels, studentAttendanceLogs 
+  user, attendanceLogs, studentPayments, setStudentPayments, teachers, initialView, refreshAllData, classes, subjects, levels, studentAttendanceLogs, reports 
 }) => {
   const isPaymentView = initialView === 'PAYMENTS';
   const [loading, setLoading] = useState(false);
@@ -140,18 +141,18 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   }, [studentPayments, normalizedUserName]);
 
   const myLogs = useMemo(() => {
-    if (!Array.isArray(attendanceLogs)) return [];
-    return attendanceLogs.filter(l => 
-      Array.isArray(l.studentsAttended) && 
-      l.studentsAttended.some(s => (s || '').toUpperCase().trim() === normalizedUserName)
+    if (!Array.isArray(reports)) return [];
+    return reports.filter(r => 
+      Array.isArray(r.studentsAttended) && 
+      r.studentsAttended.some(s => (s || '').toUpperCase().trim() === normalizedUserName)
     );
-  }, [attendanceLogs, normalizedUserName]);
+  }, [reports, normalizedUserName]);
 
   // FIXED: Logic deteksi rapot sekarang WAJIB berdasarkan packageId (ID Pembayaran)
   const findOfficialReportLog = (course: any) => {
     const possibleReports = myLogs.filter(l => 
       (l.packageId === course.id) && // STICT MATCH: Harus sama dengan ID Pembayaran
-      (l.status === 'SESSION_LOG' || l.status === 'REPORT_READY') && 
+      (l.status === 'SESSION_LOG') && // ✅ GANTI: Cek status SESSION_LOG aja (rapot yang udah dikirim)
       l.sessionNumber === 6 &&
       l.teacherId !== 'SISWA_MANDIRI' && 
       l.studentScores && 
