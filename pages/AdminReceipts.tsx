@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Receipt, ShieldCheck, ClipboardList, Loader2, Download, AlertCircle, CheckCircle2, Sparkles } from 'lucide-react';
+import { Receipt, ShieldCheck, ClipboardList, Loader2, Download, AlertCircle, CheckCircle2, Sparkles, Plus, Trash2, X } from 'lucide-react';
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
@@ -17,6 +17,12 @@ const generateReceiptId = () => {
   return `RCP-${timestamp}-${random}`.toUpperCase();
 };
 
+interface PaymentItem {
+  id: string;
+  description: string;
+  amount: string;
+}
+
 const AdminReceipts: React.FC = () => {
   const slipRef = useRef<HTMLDivElement>(null);
   const [downloading, setDownloading] = useState(false);
@@ -26,26 +32,60 @@ const AdminReceipts: React.FC = () => {
   
   const [form, setForm] = useState({
     receivedFrom: '',
-    paymentFor: '',
-    amount: '',
     date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()),
     paymentMethod: 'TRANSFER'
   });
 
-  const isFormValid = form.receivedFrom.trim() && form.paymentFor.trim() && form.amount && parseFloat(form.amount) > 0;
+  const [items, setItems] = useState<PaymentItem[]>([
+    { id: '1', description: '', amount: '' }
+  ]);
+
+  const addItem = () => {
+    setItems([...items, { id: Date.now().toString(), description: '', amount: '' }]);
+  };
+
+  const removeItem = (id: string) => {
+    if (items.length > 1) {
+      setItems(items.filter(item => item.id !== id));
+    }
+  };
+
+  const updateItem = (id: string, field: 'description' | 'amount', value: string) => {
+    setItems(items.map(item => 
+      item.id === id 
+        ? { ...item, [field]: field === 'amount' ? value.replace(/[.,]/g, '') : value }
+        : item
+    ));
+  };
+
+  const calculateTotal = () => {
+    return items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
+  };
+
+  const isFormValid = () => {
+    const hasReceivedFrom = form.receivedFrom.trim().length > 0;
+    const hasValidItems = items.some(item => item.description.trim() && parseFloat(item.amount) > 0);
+    const total = calculateTotal();
+    return hasReceivedFrom && hasValidItems && total > 0;
+  };
 
   const handleGenerate = () => {
-    if (!isFormValid) {
+    if (!isFormValid()) {
       setShowErrors(true);
       setTimeout(() => setShowErrors(false), 3000);
       return;
     }
 
+    const validItems = items.filter(item => item.description.trim() && parseFloat(item.amount) > 0);
+    
     const receipt = {
       id: generateReceiptId(),
       receivedFrom: form.receivedFrom.trim(),
-      paymentFor: form.paymentFor.trim(),
-      amount: parseFloat(form.amount),
+      items: validItems.map(item => ({
+        description: item.description.trim(),
+        amount: parseFloat(item.amount)
+      })),
+      total: calculateTotal(),
       date: form.date,
       paymentMethod: form.paymentMethod,
       generatedAt: new Date().toISOString()
@@ -55,7 +95,6 @@ const AdminReceipts: React.FC = () => {
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 3000);
 
-    // Scroll to preview
     setTimeout(() => {
       const previewElement = document.getElementById('receipt-preview');
       if (previewElement) {
@@ -100,11 +139,10 @@ const AdminReceipts: React.FC = () => {
   const handleReset = () => {
     setForm({
       receivedFrom: '',
-      paymentFor: '',
-      amount: '',
       date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()),
       paymentMethod: 'TRANSFER'
     });
+    setItems([{ id: '1', description: '', amount: '' }]);
     setGeneratedReceipt(null);
     setShowErrors(false);
   };
@@ -176,48 +214,75 @@ const AdminReceipts: React.FC = () => {
                 className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold text-sm outline-none border-2 border-transparent focus:border-blue-200 focus:bg-white transition-all"
               />
             </div>
+          </div>
 
-            {/* Untuk Pembayaran */}
-            <div className="space-y-3 md:col-span-2">
+          {/* Items List */}
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">
-                Untuk Pembayaran *
+                Item Pembayaran *
               </label>
-              <textarea
-                value={form.paymentFor}
-                onChange={(e) => setForm({...form, paymentFor: e.target.value})}
-                placeholder="Keterangan pembayaran / item yang dibayar"
-                rows={3}
-                className={`w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold text-sm outline-none border-2 transition-all resize-none ${
-                  showErrors && !form.paymentFor.trim() 
-                    ? 'border-rose-300 bg-rose-50' 
-                    : 'border-transparent focus:border-blue-200 focus:bg-white'
-                }`}
-              />
+              <button
+                onClick={addItem}
+                className="flex items-center gap-2 px-4 py-2 bg-blue-50 text-blue-600 rounded-xl font-black text-[9px] uppercase hover:bg-blue-100 transition-all"
+              >
+                <Plus size={14} /> Tambah Item
+              </button>
             </div>
 
-{/* Nominal */}
-<div className="space-y-3">
-  <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">
-    Nominal (Rp) *
-  </label>
-  <input
-    type="number"
-    value={form.amount}
-    onChange={(e) => {
-      const cleanValue = e.target.value.replace(/[.,]/g, '');
-      setForm({...form, amount: cleanValue});
-    }}
-    placeholder="0"
-    min="0"
-    className={`w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold text-sm outline-none border-2 transition-all ${
-      showErrors && (!form.amount || parseFloat(form.amount) <= 0) 
-        ? 'border-rose-300 bg-rose-50' 
-        : 'border-transparent focus:border-blue-200 focus:bg-white'
-    }`}
-  />
-</div>
+            <div className="space-y-3">
+              {items.map((item, index) => (
+                <div key={item.id} className="flex gap-3 items-start">
+                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <input
+                      type="text"
+                      value={item.description}
+                      onChange={(e) => updateItem(item.id, 'description', e.target.value)}
+                      placeholder="Nama item / keterangan"
+                      className={`w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold text-sm outline-none border-2 transition-all ${
+                        showErrors && !item.description.trim() 
+                          ? 'border-rose-300 bg-rose-50' 
+                          : 'border-transparent focus:border-blue-200 focus:bg-white'
+                      }`}
+                    />
+                    <input
+                      type="number"
+                      value={item.amount}
+                      onChange={(e) => updateItem(item.id, 'amount', e.target.value)}
+                      placeholder="Nominal (Rp)"
+                      min="0"
+                      className={`w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold text-sm outline-none border-2 transition-all ${
+                        showErrors && (!item.amount || parseFloat(item.amount) <= 0) 
+                          ? 'border-rose-300 bg-rose-50' 
+                          : 'border-transparent focus:border-blue-200 focus:bg-white'
+                      }`}
+                    />
+                  </div>
+                  {items.length > 1 && (
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      className="p-4 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-100 transition-all"
+                    >
+                      <Trash2 size={18} />
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
 
-            {/* Metode Pembayaran */}
+            {/* Total Display */}
+            <div className="bg-gradient-to-r from-emerald-50 to-blue-50 rounded-2xl p-6 border-2 border-emerald-100">
+              <div className="flex justify-between items-center">
+                <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest">Total Pembayaran:</p>
+                <p className="text-3xl font-black text-emerald-600 italic">
+                  Rp {calculateTotal().toLocaleString('id-ID')}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Metode Pembayaran */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
             <div className="space-y-3">
               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-2">
                 Metode Pembayaran
@@ -236,12 +301,12 @@ const AdminReceipts: React.FC = () => {
           </div>
 
           {/* Error Message */}
-          {showErrors && !isFormValid && (
+          {showErrors && !isFormValid() && (
             <div className="bg-rose-50 border-2 border-rose-100 rounded-2xl p-6 flex items-start gap-4">
               <AlertCircle size={24} className="text-rose-600 shrink-0 mt-1" />
               <div>
                 <p className="text-sm font-black text-rose-800 uppercase">Data Belum Lengkap!</p>
-                <p className="text-[11px] font-bold text-rose-600 mt-1">Mohon isi semua field yang bertanda (*) dengan benar.</p>
+                <p className="text-[11px] font-bold text-rose-600 mt-1">Mohon isi nama pembayar dan minimal 1 item pembayaran dengan nominal yang valid.</p>
               </div>
             </div>
           )}
@@ -256,7 +321,7 @@ const AdminReceipts: React.FC = () => {
             </button>
             <button
               onClick={handleGenerate}
-              disabled={!isFormValid}
+              disabled={!isFormValid()}
               className="flex-[2] py-5 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-2xl font-black text-[11px] uppercase tracking-wide shadow-2xl hover:shadow-blue-200 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               <Sparkles size={20} />
@@ -299,10 +364,10 @@ const AdminReceipts: React.FC = () => {
             </div>
 
             {/* Rendered Receipt */}
-            <div className="bg-gradient-to-br from-slate-100 to-slate-50 rounded-[4rem] p-12 shadow-inner">
+            <div className="flex justify-center">
               <div 
                 ref={slipRef}
-                className="bg-white p-12 md:p-20 space-y-10 max-w-[700px] mx-auto overflow-hidden text-slate-900 border-8 border-double border-slate-100 shadow-2xl"
+                className="bg-white p-12 md:p-20 space-y-10 w-full max-w-[700px] overflow-hidden text-slate-900 border-8 border-double border-slate-100 shadow-2xl"
               >
                 {/* Header */}
                 <div className="flex justify-between items-start border-b-2 border-slate-900 pb-10">
@@ -328,37 +393,57 @@ const AdminReceipts: React.FC = () => {
                   </div>
                 </div>
 
-                {/* Payment Details */}
+                {/* Payment Details - NOTA STYLE */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-3 text-slate-400 border-b-2 border-slate-50 pb-2">
                     <ClipboardList size={14} />
                     <p className="text-[10px] font-black uppercase tracking-[0.3em]">Rincian Pembayaran</p>
                   </div>
-                  <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100">
-                    <div className="text-left space-y-4">
-                      <div>
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Untuk Pembayaran:</p>
-                        <p className="text-[13px] font-black text-slate-800 uppercase text-left leading-relaxed">{generatedReceipt.paymentFor}</p>
+                  
+                  {/* Items Table */}
+                  <div className="bg-slate-50 rounded-[2.5rem] border border-slate-100 overflow-hidden">
+                    <div className="divide-y divide-slate-200/60">
+                      {generatedReceipt.items.map((item: any, idx: number) => (
+                        <div key={idx} className="grid grid-cols-12 gap-4 p-6">
+                          <div className="col-span-8 text-left">
+                            <p className="text-[12px] font-black text-slate-800 uppercase">{item.description}</p>
+                          </div>
+                          <div className="col-span-4 text-right">
+                            <p className="text-[12px] font-black text-slate-800">Rp {item.amount.toLocaleString('id-ID')}</p>
+                          </div>
+                        </div>
+                      ))}
+                      
+                      {/* Total Row */}
+                      <div className="grid grid-cols-12 gap-4 p-6 bg-emerald-50/50">
+                        <div className="col-span-8 text-left">
+                          <p className="text-[13px] font-black text-emerald-900 uppercase tracking-wide">TOTAL</p>
+                        </div>
+                        <div className="col-span-4 text-right">
+                          <p className="text-[14px] font-black text-emerald-900">Rp {generatedReceipt.total.toLocaleString('id-ID')}</p>
+                        </div>
                       </div>
-                      <div className="pt-4 border-t border-slate-200/60">
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Metode Pembayaran:</p>
-                        <p className="text-[12px] font-black text-slate-800 uppercase tracking-tight text-left">{generatedReceipt.paymentMethod}</p>
-                      </div>
+                    </div>
+                    
+                    {/* Payment Method */}
+                    <div className="px-6 py-4 border-t border-slate-200/60">
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Metode Pembayaran:</p>
+                      <p className="text-[11px] font-black text-slate-700 uppercase text-left">{generatedReceipt.paymentMethod}</p>
                     </div>
                   </div>
                 </div>
 
                 {/* Amount Section */}
                 <div className="pt-8 border-t-2 border-slate-900">
-                  <div className="flex justify-between items-start h-[32px]">
+                  <div className="flex justify-between items-start mb-4">
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">VERIFIKASI SISTEM:</p>
                     <div className="text-right flex flex-col items-end">
                       <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] italic">Terverifikasi Digital</p>
                       <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-1">Status: LUNAS</p>
                     </div>
                   </div>
-                  <p className="text-5xl font-black text-emerald-600 italic leading-none mt-4 text-left">
-                    Rp {generatedReceipt.amount.toLocaleString('id-ID')}
+                  <p className="text-5xl font-black text-emerald-600 italic leading-none text-left">
+                    Rp {generatedReceipt.total.toLocaleString('id-ID')}
                   </p>
                 </div>
 
