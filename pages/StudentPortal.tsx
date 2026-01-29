@@ -308,10 +308,8 @@ const executeFinalRequestReport = async () => {
       periode: 1  // ✅ TAMBAH (atau sesuaikan dengan tingkat siswa)
     };
     
-    // Hapus rejected lama (kalau ada)
+    // ✅ GANTI KE TABEL REPORTS!
     await supabase.from('reports').delete().eq('packageid', requestingReportFor.id).eq('status', 'REPORT_REJECTED');
-    
-    // Insert request baru
     await supabase.from('reports').insert([payload]);
     
     if (refreshAllData) await refreshAllData();
