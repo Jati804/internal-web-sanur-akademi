@@ -125,658 +125,635 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, r
     }
   }, [activeDownloadId, showMilestoneFor, confirmReject]);
 
-  // ✅ FIXED: Filter requests dengan benar
-  const incomingRequests = useMemo(() => {
-    const requests = reports.filter(r => 
-      (r.status === 'REQ' || r.status === 'REPORT_PROCESSING') &&
-      r.teacherid === user.id &&
-      r.teacherid !== 'SISWA_MANDIRI' // ✅ FILTER ABSEN SISWA MANDIRI
-    );
-    return requests.filter(req => {
-      const sn = req.studentsattended?.[0] || '';
-      const cn = req.classname || '';
-      return sn.toLowerCase().includes(historySearchTerm.toLowerCase()) || 
-             cn.toLowerCase().includes(historySearchTerm.toLowerCase());
-    });
-  }, [reports, user.id, historySearchTerm]);
+  const reportRequests = useMemo(() => {
+  const requests = reports.filter(r =>
+    (r.status === 'REQ' || r.status === 'REPORT_PROCESSING') &&
+    r.teacherid === user.id &&
+    r.teacherid !== 'SISWA_MANDIRI' // ✅ FILTER ABSEN SISWA MANDIRI
+  );
+  return requests.filter(req => {
+      const studentNameInRequest = (req.studentsAttended?.[0] || '').toUpperCase().trim();
+      return studentAccounts.some(acc => acc.name.toUpperCase().trim() === studentNameInRequest);
+  });
+}, [reports, user.id, studentAccounts]);
 
-  // ✅ FIXED: Filter published reports dengan benar
-  const publishedReports = useMemo(() => {
-    const published = reports.filter(r => 
-      r.status === 'SESSION_LOG' && 
-      r.teacherid === user.id &&
-      r.teacherid !== 'SISWA_MANDIRI' // ✅ FILTER ABSEN SISWA MANDIRI
-    );
+const publishedReports = useMemo(() => {
+  const baseReports = reports.filter(r =>  // ✅ Ganti logs → reports
+    (r.status === 'SESSION_LOG' || r.status === 'REPORT_READY') && 
+    r.sessionnumber === 6 &&  // ✅ Ganti ke huruf kecil
+    r.teacherid === user.id &&  // ✅ Ganti ke huruf kecil
+    (r.packageid || '').startsWith('PAY-') &&  // ✅ Ganti ke huruf kecil
+    r.date.startsWith(selectedYear)
+  );
     
-    // ✅ FILTER BERDASARKAN TAHUN
-    const yearFiltered = published.filter(r => {
-      const yearFromDate = r.date?.split('-')?.[0] || '2026';
-      return yearFromDate === selectedYear;
-    });
+  // LOGIKA SORTING (sama kayak sebelumnya)
+  const sorted = [...baseReports].sort((a, b) => {
+      if (a.id === lastActionedId) return -1;
+      if (b.id === lastActionedId) return 1;
+      const dateCompare = new Date(b.date).getTime() - new Date(a.date).getTime();
+      if (dateCompare !== 0) return dateCompare;
+      return b.id.localeCompare(a.id);
+  });
 
-    // ✅ FILTER BERDASARKAN TINGKAT
-    const tingkatFiltered = yearFiltered.filter(r => {
-      const periode = r.periode || 1;
-      return periode === selectedTingkat;
-    });
-    
-    // ✅ FILTER BERDASARKAN SEARCH
-    return tingkatFiltered.filter(req => {
-      const sn = req.studentsattended?.[0] || '';
-      const cn = req.classname || '';
-      return sn.toLowerCase().includes(historySearchTerm.toLowerCase()) || 
-             cn.toLowerCase().includes(historySearchTerm.toLowerCase());
-    }).sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
-  }, [reports, user.id, selectedYear, selectedTingkat, historySearchTerm]);
+  if (!historySearchTerm.trim()) return sorted;
 
-  const handleOpenWorkspace = (req: any, editMode: boolean = false) => {
+  const term = historySearchTerm.toLowerCase();
+  return sorted.filter(req => {
+      const sName = (req.studentsAttended?.[0] || '').toLowerCase();
+      const cName = (req.className || '').toLowerCase();
+      return sName.includes(term) || cName.includes(term);
+  });
+}, [reports, user.id, historySearchTerm, lastActionedId, selectedYear]); // ✅ TAMBAH selectedYear DI DEPENDENCY
+
+  const handleOpenWorkspace = (req: any, isEdit: boolean = false) => {
     setSelectedPackage(req);
-    setIsEditMode(editMode);
+    setIsEditMode(isEdit);
     setShowErrors(false);
     
-    if (editMode) {
-      const scoresObj = req.studentscores || {};
-      const topicsObj = req.studenttopics || {};
-      const sn = req.studentsattended?.[0] || '';
-      const studentScores = scoresObj[sn] || [];
-      const studentTopics = topicsObj[sn] || [];
+    // ✅ LOAD TINGKAT DARI DATABASE
+    const tingkat = req.periode || 1;
+    setSelectedTingkat(tingkat);
+    
+    const sName = req.studentsAttended?.[0] || 'SISWA';
+    if (isEdit || req.status === 'REPORT_READY') {
+      const existingTopics = (req.studentTopics?.[sName] || Array(6).fill('')) as string[];
+      const existingScores = (req.studentScores?.[sName] || Array(6).fill(90)) as number[];
+      const existingNarrative = req.studentNarratives?.[sName] || req.reportNarrative || '';
       
-      setReportForm({
-        sessions: Array.from({ length: 6 }, (_, i) => ({
-          num: i + 1,
-          material: studentTopics[i] || '',
-          score: studentScores[i] || 90
-        })),
-        narrative: req.reportnarrative || ''
+      // ✅ UPDATE SESSION NUMBERS SESUAI TINGKAT
+      const startSession = (tingkat - 1) * 6 + 1;
+      setReportForm({ 
+        sessions: Array.from({ length: 6 }, (_, i) => ({ 
+          num: startSession + i, 
+          material: existingTopics[i] || '', 
+          score: existingScores[i] || 90 
+        })), 
+        narrative: existingNarrative 
       });
     } else {
-      setReportForm({
-        sessions: Array.from({ length: 6 }, (_, i) => ({ num: i + 1, material: '', score: 90 })),
-        narrative: ''
+      // ✅ SESSION NUMBERS UNTUK FORM BARU
+      const startSession = (tingkat - 1) * 6 + 1;
+      setReportForm({ 
+        sessions: Array.from({ length: 6 }, (_, i) => ({ 
+          num: startSession + i, 
+          material: '', 
+          score: 90 
+        })), 
+        narrative: '' 
       });
     }
-    
     setActiveStep('WORKSPACE');
   };
 
-  const handleBackToQueue = () => {
-    setActiveStep('ANTREAN');
-    setSelectedPackage(null);
-    setIsEditMode(false);
-    setShowErrors(false);
-  };
-
-  const handleSaveReport = async () => {
-    const allFilled = reportForm.sessions.every(s => s.material.trim() !== '' && s.score >= 0 && s.score <= 100);
-    if (!allFilled || reportForm.narrative.trim() === '') {
-      setShowErrors(true);
-      return;
-    }
-    
-    if (!selectedPackage) return;
-    
-    setActionLoadingId(selectedPackage.id);
-    
-    const sn = selectedPackage.studentsattended?.[0] || '';
-    const newScores = { [sn]: reportForm.sessions.map(s => s.score) };
-    const newTopics = { [sn]: reportForm.sessions.map(s => s.material) };
-    
-    const { error } = await supabase
-      .from('reports')
-      .update({
-        studentscores: newScores,
-        studenttopics: newTopics,
-        reportnarrative: reportForm.narrative,
-        status: 'REPORT_PROCESSING'
-      })
-      .eq('id', selectedPackage.id);
-    
-    setActionLoadingId(null);
-    
-    if (!error) {
-      await refreshAllData();
-      setActiveStep('ANTREAN');
-      setSelectedPackage(null);
-      setIsEditMode(false);
-      setShowErrors(false);
-    } else {
-      alert('Gagal menyimpan rapot: ' + error.message);
-    }
-  };
-
-  const handleSendReportToStudent = async (req: any) => {
+  const handleAcceptRequest = async (req: any) => {
     setActionLoadingId(req.id);
-    
-    const { error } = await supabase
-      .from('reports')
-      .update({ status: 'SESSION_LOG', date: new Date().toISOString().split('T')[0] })
-      .eq('id', req.id);
-    
-    setActionLoadingId(null);
-    
-    if (!error) {
-      setLastActionedId(req.id);
+    try {
+      await supabase.from('reports').update({ status: 'REPORT_PROCESSING' }).eq('id', req.id);
       await refreshAllData();
-      setActiveStep('HISTORY');
-    } else {
-      alert('Gagal mengirim rapot: ' + error.message);
-    }
+      handleOpenWorkspace(req, false);
+    } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
   };
 
   const handleRejectRequest = async () => {
     if (!confirmReject) return;
     setActionLoadingId(confirmReject.id);
-    
-    const { error } = await supabase
-      .from('reports')
-      .delete()
-      .eq('id', confirmReject.id);
-    
-    setActionLoadingId(null);
-    
-    if (!error) {
+    try {
+      await supabase.from('reports').update({ status: 'REPORT_REJECTED' }).eq('id', confirmReject.id);
       await refreshAllData();
       setConfirmReject(null);
-    } else {
-      alert('Gagal menolak request: ' + error.message);
+    } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
+  };
+
+  const avgScore = useMemo(() => {
+    const total = reportForm.sessions.reduce((acc, s) => acc + (Number(s.score) || 0), 0);
+    return Math.round(total / 6);
+  }, [reportForm.sessions]);
+
+  const handleSaveReportToReady = async () => {
+    const isMaterialEmpty = reportForm.sessions.some(s => !s.material.trim());
+    const isNarrativeEmpty = !reportForm.narrative.trim();
+
+    if (isMaterialEmpty || isNarrativeEmpty) {
+      setShowErrors(true);
+      const errEl = document.getElementById('error-notif-required');
+      if (errEl) errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return alert("Waduh Kak! Materi sesi dan Narasi Evaluasi wajib diisi yaa agar rapot siswa sempurna ✨");
     }
+
+    setActionLoadingId(selectedPackage.id);
+    try {
+      const sName = selectedPackage.studentsAttended?.[0] || 'SISWA';
+      const topics = reportForm.sessions.map(s => (s.material || '').toUpperCase());
+      const scores = reportForm.sessions.map(s => Number(s.score) || 0);
+      const payload = { 
+        status: 'REPORT_READY', 
+        sessionnumber: 6, 
+        studenttopics: { [sName]: topics }, 
+        studentscores: { [sName]: scores }, 
+        studentnarratives: { [sName]: reportForm.narrative }, 
+        reportnarrative: reportForm.narrative, 
+        periode: selectedTingkat, // ✅ SIMPAN TINGKAT
+        date: isEditMode ? selectedPackage.date : new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()) 
+      };
+      await supabase.from('reports').update(payload).eq('id', selectedPackage.id);
+      await refreshAllData();
+      
+      setLastActionedId(selectedPackage.id);
+      setSelectedPackage(null);
+      setActiveStep('HISTORY');
+    } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
+  };
+
+  const handleSendReportToStudent = async (req: any) => {
+    setActionLoadingId(req.id);
+    try {
+      await supabase.from('reports').update({ status: 'SESSION_LOG' }).eq('id', req.id);
+      await refreshAllData();
+      setLastActionedId(req.id); // Set sebagai yang terakhir diaksi agar loncat ke depan
+      alert("Rapot Berhasil Dikirim ke Siswa! ✨");
+    } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
   };
 
   const handleDownloadPDF = async (req: any) => {
+    setDownloadProgress(5);
     setActiveDownloadId(req.id);
-    setDownloadProgress(0);
-    
-    setTimeout(() => setDownloadProgress(30), 200);
-    
-    const element = document.getElementById(`pdf-${req.id}`);
-    if (!element) {
-      setActiveDownloadId(null);
-      alert('Template rapot tidak ditemukan!');
-      return;
-    }
-    
-    setTimeout(() => setDownloadProgress(50), 600);
     
     try {
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
-      });
+      // 🎯 HALAMAN 1: LANDSCAPE (Sertifikat Horizontal)
+      const pdf = new jsPDF({ orientation: 'l', unit: 'px', format: 'a4', hotfixes: ["px_rendering"] });
+      const pw1 = pdf.internal.pageSize.getWidth();
+      const ph1 = pdf.internal.pageSize.getHeight();
+      const captureOptionsLandscape = { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: 1123, height: 794, logging: false };
+
+      setDownloadProgress(20);
+      const el1 = document.getElementById(`cert-render-${req.id}`);
+      if (el1) {
+        const canvas1 = await html2canvas(el1, captureOptionsLandscape);
+        const img1 = canvas1.toDataURL('image/png', 1.0);
+        pdf.addImage(img1, 'PNG', 0, 0, pw1, ph1, undefined, 'FAST');
+      }
+      setDownloadProgress(45);
       
-      setTimeout(() => setDownloadProgress(80), 1000);
+      // 🎯 HALAMAN 2: PORTRAIT (Transkrip Nilai)
+      pdf.addPage('a4', 'p');
+      const pw2 = pdf.internal.pageSize.getWidth();
+      const ph2 = pdf.internal.pageSize.getHeight();
+      const captureOptionsPortrait = { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: 794, height: 1123, logging: false };
       
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = pdf.internal.pageSize.getHeight();
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+      const el2 = document.getElementById(`transcript-render-${req.id}`);
+      if (el2) {
+        const canvas2 = await html2canvas(el2, captureOptionsPortrait);
+        const img2 = canvas2.toDataURL('image/png', 1.0);
+        pdf.addImage(img2, 'PNG', 0, 0, pw2, ph2, undefined, 'FAST');
+      }
+      setDownloadProgress(75);
       
-      const sn = req.studentsattended?.[0] || 'SISWA';
-      const fileName = `RAPOT_${sn.replace(/\s+/g, '_')}_${formatDateToDMY(req.date).replace(/\//g, '-')}.pdf`;
+      // 🎯 HALAMAN 3: PORTRAIT (Milestone)
+      pdf.addPage('a4', 'p');
+      const el3 = document.getElementById(`milestone-render-${req.id}`);
+      if (el3) {
+        const canvas3 = await html2canvas(el3, captureOptionsPortrait);
+        const img3 = canvas3.toDataURL('image/png', 1.0);
+        pdf.addImage(img3, 'PNG', 0, 0, pw2, ph2, undefined, 'FAST');
+      }
+      setDownloadProgress(95);
       
-      setTimeout(() => setDownloadProgress(100), 1400);
+      pdf.save(`Rapot_Sanur_${req.studentsAttended?.[0]}.pdf`);
+      setDownloadProgress(100);
       
-      setTimeout(() => {
-        pdf.save(fileName);
-        setActiveDownloadId(null);
-        setDownloadProgress(0);
-      }, 1800);
-      
-    } catch (err) {
-      console.error('Error generating PDF:', err);
-      alert('Gagal membuat PDF. Silakan coba lagi.');
-      setActiveDownloadId(null);
+      await new Promise(r => setTimeout(r, 500));
+    } catch (e) { 
+      alert("Gagal proses PDF."); 
+    } finally { 
+      setActiveDownloadId(null); 
       setDownloadProgress(0);
     }
   };
 
-  // ✅ HITUNG TAHUN-TAHUN UNIK DARI REPORTS
-  const availableYears = useMemo(() => {
-    const years = new Set<string>();
-    reports.forEach(r => {
-      if (r.status === 'SESSION_LOG' && r.teacherid === user.id) {
-        const year = r.date?.split('-')?.[0];
-        if (year) years.add(year);
-      }
-    });
-    return Array.from(years).sort((a, b) => parseInt(b) - parseInt(a));
-  }, [reports, user.id]);
-
-  // ✅ HITUNG TINGKAT UNIK DARI REPORTS (UNTUK TAHUN TERPILIH)
-  const availableTingkat = useMemo(() => {
-    const tingkatSet = new Set<number>();
-    reports.forEach(r => {
-      if (r.status === 'SESSION_LOG' && r.teacherid === user.id) {
-        const year = r.date?.split('-')?.[0];
-        if (year === selectedYear) {
-          const periode = r.periode || 1;
-          tingkatSet.add(periode);
-        }
-      }
-    });
-    return Array.from(tingkatSet).sort((a, b) => a - b);
-  }, [reports, user.id, selectedYear]);
-
   return (
     <>
-    <style>{`
-      @keyframes modalFadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-      @keyframes modalZoomIn {
-        from { opacity: 0; transform: scale(0.9); }
-        to { opacity: 1; transform: scale(1); }
-      }
-    `}</style>
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-slate-50 to-purple-50 p-4 md:p-10 space-y-8 relative overflow-y-auto">
-      
-      <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 mb-10">
-        <div className="flex items-center gap-6">
-          <div className="w-20 h-20 bg-gradient-to-br from-blue-600 to-purple-600 rounded-[2rem] flex items-center justify-center shadow-2xl rotate-3 shrink-0">
-            <GraduationCap size={42} className="text-white" />
-          </div>
-          <div className="space-y-2">
-            <h1 className="text-4xl font-black text-slate-800 uppercase italic leading-none">Inbox Rapot</h1>
-            <p className="text-[11px] font-black text-blue-600 uppercase tracking-[0.4em]">Kelola Permintaan Nilai Siswa</p>
-          </div>
-        </div>
-        
-        <div className="flex gap-3 bg-white p-2 rounded-[2rem] shadow-xl border-2 border-slate-100">
-          <button onClick={() => setActiveStep('ANTREAN')} className={`px-8 py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-3 ${activeStep === 'ANTREAN' ? 'bg-blue-600 text-white shadow-xl' : 'text-slate-400 hover:text-blue-600'}`}>
-            <ClipboardList size={18}/> ANTREAN {incomingRequests.length > 0 && <span className="bg-rose-500 text-white px-3 py-1 rounded-full text-[8px] font-black animate-pulse">{incomingRequests.length}</span>}
-          </button>
-          <button onClick={() => setActiveStep('HISTORY')} className={`px-8 py-4 rounded-[1.5rem] font-black text-[10px] uppercase tracking-[0.2em] transition-all flex items-center gap-3 ${activeStep === 'HISTORY' ? 'bg-emerald-600 text-white shadow-xl' : 'text-slate-400 hover:text-emerald-600'}`}>
-            <History size={18}/> HISTORI
-          </button>
-        </div>
-      </div>
+      <style>{`
+        @keyframes modalFadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
 
-      {activeStep === 'ANTREAN' && (
-        <div className="space-y-10">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-4 bg-white p-6 rounded-[3rem] shadow-xl border-2 border-slate-100">
-            <div className="relative flex-1 w-full">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20}/>
-              <input 
-                type="text" 
-                placeholder="Cari siswa atau kelas..." 
-                value={historySearchTerm}
-                onChange={(e) => setHistorySearchTerm(e.target.value)}
-                className="w-full pl-16 pr-6 py-5 bg-slate-50 rounded-[2rem] font-bold text-[11px] uppercase tracking-widest text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-4 focus:ring-blue-500/30 transition-all"
-              />
-            </div>
-            {historySearchTerm && (
-              <button onClick={() => setHistorySearchTerm('')} className="px-6 py-5 bg-rose-50 text-rose-500 rounded-2xl font-black text-[10px] uppercase flex items-center gap-2 hover:bg-rose-500 hover:text-white transition-all shadow-sm">
-                <X size={16}/> RESET
-              </button>
-            )}
-          </div>
+        @keyframes modalZoomIn {
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+      `}</style>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {incomingRequests.map(req => {
-              const sn = req.studentsattended?.[0] || 'SISWA';
-              const isPending = req.status === 'REQ';
-              const isProcessing = req.status === 'REPORT_PROCESSING';
-              const periode = req.periode || 1;
-              
-              return (
-                <div key={req.id} className="bg-white rounded-[4rem] p-10 shadow-2xl border-2 border-slate-100 hover:scale-[1.02] transition-all space-y-8 flex flex-col">
-                  <div className="flex justify-between items-start">
-                    <div className={`w-16 h-16 rounded-[2rem] flex items-center justify-center shadow-inner shrink-0 ${isPending ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'}`}>
-                      {isPending ? <AlertCircle size={40}/> : <Sparkles size={40}/>}
-                    </div>
-                    <div className="flex flex-col items-end gap-2">
-                      <span className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-md ${isPending ? 'bg-amber-500 text-white' : 'bg-blue-600 text-white'}`}>
-                        {isPending ? 'BARU MASUK' : 'SEDANG DIKERJAKAN'}
-                      </span>
-                      {/* ✅ BADGE TINGKAT */}
-                      <span className="px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest bg-purple-100 text-purple-600">
-                        TINGKAT {periode}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <div>
-                    <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-1 truncate">{sn}</h4>
-                    <p className="text-[11px] font-bold text-blue-600 uppercase mb-2 leading-relaxed">{req.classname}</p>
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Diminta: {formatDateToDMY(req.date)}</p>
-                  </div>
-                  
-                  <div className="space-y-3 mt-auto">
-                    <button 
-                      onClick={() => handleOpenWorkspace(req, isProcessing)} 
-                      className="w-full py-6 bg-blue-600 text-white rounded-[2.5rem] font-black text-[12px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-blue-700 transition-all shadow-xl shadow-blue-100 active:scale-95 group"
-                    >
-                      {isProcessing ? <><FileEdit size={20}/> LANJUTKAN PENGERJAAN</> : <><Zap size={20} className="group-hover:rotate-12 transition-transform"/> KERJAKAN SEKARANG</>}
-                    </button>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <button onClick={() => setShowMilestoneFor(req)} className="py-4 bg-slate-50 text-slate-400 rounded-2xl font-black text-[9px] uppercase flex items-center justify-center gap-2 hover:bg-purple-600 hover:text-white transition-all shadow-sm">
-                        <History size={16}/> MILESTONE
-                      </button>
-                      <button onClick={() => setConfirmReject(req)} className="py-4 bg-slate-50 text-slate-400 rounded-2xl font-black text-[9px] uppercase flex items-center justify-center gap-2 hover:bg-rose-500 hover:text-white transition-all shadow-sm">
-                        <X size={16}/> TOLAK
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              );
-            })}
-            {incomingRequests.length === 0 && (
-              <div className="col-span-full py-40 text-center bg-white rounded-[4rem] border-2 border-dashed border-slate-100 opacity-30">
-                <ClipboardList size={64} className="mx-auto mb-6 text-slate-300" />
-                <p className="font-black text-[11px] uppercase tracking-[0.4em] italic leading-relaxed text-center">
-                  {historySearchTerm ? 'Tidak ada hasil pencarian. ✨' : 'Belum ada permintaan rapot. ✨'}
-                </p>
+      <div className="max-w-7xl mx-auto space-y-12 pb-40 px-4 animate-in fade-in duration-700">
+      {/* LOADING MODAL TENGAH - DENGAN REAL PROGRESS BAR */}
+      {activeDownloadId && (
+        <div data-modal-container className="fixed inset-0 z-[300000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+           <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-12 shadow-2xl flex flex-col items-center text-center space-y-8 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+              <div className="w-20 h-20 bg-blue-600 text-white rounded-[2.2rem] flex items-center justify-center shadow-xl animate-bounce">
+                <FileDown size={40} />
               </div>
-            )}
-          </div>
+              <div className="space-y-3">
+                <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Memproses PDF</h4>
+                <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest leading-relaxed px-4">Mengonversi sertifikat & transkrip</p>
+              </div>
+              
+              <div className="w-full space-y-3">
+                <div className="flex justify-between items-center px-1">
+                   <span className="text-[9px] font-black text-blue-600 uppercase tracking-widest">Progress</span>
+                   <span className="text-[11px] font-black text-blue-600 italic">{downloadProgress}%</span>
+                </div>
+                <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 shadow-inner">
+                   <div 
+                     className="h-full bg-blue-600 rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(37,99,235,0.3)]" 
+                     style={{ width: `${downloadProgress}%` }}
+                   ></div>
+                </div>
+              </div>
+           </div>
         </div>
       )}
 
-      {activeStep === 'WORKSPACE' && selectedPackage && (
-        <div className="space-y-10">
-          <button onClick={handleBackToQueue} className="flex items-center gap-3 text-slate-400 hover:text-blue-600 transition-all group">
-            <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center shadow-lg group-hover:bg-blue-600 group-hover:text-white transition-all">
-              <ChevronRight size={20} className="rotate-180"/>
-            </div>
-            <span className="font-black text-[11px] uppercase tracking-[0.3em]">KEMBALI KE ANTREAN</span>
-          </button>
-
-          <div className="bg-white rounded-[4rem] p-12 shadow-2xl border-2 border-slate-100 space-y-10">
-            <div className="flex items-start justify-between gap-6">
-              <div className="flex items-center gap-6">
-                <div className="w-20 h-20 bg-gradient-to-br from-purple-600 to-blue-600 rounded-[2rem] flex items-center justify-center shadow-xl rotate-3 shrink-0">
-                  <Trophy size={42} className="text-white"/>
-                </div>
-                <div className="space-y-2">
-                  <h2 className="text-3xl font-black text-slate-800 uppercase italic leading-none">{selectedPackage.studentsattended?.[0] || 'SISWA'}</h2>
-                  <p className="text-[11px] font-bold text-blue-600 uppercase tracking-widest">{selectedPackage.classname}</p>
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">TINGKAT {selectedPackage.periode || 1} • SESI {((selectedPackage.periode || 1) - 1) * 6 + 1}-{(selectedPackage.periode || 1) * 6}</p>
-                </div>
-              </div>
-              {isEditMode && (
-                <span className="px-6 py-3 bg-amber-50 text-amber-600 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-sm flex items-center gap-2">
-                  <Edit3 size={16}/> MODE EDIT
-                </span>
-              )}
-            </div>
-
-            <div className="space-y-8">
-              <div className="flex items-center gap-3 text-slate-400 border-b-2 border-slate-100 pb-3">
-                <BookOpen size={18}/>
-                <h3 className="font-black text-[11px] uppercase tracking-[0.3em]">Penilaian Per Sesi</h3>
-              </div>
-              
-              {reportForm.sessions.map((session, idx) => (
-                <div key={session.num} className="bg-slate-50 rounded-[2.5rem] p-8 space-y-6 border-2 border-transparent hover:border-blue-500/30 transition-all">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 bg-blue-600 text-white rounded-2xl flex items-center justify-center font-black text-sm shadow-lg">{session.num}</div>
-                    <h4 className="font-black text-[11px] uppercase tracking-[0.3em] text-slate-800">Sesi {session.num}</h4>
-                  </div>
-                  
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block font-black text-[9px] uppercase tracking-[0.3em] text-slate-400 mb-3">MATERI YANG DIPELAJARI</label>
-                      <input 
-                        type="text" 
-                        value={session.material}
-                        onChange={(e) => {
-                          const newSessions = [...reportForm.sessions];
-                          newSessions[idx].material = e.target.value;
-                          setReportForm({ ...reportForm, sessions: newSessions });
-                        }}
-                        placeholder="Contoh: Pengenalan Microsoft Word & Interface Dasar"
-                        className={`w-full px-6 py-5 bg-white rounded-2xl font-bold text-[11px] uppercase text-slate-800 placeholder:text-slate-300 focus:outline-none transition-all ${showErrors && !session.material.trim() ? 'ring-4 ring-rose-500/50 border-2 border-rose-500' : 'focus:ring-4 focus:ring-blue-500/30 border-2 border-slate-100'}`}
-                      />
-                    </div>
-                    
-                    <div>
-                      <label className="block font-black text-[9px] uppercase tracking-[0.3em] text-slate-400 mb-3">NILAI (0-100)</label>
-                      <input 
-                        type="number" 
-                        min="0" 
-                        max="100"
-                        value={session.score}
-                        onChange={(e) => {
-                          const val = parseInt(e.target.value) || 0;
-                          const newSessions = [...reportForm.sessions];
-                          newSessions[idx].score = Math.max(0, Math.min(100, val));
-                          setReportForm({ ...reportForm, sessions: newSessions });
-                        }}
-                        className={`w-full px-6 py-5 bg-white rounded-2xl font-black text-2xl text-slate-800 focus:outline-none transition-all ${showErrors && (session.score < 0 || session.score > 100) ? 'ring-4 ring-rose-500/50 border-2 border-rose-500' : 'focus:ring-4 focus:ring-blue-500/30 border-2 border-slate-100'}`}
-                      />
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            <div className="space-y-6">
-              <div className="flex items-center gap-3 text-slate-400 border-b-2 border-slate-100 pb-3">
-                <Quote size={18}/>
-                <h3 className="font-black text-[11px] uppercase tracking-[0.3em]">Catatan Guru</h3>
-              </div>
-              <textarea 
-                value={reportForm.narrative}
-                onChange={(e) => setReportForm({ ...reportForm, narrative: e.target.value })}
-                placeholder="Tulis catatan perkembangan siswa, kekuatan, area yang perlu ditingkatkan, dan rekomendasi..."
-                rows={6}
-                className={`w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-bold text-[11px] leading-relaxed text-slate-800 placeholder:text-slate-300 focus:outline-none transition-all resize-none ${showErrors && !reportForm.narrative.trim() ? 'ring-4 ring-rose-500/50 border-2 border-rose-500' : 'focus:ring-4 focus:ring-blue-500/30 border-2 border-slate-100'}`}
-              />
-            </div>
-
-            {showErrors && (
-              <div className="bg-rose-50 border-2 border-rose-200 rounded-[2rem] p-6 flex items-start gap-4">
-                <AlertTriangle className="text-rose-600 shrink-0" size={24}/>
-                <div className="space-y-2">
-                  <p className="font-black text-[11px] uppercase tracking-[0.2em] text-rose-800">HARAP LENGKAPI DATA!</p>
-                  <p className="text-[10px] font-bold text-rose-600 leading-relaxed">Pastikan semua materi, nilai, dan catatan guru sudah terisi dengan benar.</p>
-                </div>
-              </div>
-            )}
-
-            <button 
-              onClick={handleSaveReport} 
-              disabled={!!actionLoadingId}
-              className="w-full py-7 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-[3rem] font-black text-[13px] uppercase tracking-[0.3em] flex items-center justify-center gap-4 hover:shadow-2xl transition-all shadow-xl active:scale-95 group"
-            >
-              {actionLoadingId === selectedPackage.id ? (
-                <Loader2 size={24} className="animate-spin"/>
-              ) : (
-                <>
-                  <Save size={24} className="group-hover:scale-110 transition-transform"/>
-                  {isEditMode ? 'PERBARUI PENILAIAN ✨' : 'SIMPAN PENILAIAN ✨'}
-                </>
-              )}
-            </button>
-          </div>
+      <header className="flex flex-col md:flex-row md:items-end justify-between gap-10 px-2">
+        <div className="space-y-4">
+           <h2 className="text-4xl font-black text-slate-800 tracking-tight leading-none uppercase italic">Portal <span className="text-orange-600">Rapot</span></h2>
+           <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Terbitkan Sertifikat & Rapot Digital Siswa ✨</p>
         </div>
+      </header>
+
+      <div className="flex bg-slate-100 p-2 rounded-full w-full max-w-xl mx-auto shadow-inner border border-slate-100">
+         <button onClick={() => setActiveStep('ANTREAN')} className={`flex-1 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeStep === 'ANTREAN' ? 'bg-white text-orange-600 shadow-md' : 'text-slate-400'}`}>Antrean ({reportRequests.length})</button>
+         <button onClick={() => setActiveStep('WORKSPACE')} disabled={!selectedPackage} className={`flex-1 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeStep === 'WORKSPACE' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-400 disabled:opacity-30'}`}>Workspace</button>
+         <button onClick={() => setActiveStep('HISTORY')} className={`flex-1 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeStep === 'HISTORY' ? 'bg-white text-emerald-600 shadow-md' : 'text-slate-400'}`}>Histori</button>
+      </div>
+
+      {activeStep === 'HISTORY' && (
+  <div className="max-w-5xl mx-auto">
+     <div className="flex items-center gap-3 bg-white border-2 border-slate-100 rounded-3xl shadow-xl p-2 pr-3">
+        {/* Search Input */}
+        <div className="flex-1 relative">
+           <div className="absolute left-6 top-1/2 -translate-y-1/2 text-emerald-500"><Search size={18} /></div>
+           <input 
+              type="text" 
+              placeholder="CARI SISWA / KELAS..." 
+              value={historySearchTerm} 
+              onChange={(e) => setHistorySearchTerm(e.target.value.toUpperCase())} 
+              className="w-full pl-14 pr-4 py-4 bg-transparent font-black text-[10px] uppercase outline-none" 
+           />
+        </div>
+
+        {/* Divider */}
+        <div className="w-px h-8 bg-slate-200"></div>
+
+        {/* Filter Tahun - Integrated */}
+        <div className="relative group shrink-0">
+           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-emerald-500"><Filter size={14} /></div>
+           <select 
+              value={selectedYear} 
+              onChange={(e) => setSelectedYear(e.target.value)} 
+              className="pl-9 pr-3 py-3 bg-transparent font-black text-[10px] uppercase outline-none appearance-none cursor-pointer min-w-[100px] text-center"
+           >
+              {Array.from({ length: 11 }, (_, i) => (2024 + i).toString()).map(y => (
+                <option key={y} value={y}>{y}</option>
+              ))}
+           </select>
+        </div>
+     </div>
+  </div>
+)}
+
+      {activeStep === 'ANTREAN' && (
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            {reportRequests.map((req, i) => (
+              <div key={i} className="bg-white p-12 md:p-14 rounded-[4rem] shadow-xl border border-slate-100 flex flex-col justify-between hover:border-orange-500 transition-all">
+                 <div>
+                   <div className="flex justify-between items-start mb-10">
+                      <div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-3xl flex items-center justify-center shadow-inner"><GraduationCap size={40}/></div>
+                      <span className="px-6 py-2 bg-orange-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-md">KLAIM BARU</span>
+                   </div>
+                   <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-2 Kalimat leading-tight">{req.studentsAttended?.[0]}</h4>
+                   <p className="text-[11px] font-bold text-blue-600 uppercase mb-10 Kalimat leading-relaxed">{req.className}</p>
+                   <button onClick={() => setShowMilestoneFor(req)} className="w-full py-5 mb-5 bg-slate-50 text-slate-500 rounded-3xl font-black text-[10px] uppercase flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all border border-transparent shadow-sm"><History size={18}/> LIHAT MILESTONE</button>
+                 </div>
+                 <div className="space-y-4">
+                    <button 
+                      onClick={() => handleAcceptRequest(req)} 
+                      disabled={!!actionLoadingId}
+                      className="w-full py-6 bg-slate-900 text-white rounded-[2rem] font-black text-[12px] uppercase tracking-widest shadow-xl active:scale-95 transition-all hover:bg-black flex items-center justify-center gap-3"
+                    >
+                      {actionLoadingId === req.id ? <Loader2 className="animate-spin" size={20} /> : 'TERIMA & ISI RAPOT ✍️'}
+                    </button>
+                    <button 
+                      onClick={() => setConfirmReject(req)} 
+                      disabled={!!actionLoadingId}
+                      className="w-full py-5 bg-rose-50 text-rose-500 rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all border border-rose-100"
+                    >
+                      TOLAK PERMINTAAN
+                    </button>
+                 </div>
+              </div>
+            ))}
+         </div>
+      )}
+      
+      {activeStep === 'WORKSPACE' && selectedPackage && (
+         <div className="bg-white rounded-[4rem] shadow-2xl border-4 border-blue-600 overflow-hidden animate-in zoom-in space-y-0">
+            <div className="p-10 bg-blue-600 text-white flex flex-col md:flex-row justify-between items-center gap-6">
+               <div className="flex items-center gap-6">
+                  <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md shadow-inner shrink-0 rotate-3"><GraduationCap size={32} /></div>
+                  <div className="text-center md:text-left"><h3 className="text-2xl font-black uppercase italic leading-none">{isEditMode ? 'Edit Rapot Siswa' : 'Ruang Kerja Penilaian'}</h3><p className="text-[11px] font-black uppercase tracking-widest mt-2 opacity-80">{selectedPackage.studentsAttended?.[0]} — {selectedPackage.className}</p></div>
+               </div>
+               <button onClick={() => { setSelectedPackage(null); setIsEditMode(false); setActiveStep('ANTREAN'); setShowErrors(false); }} className="p-4 bg-white/20 rounded-2xl hover:bg-white/40 transition-all"><X/></button>
+            </div>
+            <div className="p-8 md:p-14 space-y-16">
+               {/* ✅ SECTION PILIH PERIODE */}
+               <section className="space-y-4">
+                  <div className="flex items-center gap-3 text-purple-600"><Calendar size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Pilih Tingkat Kurikulum</h4></div>
+                  <div className="bg-gradient-to-br from-purple-50 to-blue-50 p-8 rounded-[3rem] border-2 border-purple-100 space-y-6">
+                     <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
+                        <div className="flex-1">
+                        <p className="text-[10px] font-black text-purple-800 uppercase tracking-wider mb-2">TINGKAT KURIKULUM</p>
+                        <select
+                         value={selectedTingkat}
+                           onChange={(e) => {
+                             const newTingkat = Number(e.target.value);
+                              setSelectedTingkat(newTingkat);
+                               // Update session numbers
+                                const startSession = (newTingkat - 1) * 6 + 1;
+                                 setReportForm(prev => ({
+                                    ...prev,
+                                    sessions: prev.sessions.map((s, i) => ({
+                                       ...s,
+                                       num: startSession + i
+                                    }))
+                                 }));
+                              }}
+                              className="w-full md:w-64 px-6 py-4 bg-white text-purple-600 rounded-2xl font-black text-sm uppercase cursor-pointer shadow-lg hover:shadow-xl transition-all border-2 border-purple-200"
+                           >
+                              {[1, 2, 3, 4, 5, 6].map(p => (
+                                 <option key={p} value={p}>TINGKAT {p}</option>
+                              ))}
+                           </select>
+                        </div>
+                        <div className="text-center md:text-right">
+                           <p className="text-[9px] font-black text-purple-600 uppercase tracking-widest mb-1">RANGE SESI</p>
+                           <p className="text-2xl font-black text-purple-800 italic">
+                              {((selectedTingkat - 1) * 6 + 1)} - {(selectedTingkat * 6)}
+                           </p>
+                        </div>
+                     </div>
+                     <div className="bg-white/60 p-6 rounded-2xl border border-purple-100">
+                        <p className="text-[10px] font-bold text-slate-600 leading-relaxed">
+                           <span className="font-black text-purple-600">TINGKAT {selectedTingkat}</span> mencakup materi sesi {((selectedTingkat - 1) * 6 + 1)} sampai {(selectedTingkat * 6)} dalam kurikulum. Ini adalah tingkatan pembelajaran, bukan nomor paket siswa.
+                        </p>
+                     </div>
+                  </div>
+               </section>
+               
+               <section className="space-y-4">
+   <div className="flex items-center gap-3 text-blue-600"><History size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Langkah Pembelajaran (Milestone)</h4></div>
+   <div className="bg-slate-50 p-8 rounded-[3rem] border border-slate-100">
+      {/* ✅ TAMBAH PENGECEKAN INI */}
+      {studentAttendanceLogs && Array.isArray(studentAttendanceLogs) ? (
+         <MilestoneView 
+            studentAttendanceLogs={studentAttendanceLogs} 
+            studentName={selectedPackage.studentsAttended?.[0] || ''} 
+            packageId={selectedPackage.packageId}
+            periode={selectedTingkat}
+         />
+      ) : (
+         <div className="text-center py-8">
+            <p className="text-slate-400 text-sm font-bold">Loading milestone data...</p>
+         </div>
+      )}
+   </div>
+</section>
+               <section className="flex flex-col items-center">
+                  <div className="bg-slate-900 p-12 rounded-[4rem] text-white text-center shadow-2xl relative overflow-hidden w-full max-w-lg">
+                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
+                     <p className="text-[10px] uppercase font-black text-slate-400 mb-2 relative z-10">Skor Rata-Rata Akhir</p>
+                     <h4 className="text-8xl font-black italic text-emerald-400 relative z-10">{avgScore}</h4>
+                     <p className="text-[11px] font-black uppercase tracking-widest mt-6 text-emerald-500 opacity-60 relative z-10">{avgScore >= 80 ? 'KOMPETENSI: LULUS' : 'KOMPETENSI: REMEDIAL'}</p>
+                  </div>
+               </section>
+               <section className="space-y-6">
+                  <div className="flex items-center gap-3 text-blue-600"><BookOpen size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Detail Materi & Nilai Tiap Sesi</h4></div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                     {reportForm.sessions.map((s, i) => (
+                        <div key={i} className={`flex flex-col gap-4 p-8 rounded-[2.5rem] border-2 transition-all shadow-inner ${showErrors && !s.material.trim() ? 'border-rose-500 bg-rose-50/30 ring-2 ring-rose-200' : 'border-transparent bg-slate-50 focus-within:border-blue-500'}`}>
+                           <div className="flex justify-between items-center border-b border-slate-200 pb-4">
+                              <span className="w-10 h-10 bg-white rounded-xl flex items-center justify-center font-black text-blue-600 italic shadow-sm shrink-0">{s.num < 10 ? `0${s.num}` : s.num}</span>
+                              <div className="text-right"><label className="text-[8px] font-black text-slate-400 uppercase tracking-widest block mb-1">Skor Sesi</label><input type="number" value={s.score} onChange={e => { const n = [...reportForm.sessions]; n[i].score = parseInt(e.target.value) || 0; setReportForm({...reportForm, sessions: n}); }} className="w-16 bg-transparent text-right font-black text-blue-600 text-2xl outline-none" /></div>
+                           </div>
+                           <div className="space-y-2">
+                              <div className="flex justify-between items-center ml-2">
+                                <label className="text-[8px] font-black text-slate-400 uppercase Kalimat tracking-widest flex items-center gap-1">
+                                  Materi Pembelajaran 
+                                  <span className={`font-black px-1.5 py-0.5 rounded-md text-[6px] border ${showErrors && !s.material.trim() ? 'bg-rose-500 text-white border-rose-600 animate-pulse' : 'bg-rose-50 text-rose-500 border-rose-100'}`}>WAJIB DIISI ✨</span>
+                                </label>
+                                <span className={`text-[7px] font-black ${s.material.length >= 35 ? 'text-rose-500' : 'text-slate-300'}`}>{s.material.length}/35</span>
+                              </div>
+                              <input 
+                                type="text" 
+                                placeholder="MISAL: PENGENALAN TOOLS..." 
+                                value={s.material} 
+                                maxLength={35} 
+                                onChange={e => { 
+                                  const n = [...reportForm.sessions]; 
+                                  n[i].material = e.target.value; 
+                                  setReportForm({...reportForm, sessions: n}); 
+                                }} 
+                                className={`w-full px-5 py-3 rounded-xl font-black uppercase text-[10px] outline-none transition-all border ${showErrors && !s.material.trim() ? 'bg-rose-50 border-rose-500 placeholder:text-rose-300' : 'bg-white border-slate-200 focus:border-blue-500'}`} 
+                              />
+                           </div>
+                        </div>
+                     ))}
+                  </div>
+               </section>
+               <section className="space-y-6">
+                  <div className="flex items-center gap-3 text-blue-600">
+                    <Quote size={20} />
+                    <h4 className="text-xs font-black uppercase tracking-widest">Narasi Evaluasi</h4>
+                    <span className={`font-black px-2 py-0.5 rounded-full text-[7px] border uppercase tracking-widest ${showErrors && !reportForm.narrative.trim() ? 'bg-rose-500 text-white border-rose-600 animate-pulse' : 'bg-rose-50 text-rose-500 border-rose-100'}`}>WAJIB DIISI KAK! ✨</span>
+                  </div>
+                  <div className={`p-10 rounded-[3rem] border-2 transition-all shadow-inner space-y-4 ${showErrors && !reportForm.narrative.trim() ? 'border-rose-500 bg-rose-50/30 ring-2 ring-rose-200' : 'border-slate-100 bg-slate-50'}`}>
+                     <div className="flex justify-end pr-8 mb-[-2rem] Kalimat relative z-10"><span className={`text-[10px] font-black px-3 py-1 rounded-full ${reportForm.narrative.length >= 200 ? 'bg-rose-500 text-white' : 'bg-blue-600 text-white shadow-md'}`}>{reportForm.narrative.length}/200</span></div>
+                     <textarea 
+                        placeholder="TULISKAN CATATAN PERKEMBANGAN SISWA... ✨" 
+                        value={reportForm.narrative} 
+                        maxLength={200} 
+                        onChange={e => setReportForm({...reportForm, narrative: e.target.value})} 
+                        rows={6} 
+                        className={`w-full p-10 bg-white rounded-[2rem] font-bold text-sm outline-none border-2 transition-all ${showErrors && !reportForm.narrative.trim() ? 'border-rose-500 shadow-rose-100' : 'border-transparent focus:border-blue-500 shadow-sm'}`} 
+                     />
+                  </div>
+               </section>
+               <section className="pt-10">
+                  <button 
+                    id="error-notif-required" 
+                    onClick={handleSaveReportToReady} 
+                    disabled={!!actionLoadingId} 
+                    className="w-full py-10 bg-blue-600 text-white rounded-[3rem] font-black text-[14px] uppercase tracking-[0.4em] shadow-2xl hover:bg-blue-700 transition-all flex items-center justify-center gap-5"
+                  >
+                     {actionLoadingId === selectedPackage.id ? <Loader2 size={32} className="animate-spin" /> : <><Save size={32} /> SIMPAN HASIL PENILAIAN ✨</>}
+                  </button>
+               </section>
+            </div>
+         </div>
       )}
 
       {activeStep === 'HISTORY' && (
-        <div className="space-y-10">
-          <div className="flex flex-col md:flex-row items-start md:items-center gap-4 bg-white p-6 rounded-[3rem] shadow-xl border-2 border-slate-100">
-            <div className="relative flex-1 w-full">
-              <Search className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" size={20}/>
-              <input 
-                type="text" 
-                placeholder="Cari siswa atau kelas..." 
-                value={historySearchTerm}
-                onChange={(e) => setHistorySearchTerm(e.target.value)}
-                className="w-full pl-16 pr-6 py-5 bg-slate-50 rounded-[2rem] font-bold text-[11px] uppercase tracking-widest text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-4 focus:ring-blue-500/30 transition-all"
-              />
-            </div>
-            
-            {/* ✅ FILTER TAHUN */}
-            <div className="flex items-center gap-2">
-              <Calendar className="text-slate-400" size={18}/>
-              <select 
-                value={selectedYear}
-                onChange={(e) => setSelectedYear(e.target.value)}
-                className="px-6 py-5 bg-slate-50 rounded-2xl font-black text-[10px] uppercase text-slate-800 focus:outline-none focus:ring-4 focus:ring-blue-500/30 transition-all cursor-pointer"
-              >
-                {availableYears.map(year => (
-                  <option key={year} value={year}>{year}</option>
-                ))}
-              </select>
-            </div>
+         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+            {publishedReports.map((req, i) => {
+               const sName = req.studentsAttended?.[0] || 'SISWA';
+               const scores = (Array.isArray(req.studentScores?.[sName]) ? req.studentScores?.[sName] : Array(6).fill(90)) as number[];
+               const avg = Math.round(scores.reduce((a:number,b:number)=>a+b,0)/6);
+               const isPass = avg >= 80;
+               const isReadyToSend = req.status === 'REPORT_READY';
+               const isNewlyActioned = req.id === lastActionedId;
+               const periode = req.periode || 1; // ✅ AMBIL PERIODE
 
-            {/* ✅ FILTER TINGKAT */}
-            <div className="flex items-center gap-2">
-              <Trophy className="text-purple-600" size={18}/>
-              <select 
-                value={selectedTingkat}
-                onChange={(e) => setSelectedTingkat(parseInt(e.target.value))}
-                className="px-6 py-5 bg-purple-50 rounded-2xl font-black text-[10px] uppercase text-purple-600 focus:outline-none focus:ring-4 focus:ring-purple-500/30 transition-all cursor-pointer"
-              >
-                {availableTingkat.map(t => (
-                  <option key={t} value={t}>TINGKAT {t}</option>
-                ))}
-              </select>
-            </div>
-            
-            {historySearchTerm && (
-              <button onClick={() => setHistorySearchTerm('')} className="px-6 py-5 bg-rose-50 text-rose-500 rounded-2xl font-black text-[10px] uppercase flex items-center gap-2 hover:bg-rose-500 hover:text-white transition-all shadow-sm">
-                <X size={16}/> RESET
-              </button>
+               return (
+                  <div 
+                    key={i} 
+                    id={`history-card-${req.id}`}
+                    className={`bg-white p-12 md:p-14 rounded-[4rem] shadow-xl border-2 transition-all flex flex-col relative ${isNewlyActioned ? 'border-blue-500 shadow-blue-100' : isReadyToSend ? 'border-amber-400 bg-amber-50/10' : 'border-slate-100 hover:border-emerald-500'}`}
+                  >
+                    {/* ✅ BADGE CONTAINER */}
+                     {isNewlyActioned && (
+                        <div className="absolute -top-3 -right-3 px-6 py-2 bg-blue-600 text-white rounded-full font-black text-[9px] uppercase tracking-widest shadow-xl animate-bounce z-20">
+                           TERBARU ✨
+                        </div>
+                     )}
+                     
+                     <div className="flex justify-between items-start mb-10">
+                        <div className={`w-16 h-16 rounded-3xl flex items-center justify-center shadow-inner shrink-0 ${isPass ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'}`}>{isPass ? <BadgeCheck size={40}/> : <AlertCircle size={40}/>}</div>
+                        <div className="flex flex-col items-end gap-2">
+                           <span className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-md flex items-center justify-center ${isPass ? 'bg-emerald-600 text-white' : 'bg-orange-500 text-white'}`}>{isPass ? 'LULUS' : 'REMEDIAL'}</span>
+                           {isReadyToSend && <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest animate-pulse italic">SIAP DIKIRIM ✨</span>}
+                        </div>
+                     </div>
+                     <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-1 truncate">{sName}</h4>
+                     <p className="text-[11px] font-bold text-blue-600 uppercase mb-10 leading-relaxed">{req.className}</p>
+                     
+                     {/* ✅ INFO BOX DENGAN PERIODE DI TENGAH */}
+                     <div className="bg-slate-50 p-8 rounded-[2.5rem] mb-10">
+                        <div className="grid grid-cols-3 gap-4 items-center">
+                           {/* NILAI */}
+                           <div>
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Rerata</p>
+                              <p className={`text-3xl font-black italic ${isPass ? 'text-emerald-600' : 'text-orange-600'}`}>{avg}</p>
+                           </div>
+                           
+                            {/* ✅ TINGKAT DI TENGAH */}
+                            <div className="text-center border-x-2 border-slate-200 px-2">
+                               <p className="text-[8px] font-black text-purple-600 uppercase tracking-wider mb-1">Tingkat</p>
+                               <p className="text-2xl font-black text-purple-600 italic">{periode}</p>
+                               <p className="text-[7px] font-bold text-slate-400 uppercase mt-1">
+                                  Sesi {((periode - 1) * 6 + 1)}-{(periode * 6)}
+                               </p>
+                            </div>
+                           
+                           {/* TANGGAL */}
+                           <div className="text-right">
+                              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{isReadyToSend ? 'Selesai' : 'Terkirim'}</p>
+                              <p className="text-[11px] font-black text-slate-800 uppercase tracking-normal">{formatDateToDMY(req.date)}</p>
+                           </div>
+                        </div>
+                     </div>
+                     
+                     <div className="space-y-4 mt-auto">
+                        {isReadyToSend ? (
+                           <>
+                              <button 
+                                onClick={() => handleSendReportToStudent(req)} 
+                                disabled={!!actionLoadingId} 
+                                className="w-full py-6 bg-emerald-600 text-white rounded-[2.5rem] font-black text-[12px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 active:scale-95 group"
+                              >
+                                 {actionLoadingId === req.id ? <Loader2 size={20} className="animate-spin" /> : <><SendHorizonal size={20} className="group-hover:translate-x-2 transition-transform"/> KIRIM RAPOT KE SISWA ✨</>}
+                              </button>
+                              <button onClick={() => handleOpenWorkspace(req, true)} className="w-full py-4 bg-white border-2 border-slate-100 text-slate-400 rounded-[2rem] font-black text-[10px] uppercase flex items-center justify-center gap-2 hover:border-blue-500 hover:text-blue-500 transition-all">
+                                 <FileEdit size={16}/> EDIT PENILAIAN
+                              </button>
+                           </>
+                        ) : (
+                           <>
+                              <div className="w-full py-4 bg-emerald-50 text-emerald-600 rounded-[2rem] font-black text-[10px] uppercase flex items-center justify-center gap-3 border-2 border-emerald-100 shadow-sm mb-2">
+                                 <CheckCircle2 size={18}/> SUDAH DITERIMA SISWA ✨
+                              </div>
+                              <div className="grid grid-cols-2 gap-3">
+                                 <button onClick={() => handleOpenWorkspace(req, true)} className="py-4 bg-slate-50 text-slate-400 rounded-2xl font-black text-[9px] uppercase flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
+                                    <FileEdit size={16}/> EDIT
+                                 </button>
+                                 <button onClick={() => handleDownloadPDF(req)} disabled={activeDownloadId === req.id} className="py-4 bg-slate-900 text-white rounded-2xl font-black text-[9px] uppercase flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-xl">
+                                    {activeDownloadId === req.id ? <Loader2 className="animate-spin" size={16}/> : <Printer size={16}/>} CETAK
+                                 </button>
+                              </div>
+                           </>
+                        )}
+                     </div>
+                  </div>
+               );
+            })}
+            {publishedReports.length === 0 && (
+               <div className="col-span-full py-40 text-center bg-white rounded-[4rem] border-2 border-dashed border-slate-100 opacity-30">
+                  <History size={64} className="mx-auto mb-6 text-slate-300" />
+                  <p className="font-black text-[11px] uppercase tracking-[0.4em] italic leading-relaxed text-center">Belum ada histori rapot. ✨</p>
+               </div>
             )}
-          </div>
+         </div>
+      )}
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {publishedReports.map(req => {
-              const sn = req.studentsattended?.[0] || 'SISWA';
-              const scoresObj = req.studentscores || {};
-              const studentScores = scoresObj[sn] || [];
-              const avg = studentScores.length > 0 ? Math.round(studentScores.reduce((a: number, b: number) => a + b, 0) / studentScores.length) : 0;
-              const isPass = avg >= 75;
-              const isReadyToSend = req.status === 'REPORT_PROCESSING';
-              const periode = req.periode || 1;
-              
-              return (
-                <div id={`history-card-${req.id}`} key={req.id} className="bg-white rounded-[4rem] p-10 shadow-2xl border-2 border-slate-100 hover:scale-[1.02] transition-all space-y-8 flex flex-col">
-                   
-                   <div className="flex justify-between items-start mb-10">
-                      <div className={`w-16 h-16 rounded-3xl flex items-center justify-center shadow-inner shrink-0 ${isPass ? 'bg-emerald-50 text-emerald-600' : 'bg-orange-50 text-orange-600'}`}>{isPass ? <BadgeCheck size={40}/> : <AlertCircle size={40}/>}</div>
-                      <div className="flex flex-col items-end gap-2">
-                         <span className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest shadow-md flex items-center justify-center ${isPass ? 'bg-emerald-600 text-white' : 'bg-orange-500 text-white'}`}>{isPass ? 'LULUS' : 'REMEDIAL'}</span>
-                         {isReadyToSend && <span className="text-[8px] font-black text-amber-600 uppercase tracking-widest animate-pulse italic">SIAP DIKIRIM ✨</span>}
-                      </div>
-                   </div>
-                   <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-1 truncate">{sName}</h4>
-                   <p className="text-[11px] font-bold text-blue-600 uppercase mb-10 leading-relaxed">{req.classname}</p>
-                   
-                   {/* ✅ INFO BOX DENGAN PERIODE DI TENGAH */}
-                   <div className="bg-slate-50 p-8 rounded-[2.5rem] mb-10">
-                      <div className="grid grid-cols-3 gap-4 items-center">
-                         {/* NILAI */}
-                         <div>
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Rerata</p>
-                            <p className={`text-3xl font-black italic ${isPass ? 'text-emerald-600' : 'text-orange-600'}`}>{avg}</p>
-                         </div>
-                         
-                          {/* ✅ TINGKAT DI TENGAH */}
-                          <div className="text-center border-x-2 border-slate-200 px-2">
-                             <p className="text-[8px] font-black text-purple-600 uppercase tracking-wider mb-1">Tingkat</p>
-                             <p className="text-2xl font-black text-purple-600 italic">{periode}</p>
-                             <p className="text-[7px] font-bold text-slate-400 uppercase mt-1">
-                                Sesi {((periode - 1) * 6 + 1)}-{(periode * 6)}
-                             </p>
-                          </div>
-                         
-                         {/* TANGGAL */}
-                         <div className="text-right">
-                            <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{isReadyToSend ? 'Selesai' : 'Terkirim'}</p>
-                            <p className="text-[11px] font-black text-slate-800 uppercase tracking-normal">{formatDateToDMY(req.date)}</p>
-                         </div>
-                      </div>
-                   </div>
-                   
-                   <div className="space-y-4 mt-auto">
-                      {isReadyToSend ? (
-                         <>
-                            <button 
-                              onClick={() => handleSendReportToStudent(req)} 
-                              disabled={!!actionLoadingId} 
-                              className="w-full py-6 bg-emerald-600 text-white rounded-[2.5rem] font-black text-[12px] uppercase tracking-[0.2em] flex items-center justify-center gap-3 hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-100 active:scale-95 group"
-                            >
-                               {actionLoadingId === req.id ? <Loader2 size={20} className="animate-spin" /> : <><SendHorizonal size={20} className="group-hover:translate-x-2 transition-transform"/> KIRIM RAPOT KE SISWA ✨</>}
-                            </button>
-                            <button onClick={() => handleOpenWorkspace(req, true)} className="w-full py-4 bg-white border-2 border-slate-100 text-slate-400 rounded-[2rem] font-black text-[10px] uppercase flex items-center justify-center gap-2 hover:border-blue-500 hover:text-blue-500 transition-all">
-                               <FileEdit size={16}/> EDIT PENILAIAN
-                            </button>
-                         </>
-                      ) : (
-                         <>
-                            <div className="w-full py-4 bg-emerald-50 text-emerald-600 rounded-[2rem] font-black text-[10px] uppercase flex items-center justify-center gap-3 border-2 border-emerald-100 shadow-sm mb-2">
-                               <CheckCircle2 size={18}/> SUDAH DITERIMA SISWA ✨
-                            </div>
-                            <div className="grid grid-cols-2 gap-3">
-                               <button onClick={() => handleOpenWorkspace(req, true)} className="py-4 bg-slate-50 text-slate-400 rounded-2xl font-black text-[9px] uppercase flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all shadow-sm">
-                                  <FileEdit size={16}/> EDIT
-                               </button>
-                               <button onClick={() => handleDownloadPDF(req)} disabled={activeDownloadId === req.id} className="py-4 bg-slate-900 text-white rounded-2xl font-black text-[9px] uppercase flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-xl">
-                                  {activeDownloadId === req.id ? <Loader2 className="animate-spin" size={16}/> : <Printer size={16}/>} CETAK
-                               </button>
-                            </div>
-                         </>
-                      )}
-                   </div>
-                </div>
-             );
-          })}
-          {publishedReports.length === 0 && (
-             <div className="col-span-full py-40 text-center bg-white rounded-[4rem] border-2 border-dashed border-slate-100 opacity-30">
-                <History size={64} className="mx-auto mb-6 text-slate-300" />
-                <p className="font-black text-[11px] uppercase tracking-[0.4em] italic leading-relaxed text-center">Belum ada histori rapot. ✨</p>
-             </div>
-          )}
-       </div>
-    )}
-
-    {/* RENDER PDF HIDDEN MENGGUNAKAN MASTER TEMPLATE */}
+      {/* RENDER PDF HIDDEN MENGGUNAKAN MASTER TEMPLATE */}
 <div className="fixed left-[-9999px] top-0 pointer-events-none">
- {publishedReports.map((req) => (
-    <ReportTemplate 
-      key={req.id} 
-      reportLog={req} 
-      allLogs={logs}
-      studentAttendanceLogs={studentAttendanceLogs} // ✅ INI HARUS ADA!
-      studentName={req.studentsattended?.[0] || 'SISWA'} 
-    />
- ))}
+   {publishedReports.map((req) => (
+      <ReportTemplate 
+        key={req.id} 
+        reportLog={req} 
+        allLogs={logs}
+        studentAttendanceLogs={studentAttendanceLogs} // ✅ INI HARUS ADA!
+        studentName={req.studentsAttended?.[0] || 'SISWA'} 
+      />
+   ))}
 </div>
 
-    {showMilestoneFor && (
-      <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-         <div className="bg-white w-full max-w-2xl rounded-[4rem] p-12 shadow-2xl relative overflow-hidden space-y-10 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-            <button onClick={() => setShowMilestoneFor(null)} className="absolute top-10 right-10 p-3 bg-slate-50 text-slate-400 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
-            <div className="flex items-center gap-6"><div className="w-16 h-16 bg-blue-600 text-white rounded-[2rem] flex items-center justify-center shadow-xl rotate-3"><History size={32} /></div><div><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Milestone Belajar</h4><p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-2">{showMilestoneFor.studentsattended?.[0]}</p></div></div>
-            <MilestoneView 
-              studentAttendanceLogs={studentAttendanceLogs} 
-              studentName={showMilestoneFor.studentsattended?.[0] || ''} 
-              packageId={showMilestoneFor.packageId}
-              periode={showMilestoneFor.periode || 1}
-            />
-            <button onClick={() => setShowMilestoneFor(null)} className="w-full py-5 bg-slate-900 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-[0.3em] shadow-xl">TUTUP MILESTONE ✨</button>
-         </div>
-      </div>
-    )}
+      {showMilestoneFor && (
+        <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+           <div className="bg-white w-full max-w-2xl rounded-[4rem] p-12 shadow-2xl relative overflow-hidden space-y-10 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+              <button onClick={() => setShowMilestoneFor(null)} className="absolute top-10 right-10 p-3 bg-slate-50 text-slate-400 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
+              <div className="flex items-center gap-6"><div className="w-16 h-16 bg-blue-600 text-white rounded-[2rem] flex items-center justify-center shadow-xl rotate-3"><History size={32} /></div><div><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Milestone Belajar</h4><p className="text-[10px] font-black text-blue-600 uppercase tracking-widest mt-2">{showMilestoneFor.studentsAttended?.[0]}</p></div></div>
+              <MilestoneView 
+                studentAttendanceLogs={studentAttendanceLogs} 
+                studentName={showMilestoneFor.studentsAttended?.[0] || ''} 
+                packageId={showMilestoneFor.packageId}
+                periode={showMilestoneFor.periode || 1}
+              />
+              <button onClick={() => setShowMilestoneFor(null)} className="w-full py-5 bg-slate-900 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-[0.3em] shadow-xl">TUTUP MILESTONE ✨</button>
+           </div>
+        </div>
+      )}
 
-    {confirmReject && (
-       <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-          <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-             <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm animate-pulse"><AlertCircle size={48} /></div>
-             <div className="space-y-2"><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Tolak Permintaan?</h4><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest Kalimat leading-relaxed px-4">Siswa akan diminta memilih pengajar lain untuk klaim rapot mereka.</p></div>
-             <div className="flex gap-4"><button onClick={() => setConfirmReject(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase">BATAL</button><button onClick={handleRejectRequest} disabled={!!actionLoadingId} className="flex-1 py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl flex items-center justify-center gap-2">{actionLoadingId === confirmReject.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18}/>} IYA, TOLAK</button></div>
-          </div>
-       </div>
-    )}
-  </div>
-  </>
-);
+      {confirmReject && (
+         <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+            <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+               <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm animate-pulse"><AlertCircle size={48} /></div>
+               <div className="space-y-2"><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Tolak Permintaan?</h4><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest Kalimat leading-relaxed px-4">Siswa akan diminta memilih pengajar lain untuk klaim rapot mereka.</p></div>
+               <div className="flex gap-4"><button onClick={() => setConfirmReject(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase">BATAL</button><button onClick={handleRejectRequest} disabled={!!actionLoadingId} className="flex-1 py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl flex items-center justify-center gap-2">{actionLoadingId === confirmReject.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18}/>} IYA, TOLAK</button></div>
+            </div>
+         </div>
+      )}
+    </div>
+    </>
+  );
 };
 
 export default TeacherReportsInbox;
