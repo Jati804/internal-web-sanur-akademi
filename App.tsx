@@ -258,7 +258,7 @@ const pendingReportsCount = Array.isArray(reports) ?
               <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl rotate-3 shrink-0"><BookOpen size={24} /></div>
               <div>
                 <h1 className="font-black text-slate-800 text-xl tracking-tighter uppercase italic leading-none">SANUR</h1>
-                <p className="text-[8px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1.5">Portal Internal</p>
+                <p className="text-[8px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1.5">Sistem Internal</p>
               </div>
             </div>
             <button onClick={closeSidebar} className="lg:hidden p-2 text-slate-300 hover:text-rose-500"><X size={24} /></button>
