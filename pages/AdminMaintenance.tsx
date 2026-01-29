@@ -99,7 +99,7 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
     sales_contacts: ['id', 'institution_name', 'contact_person', 'job_title', 'phone', 'email', 'last_contact_date', 'next_followup_date', 'deal_status', 'meeting_notes', 'created_at'],
     student_attendance: ['id', 'packageid', 'studentname', 'sessionnumber', 'date', 'clockin', 'duration', 'classname', 'level', 'sessioncategory', 'studentscores', 'studenttopics', 'studentnarratives', 'reportnarrative', 'created_at'],
     reports: ['id', 'teacherid', 'teachername', 'date', 'status', 'classname', 'level', 'sessioncategory', 'packageid', 'sessionnumber', 'studentsattended', 'studentscores', 'studenttopics', 'studentnarratives', 'reportnarrative', 'periode', 'created_at', 'updated_at'], 
-    maintenance_notes: ['id', 'content', 'last_modified']
+    maintenance_notes: ['id', 'content', 'last_modified', 'created_at']
   };
 
   const fetchMediaCount = async () => {
@@ -266,7 +266,7 @@ useEffect(() => {
     setLoadingText("MEMULIHKAN CLOUD...");
     setImportProgress(0);
     const resultsSummary: any[] = [];
-    const tableOrder = ['settings', 'teachers', 'student_accounts', 'student_profiles', 'transactions', 'attendance', 'student_payments', 'sales_contacts', 'student_attendance', 'maintenance_notes'];
+    const tableOrder = ['settings', 'teachers', 'student_accounts', 'student_profiles', 'transactions', 'attendance', 'student_payments', 'sales_contacts', 'student_attendance', 'reports', 'maintenance_notes'];
 
     try {
       for (let i = 0; i < tableOrder.length; i++) {
@@ -299,7 +299,7 @@ useEffect(() => {
               if (validCols.includes(lowKey)) {
                 let val = row[key];
                 if (skipPhotos && lowKey === 'receiptdata') val = null;
-                if (tableName === 'attendance' && ['studentsattended', 'studentsessions', 'studentscores', 'studenttopics', 'studentnarratives'].includes(lowKey)) {
+                if (['attendance', 'student_attendance', 'reports'].includes(tableName) && ['studentsattended', 'studentscores', 'studenttopics', 'studentnarratives'].includes(lowKey)) {
                   if (typeof val === 'string' && (val.startsWith('{') || val.startsWith('['))) {
                     try { val = JSON.parse(val); } catch(e) {}
                   }
@@ -382,7 +382,7 @@ useEffect(() => {
     setProcessingStatus('LOADING');
     setLoadingText('MEMBUAT SNAPSHOT...');
     try {
-      const tablesToExport = ['settings', 'teachers', 'student_accounts', 'student_profiles', 'transactions', 'attendance', 'student_payments', 'sales_contacts', 'student_attendance', 'maintenance_notes'];
+      const tablesToExport = ['settings', 'teachers', 'student_accounts', 'student_profiles', 'transactions', 'attendance', 'student_payments', 'sales_contacts', 'student_attendance', 'reports', 'maintenance_notes'];
       const tablesData: Record<string, any> = {};
       for(let i = 0; i < tablesToExport.length; i++) {
         const tName = tablesToExport[i];
@@ -443,7 +443,9 @@ useEffect(() => {
       await Promise.all([
         supabase.from('attendance').delete().not('id', 'is', null),
         supabase.from('student_payments').delete().not('id', 'is', null),
-        supabase.from('transactions').delete().not('id', 'is', null)
+        supabase.from('transactions').delete().not('id', 'is', null),
+        supabase.from('student_attendance').delete().not('id', 'is', null),
+        supabase.from('reports').delete().not('id', 'is', null),
       ]);
       fetchMediaCount();
       if (refreshAllData) await refreshAllData();
