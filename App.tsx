@@ -298,16 +298,23 @@ const pendingReportsCount = Array.isArray(reports) ?
         <header className="h-24 bg-white border-b border-slate-100 flex items-center justify-between px-8 md:px-12 sticky top-0 z-[1000] shadow-sm shrink-0">
           <div className="flex items-center gap-4">
             <button onClick={() => setIsSidebarOpen(true)} className="p-3 bg-slate-50 text-slate-400 rounded-xl lg:hidden"><Menu size={24}/></button>
-            <h1 className="font-black italic uppercase text-slate-800 tracking-tighter text-lg md:text-xl">PORTAL {(user?.name || 'USER').split(' ')[0]}</h1>
-          </div>
-<div className="flex gap-3">
-  <button onClick={() => setShowGuide(true)} className="p-4 bg-blue-600 text-white rounded-2xl shadow-xl hover:bg-blue-700 active:scale-95 transition-all">
-    <HelpCircle size={20} />
-  </button>
-  <button onClick={handleLogout} className="p-4 bg-rose-600 text-white rounded-2xl shadow-xl hover:bg-rose-700 active:scale-95 transition-all">
-    <Power size={20} />
-  </button>
+<div className="flex flex-col">
+  <h1 className="font-black italic uppercase text-slate-800 tracking-tighter text-lg md:text-xl leading-none">
+    {user?.name || user?.username || 'USER'}
+  </h1>
+  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
+    STATUS: {user?.role === 'ADMIN' ? 'ADMIN' : user?.role === 'TEACHER' ? 'GURU' : 'SISWA'}
+  </p>
 </div>
+          </div>
+          <div className="flex items-center gap-3">
+<button onClick={() => setShowGuide(true)} className={`p-4 ${roleGuideColor} text-white rounded-2xl shadow-xl hover:opacity-90 active:scale-95 transition-all`}>
+   <HelpCircle size={20} />
+</button>
+<button onClick={executeLogout} className="p-4 bg-rose-600 text-white rounded-2xl shadow-xl hover:bg-rose-700 active:scale-95 transition-all">
+   <Power size={20} />
+</button>
+          </div>
         </header>
         
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-12">
