@@ -369,6 +369,7 @@ useEffect(() => {
       await supabase.from('student_payments').update({ status: 'VERIFIED' }).eq('id', p.id);
       await supabase.from('transactions').insert({ id: txId, type: 'INCOME', category: 'SPP SISWA', amount: p.amount, date: getWIBDate(), description: `SPP MASUK: ${p.studentName} | ${p.className}`.toUpperCase() });
       if (refreshAllData) await refreshAllData();
+      await fetchLedgerData();
       
       setHighlightTx({ id: txId, type: 'INCOME' });
       setActiveTab('LEDGER');
@@ -385,6 +386,7 @@ useEffect(() => {
       const { error } = await supabase.from('transactions').insert({ id: txId, ...addForm, description: addForm.description.toUpperCase(), category: addForm.category.toUpperCase() });
       if (error) throw error;
       if (refreshAllData) await refreshAllData();
+      await fetchLedgerData();
       setShowAddModal(false);
       setAddForm({ type: 'INCOME', category: 'UMUM', amount: 0, date: getWIBDate(), description: '' });
       
@@ -475,6 +477,7 @@ description: desc.trim().toUpperCase(), category: (cat.trim() || 'UMUM').toUpper
       const { error } = await supabase.from('transactions').insert(payload);
       if (error) throw error;
       if (refreshAllData) await refreshAllData();
+      await fetchLedgerData();
       setShowImportModal(false); setImportText(''); alert(`Berhasil impor ${payload.length} transaksi! ✨`);
     } catch (e: any) { alert("Gagal: " + e.message); } finally { setIsLoading(false); }
   };
@@ -530,6 +533,7 @@ const handleExportExcel = () => {
       await supabase.from('attendance').update({ paymentstatus: 'PAID', receiptdata: payForm.receiptData }).eq('packageid', packageId).eq('teacherid', teacherId).eq('paymentstatus', 'UNPAID');
       await supabase.from('transactions').insert({ id: txId, type: 'EXPENSE', category: 'HONOR GURU', amount: selectedPayout.amount, date: getWIBDate(), description: `HONOR CAIR: ${selectedPayout.teacherName} | ${selectedPayout.className}`.toUpperCase() });
       if (refreshAllData) await refreshAllData();
+      await fetchLedgerData();
       
       setSelectedPayout(null); setPayForm({ receiptData: '' }); 
       setHighlightTx({ id: txId, type: 'EXPENSE' }); 
