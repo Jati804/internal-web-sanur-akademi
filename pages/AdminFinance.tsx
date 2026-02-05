@@ -539,9 +539,10 @@ const executePayTeacher = async () => {
     
     const result = await supabase
       .from('attendance')
-      .update({ paymentstatus: 'PAID' })
-      payment_receipt: payForm.receiptData
-  })
+      .update({ 
+      paymentstatus: 'PAID',
+      receiptdata: payForm.receiptData
+      })
       .eq('packageid', packageId)
       .eq('teacherid', teacherId)
       .eq('paymentstatus', 'UNPAID');
