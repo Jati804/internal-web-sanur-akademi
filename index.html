@@ -20,7 +20,15 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="SANUR">
     <link rel="apple-touch-icon" href="/images/android-launchericon-192-192.png">
-    <link rel="manifest" href="/manifest.json">
+    <!-- Manifest hanya load di NON-Vercel domain -->
+<script>
+  if (!window.location.hostname.includes('vercel.app')) {
+    const manifestLink = document.createElement('link');
+    manifestLink.rel = 'manifest';
+    manifestLink.href = '/manifest.json';
+    document.head.appendChild(manifestLink);
+  }
+</script>
     
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -112,7 +120,10 @@
     </script>
     <script type="module" src="/index.tsx"></script>
 <script>
-  if ('serviceWorker' in navigator) {
+  // Service Worker hanya register di NON-Vercel domain
+  const isVercelDomain = window.location.hostname.includes('vercel.app');
+  
+  if (!isVercelDomain && 'serviceWorker' in navigator) {
     window.addEventListener('load', () => {
       navigator.serviceWorker
         .register('/sw.js')
