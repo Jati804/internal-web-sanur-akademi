@@ -88,7 +88,7 @@ const VerifyCertificate: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFDFF] flex flex-col items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-[#FDFDFF] flex flex-col items-center justify-center p-4 md:p-6 py-12 md:py-6 relative overflow-hidden">
       {/* Background Ornaments - Enhanced for Cyan Theme */}
       {isPass ? (
         <>
@@ -107,7 +107,7 @@ const VerifyCertificate: React.FC = () => {
         </>
       )}
 
-      <div className={`max-w-xl w-full bg-white rounded-[4rem] shadow-2xl p-10 md:p-16 border-2 ${isPass ? 'border-cyan-100' : 'border-slate-50'} text-center relative z-10 animate-in fade-in`}>
+      <div className={`max-w-xl w-full bg-white rounded-[2rem] md:rounded-[4rem] shadow-2xl p-6 md:p-16 border-2 ${isPass ? 'border-cyan-100' : 'border-slate-50'} text-center relative z-10 animate-in fade-in`}>
          
          {loading ? (
            <div className="py-20 flex flex-col items-center gap-6">
@@ -130,14 +130,14 @@ const VerifyCertificate: React.FC = () => {
            <>
               {/* MAIN BADGE - Enhanced Cyan Design for Pass */}
               {isPass ? (
-                <div className="relative w-32 h-32 mx-auto mb-10">
+                <div className="relative w-24 h-24 md:w-32 md:h-32 mx-auto mb-6 md:mb-10">
                   {/* Cyan glow ring */}
                   <div className="absolute inset-0 bg-gradient-to-br from-cyan-400 to-blue-600 rounded-[2.5rem] blur-xl opacity-40 animate-pulse"></div>
                   {/* Main badge */}
-                  <div className="relative w-32 h-32 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 rounded-[2.5rem] flex items-center justify-center shadow-2xl ring-8 ring-cyan-100">
+                  <div className="relative w-24 h-24 md:w-32 md:h-32 bg-gradient-to-br from-blue-600 via-blue-700 to-blue-800 rounded-[2rem] md:rounded-[2.5rem] flex items-center justify-center shadow-2xl ring-4 md:ring-8 ring-cyan-100">
                     {/* Inner glow */}
                     <div className="absolute inset-2 bg-gradient-to-br from-cyan-400/20 to-transparent rounded-[2rem]"></div>
-                    <ShieldCheck size={64} className="relative z-10 text-cyan-300 drop-shadow-lg" />
+                    <ShieldCheck size={48} className="relative z-10 text-cyan-300 drop-shadow-lg md:w-16 md:h-16" />
                     {/* Cyan accent dot */}
                     <div className="absolute -top-2 -right-2 w-6 h-6 bg-cyan-400 rounded-full shadow-lg animate-pulse"></div>
                   </div>
@@ -159,7 +159,7 @@ const VerifyCertificate: React.FC = () => {
                 </div>
                 
                 {/* Title - FIXED: No text overflow */}
-                <h1 className="text-4xl font-black text-slate-800 tracking-tight uppercase italic leading-none px-4">
+                <h1 className="text-2xl md:text-4xl font-black text-slate-800 tracking-tight uppercase italic leading-tight md:leading-none px-2 md:px-4">
                    Sertifikat <span className={isPass ? 'text-blue-600' : themeColors.text}>Tervalidasi</span>
                 </h1>
                 
@@ -169,7 +169,7 @@ const VerifyCertificate: React.FC = () => {
               </div>
 
               {/* CONTENT CARD */}
-              <div className={`${isPass ? 'bg-gradient-to-br from-slate-50 to-blue-50/30' : 'bg-slate-50'} rounded-[3rem] p-8 md:p-10 mb-10 border-2 ${isPass ? 'border-cyan-100' : 'border-dashed border-slate-200'} text-left space-y-8 relative overflow-hidden`}>
+              <div className={`${isPass ? 'bg-gradient-to-br from-slate-50 to-blue-50/30' : 'bg-slate-50'} rounded-[2rem] md:rounded-[3rem] p-6 md:p-10 mb-6 md:mb-10 border-2 ${isPass ? 'border-cyan-100' : 'border-dashed border-slate-200'} text-left space-y-8 relative overflow-hidden`}>
                  
                  {/* Cyan corner decoration for pass */}
                  {isPass && (
@@ -181,7 +181,7 @@ const VerifyCertificate: React.FC = () => {
                  
                  {/* Student Name */}
                  <div className="flex items-center gap-5 relative z-10">
-                    <div className={`w-12 h-12 ${isPass ? 'bg-gradient-to-br from-blue-600 to-blue-700' : 'bg-white'} rounded-2xl flex items-center justify-center ${isPass ? 'text-cyan-300' : themeColors.text} shadow-lg shrink-0`}>
+                    <div className={`w-10 h-10 md:w-12 md:h-12 ${isPass ? 'bg-gradient-to-br from-blue-600 to-blue-700' : 'bg-white'} rounded-2xl flex items-center justify-center ${isPass ? 'text-cyan-300' : themeColors.text} shadow-lg shrink-0`}>
                       <User size={24} />
                     </div>
                     <div>
@@ -192,7 +192,7 @@ const VerifyCertificate: React.FC = () => {
 
                  {/* Program & Level */}
                  <div className="flex items-center gap-5 relative z-10">
-                    <div className={`w-12 h-12 ${isPass ? 'bg-gradient-to-br from-blue-600 to-blue-700' : 'bg-white'} rounded-2xl flex items-center justify-center ${isPass ? 'text-cyan-300' : themeColors.text} shadow-lg shrink-0`}>
+                    <div className={`w-10 h-10 md:w-12 md:h-12 ${isPass ? 'bg-gradient-to-br from-blue-600 to-blue-700' : 'bg-white'} rounded-2xl flex items-center justify-center ${isPass ? 'text-cyan-300' : themeColors.text} shadow-lg shrink-0`}>
                       <BookOpen size={24} />
                     </div>
                     <div>
@@ -209,7 +209,7 @@ const VerifyCertificate: React.FC = () => {
                  {/* Date & ID Grid */}
                  <div className="grid grid-cols-2 gap-4 relative z-10">
                     <div className="flex items-center gap-5">
-                        <div className={`w-12 h-12 ${isPass ? 'bg-blue-100' : 'bg-white'} rounded-xl flex items-center justify-center ${isPass ? 'text-blue-600' : 'text-slate-400'} shadow-sm shrink-0`}>
+                        <div className={`w-10 h-10 md:w-12 md:h-12 ${isPass ? 'bg-blue-100' : 'bg-white'} rounded-xl flex items-center justify-center ${isPass ? 'text-blue-600' : 'text-slate-400'} shadow-sm shrink-0`}>
                           <Calendar size={24} />
                         </div>
                         <div>
@@ -218,7 +218,7 @@ const VerifyCertificate: React.FC = () => {
                         </div>
                     </div>
                     <div className="flex items-center gap-5">
-                        <div className={`w-12 h-12 ${isPass ? 'bg-cyan-100' : 'bg-white'} rounded-xl flex items-center justify-center ${isPass ? 'text-cyan-600' : 'text-slate-400'} shadow-sm shrink-0`}>
+                        <div className={`w-10 h-10 md:w-12 md:h-12 ${isPass ? 'bg-cyan-100' : 'bg-white'} rounded-xl flex items-center justify-center ${isPass ? 'text-cyan-600' : 'text-slate-400'} shadow-sm shrink-0`}>
                           <Award size={24} />
                         </div>
                         <div>
