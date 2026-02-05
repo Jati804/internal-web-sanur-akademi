@@ -524,22 +524,21 @@ const handleExportExcel = () => {
     } catch (err) { alert("Gagal proses gambar! ✨"); } finally { setIsLoading(false); }
   };
 
-  const executePayTeacher = async () => {
-    if (!selectedPayout || !payForm.receiptData) return alert("Upload bukti transfer dulu! ✨");
-    setIsLoading(true);
-    const txId = `TX-PAY-${Date.now()}`;
-    try {
-      const { packageId, teacherId } = selectedPayout;
-      await supabase.from('attendance').update({ paymentstatus: 'PAID', receiptdata: payForm.receiptData }).eq('packageid', packageId).eq('teacherid', teacherId).eq('paymentstatus', 'UNPAID');
-      await supabase.from('transactions').insert({ id: txId, type: 'EXPENSE', category: 'HONOR GURU', amount: selectedPayout.amount, date: getWIBDate(), description: `HONOR CAIR: ${selectedPayout.teacherName} | ${selectedPayout.className}`.toUpperCase() });
-if (refreshAllData) await refreshAllData();
-      
-setSelectedPayout(null); 
-setPayForm({ receiptData: '' }); 
-setHighlightTx({ id: txId, type: 'EXPENSE' }); 
-setActiveTab('LEDGER');
-    } catch (e: any) { alert(e.message); } finally { setIsLoading(false); }
-  };
+const executePayTeacher = async () => {
+  if (!selectedPayout || !payForm.receiptData) return alert("Upload bukti transfer dulu! ✨");
+  setIsLoading(true);
+  const txId = `TX-PAY-${Date.now()}`;
+  try {
+    const { packageId, teacherId } = selectedPayout;
+    await supabase.from('attendance').update({ paymentstatus: 'PAID', receiptdata: payForm.receiptData }).eq('packageid', packageId).eq('teacherid', teacherId).eq('paymentstatus', 'UNPAID');
+    await supabase.from('transactions').insert({ id: txId, type: 'EXPENSE', category: 'HONOR GURU', amount: selectedPayout.amount, date: getWIBDate(), description: `HONOR CAIR: ${selectedPayout.teacherName} | ${selectedPayout.className}`.toUpperCase() });
+    if (refreshAllData) await refreshAllData();
+    
+    setSelectedPayout(null); setPayForm({ receiptData: '' }); 
+    setHighlightTx({ id: txId, type: 'EXPENSE' }); 
+    setActiveTab('LEDGER'); 
+  } catch (e: any) { alert(e.message); } finally { setIsLoading(false); }
+};
 
   const formatDate = (dateStr: string) => dateStr.split('-').reverse().join('/');
 
