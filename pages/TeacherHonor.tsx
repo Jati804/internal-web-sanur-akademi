@@ -530,14 +530,14 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
               <button onClick={() => setShowPurgedInfo(false)} className="absolute top-8 right-8 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
               <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner animate-pulse"><Info size={40} /></div>
               <div className="space-y-4">
-                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Media Bersih âœ¨</h4>
+                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Media Bersih</h4>
                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4 italic">
-                    "Mohon maaf Kak, foto bukti transfer ini hanya tersedia <span className="text-rose-600 font-black">Maksimal 3 Hari</span> guna menjaga database tetap kencang. âœ¨"
+                    "Mohon maaf Kak, foto bukti transfer ini hanya tersedia <span className="text-rose-600 font-black">Maksimal 3 Hari</span> guna menjaga database tetap kencang."
                  </p>
                  <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3">
                     <Zap size={16} className="text-emerald-600 shrink-0" />
                     <p className="text-[9px] font-black text-emerald-800 uppercase text-left leading-tight">
-                       "Jangan khawatir! <span className="underline">SLIP GAJI DIGITAL</span> Kakak tetap aktif selamanya dan bisa diunduh kapan saja sebagai bukti sah!"
+                       "Jangan khawatir! <span className="underline">SLIP GAJI DIGITAL</span> Kakak tetap aktif selamanya dan bisa diunduh kapan saja sebagai bukti sah"
                     </p>
                  </div>
               </div>
