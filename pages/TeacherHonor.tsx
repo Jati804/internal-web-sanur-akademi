@@ -541,7 +541,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                     </p>
                  </div>
               </div>
-              <button onClick={() => setShowPurgedInfo(false)} className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 transition-all">SAYA MENGERTI âœ¨</button>
+              <button onClick={() => setShowPurgedInfo(false)} className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 transition-all">SAYA MENGERTI</button>
            </div>
         </div>
       )}
