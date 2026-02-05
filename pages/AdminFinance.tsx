@@ -532,7 +532,10 @@ const handleExportExcel = () => {
       const { packageId, teacherId } = selectedPayout;
       await supabase.from('attendance').update({ paymentstatus: 'PAID', receiptdata: payForm.receiptData }).eq('packageid', packageId).eq('teacherid', teacherId).eq('paymentstatus', 'UNPAID');
       await supabase.from('transactions').insert({ id: txId, type: 'EXPENSE', category: 'HONOR GURU', amount: selectedPayout.amount, date: getWIBDate(), description: `HONOR CAIR: ${selectedPayout.teacherName} | ${selectedPayout.className}`.toUpperCase() });
-      if (refreshAllData) await refreshAllData();
+      if (refreshAllData) {
+  await refreshAllData(); // Refresh parent data dulu
+  await new Promise(resolve => setTimeout(resolve, 500)); // Tunggu 0.5 detik biar data ke-update
+}
       await fetchLedgerData();
       
       setSelectedPayout(null); setPayForm({ receiptData: '' }); 
