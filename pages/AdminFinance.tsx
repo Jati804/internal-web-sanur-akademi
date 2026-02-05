@@ -534,13 +534,21 @@ const handleExportExcel = () => {
       await supabase.from('transactions').insert({ id: txId, type: 'EXPENSE', category: 'HONOR GURU', amount: selectedPayout.amount, date: getWIBDate(), description: `HONOR CAIR: ${selectedPayout.teacherName} | ${selectedPayout.className}`.toUpperCase() });
       if (refreshAllData) {
   await refreshAllData(); // Refresh parent data dulu
-  await new Promise(resolve => setTimeout(resolve, 500)); // Tunggu 0.5 detik biar data ke-update
 }
-      await fetchLedgerData();
-      
-      setSelectedPayout(null); setPayForm({ receiptData: '' }); 
-      setHighlightTx({ id: txId, type: 'EXPENSE' }); 
-      setActiveTab('LEDGER'); 
+await fetchLedgerData();
+
+// Tutup modal dulu
+setSelectedPayout(null); 
+setPayForm({ receiptData: '' }); 
+
+// Pindah ke Ledger dulu (trigger re-render)
+setActiveTab('LEDGER');
+setHighlightTx({ id: txId, type: 'EXPENSE' });
+
+// Tunggu 1 detik, baru balik ke tab Payroll (biar data udah fresh)
+setTimeout(() => {
+  setActiveTab('PAYROLL');
+}, 1000);
     } catch (e: any) { alert(e.message); } finally { setIsLoading(false); }
   };
 
