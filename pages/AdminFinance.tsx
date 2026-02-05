@@ -524,22 +524,58 @@ const handleExportExcel = () => {
     } catch (err) { alert("Gagal proses gambar! ✨"); } finally { setIsLoading(false); }
   };
 
-  const executePayTeacher = async () => {
-    if (!selectedPayout || !payForm.receiptData) return alert("Upload bukti transfer dulu! ✨");
-    setIsLoading(true);
-    const txId = `TX-PAY-${Date.now()}`;
-    try {
-      const { packageId, teacherId } = selectedPayout;
-      await supabase.from('attendance').update({ paymentStatus: 'PAID', receiptData: payForm.receiptData }).eq('packageId', packageId).eq('teacherId', teacherId).eq('paymentStatus', 'UNPAID');
-      await supabase.from('transactions').insert({ id: txId, type: 'EXPENSE', category: 'HONOR GURU', amount: selectedPayout.amount, date: getWIBDate(), description: `HONOR CAIR: ${selectedPayout.teacherName} | ${selectedPayout.className}`.toUpperCase() });
-      if (refreshAllData) await refreshAllData();
-      await fetchLedgerData();
-      
-      setSelectedPayout(null); setPayForm({ receiptData: '' }); 
-      setHighlightTx({ id: txId, type: 'EXPENSE' }); 
-      setActiveTab('LEDGER'); 
-    } catch (e: any) { alert(e.message); } finally { setIsLoading(false); }
-  };
+const executePayTeacher = async () => {
+  if (!selectedPayout || !payForm.receiptData) return alert("Upload bukti transfer dulu! ✨");
+  setIsLoading(true);
+  const txId = `TX-PAY-${Date.now()}`;
+  try {
+    const { packageId, teacherId } = selectedPayout;
+    
+    // 🔍 DEBUG: Cek nilai sebelum update
+    console.log('🔍 DEBUG INFO:');
+    console.log('packageId:', packageId);
+    console.log('teacherId:', teacherId);
+    console.log('selectedPayout:', selectedPayout);
+    
+    const result = await supabase
+      .from('attendance')
+      .update({ paymentstatus: 'PAID' })
+      .eq('packageid', packageId)
+      .eq('teacherid', teacherId)
+      .eq('paymentstatus', 'UNPAID');
+    
+    // 🔍 DEBUG: Cek hasil update
+    console.log('📊 Update result:', result);
+    console.log('Error:', result.error);
+    console.log('Data:', result.data);
+    
+    if (result.error) {
+      throw result.error;
+    }
+    
+    await supabase.from('transactions').insert({ 
+      id: txId, 
+      type: 'EXPENSE', 
+      category: 'HONOR GURU', 
+      amount: selectedPayout.amount, 
+      date: getWIBDate(), 
+      description: `HONOR CAIR: ${selectedPayout.teacherName} | ${selectedPayout.className}`.toUpperCase() 
+    });
+    
+    if (refreshAllData) await refreshAllData();
+    await fetchLedgerData();
+    
+    setSelectedPayout(null); 
+    setPayForm({ receiptData: '' }); 
+    setHighlightTx({ id: txId, type: 'EXPENSE' }); 
+    setActiveTab('LEDGER'); 
+  } catch (e: any) { 
+    console.error('❌ Error lengkap:', e);
+    alert(e.message); 
+  } finally { 
+    setIsLoading(false); 
+  }
+};
 
   const formatDate = (dateStr: string) => dateStr.split('-').reverse().join('/');
 
