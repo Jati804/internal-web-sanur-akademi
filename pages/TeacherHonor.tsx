@@ -430,7 +430,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
          }) : (
             <div className="py-40 text-center bg-white rounded-[4rem] border-2 border-dashed border-slate-100 opacity-30">
                <ClipboardCheck size={64} className="mx-auto mb-6 text-slate-300" />
-               <p className="font-black text-[11px] uppercase tracking-[0.4em] italic leading-relaxed text-center">Belum ada riwayat honor di tahun {selectedYear}. âœ¨</p>
+               <p className="font-black text-[11px] uppercase tracking-[0.4em] italic leading-relaxed text-center">Belum ada riwayat honor di tahun {selectedYear}</p>
             </div>
          )}
       </div>
