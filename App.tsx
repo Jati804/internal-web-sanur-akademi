@@ -56,411 +56,73 @@ const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }
   );
 };
 
-const GuideTour = ({ 
-  role, 
-  currentStep, 
-  setCurrentStep, 
-  onClose 
-}: { 
-  role: string, 
-  currentStep: number,
-  setCurrentStep: (step: number) => void,
-  onClose: () => void 
-}) => {
-  // HAPUS baris ini karena currentStep sekarang dari props:
-  // const [currentStep, setCurrentStep] = React.useState(0);
-
-const navigate = useNavigate(); // TAMBAH INI
-
-interface TourStep {
-  title: string;
-  desc: string;
-  target: string | null;
-  placement: string;
-  note?: string;
-}
-
-const tourSteps: { [key: string]: TourStep[] } = {
-    TEACHER: [
-      { 
-        title: 'Dashboard Guru', 
-        desc: 'Ini halaman utama kamu. Di sini bisa lihat ringkasan mengajar.',
-        target: '[href="#/teacher"]',
-        placement: 'right'
-      },
-      { 
-        title: 'Lapor Presensi', 
-        desc: 'KLIK DI SINI untuk lapor setiap selesai mengajar. Sistem otomatis deteksi sesi 1-6.',
-        target: '[href="#/teacher"]',
-        placement: 'right'
-      },
-      { 
-        title: 'Honor Saya', 
-        desc: 'KLIK DI SINI untuk pantau status honor & download slip gaji.',
-        target: '[href="#/teacher/honor"]',
-        placement: 'right'
-      },
-      { 
-        title: 'Rapot Siswa', 
-        desc: 'KLIK DI SINI untuk lihat permintaan rapot dari siswa.',
-        target: '[href="#/teacher/reports"]',
-        placement: 'right'
-      },
-    ],
-    ADMIN: [
-      { 
-        title: 'Dashboard Admin', 
-        desc: 'Lihat ringkasan keuangan dan aktivitas sistem di sini.',
-        target: '[href="#/admin"]',
-        placement: 'right'
-      },
-      { 
-        title: 'Keuangan', 
-        desc: 'KLIK DI SINI untuk verifikasi SPP siswa. Cek bukti bayar lalu konfirmasi.',
-        target: '[href="#/admin/finance"]',
-        placement: 'right'
-      },
-      { 
-        title: 'Buku Induk', 
-        desc: 'KLIK DI SINI untuk daftarkan siswa baru atau update data.',
-        target: '[href="#/admin/buku-induk"]',
-        placement: 'right'
-      },
-      { 
-        title: 'Sistem', 
-        desc: 'PENTING! KLIK DI SINI untuk export database minimal sebulan sekali.',
-        target: '[href="#/admin/maintenance"]',
-        placement: 'right'
-      },
-    ],
-STUDENT: [
-  { 
-    title: '1. Menu Kelas Saya', 
-    desc: 'Selamat datang! Ini menu untuk lihat paket belajar dan progres absensi kamu.',
-    target: '[href="#/student"]',
-    placement: 'right'
-  },
-  { 
-    title: '2. Menu Pembayaran', 
-    desc: 'KLIK DI SINI untuk bayar paket kelas. Penting! Kamu HARUS bayar dulu sebelum bisa absen!',
-    target: '[href="#/student/payments"]',
-    placement: 'right'
-  },
-  { 
-    title: '3. Pilih Paket & Isi Form', 
-    desc: 'Di halaman Pembayaran, pilih paket kelas (misal: "Microsoft Word Basic - Reguler 1"). Isi nominal, tanggal, dan upload bukti transfer.',
-    target: null,
-    placement: 'center',
-    note: '💡 Setelah tour selesai, lakukan pembayaran dulu ya! Nanti kamu bisa lanjut tour lagi dengan klik tombol "?" setelah pembayaran selesai.'
-  },
-  { 
-    title: '4. Upload Bukti Transfer', 
-    desc: 'Klik tombol upload untuk pilih foto/screenshot bukti transfer kamu. File akan otomatis dikompres.',
-    target: null,
-    placement: 'center'
-  },
-  { 
-    title: '5. Kirim Laporan', 
-    desc: 'Setelah semua terisi, klik tombol "KIRIM LAPORAN" yang berwarna hijau di bawah.',
-    target: null,
-    placement: 'center'
-  },
-  { 
-    title: '6. Pembayaran Pending', 
-    desc: 'Pembayaran kamu muncul di "Riwayat Pembayaran" dengan status PENDING (kuning). Selama pending, kamu MASIH BISA edit atau hapus data.',
-    target: null,
-    placement: 'center'
-  },
-  { 
-    title: '7. Tunggu Persetujuan Admin', 
-    desc: 'Admin akan cek bukti transfer kamu. Kalau disetujui, status berubah jadi VERIFIED (hijau) dan kamu dapat kuitansi digital!',
-    target: null,
-    placement: 'center'
-  },
-  { 
-    title: '8. Download Kuitansi', 
-    desc: 'Setelah verified, tombol "LIHAT KUITANSI" akan muncul. Klik untuk download kuitansi resmi sebagai bukti pembayaran.',
-    target: null,
-    placement: 'center'
-  },
-  { 
-    title: '9. Kembali ke Kelas Saya', 
-    desc: 'Setelah pembayaran disetujui, KLIK DI SINI untuk mulai absen. Kotak kelas yang sudah dibayar akan muncul!',
-    target: '[href="#/student"]',
-    placement: 'right',
-    note: '✅ Pastikan pembayaran kamu sudah VERIFIED (hijau) dulu sebelum lanjut!'
-  },
-  { 
-    title: '10. Kotak Kelas Muncul', 
-    desc: 'Kotak paket belajar yang sudah dibayar akan muncul. Kamu akan lihat progress (misal: 0/6) dan tombol untuk absen setiap sesi.',
-    target: null,
-    placement: 'center'
-  },
-  { 
-    title: '11. Klik Tombol Absen', 
-    desc: 'Klik nomor sesi (1, 2, 3, dst) atau tombol "ABSEN" untuk lapor setiap kali selesai belajar. Pilih tanggal belajar lalu simpan.',
-    target: null,
-    placement: 'center'
-  },
-  { 
-    title: '12. Absen 6 Kali', 
-    desc: 'Kamu harus absen 6 kali untuk menyelesaikan paket. Progress akan update otomatis (1/6 → 2/6 → ... → 6/6).',
-    target: null,
-    placement: 'center'
-  },
-  { 
-    title: '13. Tombol Klaim Guru Muncul', 
-    desc: 'Setelah absen 6/6, tombol "KLAIM GURU" akan muncul di kotak kelas. Klik untuk memilih guru pembimbing!',
-    target: null,
-    placement: 'center',
-    note: '📌 Tombol "KLAIM GURU" baru muncul setelah kamu absen 6 kali. Selesaikan dulu absensimu ya!'
-  },
-  { 
-    title: '14. Pilih Guru Pembimbing', 
-    desc: 'Modal akan muncul. Pilih guru yang kamu inginkan dari dropdown, lalu klik "AJUKAN SEKARANG". Guru akan dapat notifikasi.',
-    target: null,
-    placement: 'center'
-  },
-  { 
-    title: '15. Tunggu Persetujuan Guru', 
-    desc: 'Guru bisa TERIMA atau TOLAK. Kalau ditolak, kamu bisa pilih guru lain. Kalau diterima, status berubah jadi "Menunggu Rapot dari Guru".',
-    target: null,
-    placement: 'center'
-  },
-  { 
-    title: '16. Proses Rapot (3-7 Hari)', 
-    desc: 'Setelah guru terima, tunggu 3-7 hari kerja. Guru akan isi nilai, topik, dan catatan perkembangan kamu.',
-    target: null,
-    placement: 'center'
-  },
-  { 
-    title: '17. Download Rapot!', 
-    desc: 'Rapot selesai! Klik kotak kelas untuk lihat dan download rapot lengkap. Rapot berisi nilai 6 sesi, topik pembelajaran, dan catatan guru. Selamat! 🎉',
-    target: null,
-    placement: 'center'
-  },
-  { 
-    title: '18. Ulangi untuk Paket Baru', 
-    desc: 'Mau ikut kelas lagi? Ulangi dari awal: Bayar → Absen 6x → Klaim Guru → Dapat Rapot. Semangat belajar! ✨',
-    target: null,
-    placement: 'center'
-  },
-]
-  }[role] || [];
-
+const GuideModal = ({ role, onClose }: { role: string, onClose: () => void }) => {
   const content = {
-    ADMIN: { color: 'bg-blue-600', borderColor: 'border-blue-500', glowColor: 'rgba(59, 130, 246, 0.6)' },
-    TEACHER: { color: 'bg-orange-500', borderColor: 'border-orange-500', glowColor: 'rgba(249, 115, 22, 0.6)' },
-    STUDENT: { color: 'bg-emerald-600', borderColor: 'border-emerald-500', glowColor: 'rgba(16, 185, 129, 0.6)' }
-  }[role] || { color: 'bg-slate-600', borderColor: 'border-slate-500', glowColor: 'rgba(100, 116, 139, 0.6)' };
-
-const currentStepData = tourSteps[currentStep];
-  
-  // TAMBAH INI - Auto advance kalau user klik target
-  React.useEffect(() => {
-    if (!currentStepData?.target) return;
-    
-    const handleTargetClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      const targetElement = document.querySelector(currentStepData.target);
-      
-      if (targetElement && (targetElement.contains(target) || targetElement === target)) {
-        // User klik elemen yang di-highlight
-        setTimeout(() => {
-          if (currentStep < tourSteps.length - 1) {
-            setCurrentStep(currentStep + 1);
-          } else {
-            onClose(); // Tutup tour kalau udah step terakhir
-          }
-        }, 500); // Delay 500ms biar smooth
-      }
-    };
-    
-    document.addEventListener('click', handleTargetClick, true);
-    return () => document.removeEventListener('click', handleTargetClick, true);
-  }, [currentStepData, currentStep, tourSteps.length, setCurrentStep, onClose]);
-  
-React.useEffect(() => {
-  if (!currentStepData || !currentStepData.target) return;
-  
-  const targetEl = document.querySelector(currentStepData.target) as HTMLElement;
-  if (targetEl) {
-    // Inject style langsung
-    targetEl.style.position = 'relative';
-    targetEl.style.zIndex = '60';
-    targetEl.style.borderRadius = '12px';
-    targetEl.style.transition = 'all 0.3s ease';
-    
-    // Scroll ke elemen
-    targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-  }
-  
-  return () => {
-    if (targetEl) {
-      // Clean up style
-      targetEl.style.zIndex = '';
-      targetEl.style.boxShadow = '';
-      targetEl.style.borderRadius = '';
+    ADMIN: {
+      color: 'bg-blue-600',
+      text: 'text-blue-600',
+      steps: [
+        { title: 'Verifikasi SPP', desc: 'Cek bukti bayar siswa di tab "Keuangan" -> "Verif SPP". Klik konfirmasi agar paket aktif.' },
+        { title: 'Bayar Honor', desc: 'Cairkan gaji guru di tab "Gaji Guru" & upload bukti transfer untuk mengurangi saldo kas.' },
+        { title: 'Buku Induk', desc: 'Daftarkan siswa baru atau update data kontak orang tua di menu "Buku Induk".' },
+        { title: 'Maintenance', desc: 'Lakukan "Export Database" di menu "Sistem" minimal sebulan sekali untuk cadangan data.' }
+      ]
+    },
+    TEACHER: {
+      color: 'bg-orange-500',
+      text: 'text-orange-600',
+      steps: [
+        { title: 'Lapor Presensi', desc: 'Lapor setiap selesai mengajar. Sistem otomatis mendeteksi sesi 1-6 dalam satu paket.' },
+        { title: 'Guru Pengganti', desc: 'Jika digantikan teman, gunakan tombol "Berhalangan". Honor akan otomatis beralih ke temanmu.' },
+        { title: 'Pantau Honor', desc: 'Lihat status honor cair & unduh slip gaji digital resmi di menu "Honor Saya".' },
+        { title: 'Proses Rapot', desc: 'Permintaan rapot muncul di menu "Rapot Siswa" hanya setelah siswa menekan tombol Klaim.' }
+      ]
+    },
+    STUDENT: {
+      color: 'bg-emerald-600',
+      text: 'text-emerald-600',
+      steps: [
+        { title: 'Lapor Bayar', desc: 'Upload bukti transfer di menu "Pembayaran" agar Admin bisa mengaktifkan paket belajarmu.' },
+        { title: 'Presensi Mandiri', desc: 'Presensi dilakukan secara mandiri, kamu bisa klik nomor sesi di "Kelas Saya" untuk lapor progres.' },
+        { title: 'Klaim Rapot', desc: 'Tombol Klaim muncul saat progres 6/6. Pilih guru pembimbingmu untuk meminta penilaian.' },
+        { title: 'Unduh Rapot', desc: 'Sertifikat & Rapot PDF bisa diunduh di tab "Kelas Saya" setelah guru selesai menilai.' }
+      ]
     }
-  };
-}, [currentStep, currentStepData]);
+  }[role] || { color: 'bg-slate-600', text: 'text-slate-600', steps: [] };
 
-  const handleNext = () => {
-    if (currentStep < tourSteps.length - 1) {
-      setCurrentStep(currentStep + 1);
-    } else {
-      onClose();
-    }
-  };
-
-  const handleBack = () => {
-    if (currentStep > 0) setCurrentStep(currentStep - 1);
-  };
-
-if (!currentStepData) return null;
-
-// Check if this step has a specific target element
-const hasTarget = currentStepData.target !== null;
-const targetEl = hasTarget ? document.querySelector(currentStepData.target) : null;
-const rect = targetEl?.getBoundingClientRect();
-
-return (
-    <>
-      {/* Light overlay - JANGAN BLOCK KLIK */}
-      <div className="fixed inset-0 bg-slate-900/20 z-[99998] animate-in fade-in pointer-events-none" />
-      
-{/* Spotlight highlight - only show if target exists */}
-{hasTarget && rect && (
-  <div 
-    className={`fixed z-[99999] ${content.borderColor} border-[6px] rounded-2xl pointer-events-none animate-pulse`}
-    style={{
-      top: rect.top - 12,
-      left: rect.left - 12,
-      width: rect.width + 24,
-      height: rect.height + 24,
-      boxShadow: `0 0 0 9999px rgba(15, 23, 42, 0.3), 0 0 60px 20px ${content.glowColor}`
-    }}
-  />
-)}
-
-{/* Tooltip */}
-<div 
-  className="fixed z-[100000] animate-in slide-in-from-bottom pointer-events-auto"
-  style={
-    hasTarget && rect
-      ? {
-          top: rect.bottom + window.innerHeight - rect.bottom < 400 ? rect.top - 420 : rect.top,
-          left: rect.right + 24,
-          maxWidth: '320px'
-        }
-      : {
-          top: '50%',
-          left: '50%',
-          transform: 'translate(-50%, -50%)',
-          maxWidth: '400px'
-        }
-  }
->
-  {/* Arrow pointing to element - only for targeted steps */}
-  {hasTarget && rect && (
-    <>
-      <div 
-        className={`fixed z-[99999] ${content.borderColor} border-[8px] rounded-2xl pointer-events-none animate-pulse`}
-        style={{
-          top: rect.top - 16,
-          left: rect.left - 16,
-          width: rect.width + 32,
-          height: rect.height + 32,
-          boxShadow: `0 0 0 9999px rgba(15, 23, 42, 0.3), 0 0 60px 20px ${content.glowColor}`,
-          animationDuration: '1s'
-        }}
-      />
-      
-      {/* Label "KLIK DI SINI" di atas elemen */}
-      <div 
-        className={`fixed z-[100000] ${content.color} text-white px-4 py-2 rounded-xl font-black text-xs uppercase pointer-events-none animate-bounce`}
-        style={{
-          top: rect.top - 50,
-          left: rect.left + (rect.width / 2) - 60,
-        }}
-      >
-        👆 KLIK DI SINI
-      </div>
-    </>
-  )}
-  
-  {/* CARD TOUR - INI YANG DIPERBAIKI */}
-  <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
-    {/* HEADER */}
-    <div className={`p-6 ${content.color} text-white`}>
-      <div className="flex items-center justify-between mb-2">
-        <span className="text-xs font-black uppercase opacity-80">Step {currentStep + 1}/{tourSteps.length}</span>
-        <button onClick={onClose} className="p-1 bg-white/20 rounded-lg hover:bg-white/40 transition-all">
-          <X size={16}/>
-        </button>
-      </div>
-      <h4 className="text-lg font-black uppercase">{currentStepData.title}</h4>
-    </div>
-    
-    {/* CONTENT BODY */}
-    <div className="p-6 space-y-4">
-      <p className="text-sm text-slate-700 font-bold leading-relaxed">{currentStepData.desc}</p>
-      
-      {/* TAMBAH INI - Kalau ada target, kasih petunjuk tegas */}
-      {hasTarget && (
-        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 animate-pulse">
-          <p className="text-xs font-black text-blue-800 leading-relaxed text-center">
-            👆 KLIK ELEMEN YANG MENYALA UNTUK LANJUT
-          </p>
-        </div>
-      )}
-      
-      {/* Note/Warning Box */}
-      {currentStepData.note && (
-        <div className="bg-amber-50 border-2 border-amber-200 rounded-xl p-4">
-          <p className="text-xs font-bold text-amber-800 leading-relaxed">{currentStepData.note}</p>
-        </div>
-      )}
-      
-      <div className="flex gap-2">
-        {currentStep > 0 && (
-          <button 
-            onClick={handleBack} 
-            className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-xs uppercase hover:bg-slate-200 transition-all"
-          >
-            ← Kembali
-          </button>
-        )}
-        
-        {/* Kalau NGGAK ada target, show tombol LANJUT */}
-        {!hasTarget && (
-          <button 
-            onClick={handleNext} 
-            className={`flex-1 py-2 ${content.color} text-white rounded-xl font-black text-xs uppercase hover:opacity-90 transition-all`}
-          >
-            {currentStep < tourSteps.length - 1 ? 'Lanjut →' : 'Selesai ✨'}
-          </button>
-        )}
-        
-        {/* Kalau ada target, kasih petunjuk */}
-        {hasTarget && (
-          <div className="flex-1 py-2 px-4 bg-slate-100 text-slate-600 rounded-xl font-black text-xs uppercase text-center">
-            👆 Klik elemen yang di-highlight
+  return (
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
+      <div className="bg-white w-full max-w-sm rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+        <div className={`p-8 ${content.color} text-white flex justify-between items-center shrink-0`}>
+          <div className="flex items-center gap-3">
+            <HelpCircle size={24} />
+            <h3 className="text-lg font-black uppercase italic tracking-tighter">Panduan Sistem</h3>
           </div>
-        )}
+          <button onClick={onClose} className="p-2 bg-white/20 rounded-full hover:bg-white/40 transition-all"><X size={18}/></button>
+        </div>
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-6">
+          {content.steps.map((s, i) => (
+            <div key={i} className="flex gap-4">
+              <div className={`w-8 h-8 rounded-full ${content.color} text-white flex items-center justify-center font-black italic shrink-0 text-xs shadow-md`}>0{i+1}</div>
+              <div className="space-y-1">
+                <h4 className={`text-xs font-black uppercase tracking-widest ${content.text}`}>{s.title}</h4>
+                <p className="text-[10px] font-bold text-slate-400 uppercase leading-relaxed uppercase">{s.desc}</p>
+              </div>
+            </div>
+          ))}
+          <div className="pt-4 border-t border-slate-50">
+             <div className="bg-slate-50 p-4 rounded-2xl flex items-center gap-3">
+                <Info size={16} className="text-slate-400 shrink-0" />
+                <p className="text-[9px] font-black text-slate-400 uppercase leading-tight italic">Hubungi Admin jika ada kendala teknis lebih lanjut ya Kak! ✨</p>
+             </div>
+          </div>
+        </div>
+        <div className="p-6 bg-white border-t border-slate-50 shrink-0">
+          <button onClick={onClose} className={`w-full py-4 ${content.color} text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all`}>SAYA MENGERTI ✨</button>
+        </div>
       </div>
-      
-      <button 
-        onClick={onClose} 
-        className="w-full text-slate-400 text-xs font-bold uppercase hover:text-slate-600"
-      >
-        Lewati Tour
-      </button>
     </div>
-  </div>
-</div>
-</>
-);
+  );
 };
 
 // 🔥 MODAL ANTI PORTRAIT - NUTUPIN LAYAR KALO PORTRAIT
@@ -494,25 +156,9 @@ const PortraitBlocker = () => {
 const AppContent = ({ 
   user, setUser, attendanceLogs, setAttendanceLogs, studentAttendanceLogs, setStudentAttendanceLogs, teachers, setTeachers, studentAccounts, setStudentAccounts, transactions, setTransactions, studentPayments, setStudentPayments, studentProfiles, setStudentProfiles, salesContacts, setSalesContacts, reports, setReports, subjects, setSubjects, classes, setClasses, levels, setLevels, masterSchedule, setMasterSchedule, salaryConfig, setSalaryConfig, isSidebarOpen, setIsSidebarOpen, isSyncing, connectionError, refreshAllData
 }: any) => {
-const navigate = useNavigate();
+  const navigate = useNavigate();
   const location = useLocation();
-  
-  // State tour baru
-  const [showTour, setShowTour] = useState(() => {
-    const saved = localStorage.getItem('sanur_tour_active');
-    return saved === 'true';
-  });
-  
-  const [tourStep, setTourStep] = useState(() => {
-    const saved = localStorage.getItem('sanur_tour_step');
-    return saved ? parseInt(saved) : 0;
-  });
-  
-  // Sync tour state ke localStorage
-  useEffect(() => {
-    localStorage.setItem('sanur_tour_active', showTour.toString());
-    localStorage.setItem('sanur_tour_step', tourStep.toString());
-  }, [showTour, tourStep]);
+  const [showGuide, setShowGuide] = useState(false);
   
   // 🎯 DETEKSI DOMAIN - FUTURE PROOF!
   // Vercel domain (.vercel.app) = verify only
@@ -600,19 +246,7 @@ const pendingReportsCount = Array.isArray(reports) ?
 
   return (
     <div className="min-h-screen bg-[#FDFDFF] flex overflow-hidden font-sans relative">
-      {showTour && (
-        <GuideTour 
-          role={user.role} 
-          currentStep={tourStep}
-          setCurrentStep={setTourStep}
-          onClose={() => {
-            setShowTour(false);
-            setTourStep(0);
-            localStorage.removeItem('sanur_tour_active');
-            localStorage.removeItem('sanur_tour_step');
-          }} 
-        />
-      )}
+      {showGuide && <GuideModal role={user.role} onClose={() => setShowGuide(false)} />}
       
       {isSidebarOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80000] lg:hidden animate-in fade-in" onClick={closeSidebar} />
@@ -674,13 +308,7 @@ const pendingReportsCount = Array.isArray(reports) ?
 </div>
           </div>
           <div className="flex items-center gap-3">
-<button 
-  onClick={() => {
-    setShowTour(true);
-    setTourStep(0);
-  }} 
-  className={`p-4 ${roleGuideColor} text-white rounded-2xl shadow-xl hover:opacity-90 active:scale-95 transition-all`}
->
+<button onClick={() => setShowGuide(true)} className={`p-4 ${roleGuideColor} text-white rounded-2xl shadow-xl hover:opacity-90 active:scale-95 transition-all`}>
    <HelpCircle size={20} />
 </button>
 <button onClick={executeLogout} className="p-4 bg-rose-600 text-white rounded-2xl shadow-xl hover:bg-rose-700 active:scale-95 transition-all">
