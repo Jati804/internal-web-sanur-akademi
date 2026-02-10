@@ -141,6 +141,96 @@ useEffect(() => {
     }
   };
 
+const executeDelete = async () => {
+  if (!showDeleteConfirm) return;
+  setIsLocalSyncing(true);
+  
+  try {
+    const userId = showDeleteConfirm.id;
+    const userName = showDeleteConfirm.name.toUpperCase().trim();
+    
+    console.log('🗑️ Mulai hapus siswa:', { userId, userName });
+    
+    // ========================================
+    // STEP 1: Hapus student_payments
+    // ========================================
+    const { error: paymentError } = await supabase
+      .from('student_payments')
+      .delete()
+      .ilike('studentname', userName);
+    
+    if (paymentError) {
+      console.error('❌ Error hapus payment:', paymentError);
+      throw paymentError;
+    }
+    console.log('✅ Payment dihapus');
+    
+    // ========================================
+    // STEP 2: Hapus student_attendance
+    // ========================================
+    const { error: attendanceError } = await supabase
+      .from('student_attendance')
+      .delete()
+      .ilike('studentname', userName);
+    
+    if (attendanceError) {
+      console.error('❌ Error hapus attendance:', attendanceError);
+      throw attendanceError;
+    }
+    console.log('✅ Attendance dihapus');
+    
+    // ========================================
+    // STEP 3: Update reports (JANGAN DIHAPUS!)
+    // Mark sebagai archived agar guru tetap punya history
+    // ========================================
+    const { error: reportError } = await supabase
+      .from('reports')
+      .update({ status: 'STUDENT_ARCHIVED' })
+      .contains('studentsattended', [userName])
+      .in('status', ['SESSION_LOG', 'REPORT_READY']);
+    
+    if (reportError) {
+      console.warn('⚠️ Warning update report:', reportError);
+      // Tidak throw error, karena ini optional
+    }
+    console.log('✅ Reports di-archive');
+    
+    // ========================================
+    // STEP 4: Hapus akun student
+    // ========================================
+    const { error: accountError } = await supabase
+      .from('student_accounts')
+      .delete()
+      .eq('id', userId);
+    
+    if (accountError) {
+      console.error('❌ Error hapus akun:', accountError);
+      throw accountError;
+    }
+    console.log('✅ Akun siswa dihapus');
+    
+    // ========================================
+    // STEP 5: Update local state
+    // ========================================
+    setStudentAccounts(prev => prev.filter(s => s.id !== userId));
+    
+    // Refresh data dari server
+    if (refreshAllData) await refreshAllData();
+    
+    // Tutup modal
+    setShowDeleteConfirm(null);
+    
+    // Success message (opsional)
+    alert('✨ Akun siswa berhasil dihapus! Rapot tetap tersimpan di histori guru.');
+    
+  } catch (e: any) {
+    console.error('❌ Error saat hapus siswa:', e);
+    alert(`Gagal menghapus siswa: ${e.message}`);
+  } finally {
+    setIsLocalSyncing(false);
+  }
+};
+  
   const handleSave = async () => {
     if (!formData.name || !formData.username) return;
     setIsLocalSyncing(true);
@@ -171,18 +261,68 @@ useEffect(() => {
     } catch (e: any) { alert("Terjadi Kendala: " + e.message); } finally { setIsLocalSyncing(false); }
   };
 
-  const executeDelete = async () => {
-    if (!showDeleteConfirm) return;
-    setIsLocalSyncing(true);
-    try {
-      const isStudent = activeTab === 'STUDENTS';
-      const tableName = isStudent ? 'student_accounts' : 'teachers';
-      const { error } = await supabase.from(tableName).delete().eq('id', showDeleteConfirm.id);
-      if (error) throw error;
-      if (refreshAllData) await refreshAllData();
-      setShowDeleteConfirm(null);
-    } catch (e: any) { alert("Gagal menghapus: " + e.message); } finally { setIsLocalSyncing(false); }
-  };
+const executeDelete = async () => {
+  if (!showDeleteConfirm) return;
+  setIsLocalSyncing(true);
+  
+  try {
+    const userId = showDeleteConfirm.id;
+    const userName = showDeleteConfirm.name.toUpperCase().trim();
+    
+    console.log('🗑️ Mulai hapus siswa:', { userId, userName });
+    
+    // STEP 1: Hapus student_payments
+    const { error: paymentError } = await supabase
+      .from('student_payments')
+      .delete()
+      .ilike('studentname', userName);
+    
+    if (paymentError) throw paymentError;
+    console.log('✅ Payment dihapus');
+    
+    // STEP 2: Hapus student_attendance
+    const { error: attendanceError } = await supabase
+      .from('student_attendance')
+      .delete()
+      .ilike('studentname', userName);
+    
+    if (attendanceError) throw attendanceError;
+    console.log('✅ Attendance dihapus');
+    
+    // STEP 3: Update reports (JANGAN DIHAPUS!)
+    const { error: reportError } = await supabase
+      .from('reports')
+      .update({ status: 'STUDENT_ARCHIVED' })
+      .contains('studentsattended', [userName])
+      .in('status', ['SESSION_LOG', 'REPORT_READY']);
+    
+    if (reportError) console.warn('⚠️ Warning update report:', reportError);
+    console.log('✅ Reports di-archive');
+    
+    // STEP 4: Hapus akun student
+    const { error: accountError } = await supabase
+      .from('student_accounts')
+      .delete()
+      .eq('id', userId);
+    
+    if (accountError) throw accountError;
+    console.log('✅ Akun siswa dihapus');
+    
+    // STEP 5: Update local state
+    setStudentAccounts(prev => prev.filter(s => s.id !== userId));
+    
+    if (refreshAllData) await refreshAllData();
+    setShowDeleteConfirm(null);
+    
+    alert('✨ Akun siswa berhasil dihapus! Rapot tetap tersimpan di histori guru.');
+    
+  } catch (e: any) {
+    console.error('❌ Error saat hapus siswa:', e);
+    alert(`Gagal menghapus siswa: ${e.message}`);
+  } finally {
+    setIsLocalSyncing(false);
+  }
+};
 
   return (
   <>
