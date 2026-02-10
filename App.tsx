@@ -61,30 +61,89 @@ const GuideTour = ({ role, onClose }: { role: string, onClose: () => void }) => 
 
   const tourSteps = {
     TEACHER: [
-      { title: 'Lapor Presensi', desc: 'Lapor setiap selesai mengajar. Sistem otomatis mendeteksi sesi 1-6 dalam satu paket.' },
-      { title: 'Guru Pengganti', desc: 'Jika digantikan teman, gunakan tombol "Berhalangan". Honor akan otomatis beralih ke temanmu.' },
-      { title: 'Pantau Honor', desc: 'Lihat status honor cair & unduh slip gaji digital resmi di menu "Honor Saya".' },
-      { title: 'Proses Rapot', desc: 'Permintaan rapot muncul di menu "Rapot Siswa" hanya setelah siswa menekan tombol Klaim.' }
+      { 
+        title: 'Dashboard Guru', 
+        desc: 'Ini halaman utama kamu. Di sini bisa lihat ringkasan mengajar.',
+        target: '[href="#/teacher"]',
+        placement: 'right'
+      },
+      { 
+        title: 'Lapor Presensi', 
+        desc: 'KLIK DI SINI untuk lapor setiap selesai mengajar. Sistem otomatis deteksi sesi 1-6.',
+        target: '[href="#/teacher"]',
+        placement: 'right'
+      },
+      { 
+        title: 'Honor Saya', 
+        desc: 'KLIK DI SINI untuk pantau status honor & download slip gaji.',
+        target: '[href="#/teacher/honor"]',
+        placement: 'right'
+      },
+      { 
+        title: 'Rapot Siswa', 
+        desc: 'KLIK DI SINI untuk lihat permintaan rapot dari siswa.',
+        target: '[href="#/teacher/reports"]',
+        placement: 'right'
+      },
     ],
     ADMIN: [
-      { title: 'Verifikasi SPP', desc: 'Cek bukti bayar siswa di tab "Keuangan" -> "Verif SPP". Klik konfirmasi agar paket aktif.' },
-      { title: 'Bayar Honor', desc: 'Cairkan gaji guru di tab "Gaji Guru" & upload bukti transfer untuk mengurangi saldo kas.' },
-      { title: 'Buku Induk', desc: 'Daftarkan siswa baru atau update data kontak orang tua di menu "Buku Induk".' },
-      { title: 'Maintenance', desc: 'Lakukan "Export Database" di menu "Sistem" minimal sebulan sekali untuk cadangan data.' }
+      { 
+        title: 'Dashboard Admin', 
+        desc: 'Lihat ringkasan keuangan dan aktivitas sistem di sini.',
+        target: '[href="#/admin"]',
+        placement: 'right'
+      },
+      { 
+        title: 'Keuangan', 
+        desc: 'KLIK DI SINI untuk verifikasi SPP siswa. Cek bukti bayar lalu konfirmasi.',
+        target: '[href="#/admin/finance"]',
+        placement: 'right'
+      },
+      { 
+        title: 'Buku Induk', 
+        desc: 'KLIK DI SINI untuk daftarkan siswa baru atau update data.',
+        target: '[href="#/admin/buku-induk"]',
+        placement: 'right'
+      },
+      { 
+        title: 'Sistem', 
+        desc: 'PENTING! KLIK DI SINI untuk export database minimal sebulan sekali.',
+        target: '[href="#/admin/maintenance"]',
+        placement: 'right'
+      },
     ],
     STUDENT: [
-      { title: 'Lapor Bayar', desc: 'Upload bukti transfer di menu "Pembayaran" agar Admin bisa mengaktifkan paket belajarmu.' },
-      { title: 'Presensi Mandiri', desc: 'Presensi dilakukan secara mandiri, kamu bisa klik nomor sesi di "Kelas Saya" untuk lapor progres.' },
-      { title: 'Klaim Rapot', desc: 'Tombol Klaim muncul saat progres 6/6. Pilih guru pembimbingmu untuk meminta penilaian.' },
-      { title: 'Unduh Rapot', desc: 'Sertifikat & Rapot PDF bisa diunduh di tab "Kelas Saya" setelah guru selesai menilai.' }
+      { 
+        title: 'Kelas Saya', 
+        desc: 'Halaman utama untuk lihat progres belajar kamu.',
+        target: '[href="#/student"]',
+        placement: 'right'
+      },
+      { 
+        title: 'Pembayaran', 
+        desc: 'KLIK DI SINI untuk upload bukti transfer SPP.',
+        target: '[href="#/student/payments"]',
+        placement: 'right'
+      },
     ]
   }[role] || [];
 
   const content = {
-    ADMIN: { color: 'bg-blue-600', text: 'text-blue-600' },
-    TEACHER: { color: 'bg-orange-500', text: 'text-orange-600' },
-    STUDENT: { color: 'bg-emerald-600', text: 'text-emerald-600' }
-  }[role] || { color: 'bg-slate-600', text: 'text-slate-600' };
+    ADMIN: { color: 'bg-blue-600', borderColor: 'border-blue-500' },
+    TEACHER: { color: 'bg-orange-500', borderColor: 'border-orange-500' },
+    STUDENT: { color: 'bg-emerald-600', borderColor: 'border-emerald-500' }
+  }[role] || { color: 'bg-slate-600', borderColor: 'border-slate-500' };
+
+  const currentStepData = tourSteps[currentStep];
+  
+  React.useEffect(() => {
+    if (!currentStepData) return;
+    
+    const targetEl = document.querySelector(currentStepData.target);
+    if (targetEl) {
+      targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+  }, [currentStep, currentStepData]);
 
   const handleNext = () => {
     if (currentStep < tourSteps.length - 1) {
@@ -98,48 +157,87 @@ const GuideTour = ({ role, onClose }: { role: string, onClose: () => void }) => 
     if (currentStep > 0) setCurrentStep(currentStep - 1);
   };
 
+  if (!currentStepData) return null;
+
+  const targetEl = document.querySelector(currentStepData.target);
+  const rect = targetEl?.getBoundingClientRect();
+
   return (
-    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-      <div className="bg-white w-full max-w-sm rounded-[3rem] shadow-2xl overflow-hidden flex flex-col">
-        <div className={`p-8 ${content.color} text-white flex justify-between items-center`}>
-          <div className="flex items-center gap-3">
-            <HelpCircle size={24} />
-            <h3 className="text-lg font-black uppercase italic tracking-tighter">Panduan Sistem</h3>
-          </div>
-          <button onClick={onClose} className="p-2 bg-white/20 rounded-full hover:bg-white/40 transition-all"><X size={18}/></button>
-        </div>
-        
-        <div className="p-8 space-y-6">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-black text-slate-400 uppercase">Step {currentStep + 1} / {tourSteps.length}</span>
-            <div className="flex gap-1">
-              {tourSteps.map((_, i) => (
-                <div key={i} className={`w-2 h-2 rounded-full ${i === currentStep ? content.color : 'bg-slate-200'}`} />
-              ))}
+    <>
+      {/* Dark overlay */}
+      <div className="fixed inset-0 bg-slate-900/80 z-[99998] animate-in fade-in" />
+      
+      {/* Spotlight highlight */}
+      {rect && (
+        <div 
+          className={`fixed z-[99999] ${content.borderColor} border-4 rounded-2xl pointer-events-none animate-pulse`}
+          style={{
+            top: rect.top - 8,
+            left: rect.left - 8,
+            width: rect.width + 16,
+            height: rect.height + 16,
+            boxShadow: `0 0 0 9999px rgba(15, 23, 42, 0.8), 0 0 40px 10px rgba(59, 130, 246, 0.5)`
+          }}
+        />
+      )}
+
+      {/* Tooltip */}
+      {rect && (
+        <div 
+          className="fixed z-[100000] animate-in slide-in-from-left"
+          style={{
+            top: rect.top,
+            left: rect.right + 24,
+            maxWidth: '320px'
+          }}
+        >
+          {/* Arrow pointing to element */}
+          <div 
+            className={`absolute -left-3 top-8 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 ${content.color.replace('bg-', 'border-r-')}`}
+          />
+          
+          <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+            <div className={`p-6 ${content.color} text-white`}>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-black uppercase opacity-80">Step {currentStep + 1}/{tourSteps.length}</span>
+                <button onClick={onClose} className="p-1 bg-white/20 rounded-lg hover:bg-white/40 transition-all">
+                  <X size={16}/>
+                </button>
+              </div>
+              <h4 className="text-lg font-black uppercase">{currentStepData.title}</h4>
+            </div>
+            
+            <div className="p-6 space-y-4">
+              <p className="text-sm text-slate-700 font-bold leading-relaxed">{currentStepData.desc}</p>
+              
+              <div className="flex gap-2">
+                {currentStep > 0 && (
+                  <button 
+                    onClick={handleBack} 
+                    className="px-4 py-2 bg-slate-100 text-slate-600 rounded-xl font-bold text-xs uppercase hover:bg-slate-200 transition-all"
+                  >
+                    ← Kembali
+                  </button>
+                )}
+                <button 
+                  onClick={handleNext} 
+                  className={`flex-1 py-2 ${content.color} text-white rounded-xl font-black text-xs uppercase hover:opacity-90 transition-all`}
+                >
+                  {currentStep < tourSteps.length - 1 ? 'Lanjut →' : 'Selesai ✨'}
+                </button>
+              </div>
+              
+              <button 
+                onClick={onClose} 
+                className="w-full text-slate-400 text-xs font-bold uppercase hover:text-slate-600"
+              >
+                Lewati Tour
+              </button>
             </div>
           </div>
-
-          <div className="space-y-3">
-            <h4 className={`text-lg font-black uppercase ${content.text}`}>{tourSteps[currentStep]?.title}</h4>
-            <p className="text-sm text-slate-600 leading-relaxed">{tourSteps[currentStep]?.desc}</p>
-          </div>
         </div>
-
-        <div className="p-6 bg-slate-50 flex gap-3">
-          {currentStep > 0 && (
-            <button onClick={handleBack} className="px-6 py-3 bg-white border-2 border-slate-200 text-slate-600 rounded-2xl font-black text-xs uppercase">
-              Kembali
-            </button>
-          )}
-          <button onClick={handleNext} className={`flex-1 py-3 ${content.color} text-white rounded-2xl font-black text-xs uppercase`}>
-            {currentStep < tourSteps.length - 1 ? 'Lanjut' : 'Selesai ✨'}
-          </button>
-          <button onClick={onClose} className="px-4 py-3 text-slate-400 text-xs font-bold uppercase">
-            Lewati
-          </button>
-        </div>
-      </div>
-    </div>
+      )}
+    </>
   );
 };
 
