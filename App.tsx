@@ -11,6 +11,8 @@ import {
   Sparkles, HelpCircle, Info, RotateCw
 } from 'lucide-react';
 
+import Joyride, { Step, CallBackProps, STATUS } from 'react-joyride';
+
 import { supabase } from './services/supabase.ts';
 
 import LoginPage from './pages/LoginPage.tsx';
@@ -56,72 +58,150 @@ const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }
   );
 };
 
-const GuideModal = ({ role, onClose }: { role: string, onClose: () => void }) => {
-  const content = {
-    ADMIN: {
-      color: 'bg-blue-600',
-      text: 'text-blue-600',
-      steps: [
-        { title: 'Verifikasi SPP', desc: 'Cek bukti bayar siswa di tab "Keuangan" -> "Verif SPP". Klik konfirmasi agar paket aktif.' },
-        { title: 'Bayar Honor', desc: 'Cairkan gaji guru di tab "Gaji Guru" & upload bukti transfer untuk mengurangi saldo kas.' },
-        { title: 'Buku Induk', desc: 'Daftarkan siswa baru atau update data kontak orang tua di menu "Buku Induk".' },
-        { title: 'Maintenance', desc: 'Lakukan "Export Database" di menu "Sistem" minimal sebulan sekali untuk cadangan data.' }
-      ]
-    },
-    TEACHER: {
-      color: 'bg-orange-500',
-      text: 'text-orange-600',
-      steps: [
-        { title: 'Lapor Presensi', desc: 'Lapor setiap selesai mengajar. Sistem otomatis mendeteksi sesi 1-6 dalam satu paket.' },
-        { title: 'Guru Pengganti', desc: 'Jika digantikan teman, gunakan tombol "Berhalangan". Honor akan otomatis beralih ke temanmu.' },
-        { title: 'Pantau Honor', desc: 'Lihat status honor cair & unduh slip gaji digital resmi di menu "Honor Saya".' },
-        { title: 'Proses Rapot', desc: 'Permintaan rapot muncul di menu "Rapot Siswa" hanya setelah siswa menekan tombol Klaim.' }
-      ]
-    },
-    STUDENT: {
-      color: 'bg-emerald-600',
-      text: 'text-emerald-600',
-      steps: [
-        { title: 'Lapor Bayar', desc: 'Upload bukti transfer di menu "Pembayaran" agar Admin bisa mengaktifkan paket belajarmu.' },
-        { title: 'Presensi Mandiri', desc: 'Presensi dilakukan secara mandiri, kamu bisa klik nomor sesi di "Kelas Saya" untuk lapor progres.' },
-        { title: 'Klaim Rapot', desc: 'Tombol Klaim muncul saat progres 6/6. Pilih guru pembimbingmu untuk meminta penilaian.' },
-        { title: 'Unduh Rapot', desc: 'Sertifikat & Rapot PDF bisa diunduh di tab "Kelas Saya" setelah guru selesai menilai.' }
-      ]
+const GuideTour = ({ role, onClose }: { role: string, onClose: () => void }) => {
+  const [runTour, setRunTour] = React.useState(true);
+
+  const tourSteps: { [key: string]: Step[] } = {
+    TEACHER: [
+      {
+        target: 'body',
+        content: 'Halo! Mari kita kenali sistem Sanur Akademi. Klik Next untuk mulai tour.',
+        placement: 'center',
+        disableBeacon: true,
+      },
+      {
+        target: '[href="#/teacher"]',
+        content: 'Ini halaman Dashboard utama kamu. Di sini kamu bisa lihat ringkasan aktivitas mengajar.',
+        placement: 'right',
+      },
+      {
+        target: 'button:has(> svg.lucide-clipboard-check)',
+        content: 'Klik tombol ini untuk LAPOR PRESENSI setiap selesai mengajar. Sistem otomatis mendeteksi sesi 1-6 dalam satu paket.',
+        placement: 'bottom',
+      },
+      {
+        target: '[href="#/teacher/honor"]',
+        content: 'Di menu HONOR SAYA, kamu bisa pantau status honor yang sudah cair & unduh slip gaji digital resmi.',
+        placement: 'right',
+      },
+      {
+        target: '[href="#/teacher/history"]',
+        content: 'Menu RAPOT SISWA menampilkan permintaan rapot. Permintaan muncul hanya setelah siswa menekan tombol Klaim.',
+        placement: 'right',
+      },
+    ],
+    ADMIN: [
+      {
+        target: 'body',
+        content: 'Selamat datang Admin! Mari kita tour fitur-fitur utama sistem.',
+        placement: 'center',
+        disableBeacon: true,
+      },
+      {
+        target: '[href="#/admin"]',
+        content: 'Dashboard Admin - Lihat ringkasan keuangan dan aktivitas sistem.',
+        placement: 'right',
+      },
+      {
+        target: '[href="#/admin/finance"]',
+        content: 'Di menu KEUANGAN, kamu bisa verifikasi SPP siswa. Cek bukti bayar dan klik konfirmasi agar paket aktif.',
+        placement: 'right',
+      },
+      {
+        target: '[href="#/admin/academic"]',
+        content: 'Menu BUKU INDUK untuk daftarkan siswa baru atau update data kontak orang tua.',
+        placement: 'right',
+      },
+      {
+        target: '[href="#/admin/maintenance"]',
+        content: 'PENTING! Lakukan Export Database di menu Sistem minimal sebulan sekali untuk cadangan data.',
+        placement: 'right',
+      },
+    ],
+    STUDENT: [
+      {
+        target: 'body',
+        content: 'Halo Pelajar! Yuk kenali fitur-fitur yang bisa kamu gunakan.',
+        placement: 'center',
+        disableBeacon: true,
+      },
+      {
+        target: 'button:has(> svg.lucide-wallet)',
+        content: 'Klik tombol PEMBAYARAN untuk upload bukti transfer agar Admin bisa mengaktifkan paket belajarmu.',
+        placement: 'bottom',
+      },
+      {
+        target: 'button:has(> svg.lucide-clipboard-check)',
+        content: 'PRESENSI MANDIRI - Klik nomor sesi untuk lapor progres belajar kamu.',
+        placement: 'bottom',
+      },
+      {
+        target: 'body',
+        content: 'Tombol Klaim Rapot akan muncul saat progres 6/6. Pilih guru pembimbingmu untuk minta penilaian.',
+        placement: 'center',
+      },
+    ],
+  };
+
+  const steps = tourSteps[role] || tourSteps.TEACHER;
+
+  const handleJoyrideCallback = (data: CallBackProps) => {
+    const { status } = data;
+    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+      setRunTour(false);
+      onClose();
     }
-  }[role] || { color: 'bg-slate-600', text: 'text-slate-600', steps: [] };
+  };
 
   return (
-    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-      <div className="bg-white w-full max-w-sm rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
-        <div className={`p-8 ${content.color} text-white flex justify-between items-center shrink-0`}>
-          <div className="flex items-center gap-3">
-            <HelpCircle size={24} />
-            <h3 className="text-lg font-black uppercase italic tracking-tighter">Panduan Sistem</h3>
-          </div>
-          <button onClick={onClose} className="p-2 bg-white/20 rounded-full hover:bg-white/40 transition-all"><X size={18}/></button>
-        </div>
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-6">
-          {content.steps.map((s, i) => (
-            <div key={i} className="flex gap-4">
-              <div className={`w-8 h-8 rounded-full ${content.color} text-white flex items-center justify-center font-black italic shrink-0 text-xs shadow-md`}>0{i+1}</div>
-              <div className="space-y-1">
-                <h4 className={`text-xs font-black uppercase tracking-widest ${content.text}`}>{s.title}</h4>
-                <p className="text-[10px] font-bold text-slate-400 uppercase leading-relaxed uppercase">{s.desc}</p>
-              </div>
-            </div>
-          ))}
-          <div className="pt-4 border-t border-slate-50">
-             <div className="bg-slate-50 p-4 rounded-2xl flex items-center gap-3">
-                <Info size={16} className="text-slate-400 shrink-0" />
-                <p className="text-[9px] font-black text-slate-400 uppercase leading-tight italic">Hubungi Admin jika ada kendala teknis lebih lanjut ya Kak! ✨</p>
-             </div>
-          </div>
-        </div>
-        <div className="p-6 bg-white border-t border-slate-50 shrink-0">
-          <button onClick={onClose} className={`w-full py-4 ${content.color} text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all`}>SAYA MENGERTI ✨</button>
-        </div>
-      </div>
-    </div>
+    <Joyride
+      steps={steps}
+      run={runTour}
+      continuous
+      showProgress
+      showSkipButton
+      callback={handleJoyrideCallback}
+      styles={{
+        options: {
+          primaryColor: role === 'ADMIN' ? '#2563eb' : role === 'TEACHER' ? '#f97316' : '#10b981',
+          zIndex: 100000,
+        },
+        buttonNext: {
+          backgroundColor: role === 'ADMIN' ? '#2563eb' : role === 'TEACHER' ? '#f97316' : '#10b981',
+          fontSize: 12,
+          fontWeight: 'bold',
+          textTransform: 'uppercase',
+          padding: '12px 24px',
+          borderRadius: '12px',
+        },
+        buttonBack: {
+          color: '#64748b',
+          fontSize: 12,
+          fontWeight: 'bold',
+          textTransform: 'uppercase',
+        },
+        buttonSkip: {
+          color: '#94a3b8',
+          fontSize: 10,
+          fontWeight: 'bold',
+        },
+        tooltip: {
+          borderRadius: '24px',
+          fontSize: 13,
+          padding: '24px',
+        },
+        tooltipContent: {
+          padding: '12px 0',
+        },
+      }}
+      locale={{
+        back: 'Kembali',
+        close: 'Tutup',
+        last: 'Selesai ✨',
+        next: 'Lanjut',
+        skip: 'Lewati',
+      }}
+    />
   );
 };
 
@@ -246,7 +326,7 @@ const pendingReportsCount = Array.isArray(reports) ?
 
   return (
     <div className="min-h-screen bg-[#FDFDFF] flex overflow-hidden font-sans relative">
-      {showGuide && <GuideModal role={user.role} onClose={() => setShowGuide(false)} />}
+      {showGuide && <GuideTour role={user.role} onClose={() => setShowGuide(false)} />}
       
       {isSidebarOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80000] lg:hidden animate-in fade-in" onClick={closeSidebar} />
