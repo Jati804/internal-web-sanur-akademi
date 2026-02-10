@@ -451,9 +451,25 @@ const PortraitBlocker = () => {
 const AppContent = ({ 
   user, setUser, attendanceLogs, setAttendanceLogs, studentAttendanceLogs, setStudentAttendanceLogs, teachers, setTeachers, studentAccounts, setStudentAccounts, transactions, setTransactions, studentPayments, setStudentPayments, studentProfiles, setStudentProfiles, salesContacts, setSalesContacts, reports, setReports, subjects, setSubjects, classes, setClasses, levels, setLevels, masterSchedule, setMasterSchedule, salaryConfig, setSalaryConfig, isSidebarOpen, setIsSidebarOpen, isSyncing, connectionError, refreshAllData
 }: any) => {
-  const navigate = useNavigate();
+const navigate = useNavigate();
   const location = useLocation();
-  const [showGuide, setShowGuide] = useState(false);
+  
+  // State tour baru
+  const [showTour, setShowTour] = useState(() => {
+    const saved = localStorage.getItem('sanur_tour_active');
+    return saved === 'true';
+  });
+  
+  const [tourStep, setTourStep] = useState(() => {
+    const saved = localStorage.getItem('sanur_tour_step');
+    return saved ? parseInt(saved) : 0;
+  });
+  
+  // Sync tour state ke localStorage
+  useEffect(() => {
+    localStorage.setItem('sanur_tour_active', showTour.toString());
+    localStorage.setItem('sanur_tour_step', tourStep.toString());
+  }, [showTour, tourStep]);
   
   // 🎯 DETEKSI DOMAIN - FUTURE PROOF!
   // Vercel domain (.vercel.app) = verify only
@@ -541,7 +557,19 @@ const pendingReportsCount = Array.isArray(reports) ?
 
   return (
     <div className="min-h-screen bg-[#FDFDFF] flex overflow-hidden font-sans relative">
-      {showGuide && <GuideTour role={user.role} onClose={() => setShowGuide(false)} />}
+      {showTour && (
+        <GuideTour 
+          role={user.role} 
+          currentStep={tourStep}
+          setCurrentStep={setTourStep}
+          onClose={() => {
+            setShowTour(false);
+            setTourStep(0);
+            localStorage.removeItem('sanur_tour_active');
+            localStorage.removeItem('sanur_tour_step');
+          }} 
+        />
+      )}
       
       {isSidebarOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80000] lg:hidden animate-in fade-in" onClick={closeSidebar} />
@@ -603,7 +631,13 @@ const pendingReportsCount = Array.isArray(reports) ?
 </div>
           </div>
           <div className="flex items-center gap-3">
-<button onClick={() => setShowGuide(true)} className={`p-4 ${roleGuideColor} text-white rounded-2xl shadow-xl hover:opacity-90 active:scale-95 transition-all`}>
+<button 
+  onClick={() => {
+    setShowTour(true);
+    setTourStep(0);
+  }} 
+  className={`p-4 ${roleGuideColor} text-white rounded-2xl shadow-xl hover:opacity-90 active:scale-95 transition-all`}
+>
    <HelpCircle size={20} />
 </button>
 <button onClick={executeLogout} className="p-4 bg-rose-600 text-white rounded-2xl shadow-xl hover:bg-rose-700 active:scale-95 transition-all">
