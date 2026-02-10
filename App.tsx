@@ -56,15 +56,28 @@ const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }
   );
 };
 
-const GuideTour = ({ role, onClose }: { role: string, onClose: () => void }) => {
-  const [currentStep, setCurrentStep] = React.useState(0);
+const GuideTour = ({ 
+  role, 
+  currentStep, 
+  setCurrentStep, 
+  onClose 
+}: { 
+  role: string, 
+  currentStep: number,
+  setCurrentStep: (step: number) => void,
+  onClose: () => void 
+}) => {
+  // HAPUS baris ini karena currentStep sekarang dari props:
+  // const [currentStep, setCurrentStep] = React.useState(0);
+
+const navigate = useNavigate(); // TAMBAH INI
 
 interface TourStep {
   title: string;
   desc: string;
   target: string | null;
   placement: string;
-  note?: string; // Peringatan opsional
+  note?: string;
 }
 
 const tourSteps: { [key: string]: TourStep[] } = {
@@ -241,15 +254,56 @@ STUDENT: [
     STUDENT: { color: 'bg-emerald-600', borderColor: 'border-emerald-500', glowColor: 'rgba(16, 185, 129, 0.6)' }
   }[role] || { color: 'bg-slate-600', borderColor: 'border-slate-500', glowColor: 'rgba(100, 116, 139, 0.6)' };
 
-  const currentStepData = tourSteps[currentStep];
+const currentStepData = tourSteps[currentStep];
+  
+  // TAMBAH INI - Auto advance kalau user klik target
+  React.useEffect(() => {
+    if (!currentStepData?.target) return;
+    
+    const handleTargetClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      const targetElement = document.querySelector(currentStepData.target);
+      
+      if (targetElement && (targetElement.contains(target) || targetElement === target)) {
+        // User klik elemen yang di-highlight
+        setTimeout(() => {
+          if (currentStep < tourSteps.length - 1) {
+            setCurrentStep(currentStep + 1);
+          } else {
+            onClose(); // Tutup tour kalau udah step terakhir
+          }
+        }, 500); // Delay 500ms biar smooth
+      }
+    };
+    
+    document.addEventListener('click', handleTargetClick, true);
+    return () => document.removeEventListener('click', handleTargetClick, true);
+  }, [currentStepData, currentStep, tourSteps.length, setCurrentStep, onClose]);
   
 React.useEffect(() => {
   if (!currentStepData || !currentStepData.target) return;
   
-  const targetEl = document.querySelector(currentStepData.target);
+  const targetEl = document.querySelector(currentStepData.target) as HTMLElement;
   if (targetEl) {
+    // Inject style langsung
+    targetEl.style.position = 'relative';
+    targetEl.style.zIndex = '60';
+    targetEl.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.6), 0 0 0 9999px rgba(0, 0, 0, 0.5)';
+    targetEl.style.borderRadius = '12px';
+    targetEl.style.transition = 'all 0.3s ease';
+    
+    // Scroll ke elemen
     targetEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
+  
+  return () => {
+    if (targetEl) {
+      // Clean up style
+      targetEl.style.zIndex = '';
+      targetEl.style.boxShadow = '';
+      targetEl.style.borderRadius = '';
+    }
+  };
 }, [currentStep, currentStepData]);
 
   const handleNext = () => {
@@ -271,10 +325,10 @@ const hasTarget = currentStepData.target !== null;
 const targetEl = hasTarget ? document.querySelector(currentStepData.target) : null;
 const rect = targetEl?.getBoundingClientRect();
 
-  return (
+return (
     <>
-      {/* Light overlay - LEBIH TERANG */}
-      <div className="fixed inset-0 bg-slate-900/20 z-[99998] animate-in fade-in" onClick={onClose} />
+      {/* Light overlay - JANGAN BLOCK KLIK */}
+      <div className="fixed inset-0 bg-slate-900/20 z-[99998] animate-in fade-in pointer-events-none" />
       
 {/* Spotlight highlight - only show if target exists */}
 {hasTarget && rect && (
@@ -292,7 +346,7 @@ const rect = targetEl?.getBoundingClientRect();
 
 {/* Tooltip */}
 <div 
-  className="fixed z-[100000] animate-in slide-in-from-bottom"
+  className="fixed z-[100000] animate-in slide-in-from-bottom pointer-events-auto"
   style={
     hasTarget && rect
       ? {
