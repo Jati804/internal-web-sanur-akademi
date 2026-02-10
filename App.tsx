@@ -165,7 +165,7 @@ const GuideTour = ({ role, onClose }: { role: string, onClose: () => void }) => 
   return (
     <>
       {/* Light overlay - LEBIH TERANG */}
-      <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-[99998] animate-in fade-in" onClick={onClose} />
+      <div className="fixed inset-0 bg-slate-900/20 z-[99998] animate-in fade-in" onClick={onClose} />
       
       {/* Spotlight highlight */}
       {rect && (
