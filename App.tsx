@@ -11,8 +11,6 @@ import {
   Sparkles, HelpCircle, Info, RotateCw
 } from 'lucide-react';
 
-import Joyride, { Step, CallBackProps, STATUS } from 'react-joyride';
-
 import { supabase } from './services/supabase.ts';
 
 import LoginPage from './pages/LoginPage.tsx';
@@ -59,149 +57,89 @@ const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }
 };
 
 const GuideTour = ({ role, onClose }: { role: string, onClose: () => void }) => {
-  const [runTour, setRunTour] = React.useState(true);
+  const [currentStep, setCurrentStep] = React.useState(0);
 
-  const tourSteps: { [key: string]: Step[] } = {
+  const tourSteps = {
     TEACHER: [
-      {
-        target: 'body',
-        content: 'Halo! Mari kita kenali sistem Sanur Akademi. Klik Next untuk mulai tour.',
-        placement: 'center',
-        disableBeacon: true,
-      },
-      {
-        target: '[href="#/teacher"]',
-        content: 'Ini halaman Dashboard utama kamu. Di sini kamu bisa lihat ringkasan aktivitas mengajar.',
-        placement: 'right',
-      },
-      {
-        target: 'button:has(> svg.lucide-clipboard-check)',
-        content: 'Klik tombol ini untuk LAPOR PRESENSI setiap selesai mengajar. Sistem otomatis mendeteksi sesi 1-6 dalam satu paket.',
-        placement: 'bottom',
-      },
-      {
-        target: '[href="#/teacher/honor"]',
-        content: 'Di menu HONOR SAYA, kamu bisa pantau status honor yang sudah cair & unduh slip gaji digital resmi.',
-        placement: 'right',
-      },
-      {
-        target: '[href="#/teacher/history"]',
-        content: 'Menu RAPOT SISWA menampilkan permintaan rapot. Permintaan muncul hanya setelah siswa menekan tombol Klaim.',
-        placement: 'right',
-      },
+      { title: 'Lapor Presensi', desc: 'Lapor setiap selesai mengajar. Sistem otomatis mendeteksi sesi 1-6 dalam satu paket.' },
+      { title: 'Guru Pengganti', desc: 'Jika digantikan teman, gunakan tombol "Berhalangan". Honor akan otomatis beralih ke temanmu.' },
+      { title: 'Pantau Honor', desc: 'Lihat status honor cair & unduh slip gaji digital resmi di menu "Honor Saya".' },
+      { title: 'Proses Rapot', desc: 'Permintaan rapot muncul di menu "Rapot Siswa" hanya setelah siswa menekan tombol Klaim.' }
     ],
     ADMIN: [
-      {
-        target: 'body',
-        content: 'Selamat datang Admin! Mari kita tour fitur-fitur utama sistem.',
-        placement: 'center',
-        disableBeacon: true,
-      },
-      {
-        target: '[href="#/admin"]',
-        content: 'Dashboard Admin - Lihat ringkasan keuangan dan aktivitas sistem.',
-        placement: 'right',
-      },
-      {
-        target: '[href="#/admin/finance"]',
-        content: 'Di menu KEUANGAN, kamu bisa verifikasi SPP siswa. Cek bukti bayar dan klik konfirmasi agar paket aktif.',
-        placement: 'right',
-      },
-      {
-        target: '[href="#/admin/academic"]',
-        content: 'Menu BUKU INDUK untuk daftarkan siswa baru atau update data kontak orang tua.',
-        placement: 'right',
-      },
-      {
-        target: '[href="#/admin/maintenance"]',
-        content: 'PENTING! Lakukan Export Database di menu Sistem minimal sebulan sekali untuk cadangan data.',
-        placement: 'right',
-      },
+      { title: 'Verifikasi SPP', desc: 'Cek bukti bayar siswa di tab "Keuangan" -> "Verif SPP". Klik konfirmasi agar paket aktif.' },
+      { title: 'Bayar Honor', desc: 'Cairkan gaji guru di tab "Gaji Guru" & upload bukti transfer untuk mengurangi saldo kas.' },
+      { title: 'Buku Induk', desc: 'Daftarkan siswa baru atau update data kontak orang tua di menu "Buku Induk".' },
+      { title: 'Maintenance', desc: 'Lakukan "Export Database" di menu "Sistem" minimal sebulan sekali untuk cadangan data.' }
     ],
     STUDENT: [
-      {
-        target: 'body',
-        content: 'Halo Pelajar! Yuk kenali fitur-fitur yang bisa kamu gunakan.',
-        placement: 'center',
-        disableBeacon: true,
-      },
-      {
-        target: 'button:has(> svg.lucide-wallet)',
-        content: 'Klik tombol PEMBAYARAN untuk upload bukti transfer agar Admin bisa mengaktifkan paket belajarmu.',
-        placement: 'bottom',
-      },
-      {
-        target: 'button:has(> svg.lucide-clipboard-check)',
-        content: 'PRESENSI MANDIRI - Klik nomor sesi untuk lapor progres belajar kamu.',
-        placement: 'bottom',
-      },
-      {
-        target: 'body',
-        content: 'Tombol Klaim Rapot akan muncul saat progres 6/6. Pilih guru pembimbingmu untuk minta penilaian.',
-        placement: 'center',
-      },
-    ],
-  };
+      { title: 'Lapor Bayar', desc: 'Upload bukti transfer di menu "Pembayaran" agar Admin bisa mengaktifkan paket belajarmu.' },
+      { title: 'Presensi Mandiri', desc: 'Presensi dilakukan secara mandiri, kamu bisa klik nomor sesi di "Kelas Saya" untuk lapor progres.' },
+      { title: 'Klaim Rapot', desc: 'Tombol Klaim muncul saat progres 6/6. Pilih guru pembimbingmu untuk meminta penilaian.' },
+      { title: 'Unduh Rapot', desc: 'Sertifikat & Rapot PDF bisa diunduh di tab "Kelas Saya" setelah guru selesai menilai.' }
+    ]
+  }[role] || [];
 
-  const steps = tourSteps[role] || tourSteps.TEACHER;
+  const content = {
+    ADMIN: { color: 'bg-blue-600', text: 'text-blue-600' },
+    TEACHER: { color: 'bg-orange-500', text: 'text-orange-600' },
+    STUDENT: { color: 'bg-emerald-600', text: 'text-emerald-600' }
+  }[role] || { color: 'bg-slate-600', text: 'text-slate-600' };
 
-  const handleJoyrideCallback = (data: CallBackProps) => {
-    const { status } = data;
-    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
-      setRunTour(false);
+  const handleNext = () => {
+    if (currentStep < tourSteps.length - 1) {
+      setCurrentStep(currentStep + 1);
+    } else {
       onClose();
     }
   };
 
+  const handleBack = () => {
+    if (currentStep > 0) setCurrentStep(currentStep - 1);
+  };
+
   return (
-    <Joyride
-      steps={steps}
-      run={runTour}
-      continuous
-      showProgress
-      showSkipButton
-      callback={handleJoyrideCallback}
-      styles={{
-        options: {
-          primaryColor: role === 'ADMIN' ? '#2563eb' : role === 'TEACHER' ? '#f97316' : '#10b981',
-          zIndex: 100000,
-        },
-        buttonNext: {
-          backgroundColor: role === 'ADMIN' ? '#2563eb' : role === 'TEACHER' ? '#f97316' : '#10b981',
-          fontSize: 12,
-          fontWeight: 'bold',
-          textTransform: 'uppercase',
-          padding: '12px 24px',
-          borderRadius: '12px',
-        },
-        buttonBack: {
-          color: '#64748b',
-          fontSize: 12,
-          fontWeight: 'bold',
-          textTransform: 'uppercase',
-        },
-        buttonSkip: {
-          color: '#94a3b8',
-          fontSize: 10,
-          fontWeight: 'bold',
-        },
-        tooltip: {
-          borderRadius: '24px',
-          fontSize: 13,
-          padding: '24px',
-        },
-        tooltipContent: {
-          padding: '12px 0',
-        },
-      }}
-      locale={{
-        back: 'Kembali',
-        close: 'Tutup',
-        last: 'Selesai ✨',
-        next: 'Lanjut',
-        skip: 'Lewati',
-      }}
-    />
+    <div className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
+      <div className="bg-white w-full max-w-sm rounded-[3rem] shadow-2xl overflow-hidden flex flex-col">
+        <div className={`p-8 ${content.color} text-white flex justify-between items-center`}>
+          <div className="flex items-center gap-3">
+            <HelpCircle size={24} />
+            <h3 className="text-lg font-black uppercase italic tracking-tighter">Panduan Sistem</h3>
+          </div>
+          <button onClick={onClose} className="p-2 bg-white/20 rounded-full hover:bg-white/40 transition-all"><X size={18}/></button>
+        </div>
+        
+        <div className="p-8 space-y-6">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-black text-slate-400 uppercase">Step {currentStep + 1} / {tourSteps.length}</span>
+            <div className="flex gap-1">
+              {tourSteps.map((_, i) => (
+                <div key={i} className={`w-2 h-2 rounded-full ${i === currentStep ? content.color : 'bg-slate-200'}`} />
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-3">
+            <h4 className={`text-lg font-black uppercase ${content.text}`}>{tourSteps[currentStep]?.title}</h4>
+            <p className="text-sm text-slate-600 leading-relaxed">{tourSteps[currentStep]?.desc}</p>
+          </div>
+        </div>
+
+        <div className="p-6 bg-slate-50 flex gap-3">
+          {currentStep > 0 && (
+            <button onClick={handleBack} className="px-6 py-3 bg-white border-2 border-slate-200 text-slate-600 rounded-2xl font-black text-xs uppercase">
+              Kembali
+            </button>
+          )}
+          <button onClick={handleNext} className={`flex-1 py-3 ${content.color} text-white rounded-2xl font-black text-xs uppercase`}>
+            {currentStep < tourSteps.length - 1 ? 'Lanjut' : 'Selesai ✨'}
+          </button>
+          <button onClick={onClose} className="px-4 py-3 text-slate-400 text-xs font-bold uppercase">
+            Lewati
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
