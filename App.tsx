@@ -129,10 +129,10 @@ const GuideTour = ({ role, onClose }: { role: string, onClose: () => void }) => 
   }[role] || [];
 
   const content = {
-    ADMIN: { color: 'bg-blue-600', borderColor: 'border-blue-500' },
-    TEACHER: { color: 'bg-orange-500', borderColor: 'border-orange-500' },
-    STUDENT: { color: 'bg-emerald-600', borderColor: 'border-emerald-500' }
-  }[role] || { color: 'bg-slate-600', borderColor: 'border-slate-500' };
+    ADMIN: { color: 'bg-blue-600', borderColor: 'border-blue-500', glowColor: 'rgba(59, 130, 246, 0.6)' },
+    TEACHER: { color: 'bg-orange-500', borderColor: 'border-orange-500', glowColor: 'rgba(249, 115, 22, 0.6)' },
+    STUDENT: { color: 'bg-emerald-600', borderColor: 'border-emerald-500', glowColor: 'rgba(16, 185, 129, 0.6)' }
+  }[role] || { color: 'bg-slate-600', borderColor: 'border-slate-500', glowColor: 'rgba(100, 116, 139, 0.6)' };
 
   const currentStepData = tourSteps[currentStep];
   
@@ -164,19 +164,19 @@ const GuideTour = ({ role, onClose }: { role: string, onClose: () => void }) => 
 
   return (
     <>
-      {/* Dark overlay */}
-      <div className="fixed inset-0 bg-slate-900/80 z-[99998] animate-in fade-in" />
+      {/* Light overlay - LEBIH TERANG */}
+      <div className="fixed inset-0 bg-slate-900/30 backdrop-blur-sm z-[99998] animate-in fade-in" onClick={onClose} />
       
       {/* Spotlight highlight */}
       {rect && (
         <div 
-          className={`fixed z-[99999] ${content.borderColor} border-4 rounded-2xl pointer-events-none animate-pulse`}
+          className={`fixed z-[99999] ${content.borderColor} border-[6px] rounded-2xl pointer-events-none animate-pulse`}
           style={{
-            top: rect.top - 8,
-            left: rect.left - 8,
-            width: rect.width + 16,
-            height: rect.height + 16,
-            boxShadow: `0 0 0 9999px rgba(15, 23, 42, 0.8), 0 0 40px 10px rgba(59, 130, 246, 0.5)`
+            top: rect.top - 12,
+            left: rect.left - 12,
+            width: rect.width + 24,
+            height: rect.height + 24,
+            boxShadow: `0 0 0 9999px rgba(15, 23, 42, 0.3), 0 0 60px 20px ${content.glowColor}`
           }}
         />
       )}
