@@ -362,9 +362,8 @@ const rect = targetEl?.getBoundingClientRect();
     </div>
   </div>
 </div>
-      )}
-    </>
-  );
+</>
+);
 };
 
 // 🔥 MODAL ANTI PORTRAIT - NUTUPIN LAYAR KALO PORTRAIT
