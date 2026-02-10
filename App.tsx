@@ -112,20 +112,68 @@ const GuideTour = ({ role, onClose }: { role: string, onClose: () => void }) => 
         placement: 'right'
       },
     ],
-    STUDENT: [
-      { 
-        title: 'Kelas Saya', 
-        desc: 'Halaman utama untuk lihat progres belajar kamu.',
-        target: '[href="#/student"]',
-        placement: 'right'
-      },
-      { 
-        title: 'Pembayaran', 
-        desc: 'KLIK DI SINI untuk upload bukti transfer SPP.',
-        target: '[href="#/student/payments"]',
-        placement: 'right'
-      },
-    ]
+STUDENT: [
+  { 
+    title: '1. Menu Kelas Saya', 
+    desc: 'Ini menu utama untuk lihat paket belajar dan progres absensi kamu.',
+    target: '[href="#/student"]',
+    placement: 'right'
+  },
+  { 
+    title: '2. Menu Pembayaran', 
+    desc: 'KLIK DI SINI untuk bayar paket kelas. Kamu harus bayar dulu sebelum bisa absen!',
+    target: '[href="#/student/payments"]',
+    placement: 'right'
+  },
+  { 
+    title: '3. Isi Form Pembayaran', 
+    desc: 'Setelah masuk menu Pembayaran, pilih paket kelas, isi nominal, tanggal, dan upload bukti transfer. Lalu klik "Kirim Laporan".',
+    target: 'body',
+    placement: 'center'
+  },
+  { 
+    title: '4. Tunggu Persetujuan Admin', 
+    desc: 'Pembayaran kamu akan muncul di Riwayat dengan status PENDING. Selama pending, kamu masih bisa edit/hapus. Setelah disetujui admin, kamu dapat kwitansi digital!',
+    target: 'body',
+    placement: 'center'
+  },
+  { 
+    title: '5. Kembali ke Kelas Saya', 
+    desc: 'Setelah pembayaran disetujui, KLIK DI SINI untuk mulai absen.',
+    target: '[href="#/student"]',
+    placement: 'right'
+  },
+  { 
+    title: '6. Klik Tombol Absen', 
+    desc: 'Kotak kelas yang sudah dibayar akan muncul. Klik tombol "Absen" setiap kali selesai belajar. Isi tanggal belajar lalu simpan.',
+    target: 'body',
+    placement: 'center'
+  },
+  { 
+    title: '7. Absen 6 Kali', 
+    desc: 'Kamu harus absen 6 kali untuk menyelesaikan paket. Progress absensi bisa dilihat di kotak kelas (misal: 3/6).',
+    target: 'body',
+    placement: 'center'
+  },
+  { 
+    title: '8. Klaim Guru', 
+    desc: 'Setelah absen 6/6, tombol "Klaim Guru" akan muncul. Klik dan pilih guru yang kamu inginkan untuk buat rapot.',
+    target: 'body',
+    placement: 'center'
+  },
+  { 
+    title: '9. Tunggu Persetujuan Guru', 
+    desc: 'Guru bisa terima atau tolak. Kalau ditolak, pilih guru lain. Kalau diterima, status akan berubah jadi "Menunggu Rapot".',
+    target: 'body',
+    placement: 'center'
+  },
+  { 
+    title: '10. Download Rapot', 
+    desc: 'Setelah guru selesai buat rapot (3-7 hari), klik kotak kelas untuk lihat dan download rapot lengkap kamu. Rapot berisi nilai, topik, dan catatan perkembangan. Selamat!',
+    target: 'body',
+    placement: 'center'
+  },
+]
   }[role] || [];
 
   const content = {
