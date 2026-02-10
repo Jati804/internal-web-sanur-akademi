@@ -288,7 +288,6 @@ React.useEffect(() => {
     // Inject style langsung
     targetEl.style.position = 'relative';
     targetEl.style.zIndex = '60';
-    targetEl.style.boxShadow = '0 0 0 4px rgba(59, 130, 246, 0.6), 0 0 0 9999px rgba(0, 0, 0, 0.5)';
     targetEl.style.borderRadius = '12px';
     targetEl.style.transition = 'all 0.3s ease';
     
@@ -350,26 +349,51 @@ return (
   style={
     hasTarget && rect
       ? {
-          top: rect.top,
+          top: rect.bottom + window.innerHeight - rect.bottom < 400 ? rect.top - 420 : rect.top,
           left: rect.right + 24,
-          maxWidth: '320px'
+          maxWidth: '320px',
+          maxHeight: '80vh',
+          overflowY: 'auto'
         }
       : {
           top: '50%',
           left: '50%',
           transform: 'translate(-50%, -50%)',
-          maxWidth: '400px'
+          maxWidth: '400px',
+          maxHeight: '80vh',
+          overflowY: 'auto'
         }
   }
 >
   {/* Arrow pointing to element - only for targeted steps */}
-  {hasTarget && rect && (
+{hasTarget && rect && (
+  <>
     <div 
-      className={`absolute -left-3 top-8 w-0 h-0 border-t-8 border-t-transparent border-b-8 border-b-transparent border-r-8 ${content.color.replace('bg-', 'border-r-')}`}
+      className={`fixed z-[99999] ${content.borderColor} border-[8px] rounded-2xl pointer-events-none animate-pulse`}
+      style={{
+        top: rect.top - 16,
+        left: rect.left - 16,
+        width: rect.width + 32,
+        height: rect.height + 32,
+        boxShadow: `0 0 0 9999px rgba(15, 23, 42, 0.3), 0 0 60px 20px ${content.glowColor}`,
+        animationDuration: '1s'
+      }}
     />
-  )}
+    
+    {/* Label "KLIK DI SINI" di atas elemen */}
+    <div 
+      className={`fixed z-[100000] ${content.color} text-white px-4 py-2 rounded-xl font-black text-xs uppercase pointer-events-none animate-bounce`}
+      style={{
+        top: rect.top - 50,
+        left: rect.left + (rect.width / 2) - 60,
+      }}
+    >
+      👆 KLIK DI SINI
+    </div>
+  </>
+)}
   
-  <div className="bg-white rounded-3xl shadow-2xl overflow-hidden">
+  <div className="p-6 space-y-4 overflow-y-auto flex-1">
     <div className={`p-6 ${content.color} text-white`}>
       <div className="flex items-center justify-between mb-2">
         <span className="text-xs font-black uppercase opacity-80">Step {currentStep + 1}/{tourSteps.length}</span>
@@ -380,8 +404,17 @@ return (
       <h4 className="text-lg font-black uppercase">{currentStepData.title}</h4>
     </div>
     
-    <div className="p-6 space-y-4">
-      <p className="text-sm text-slate-700 font-bold leading-relaxed">{currentStepData.desc}</p>
+    <div className="p-6 space-y-4 overflow-y-auto flex-1">
+<p className="text-sm text-slate-700 font-bold leading-relaxed">{currentStepData.desc}</p>
+      
+      {/* TAMBAH INI - Kalau ada target, kasih petunjuk tegas */}
+      {hasTarget && (
+        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-4 animate-pulse">
+          <p className="text-xs font-black text-blue-800 leading-relaxed text-center">
+            👆 KLIK ELEMEN YANG MENYALA UNTUK LANJUT
+          </p>
+        </div>
+      )}
       
       {/* Note/Warning Box */}
       {currentStepData.note && (
@@ -390,7 +423,7 @@ return (
         </div>
       )}
       
-      <div className="flex gap-2">
+<div className="flex gap-2">
         {currentStep > 0 && (
           <button 
             onClick={handleBack} 
@@ -399,12 +432,23 @@ return (
             ← Kembali
           </button>
         )}
-        <button 
-          onClick={handleNext} 
-          className={`flex-1 py-2 ${content.color} text-white rounded-xl font-black text-xs uppercase hover:opacity-90 transition-all`}
-        >
-          {currentStep < tourSteps.length - 1 ? 'Lanjut →' : 'Selesai ✨'}
-        </button>
+        
+        {/* Kalau ada target, HIDE tombol LANJUT (user harus klik elemen) */}
+        {!hasTarget && (
+          <button 
+            onClick={handleNext} 
+            className={`flex-1 py-2 ${content.color} text-white rounded-xl font-black text-xs uppercase hover:opacity-90 transition-all`}
+          >
+            {currentStep < tourSteps.length - 1 ? 'Lanjut →' : 'Selesai ✨'}
+          </button>
+        )}
+        
+        {/* Kalau ada target, kasih petunjuk */}
+        {hasTarget && (
+          <div className="flex-1 py-2 px-4 bg-slate-100 text-slate-600 rounded-xl font-black text-xs uppercase text-center">
+            👆 Klik elemen yang di-highlight
+          </div>
+        )}
       </div>
       
       <button 
