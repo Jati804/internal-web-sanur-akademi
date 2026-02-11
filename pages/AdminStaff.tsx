@@ -179,12 +179,17 @@ const executeDelete = async () => {
     const userId = showDeleteConfirm.id;
     const userName = showDeleteConfirm.name.toUpperCase().trim();
     
-    console.log('🗑️ Mulai hapus siswa:', { userId, userName });
+    console.log('='.repeat(60));
+    console.log('🗑️ MULAI PROSES HAPUS SISWA');
+    console.log('='.repeat(60));
+    console.log(`UserID: ${userId}`);
+    console.log(`UserName: ${userName}`);
     
     // ========================================
-    // STEP 0: BACKUP MILESTONE KE REPORTS!
+    // STEP 0: BACKUP MILESTONE KE REPORTS
     // ========================================
-    console.log('📦 Backup milestone siswa ke reports...');
+    console.log('\n📦 STEP 0: BACKUP MILESTONE KE REPORTS');
+    console.log('-'.repeat(60));
     
     // Ambil semua reports siswa ini
     const { data: studentReports, error: fetchReportsError } = await supabase
@@ -193,25 +198,41 @@ const executeDelete = async () => {
       .contains('studentsattended', [userName]);
     
     if (fetchReportsError) {
-      console.warn('⚠️ Error fetch reports:', fetchReportsError);
+      console.error('❌ Error fetch reports:', fetchReportsError);
+      throw fetchReportsError;
     }
+    
+    console.log(`✅ Reports ditemukan: ${studentReports?.length || 0}`);
     
     if (studentReports && studentReports.length > 0) {
       for (const report of studentReports) {
-        // Ambil student_attendance untuk packageId ini
+        const reportPkgId = (report.packageid || '').toUpperCase().trim();
+        
+        console.log(`\n   📄 Report ID: ${report.id}`);
+        console.log(`      Package ID: "${reportPkgId}"`);
+        
+        // Ambil milestone dari student_attendance
         const { data: milestones, error: fetchMilestoneError } = await supabase
           .from('student_attendance')
-          .select('sessionnumber, date, duration')
+          .select('sessionnumber, date, duration, clockin')
           .ilike('studentname', userName)
-          .eq('packageid', report.packageid)
+          .eq('packageid', reportPkgId)
           .order('sessionnumber', { ascending: true });
         
         if (fetchMilestoneError) {
-          console.warn('⚠️ Error fetch milestone:', fetchMilestoneError);
+          console.error('      ❌ Error fetch milestone:', fetchMilestoneError);
           continue;
         }
         
+        console.log(`      ✅ Milestone ditemukan: ${milestones?.length || 0} sesi`);
+        
         if (milestones && milestones.length > 0) {
+          // Tampilkan data milestone
+          console.log('      📊 Data milestone:');
+          milestones.forEach(m => {
+            console.log(`         Sesi ${m.sessionnumber}: ${m.date} (${m.duration}h)`);
+          });
+          
           // Update report dengan milestone data
           const { error: updateError } = await supabase
             .from('reports')
@@ -219,65 +240,106 @@ const executeDelete = async () => {
             .eq('id', report.id);
           
           if (updateError) {
-            console.warn('⚠️ Error update milestone:', updateError);
-          } else {
-            console.log(`✅ Milestone backup untuk report ${report.id}`);
+            console.error('      ❌ Error update milestone:', updateError);
+            throw updateError;
           }
+          
+          console.log(`      ✅ Milestone berhasil di-backup!`);
+        } else {
+          console.warn(`      ⚠️ Tidak ada milestone untuk package ini`);
         }
       }
+    } else {
+      console.log('⚠️ Tidak ada reports untuk siswa ini');
     }
     
-    console.log('✅ Backup milestone selesai');
+    console.log('\n✅ BACKUP MILESTONE SELESAI');
     
     // ========================================
     // STEP 1: Hapus student_payments
     // ========================================
+    console.log('\n🗑️ STEP 1: HAPUS STUDENT PAYMENTS');
+    console.log('-'.repeat(60));
+    
     const { error: paymentError } = await supabase
       .from('student_payments')
       .delete()
       .ilike('studentname', userName);
     
-    if (paymentError) throw paymentError;
-    console.log('✅ Payment dihapus');
+    if (paymentError) {
+      console.error('❌ Error hapus payment:', paymentError);
+      throw paymentError;
+    }
+    
+    console.log('✅ Payment berhasil dihapus');
     
     // ========================================
     // STEP 2: Hapus student_attendance
     // ========================================
+    console.log('\n🗑️ STEP 2: HAPUS STUDENT ATTENDANCE');
+    console.log('-'.repeat(60));
+    
     const { error: attendanceError } = await supabase
       .from('student_attendance')
       .delete()
       .ilike('studentname', userName);
     
-    if (attendanceError) throw attendanceError;
-    console.log('✅ Attendance dihapus');
+    if (attendanceError) {
+      console.error('❌ Error hapus attendance:', attendanceError);
+      throw attendanceError;
+    }
+    
+    console.log('✅ Attendance berhasil dihapus');
     
     // ========================================
-    // STEP 3: Reports tetap ada (QR valid)
+    // STEP 3: Reports tetap ada
     // ========================================
-    console.log('✅ Reports tetap tersimpan dengan milestone backup');
+    console.log('\n📋 STEP 3: REPORTS');
+    console.log('-'.repeat(60));
+    console.log('✅ Reports tetap tersimpan (tidak dihapus)');
+    console.log('✅ QR code tetap valid untuk verifikasi');
     
     // ========================================
     // STEP 4: Hapus akun student
     // ========================================
+    console.log('\n🗑️ STEP 4: HAPUS AKUN STUDENT');
+    console.log('-'.repeat(60));
+    
     const { error: accountError } = await supabase
       .from('student_accounts')
       .delete()
       .eq('id', userId);
     
-    if (accountError) throw accountError;
-    console.log('✅ Akun siswa dihapus');
+    if (accountError) {
+      console.error('❌ Error hapus akun:', accountError);
+      throw accountError;
+    }
+    
+    console.log('✅ Akun siswa berhasil dihapus');
     
     // ========================================
     // STEP 5: Refresh & cleanup
     // ========================================
+    console.log('\n🔄 STEP 5: REFRESH DATA');
+    console.log('-'.repeat(60));
+    
     if (refreshAllData) await refreshAllData();
     setShowDeleteConfirm(null);
     
-    alert('✨ Akun siswa berhasil dihapus! Rapot & milestone tetap tersimpan.');
+    console.log('✅ Data berhasil di-refresh');
+    console.log('\n' + '='.repeat(60));
+    console.log('✨ PROSES HAPUS SISWA SELESAI!');
+    console.log('='.repeat(60));
+    
+    alert('✨ Akun siswa berhasil dihapus!\n\n✅ Rapot & milestone tetap tersimpan\n✅ QR code tetap valid untuk verifikasi');
     
   } catch (e: any) {
-    console.error('❌ Error saat hapus siswa:', e);
-    alert(`Gagal menghapus siswa: ${e.message}`);
+    console.error('\n' + '='.repeat(60));
+    console.error('❌ ERROR SAAT HAPUS SISWA');
+    console.error('='.repeat(60));
+    console.error('Error:', e);
+    console.error('Message:', e.message);
+    alert(`❌ Gagal menghapus siswa:\n\n${e.message}`);
   } finally {
     setIsLocalSyncing(false);
   }
