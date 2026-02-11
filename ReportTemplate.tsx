@@ -64,12 +64,24 @@ const ReportTemplate: React.FC<ReportTemplateProps> = ({
 const sNameNorm = studentName.toUpperCase().trim();
 const pkgIdNorm = (reportLog.packageId || '').toUpperCase().trim();
 
-const studentOnlyLogs = [...(studentAttendanceLogs || [])]
-  .filter(l => 
-    (l.packageid || '').toUpperCase().trim() === pkgIdNorm && 
-    (l.studentname || '').toUpperCase().trim() === sNameNorm
-  )
-  .sort((a, b) => (a.sessionnumber || 0) - (b.sessionnumber || 0));
+// ✅ PRIORITAS: Pakai backup milestone dari reports kalau ada
+// Kalau nggak ada, baru ambil dari student_attendance (live data)
+const studentOnlyLogs = (() => {
+  // 1. Cek apakah ada backup milestone di reports
+  if (reportLog.student_milestone && Array.isArray(reportLog.student_milestone) && reportLog.student_milestone.length > 0) {
+    console.log('📦 Pakai milestone dari backup (siswa mungkin udah dihapus)');
+    return reportLog.student_milestone.sort((a, b) => (a.sessionnumber || 0) - (b.sessionnumber || 0));
+  }
+  
+  // 2. Kalau nggak ada backup, ambil dari student_attendance (live)
+  console.log('📡 Pakai milestone dari student_attendance (live data)');
+  return [...(studentAttendanceLogs || [])]
+    .filter(l => 
+      (l.packageid || '').toUpperCase().trim() === pkgIdNorm && 
+      (l.studentname || '').toUpperCase().trim() === sNameNorm
+    )
+    .sort((a, b) => (a.sessionnumber || 0) - (b.sessionnumber || 0));
+})();
 
   // LOGIKA QR CODE
   const statusLabel = isPass ? "LULUS & KOMPETEN" : "PESERTA PELATIHAN";
