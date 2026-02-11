@@ -91,7 +91,7 @@ const GuideModal = ({ role, onClose, activeTab, setActiveTab }: {
       color: 'bg-emerald-600',
       text: 'text-emerald-600',
       hasVideo: true, // 👈 STUDENT ada video
-      videoId: '3-ImTXYZgLg', // 👈 Nanti ganti ini dengan YouTube video ID Student
+      videoId: 'cVptjCHX6o0', // 👈 Nanti ganti ini dengan YouTube video ID Student
       steps: [
         { title: 'Lapor Bayar', desc: 'Upload bukti transfer di menu "Pembayaran" agar Admin bisa mengaktifkan paket belajarmu.' },
         { title: 'Presensi Mandiri', desc: 'Presensi dilakukan secara mandiri, kamu bisa klik nomor sesi di "Kelas Saya" untuk lapor progres.' },
