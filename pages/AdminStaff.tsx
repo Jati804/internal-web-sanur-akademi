@@ -185,75 +185,82 @@ const executeDelete = async () => {
     console.log(`UserID: ${userId}`);
     console.log(`UserName: ${userName}`);
     
-    // ========================================
-    // STEP 0: BACKUP MILESTONE KE REPORTS
-    // ========================================
-    console.log('\n📦 STEP 0: BACKUP MILESTONE KE REPORTS');
-    console.log('-'.repeat(60));
+// ========================================
+// STEP 0: BACKUP MILESTONE KE REPORTS
+// ========================================
+console.log('\n📦 STEP 0: BACKUP MILESTONE KE REPORTS');
+console.log('-'.repeat(60));
+
+// Ambil semua reports dulu (karena .contains() error di beberapa versi Supabase)
+const { data: allReports, error: fetchReportsError } = await supabase
+  .from('reports')
+  .select('*');
+
+if (fetchReportsError) {
+  console.error('❌ Error fetch reports:', fetchReportsError);
+  throw fetchReportsError;
+}
+
+// Filter manual untuk cari reports siswa ini
+const studentReports = allReports?.filter(report => {
+  const attended = report.studentsattended || [];
+  return Array.isArray(attended) && attended.some(name => 
+    (name || '').toUpperCase().trim() === userName
+  );
+});
+
+console.log(`✅ Reports ditemukan: ${studentReports?.length || 0}`);
+
+if (studentReports && studentReports.length > 0) {
+  for (const report of studentReports) {
+    const reportPkgId = (report.packageid || '').toUpperCase().trim();
     
-    // Ambil semua reports siswa ini
-    const { data: studentReports, error: fetchReportsError } = await supabase
-      .from('reports')
-      .select('*')
-      .contains('studentsattended', [userName]);
+    console.log(`\n   📄 Report ID: ${report.id}`);
+    console.log(`      Package ID: "${reportPkgId}"`);
     
-    if (fetchReportsError) {
-      console.error('❌ Error fetch reports:', fetchReportsError);
-      throw fetchReportsError;
+    // Ambil milestone dari student_attendance
+    const { data: milestones, error: fetchMilestoneError } = await supabase
+      .from('student_attendance')
+      .select('sessionnumber, date, duration, clockin')
+      .ilike('studentname', userName)
+      .eq('packageid', reportPkgId)
+      .order('sessionnumber', { ascending: true });
+    
+    if (fetchMilestoneError) {
+      console.error('      ❌ Error fetch milestone:', fetchMilestoneError);
+      continue;
     }
     
-    console.log(`✅ Reports ditemukan: ${studentReports?.length || 0}`);
+    console.log(`      ✅ Milestone ditemukan: ${milestones?.length || 0} sesi`);
     
-    if (studentReports && studentReports.length > 0) {
-      for (const report of studentReports) {
-        const reportPkgId = (report.packageid || '').toUpperCase().trim();
-        
-        console.log(`\n   📄 Report ID: ${report.id}`);
-        console.log(`      Package ID: "${reportPkgId}"`);
-        
-        // Ambil milestone dari student_attendance
-        const { data: milestones, error: fetchMilestoneError } = await supabase
-          .from('student_attendance')
-          .select('sessionnumber, date, duration, clockin')
-          .ilike('studentname', userName)
-          .eq('packageid', reportPkgId)
-          .order('sessionnumber', { ascending: true });
-        
-        if (fetchMilestoneError) {
-          console.error('      ❌ Error fetch milestone:', fetchMilestoneError);
-          continue;
-        }
-        
-        console.log(`      ✅ Milestone ditemukan: ${milestones?.length || 0} sesi`);
-        
-        if (milestones && milestones.length > 0) {
-          // Tampilkan data milestone
-          console.log('      📊 Data milestone:');
-          milestones.forEach(m => {
-            console.log(`         Sesi ${m.sessionnumber}: ${m.date} (${m.duration}h)`);
-          });
-          
-          // Update report dengan milestone data
-          const { error: updateError } = await supabase
-            .from('reports')
-            .update({ student_milestone: milestones })
-            .eq('id', report.id);
-          
-          if (updateError) {
-            console.error('      ❌ Error update milestone:', updateError);
-            throw updateError;
-          }
-          
-          console.log(`      ✅ Milestone berhasil di-backup!`);
-        } else {
-          console.warn(`      ⚠️ Tidak ada milestone untuk package ini`);
-        }
+    if (milestones && milestones.length > 0) {
+      // Tampilkan data milestone
+      console.log('      📊 Data milestone:');
+      milestones.forEach(m => {
+        console.log(`         Sesi ${m.sessionnumber}: ${m.date} (${m.duration}h)`);
+      });
+      
+      // Update report dengan milestone data
+      const { error: updateError } = await supabase
+        .from('reports')
+        .update({ student_milestone: milestones })
+        .eq('id', report.id);
+      
+      if (updateError) {
+        console.error('      ❌ Error update milestone:', updateError);
+        throw updateError;
       }
+      
+      console.log(`      ✅ Milestone berhasil di-backup!`);
     } else {
-      console.log('⚠️ Tidak ada reports untuk siswa ini');
+      console.warn(`      ⚠️ Tidak ada milestone untuk package ini`);
     }
-    
-    console.log('\n✅ BACKUP MILESTONE SELESAI');
+  }
+} else {
+  console.log('⚠️ Tidak ada reports untuk siswa ini');
+}
+
+console.log('\n✅ BACKUP MILESTONE SELESAI');
     
     // ========================================
     // STEP 1: Hapus student_payments
