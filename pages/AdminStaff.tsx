@@ -181,59 +181,99 @@ const executeDelete = async () => {
     
     console.log('🗑️ Mulai hapus siswa:', { userId, userName });
     
+    // ========================================
+    // STEP 0: BACKUP MILESTONE KE REPORTS!
+    // ========================================
+    console.log('📦 Backup milestone siswa ke reports...');
+    
+    // Ambil semua reports siswa ini
+    const { data: studentReports, error: fetchReportsError } = await supabase
+      .from('reports')
+      .select('*')
+      .contains('studentsattended', [userName]);
+    
+    if (fetchReportsError) {
+      console.warn('⚠️ Error fetch reports:', fetchReportsError);
+    }
+    
+    if (studentReports && studentReports.length > 0) {
+      for (const report of studentReports) {
+        // Ambil student_attendance untuk packageId ini
+        const { data: milestones, error: fetchMilestoneError } = await supabase
+          .from('student_attendance')
+          .select('sessionnumber, date, duration')
+          .ilike('studentname', userName)
+          .eq('packageid', report.packageid)
+          .order('sessionnumber', { ascending: true });
+        
+        if (fetchMilestoneError) {
+          console.warn('⚠️ Error fetch milestone:', fetchMilestoneError);
+          continue;
+        }
+        
+        if (milestones && milestones.length > 0) {
+          // Update report dengan milestone data
+          const { error: updateError } = await supabase
+            .from('reports')
+            .update({ student_milestone: milestones })
+            .eq('id', report.id);
+          
+          if (updateError) {
+            console.warn('⚠️ Error update milestone:', updateError);
+          } else {
+            console.log(`✅ Milestone backup untuk report ${report.id}`);
+          }
+        }
+      }
+    }
+    
+    console.log('✅ Backup milestone selesai');
+    
+    // ========================================
     // STEP 1: Hapus student_payments
+    // ========================================
     const { error: paymentError } = await supabase
       .from('student_payments')
       .delete()
       .ilike('studentname', userName);
     
-    if (paymentError) {
-      console.error('❌ Error hapus payment:', paymentError);
-      throw paymentError;
-    }
+    if (paymentError) throw paymentError;
     console.log('✅ Payment dihapus');
     
+    // ========================================
     // STEP 2: Hapus student_attendance
+    // ========================================
     const { error: attendanceError } = await supabase
       .from('student_attendance')
       .delete()
       .ilike('studentname', userName);
     
-    if (attendanceError) {
-      console.error('❌ Error hapus attendance:', attendanceError);
-      throw attendanceError;
-    }
+    if (attendanceError) throw attendanceError;
     console.log('✅ Attendance dihapus');
     
-    // STEP 3: Update reports (JANGAN DIHAPUS!)
-    const { error: reportError } = await supabase
-      .from('reports')
-      .update({ status: 'STUDENT_ARCHIVED' })
-      .contains('studentsattended', [userName])
-      .in('status', ['SESSION_LOG', 'REPORT_READY']);
+    // ========================================
+    // STEP 3: Reports tetap ada (QR valid)
+    // ========================================
+    console.log('✅ Reports tetap tersimpan dengan milestone backup');
     
-    if (reportError) {
-      console.warn('⚠️ Warning update report:', reportError);
-    }
-    console.log('✅ Reports di-archive');
-    
+    // ========================================
     // STEP 4: Hapus akun student
+    // ========================================
     const { error: accountError } = await supabase
       .from('student_accounts')
       .delete()
       .eq('id', userId);
     
-    if (accountError) {
-      console.error('❌ Error hapus akun:', accountError);
-      throw accountError;
-    }
+    if (accountError) throw accountError;
     console.log('✅ Akun siswa dihapus');
     
+    // ========================================
     // STEP 5: Refresh & cleanup
+    // ========================================
     if (refreshAllData) await refreshAllData();
     setShowDeleteConfirm(null);
     
-    alert('✨ Akun siswa berhasil dihapus! Rapot tetap tersimpan di histori guru.');
+    alert('✨ Akun siswa berhasil dihapus! Rapot & milestone tetap tersimpan.');
     
   } catch (e: any) {
     console.error('❌ Error saat hapus siswa:', e);
