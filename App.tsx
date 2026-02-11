@@ -79,7 +79,7 @@ const GuideModal = ({ role, onClose, activeTab, setActiveTab }: {
       color: 'bg-orange-500',
       text: 'text-orange-600',
       hasVideo: true, // 👈 TEACHER ada video
-      videoId: 'Y9KgjC1zlRU', // 👈 Nanti ganti ini dengan YouTube video ID Teacher
+      videoId: 'BxgfF8UehsI', // 👈 Nanti ganti ini dengan YouTube video ID Teacher
       steps: [
         { title: 'Lapor Presensi', desc: 'Lapor setiap selesai mengajar. Sistem otomatis mendeteksi sesi 1-6 dalam satu paket.' },
         { title: 'Guru Pengganti', desc: 'Jika digantikan teman, gunakan tombol "Berhalangan". Honor akan otomatis beralih ke temanmu.' },
