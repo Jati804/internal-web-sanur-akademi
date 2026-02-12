@@ -477,11 +477,11 @@ const publishedReports = useMemo(() => {
             <div className="p-8 md:p-14 space-y-16">
                {/* ✅ SECTION PILIH PERIODE */}
                <section className="space-y-4">
-                  <div className="flex items-center gap-3 text-purple-600"><Calendar size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Pilih Tingkat Kurikulum</h4></div>
+                  <div className="flex items-center gap-3 text-purple-600"><Calendar size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Pilih Materi Kurikulum</h4></div>
                   <div className="bg-gradient-to-br from-purple-50 to-blue-50 p-8 rounded-[3rem] border-2 border-purple-100 space-y-6">
                      <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
                         <div className="flex-1">
-                        <p className="text-[10px] font-black text-purple-800 uppercase tracking-wider mb-2">TINGKAT KURIKULUM</p>
+                        <p className="text-[10px] font-black text-purple-800 uppercase tracking-wider mb-2">MATERI KURIKULUM</p>
                         <select
                          value={selectedTingkat}
                            onChange={(e) => {
