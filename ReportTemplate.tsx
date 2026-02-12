@@ -223,7 +223,7 @@ const studentOnlyLogs = (() => {
         
 <div style={{ marginBottom: '30px', position: 'relative', zIndex: 10 }}>
   <p style={{ fontSize: '13px', fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', textTransform: 'uppercase', letterSpacing: '0.3em', textAlign: 'center', margin: 0 }}>
-    📚 MATERI KURIKULUM — SESI {sessionNumbers[0]} s/d {sessionNumbers[5]}
+    📚 MATERI KURIKULUM
   </p>
 </div>
 
@@ -231,7 +231,6 @@ const studentOnlyLogs = (() => {
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ backgroundColor: '#0f172a', color: 'white' }}>
-                <th style={{ padding: '12px', textAlign: 'center', fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em', width: '90px', borderRight: '1px solid rgba(255,255,255,0.1)' }}>Sesi</th>
                 <th style={{ padding: '12px', textAlign: 'left', fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Materi & Modul Kurikulum</th>
                 <th style={{ padding: '12px', textAlign: 'center', fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em', width: '120px' }}>Nilai</th>
               </tr>
@@ -240,11 +239,6 @@ const studentOnlyLogs = (() => {
               {/* ✅ GANTI NOMOR SESI JADI DINAMIS */}
               {sessionNumbers.map((sessionNum, i) => (
                 <tr key={i} style={{ borderBottom: '1px solid #f1f5f9', height: '78px' }}>
-                  <td style={{ textAlign: 'center', borderRight: '1px solid #e2e8f0', verticalAlign: 'middle' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-                        <span style={{ fontWeight: '900', color: '#e2e8f0', fontSize: '20px', fontStyle: 'italic' }}>{sessionNum < 10 ? `0${sessionNum}` : sessionNum}</span>
-                    </div>
-                  </td>
                   <td style={{ padding: '0 35px', verticalAlign: 'middle' }}>
                     <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
                         <span style={{ fontWeight: '900', color: '#1e293b', fontSize: '20px', textTransform: 'uppercase', fontStyle: 'italic', letterSpacing: '-0.01em', lineHeight: 1.1, display: 'block' }}>{topics[i] || "MATERI PEMBELAJARAN"}</span>
