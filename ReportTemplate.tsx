@@ -247,7 +247,7 @@ const studentOnlyLogs = (() => {
                   <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', height: '100%' }}>
                       <span style={{ fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', fontSize: '20px', fontStyle: 'italic' }}>{scores[i] || 0}</span>
-                      <span style={{ color: '#cbd5e1', fontWeight: '700', fontSize: '11px' }}>/100</span>
+                      <span style={{ color: '#94a3b8', fontWeight: '700', fontSize: '11px' }}>/100</span>
                     </div>
                   </td>
                 </tr>
