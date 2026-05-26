@@ -180,11 +180,14 @@ const studentOnlyLogs = (() => {
               <div style={{ width: '100%', height: '4px', backgroundColor: isPass ? '#dbeafe' : '#ffedd5', marginTop: '10px', borderRadius: '10px' }}></div>
             </div>
             
-            <p style={{ fontSize: '14px', fontFamily: 'serif', fontStyle: 'italic', color: '#475569', lineHeight: '1.7', margin: '0 0 40px 0', padding: '0 100px' }}>
-              {isPass 
-                ? "Telah menyelesaikan seluruh materi pelatihan dan lulus dalam ujian standar kompetensi Sanur Akademi Inspirasi:" 
-                : "Telah berpartisipasi aktif dan menyelesaikan modul pelatihan intensif dengan dedikasi tinggi guna meningkatkan kompetensi pada program:"}
-            </p>
+<p style={{ fontSize: '14px', fontFamily: 'serif', fontStyle: 'italic', color: '#475569', lineHeight: '1.7', margin: '0 0 8px 0', padding: '0 100px' }}>
+  {isPass 
+    ? "Telah menyelesaikan seluruh materi pelatihan dan lulus dalam ujian standar kompetensi" 
+    : "Telah berkomitmen mengikuti dan menyelesaikan seluruh rangkaian program pelatihan"}
+</p>
+<p style={{ fontSize: '14px', fontFamily: 'serif', fontStyle: 'italic', color: '#1e3a8a', fontWeight: '700', margin: '0 0 40px 0' }}>
+  Sanur Akademi Inspirasi:
+</p>
 
             {/* ✅ KOTAK HANYA UNTUK SUBJECT & LEVEL */}
             <div style={{ background: isPass ? 'linear-gradient(135deg, #1e3a8a, #0f172a)' : 'linear-gradient(135deg, #ea580c, #0f172a)', width: '700px', padding: '30px 20px', borderRadius: '35px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', boxShadow: '0 12px 30px -8px rgba(0,0,0,0.15)', marginBottom: '50px' }}>
