@@ -317,16 +317,6 @@ const handleNextClass = async () => {
         const img2 = canvas2.toDataURL('image/png', 1.0);
         pdf.addImage(img2, 'PNG', 0, 0, pw2, ph2, undefined, 'FAST');
       }
-      setDownloadProgress(75);
-      
-      // 🎯 HALAMAN 3: PORTRAIT (Milestone)
-      pdf.addPage('a4', 'p');
-      const el3 = document.getElementById(`milestone-render-${req.id}`);
-      if (el3) {
-        const canvas3 = await html2canvas(el3, captureOptionsPortrait);
-        const img3 = canvas3.toDataURL('image/png', 1.0);
-        pdf.addImage(img3, 'PNG', 0, 0, pw2, ph2, undefined, 'FAST');
-      }
       setDownloadProgress(95);
       
       pdf.save(`Rapot_Sanur_${req.studentsAttended?.[0]}.pdf`);
