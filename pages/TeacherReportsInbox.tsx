@@ -436,10 +436,24 @@ const publishedReports = useMemo(() => {
             {reportRequests.map((req, i) => (
               <div key={i} className="bg-white p-12 md:p-14 rounded-[4rem] shadow-xl border border-slate-100 flex flex-col justify-between hover:border-orange-500 transition-all">
                  <div>
-                   <div className="flex justify-between items-start mb-10">
-                      <div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-3xl flex items-center justify-center shadow-inner"><GraduationCap size={40}/></div>
-                      <span className="px-6 py-2 bg-orange-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-md">KLAIM BARU</span>
-                   </div>
+<div className="flex justify-between items-start mb-10">
+   <div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-3xl flex items-center justify-center shadow-inner"><GraduationCap size={40}/></div>
+   <div className="flex flex-col items-end gap-1">
+      <span className="px-6 py-2 bg-orange-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-md">KLAIM BARU</span>
+      {(() => {
+         const lastSession = studentAttendanceLogs.find(l =>
+            (l.packageid || '').toUpperCase().trim() === (req.packageId || '').toUpperCase().trim() &&
+            (l.studentname || '').toUpperCase().trim() === (req.studentsAttended?.[0] || '').toUpperCase().trim() &&
+            l.sessionnumber === 6
+         );
+         return lastSession ? (
+            <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">
+               {formatDateToDMY(lastSession.date)}
+            </p>
+         ) : null;
+      })()}
+   </div>
+</div>
                    <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-2 Kalimat leading-tight">{req.studentsAttended?.[0]}</h4>
                    <p className="text-[11px] font-bold text-blue-600 uppercase mb-10 Kalimat leading-relaxed">{req.className}</p>
                    <button onClick={() => setShowMilestoneFor(req)} className="w-full py-5 mb-5 bg-slate-50 text-slate-500 rounded-3xl font-black text-[10px] uppercase flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all border border-transparent shadow-sm"><History size={18}/> LIHAT MILESTONE</button>
