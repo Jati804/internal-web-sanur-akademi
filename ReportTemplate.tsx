@@ -287,8 +287,11 @@ const studentOnlyLogs = (() => {
     <p style={{ fontSize: '17px', fontWeight: '900', fontStyle: 'italic', textTransform: 'uppercase' }}>{isPass ? 'KOMPETEN' : 'REMEDIAL'}</p>
   </div>
 </div>
-      </div>
-
+</div>
+    </div>
+  );
 };
+
+export default ReportTemplate;
 
 export default ReportTemplate;
