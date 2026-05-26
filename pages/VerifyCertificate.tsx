@@ -235,7 +235,7 @@ const VerifyCertificate: React.FC = () => {
                     <div className="flex items-center gap-3">
                        <Zap size={20} className={isPass ? 'text-cyan-500' : themeColors.textDark} />
                        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">
-                        {isPass ? 'Status Kelulusan' : 'Status Partisipasi'}
+                        {isPass ? 'Hasil Evaluasi' : 'Status Partisipasi'}
                        </p>
                     </div>
                     
