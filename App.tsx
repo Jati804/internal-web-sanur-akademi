@@ -49,9 +49,9 @@ const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }
         <Icon size={18} />
         {label}
       </div>
-      {badge && badge > 0 ? (
-        <span className="bg-rose-500 text-white text-[9px] px-2 py-1 min-w-[20px] text-center rounded-full animate-pulse shadow-lg shadow-rose-200">{badge}</span>
-      ) : null}
+{badge && badge > 0 ? (
+  <span className="w-2.5 h-2.5 bg-rose-500 rounded-full animate-pulse shadow-lg shadow-rose-200 shrink-0"></span>
+) : null}
     </Link>
   );
 };
@@ -283,10 +283,10 @@ const [guideTab, setGuideTab] = useState<'text' | 'video'>('text');
   };
 
 const pendingReportsCount = Array.isArray(reports) ? 
-  reports.filter((r: any) => 
-    r.status === 'REQ' && 
+  reports.some((r: any) => 
+    (r.status === 'REQ' || r.status === 'REPORT_PROCESSING') && 
     r.teacherId === user?.id
-  ).length : 0;
+  ) ? 1 : 0 : 0;
 
   // 🎯 VERCEL DOMAIN: Hanya tampilkan verify page, block semua yang lain
   if (isVercelDomain) {
