@@ -885,11 +885,16 @@ const completedSessions = studentAttendanceLogs
                                    );
                                 })}
                              </div>
-                             {maxSess >= 6 && (
-                                <button onClick={() => setRequestingReportFor(course)} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl animate-bounce flex items-center justify-center gap-3">
-                                   <GraduationCap size={20}/> KLAIM RAPOT SEKARANG! 🎓
-                                </button>
-                             )}
+{maxSess >= 6 && !isNextClass && (
+  <button onClick={() => setRequestingReportFor(course)} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl animate-bounce flex items-center justify-center gap-3">
+    <GraduationCap size={20}/> KLAIM RAPOT SEKARANG! 🎓
+  </button>
+)}
+{isNextClass && (
+  <div className="w-full py-5 bg-purple-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl flex items-center justify-center gap-3">
+    <Star size={20}/> LANJUTKAN BELAJAR! ⭐
+  </div>
+)}
                           </div>
                         )}
                       </div>
