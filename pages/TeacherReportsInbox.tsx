@@ -487,7 +487,16 @@ const publishedReports = useMemo(() => {
                   <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md shadow-inner shrink-0 rotate-3"><GraduationCap size={32} /></div>
                   <div className="text-center md:text-left"><h3 className="text-2xl font-black uppercase italic leading-none">{isEditMode ? 'Edit Rapot Siswa' : 'Ruang Kerja Penilaian'}</h3><p className="text-[11px] font-black uppercase tracking-widest mt-2 opacity-80">{selectedPackage.studentsAttended?.[0]} — {selectedPackage.className}</p></div>
                </div>
-               <button onClick={() => { setSelectedPackage(null); setIsEditMode(false); setActiveStep('ANTREAN'); setShowErrors(false); }} className="p-4 bg-white/20 rounded-2xl hover:bg-white/40 transition-all"><X/></button>
+               <button onClick={async () => {
+  if (selectedPackage?.status === 'REPORT_PROCESSING') {
+    await supabase.from('reports').update({ status: 'REQ' }).eq('id', selectedPackage.id);
+    await refreshAllData();
+  }
+  setSelectedPackage(null);
+  setIsEditMode(false);
+  setActiveStep('ANTREAN');
+  setShowErrors(false);
+}} className="p-4 bg-white/20 rounded-2xl hover:bg-white/40 transition-all"><X/></button>
             </div>
             <div className="p-8 md:p-14 space-y-16">
                {/* ✅ SECTION PILIH PERIODE */}
