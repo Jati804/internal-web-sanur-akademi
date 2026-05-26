@@ -7,7 +7,7 @@ import {
   GraduationCap, BadgeCheck, FileText, Upload, Receipt, History, AlertCircle, 
   CreditCard, Eye, Trash2, Printer, Smile, Heart, Target, Edit3, Save, ChevronRight,
   ClipboardList, Download, ShieldCheck, PartyPopper, UserCog, AlertTriangle, Zap, Star, Quote,
-  Layout, Info, FileDown, FileCheck, ImageIcon, Calendar, CheckCircle2
+  Layout, Info, FileDown, FileCheck, ImageIcon, Calendar, CheckCircle2, ArrowRight
 } from 'lucide-react';
 
 import html2canvas from 'html2canvas';
@@ -794,7 +794,7 @@ const completedSessions = studentAttendanceLogs
                       <div className="flex-1 space-y-6 text-center lg:text-left w-full lg:w-auto">
                         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                            <div className={`w-16 h-16 mx-auto lg:mx-0 ${themeColorClass} text-white rounded-2xl flex items-center justify-center shadow-lg transition-colors`}>
-                              {isReportPublished ? (isPass ? <BadgeCheck size={32} /> : <AlertTriangle size={32} />) : isWaitingRelease ? <Clock size={32} /> : isRequesting ? <Clock size={32} /> : isProcessing ? <Edit3 size={32} /> : isRejected ? <AlertTriangle size={32} /> : <BookOpen size={32} />}
+                              {isReportPublished ? (isPass ? <BadgeCheck size={32} /> : <AlertTriangle size={32} />) : isWaitingRelease ? <Clock size={32} /> : isRequesting ? <Clock size={32} /> : isProcessing ? <Edit3 size={32} /> : isNextClass ? <ArrowRight size={32} /> : isRejected ? <AlertTriangle size={32} /> : <BookOpen size={32} />}
                            </div>
                            <span className={`inline-flex px-5 py-1.5 mx-auto lg:mx-0 ${themeColorClass} text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-md transition-colors`}>
                               {badgeText}
