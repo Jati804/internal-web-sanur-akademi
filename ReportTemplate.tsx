@@ -185,8 +185,8 @@ const studentOnlyLogs = (() => {
     ? "Telah menyelesaikan seluruh materi pelatihan dan lulus dalam ujian standar kompetensi" 
     : "Telah berkomitmen mengikuti dan menyelesaikan seluruh rangkaian program pelatihan"}
 </p>
-<p style={{ fontSize: '14px', fontFamily: 'serif', fontStyle: 'italic', color: '#1e3a8a', fontWeight: '700', margin: '0 0 40px 0' }}>
-  Sanur Akademi Inspirasi:
+<p style={{ fontSize: '14px', fontFamily: 'serif', fontStyle: 'italic', color: isPass ? '#1e3a8a' : '#ea580c', fontWeight: '700', margin: '0 0 40px 0' }}>
+  Sanur Akademi Inspirasi
 </p>
 
             {/* ✅ KOTAK HANYA UNTUK SUBJECT & LEVEL */}
