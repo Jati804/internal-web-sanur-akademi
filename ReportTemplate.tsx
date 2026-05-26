@@ -182,7 +182,7 @@ const studentOnlyLogs = (() => {
             
             <p style={{ fontSize: '14px', fontFamily: 'serif', fontStyle: 'italic', color: '#475569', lineHeight: '1.7', margin: '0 0 40px 0', padding: '0 100px' }}>
               {isPass 
-                ? "Telah menunjukkan kompetensi luar biasa dan berhasil menyelesaikan seluruh kurikulum pelatihan intensif dengan hasil memuaskan pada program:" 
+                ? "Telah menyelesaikan seluruh materi pelatihan dan lulus dalam ujian standar kompetensi Sanur Akademi Inspirasi:" 
                 : "Telah berpartisipasi aktif dan menyelesaikan modul pelatihan intensif dengan dedikasi tinggi guna meningkatkan kompetensi pada program:"}
             </p>
 
