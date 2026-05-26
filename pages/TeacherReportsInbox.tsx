@@ -242,9 +242,8 @@ const handleNextClass = async () => {
 
   const handleSaveReportToReady = async () => {
     const isMaterialEmpty = reportForm.sessions.some(s => !s.material.trim());
-    const isNarrativeEmpty = !reportForm.narrative.trim();
 
-    if (isMaterialEmpty || isNarrativeEmpty) {
+  if (isMaterialEmpty) {
       setShowErrors(true);
       const errEl = document.getElementById('error-notif-required');
       if (errEl) errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -593,24 +592,6 @@ const handleNextClass = async () => {
                            </div>
                         </div>
                      ))}
-                  </div>
-               </section>
-               <section className="space-y-6">
-                  <div className="flex items-center gap-3 text-blue-600">
-                    <Quote size={20} />
-                    <h4 className="text-xs font-black uppercase tracking-widest">Narasi Evaluasi</h4>
-                    <span className={`font-black px-2 py-0.5 rounded-full text-[7px] border uppercase tracking-widest ${showErrors && !reportForm.narrative.trim() ? 'bg-rose-500 text-white border-rose-600 animate-pulse' : 'bg-rose-50 text-rose-500 border-rose-100'}`}>WAJIB DIISI KAK! ✨</span>
-                  </div>
-                  <div className={`p-10 rounded-[3rem] border-2 transition-all shadow-inner space-y-4 ${showErrors && !reportForm.narrative.trim() ? 'border-rose-500 bg-rose-50/30 ring-2 ring-rose-200' : 'border-slate-100 bg-slate-50'}`}>
-                     <div className="flex justify-end pr-8 mb-[-2rem] Kalimat relative z-10"><span className={`text-[10px] font-black px-3 py-1 rounded-full ${reportForm.narrative.length >= 200 ? 'bg-rose-500 text-white' : 'bg-blue-600 text-white shadow-md'}`}>{reportForm.narrative.length}/200</span></div>
-                     <textarea 
-                        placeholder="TULISKAN CATATAN PERKEMBANGAN SISWA... ✨" 
-                        value={reportForm.narrative} 
-                        maxLength={200} 
-                        onChange={e => setReportForm({...reportForm, narrative: e.target.value})} 
-                        rows={6} 
-                        className={`w-full p-10 bg-white rounded-[2rem] font-bold text-sm outline-none border-2 transition-all ${showErrors && !reportForm.narrative.trim() ? 'border-rose-500 shadow-rose-100' : 'border-transparent focus:border-blue-500 shadow-sm'}`} 
-                     />
                   </div>
                </section>
                <section className="pt-10">
