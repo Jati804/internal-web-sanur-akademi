@@ -293,5 +293,3 @@ const studentOnlyLogs = (() => {
 };
 
 export default ReportTemplate;
-
-export default ReportTemplate;
