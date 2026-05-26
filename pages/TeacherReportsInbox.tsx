@@ -472,7 +472,7 @@ const publishedReports = useMemo(() => {
                       disabled={!!actionLoadingId}
                       className="w-full py-5 bg-rose-50 text-rose-500 rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all border border-rose-100"
                     >
-                      TOLAK PERMINTAAN
+                      TOLAK PERMIN
                     </button>
                  </div>
               </div>
