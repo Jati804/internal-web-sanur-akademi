@@ -765,6 +765,7 @@ const completedSessions = studentAttendanceLogs
               const isRequesting = courseLogs.some(r => r.status === 'REQ');
               const isProcessing = courseLogs.some(r => r.status === 'REPORT_PROCESSING');
               const isRejected = courseLogs.some(r => r.status === 'REPORT_REJECTED');
+              const isNextClass = courseLogs.some(r => r.status === 'NEXT_CLASS');
               const displayMaxSess = (isReportPublished || isWaitingRelease) ? 6 : maxSess;
               const progressPercent = Math.min((displayMaxSess / 6) * 100, 100);
 
@@ -774,6 +775,7 @@ const completedSessions = studentAttendanceLogs
                 : isWaitingRelease ? 'bg-amber-500' 
                 : isProcessing ? 'bg-orange-500' 
                 : isRequesting ? 'bg-amber-500' 
+                : isNextClass ? 'bg-purple-600'
                 : isRejected ? 'bg-rose-500' 
                 : 'bg-blue-600';
 
@@ -782,6 +784,7 @@ const completedSessions = studentAttendanceLogs
                 : isWaitingRelease ? 'SIAP TERBIT' 
                 : isProcessing ? 'SEDANG DI PROSES' 
                 : isRequesting ? 'MENUNGGU PERSETUJUAN' 
+                : isNextClass ? 'LANJUT KELAS BERIKUTNYA 🚀'
                 : isRejected ? 'DI TOLAK' 
                 : 'PAKET AKTIF ✨';
 
