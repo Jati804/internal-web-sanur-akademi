@@ -214,15 +214,25 @@ const publishedReports = useMemo(() => {
     } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
   };
 
-  const handleRejectRequest = async () => {
-    if (!confirmReject) return;
-    setActionLoadingId(confirmReject.id);
-    try {
-      await supabase.from('reports').update({ status: 'REPORT_REJECTED' }).eq('id', confirmReject.id);
-      await refreshAllData();
-      setConfirmReject(null);
-    } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
-  };
+const handleRejectRequest = async () => {
+  if (!confirmReject) return;
+  setActionLoadingId(confirmReject.id);
+  try {
+    await supabase.from('reports').update({ status: 'REPORT_REJECTED' }).eq('id', confirmReject.id);
+    await refreshAllData();
+    setConfirmReject(null);
+  } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
+};
+
+const handleNextClass = async () => {
+  if (!confirmReject) return;
+  setActionLoadingId(confirmReject.id);
+  try {
+    await supabase.from('reports').update({ status: 'NEXT_CLASS' }).eq('id', confirmReject.id);
+    await refreshAllData();
+    setConfirmReject(null);
+  } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
+};
 
   const avgScore = useMemo(() => {
     const total = reportForm.sessions.reduce((acc, s) => acc + (Number(s.score) || 0), 0);
@@ -762,7 +772,13 @@ const publishedReports = useMemo(() => {
             <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
                <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm animate-pulse"><AlertCircle size={48} /></div>
                <div className="space-y-2"><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Tolak Permintaan?</h4><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest Kalimat leading-relaxed px-4">Siswa akan diminta memilih pengajar lain untuk klaim rapot mereka.</p></div>
-               <div className="flex gap-4"><button onClick={() => setConfirmReject(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase">BATAL</button><button onClick={handleRejectRequest} disabled={!!actionLoadingId} className="flex-1 py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl flex items-center justify-center gap-2">{actionLoadingId === confirmReject.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18}/>} IYA, TOLAK</button></div>
+               <div className="flex gap-4">
+  <button onClick={() => setConfirmReject(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase">BATAL</button>
+  <button onClick={handleRejectRequest} disabled={!!actionLoadingId} className="flex-1 py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl flex items-center justify-center gap-2">{actionLoadingId === confirmReject.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18}/>} IYA, TOLAK</button>
+</div>
+<button onClick={handleNextClass} disabled={!!actionLoadingId} className="w-full py-5 bg-purple-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl flex items-center justify-center gap-2 mt-2">
+  {actionLoadingId === confirmReject.id ? <Loader2 size={18} className="animate-spin" /> : <ChevronRight size={18}/>} LANJUT KELAS BERIKUTNYA
+</button>
             </div>
          </div>
       )}
