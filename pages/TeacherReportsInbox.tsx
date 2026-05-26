@@ -216,7 +216,7 @@ const publishedReports = useMemo(() => {
 
 const handleRejectRequest = async () => {
   if (!confirmReject) return;
-  setActionLoadingId(confirmReject.id);
+  setActionLoadingId(`reject-${confirmReject.id}`);
   try {
     await supabase.from('reports').update({ status: 'REPORT_REJECTED' }).eq('id', confirmReject.id);
     await refreshAllData();
@@ -226,7 +226,7 @@ const handleRejectRequest = async () => {
 
 const handleNextClass = async () => {
   if (!confirmReject) return;
-  setActionLoadingId(confirmReject.id);
+  setActionLoadingId(`next-${confirmReject.id}`);
   try {
     await supabase.from('reports').update({ status: 'NEXT_CLASS' }).eq('id', confirmReject.id);
     await refreshAllData();
@@ -774,10 +774,10 @@ const handleNextClass = async () => {
                <div className="space-y-2"><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Tolak Permintaan?</h4><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest Kalimat leading-relaxed px-4">Siswa akan diminta memilih pengajar lain untuk klaim rapot mereka.</p></div>
                <div className="flex gap-4">
   <button onClick={() => setConfirmReject(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase">BATAL</button>
-  <button onClick={handleRejectRequest} disabled={!!actionLoadingId} className="flex-1 py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl flex items-center justify-center gap-2">{actionLoadingId === confirmReject.id ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18}/>} IYA, TOLAK</button>
+<button onClick={handleRejectRequest} disabled={!!actionLoadingId} className="flex-1 py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl flex items-center justify-center gap-2">{actionLoadingId === `reject-${confirmReject.id}` ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18}/>} IYA, TOLAK</button>
 </div>
 <button onClick={handleNextClass} disabled={!!actionLoadingId} className="w-full py-5 bg-purple-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl flex items-center justify-center gap-2 mt-2">
-  {actionLoadingId === confirmReject.id ? <Loader2 size={18} className="animate-spin" /> : <ChevronRight size={18}/>} LANJUT KELAS BERIKUTNYA
+  {actionLoadingId === `next-${confirmReject.id}` ? <Loader2 size={18} className="animate-spin" /> : <ChevronRight size={18}/>} LANJUT KELAS BERIKUTNYA
 </button>
             </div>
          </div>
