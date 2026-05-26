@@ -814,46 +814,46 @@ const completedSessions = studentAttendanceLogs
                       <div className="flex-[1.5] w-full lg:w-auto">
   {isReportPublished ? (
   <div className="space-y-4">
-    {/* Banner lulus/remedial */}
-    <div className={`${isPass ? 'bg-emerald-600' : 'bg-orange-600'} p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden`}>
-      <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
-      <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
-        <div className="flex items-center gap-5 text-left">
-          <div className={`w-14 h-14 bg-white/20 rounded-full flex items-center justify-center shrink-0 ${isPass ? 'animate-bounce' : ''}`}>
-            {isPass ? <PartyPopper size={28}/> : <Zap size={28}/>}
-          </div>
-          <div>
-            <h4 className="text-2xl font-black uppercase italic leading-none">{isPass ? 'KAMU LULUS! 🎉' : 'SESI SELESAI!'}</h4>
-            <p className="text-[9px] font-bold uppercase tracking-widest opacity-80 mt-1">
-              {isPass ? 'Selamat! Sertifikat & Rapotmu sudah terbit ✨' : 'Kamu hebat sudah belajar sampai akhir! Terus semangat ya ✨'}
-            </p>
-          </div>
+  {/* Grid sesi dulu */}
+  <div className="grid grid-cols-6 gap-2">
+    {[1, 2, 3, 4, 5, 6].map(sNum => {
+      const doneLog = completedSessions.find(s => s.num === sNum);
+      return (
+        <div key={sNum} className={`w-full p-2 h-20 md:h-24 rounded-2xl font-black border-2 flex flex-col items-center justify-center gap-1.5 ${doneLog ? (isPass ? 'bg-white border-emerald-500 text-emerald-600' : 'bg-white border-orange-400 text-orange-500') : 'bg-slate-50 border-transparent text-slate-200 opacity-40'}`}>
+          {doneLog ? (
+            <>
+              <p className={`text-[7px] font-black mb-1 leading-none ${isPass ? 'text-emerald-500' : 'text-orange-400'}`}>{formatDateToDMY(doneLog.date)}</p>
+              <Check size={16} strokeWidth={4}/>
+            </>
+          ) : (
+            <span className="text-xl">{sNum}</span>
+          )}
+          <p className="text-[6px] md:text-[7px] font-black uppercase">{doneLog ? 'DONE' : `SESI ${sNum}`}</p>
         </div>
-        <button onClick={() => handleDownloadPDFReport(course)} disabled={!!activeDownloadId} className={`px-8 py-4 bg-white ${isPass ? 'text-emerald-600' : 'text-orange-600'} rounded-2xl font-black text-[10px] uppercase shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-all shrink-0`}>
-          {activeDownloadId === course.id ? <Loader2 className="animate-spin" size={16} /> : <Download size={18}/>} UNDUH RAPOT
-        </button>
+      );
+    })}
+  </div>
+  {/* Banner lulus/remedial di bawah */}
+  <div className={`${isPass ? 'bg-emerald-600' : 'bg-orange-600'} p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden`}>
+    <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
+    <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
+      <div className="flex items-center gap-5 text-left">
+        <div className={`w-14 h-14 bg-white/20 rounded-full flex items-center justify-center shrink-0 ${isPass ? 'animate-bounce' : ''}`}>
+          {isPass ? <PartyPopper size={28}/> : <Zap size={28}/>}
+        </div>
+        <div>
+          <h4 className="text-2xl font-black uppercase italic leading-none">{isPass ? 'KAMU LULUS! 🎉' : 'SESI SELESAI!'}</h4>
+          <p className="text-[9px] font-bold uppercase tracking-widest opacity-80 mt-1">
+            {isPass ? 'Selamat! Sertifikat & Rapotmu sudah terbit ✨' : 'Kamu hebat sudah belajar sampai akhir! Terus semangat ya ✨'}
+          </p>
+        </div>
       </div>
-    </div>
-    {/* Grid sesi — beku, tidak bisa diklik */}
-    <div className="grid grid-cols-6 gap-2">
-      {[1, 2, 3, 4, 5, 6].map(sNum => {
-        const doneLog = completedSessions.find(s => s.num === sNum);
-        return (
-          <div key={sNum} className={`w-full p-2 h-20 md:h-24 rounded-2xl font-black border-2 flex flex-col items-center justify-center gap-1.5 ${doneLog ? (isPass ? 'bg-white border-emerald-500 text-emerald-600' : 'bg-white border-orange-400 text-orange-500') : 'bg-slate-50 border-transparent text-slate-200 opacity-40'}`}>
-            {doneLog ? (
-              <>
-                <p className={`text-[7px] font-black mb-1 leading-none ${isPass ? 'text-emerald-500' : 'text-orange-400'}`}>{formatDateToDMY(doneLog.date)}</p>
-                <Check size={16} strokeWidth={4}/>
-              </>
-            ) : (
-              <span className="text-xl">{sNum}</span>
-            )}
-            <p className="text-[6px] md:text-[7px] font-black uppercase">{doneLog ? 'DONE' : `SESI ${sNum}`}</p>
-          </div>
-        );
-      })}
+      <button onClick={() => handleDownloadPDFReport(course)} disabled={!!activeDownloadId} className={`px-8 py-4 bg-white ${isPass ? 'text-emerald-600' : 'text-orange-600'} rounded-2xl font-black text-[10px] uppercase shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-all shrink-0`}>
+        {activeDownloadId === course.id ? <Loader2 className="animate-spin" size={16} /> : <Download size={18}/>} UNDUH RAPOT
+      </button>
     </div>
   </div>
+</div>
                         ) : isWaitingRelease ? (
                            <div className="bg-amber-50 p-8 rounded-[2.5rem] border border-amber-100 flex flex-col items-center justify-center text-center gap-4 animate-pulse">
                               <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-amber-600"><Zap size={24}/></div>
