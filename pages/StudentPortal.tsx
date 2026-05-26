@@ -878,8 +878,8 @@ const completedSessions = studentAttendanceLogs
                                           )}
                                           <p className="text-[6px] md:text-[7px] font-black uppercase">{doneLog ? 'DONE' : `SESI ${sNum}`}</p>
                                        </button>
-                                       {!!doneLog && !isRequesting && !isProcessing && (
-                                         <button onClick={(e) => { e.stopPropagation(); setShowEditDateModal(doneLog); setEditDateValue(doneLog.date); }} className="absolute -top-1.5 -right-1.5 p-1.5 bg-white text-blue-500 rounded-full shadow-lg border border-blue-50 hover:bg-blue-50 transition-all z-20" title="Ubah Tanggal"><Edit3 size={10} strokeWidth={3} /></button>
+                                       {!!doneLog && !isRequesting && !isProcessing && !isNextClass && (
+                                          <button onClick={(e) => { e.stopPropagation(); setShowEditDateModal(doneLog); setEditDateValue(doneLog.date); }} className="absolute -top-1.5 -right-1.5 p-1.5 bg-white text-blue-500 rounded-full shadow-lg border border-blue-50 hover:bg-blue-50 transition-all z-20" title="Ubah Tanggal"><Edit3 size={10} strokeWidth={3} /></button>
                                        )}
                                      </div>
                                    );
