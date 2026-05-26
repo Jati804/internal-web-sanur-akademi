@@ -197,7 +197,7 @@ const VerifyCertificate: React.FC = () => {
                     </div>
                     <div>
                       <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Program & Level</p>
-                      <p className="text-sm font-black text-slate-800 uppercase italic leading-tight">{reportData.className}</p>
+                      <p className="text-sm font-black text-slate-800 uppercase italic leading-tight">{reportData.className.split(' - ')[0]}</p>
 <div className="flex items-center gap-2 mt-1.5">
    <span className={`px-3 py-0.5 ${isPass ? 'bg-gradient-to-r from-cyan-500 to-blue-600' : themeColors.bgDark} text-white rounded-full text-[7px] font-black uppercase tracking-widest shadow-md`}>
      {reportData.sessionCategory}
