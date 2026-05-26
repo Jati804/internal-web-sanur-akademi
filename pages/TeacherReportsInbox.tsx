@@ -448,7 +448,7 @@ const publishedReports = useMemo(() => {
          );
          return lastSession ? (
 <div className="flex flex-col items-center gap-0.5">
-   <p className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Tanggal Terakhir Kelas</p>
+   <p className="text-[8px] font-black text-orange-300 uppercase tracking-widest">Tanggal Terakhir Kelas</p>
    <p className="text-[9px] font-black text-slate-400 uppercase tracking-wider">{formatDateToDMY(lastSession.date)}</p>
 </div>
          ) : null;
