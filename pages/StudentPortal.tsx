@@ -895,18 +895,27 @@ const completedSessions = studentAttendanceLogs
       <div><p className="text-[10px] font-black text-orange-800 uppercase italic leading-none">Sedang Di Proses</p><p className="text-[9px] font-bold text-orange-600 uppercase mt-1">Sertifikat & Rapotmu Sedang Diisi Oleh Guru ✨</p></div>
     </div>
   </div>
-                        ) : isRejected ? (
-                           <div className="space-y-6">
-                              <div className="bg-rose-50 p-6 rounded-[2rem] border border-rose-100 flex items-center gap-4 shadow-sm animate-in shake">
-                                 <AlertCircle className="text-rose-600" size={24}/>
-                                 <p className="text-[10px] font-black text-rose-800 uppercase italic leading-relaxed">
-                                    "Di tolak, pilih guru lain ya Kak! ✨ Permintaanmu ditolak guru tersebut, silakan ajukan ke pembimbing lainnya."
-                                 </p>
-                              </div>
-                              <button onClick={() => setRequestingReportFor(course)} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all">
-                                 <GraduationCap size={20}/> KLAIM ULANG RAPOT 🎓
-                              </button>
-                           </div>
+) : isRejected ? (
+  <div className="space-y-6">
+    <div className="grid grid-cols-6 gap-2">
+      {[1, 2, 3, 4, 5, 6].map(sNum => {
+        const doneLog = completedSessions.find(s => s.num === sNum);
+        return (
+          <div key={sNum} className={`w-full p-2 h-20 md:h-24 rounded-2xl font-black border-2 flex flex-col items-center justify-center gap-1.5 ${doneLog ? 'bg-white border-rose-400 text-rose-600' : 'bg-slate-50 border-transparent text-slate-200 opacity-40'}`}>
+            {doneLog ? (<><p className="text-[7px] font-black mb-1 leading-none text-rose-500">{formatDateToDMY(doneLog.date)}</p><Check size={16} strokeWidth={4}/></>) : (<span className="text-xl">{sNum}</span>)}
+            <p className="text-[6px] md:text-[7px] font-black uppercase">{doneLog ? 'DONE' : `SESI ${sNum}`}</p>
+          </div>
+        );
+      })}
+    </div>
+    <div className="bg-rose-50 p-6 rounded-[2rem] border border-rose-100 flex items-center gap-4 shadow-sm">
+      <AlertCircle className="text-rose-600 shrink-0" size={24}/>
+      <p className="text-[10px] font-black text-rose-800 uppercase italic leading-relaxed">Di tolak, pilih guru lain ya Kak! ✨ Permintaanmu ditolak guru tersebut, silakan ajukan ke pembimbing lainnya.</p>
+    </div>
+    <button onClick={() => setRequestingReportFor(course)} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all">
+      <GraduationCap size={20}/> KLAIM ULANG RAPOT 🎓
+    </button>
+  </div>
                         ) : (
                           <div className="space-y-6">
                              <div className="grid grid-cols-6 gap-2">
@@ -929,7 +938,7 @@ const completedSessions = studentAttendanceLogs
                                           )}
                                           <p className="text-[6px] md:text-[7px] font-black uppercase">{doneLog ? 'DONE' : `SESI ${sNum}`}</p>
                                        </button>
-                                       {!!doneLog && !isRequesting && !isProcessing && !isNextClass && (
+                                       {!!doneLog && !isRequesting && !isProcessing && !isNextClass && !isRejected && !isWaitingRelease && (
                                           <button onClick={(e) => { e.stopPropagation(); setShowEditDateModal(doneLog); setEditDateValue(doneLog.date); }} className="absolute -top-1.5 -right-1.5 p-1.5 bg-white text-blue-500 rounded-full shadow-lg border border-blue-50 hover:bg-blue-50 transition-all z-20" title="Ubah Tanggal"><Edit3 size={10} strokeWidth={3} /></button>
                                        )}
                                      </div>
