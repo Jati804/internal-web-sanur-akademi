@@ -171,23 +171,16 @@ const publishedReports = useMemo(() => {
     setIsEditMode(isEdit);
     setShowErrors(false);
     
-    // ✅ LOAD TINGKAT DARI DATABASE
-    const tingkat = req.periode || 1;
-    setSelectedTingkat(tingkat);
-    
     const sName = req.studentsAttended?.[0] || 'SISWA';
     if (isEdit || req.status === 'REPORT_READY') {
       const existingTopics = (req.studentTopics?.[sName] || Array(6).fill('')) as string[];
       const existingScores = (req.studentScores?.[sName] || Array(6).fill(90)) as number[];
-      const existingNarrative = req.studentNarratives?.[sName] || req.reportNarrative || '';
       
-      // ✅ UPDATE SESSION NUMBERS SESUAI TINGKAT
-      const startSession = (tingkat - 1) * 6 + 1;
 setReportForm({ 
   sessions: existingTopics.length > 0 
     ? existingTopics.map((mat: string, i: number) => ({ num: i + 1, material: mat || '', score: existingScores[i] || 90 }))
     : [{ num: 1, material: '', score: 90 }],
-  narrative: existingNarrative 
+  narrative: ''
 });
 } else {
   setReportForm({ 
@@ -239,7 +232,7 @@ const avgScore = useMemo(() => {
       setShowErrors(true);
       const errEl = document.getElementById('error-notif-required');
       if (errEl) errEl.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      return alert("Waduh Kak! Materi sesi dan Narasi Evaluasi wajib diisi yaa agar rapot siswa sempurna ✨");
+      return alert("Waduh Kak! Materi kurikulum wajib diisi yaa agar rapot siswa sempurna ✨");
     }
 
     setActionLoadingId(selectedPackage.id);
