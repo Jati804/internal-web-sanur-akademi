@@ -43,6 +43,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   const slipRef = useRef<HTMLDivElement>(null);
 
   const [confirmingAbsen, setConfirmingAbsen] = useState<{course: any, sessionNum: number} | null>(null);
+  const [activeFilter, setActiveFilter] = useState<string>('SEMUA');
   const [selectedAbsenDate, setSelectedAbsenDate] = useState(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()));
   const [requestingReportFor, setRequestingReportFor] = useState<any | null>(null);
   const [selectedTeacherForReport, setSelectedTeacherForReport] = useState('');
@@ -128,7 +129,14 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
       });
   }, [studentPayments, normalizedUserName]);
 
-  const myPayments = useMemo(() => {
+const uniqueSubjects = useMemo(() => {
+  const names = verifiedCourses.map(c =>
+    (c.className || '').replace(/\s*\(.*?\)\s*-\s*REGULER\s*\d+/i, '').trim()
+  );
+  return ['SEMUA', ...Array.from(new Set(names))];
+}, [verifiedCourses]);
+
+    const myPayments = useMemo(() => {
     if (!Array.isArray(studentPayments)) return [];
     return [...studentPayments]
       .filter(p => (p.studentName || '').toUpperCase().trim() === normalizedUserName)
@@ -726,7 +734,30 @@ const executeFinalRequestReport = async () => {
         </section>
       ) : (
         <section className="space-y-10">
-           {verifiedCourses.map((course, idx) => {
+   {uniqueSubjects.length > 2 && (
+     <div className="flex flex-wrap gap-2 px-2">
+       {uniqueSubjects.map(subject => (
+         <button
+           key={subject}
+           onClick={() => setActiveFilter(subject)}
+           className={`px-5 py-2.5 rounded-full font-black text-[9px] uppercase tracking-widest transition-all ${
+             activeFilter === subject
+               ? 'bg-emerald-600 text-white shadow-lg'
+               : 'bg-white text-slate-400 border-2 border-slate-100 hover:border-emerald-300'
+           }`}
+         >
+           {subject}
+         </button>
+       ))}
+     </div>
+   )}
+   {verifiedCourses
+     .filter(course => {
+       if (activeFilter === 'SEMUA') return true;
+       const name = (course.className || '').replace(/\s*\(.*?\)\s*-\s*REGULER\s*\d+/i, '').trim();
+       return name === activeFilter;
+     })
+     .map((course, idx) => {
               // ✅ GANTI PAKAI studentAttendanceLogs
 const pkgIdNorm = (course.id || '').toUpperCase().trim();
 const completedSessions = studentAttendanceLogs
