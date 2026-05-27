@@ -841,21 +841,60 @@ const completedSessions = studentAttendanceLogs
     </div>
   </div>
 </div>
-                        ) : isWaitingRelease ? (
-                           <div className="bg-amber-50 p-8 rounded-[2.5rem] border border-amber-100 flex flex-col items-center justify-center text-center gap-4 animate-pulse">
-                              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-amber-600"><Zap size={24}/></div>
-                              <div><p className="text-[11px] font-black text-amber-800 uppercase italic">Penilaian Selesai!</p><p className="text-[9px] font-bold text-amber-600 uppercase mt-2">Tunggu Guru Mengirimkan Rapotmu Ke Sini ✨</p></div>
-                           </div>
-                        ) : isRequesting ? (
-                           <div className="bg-amber-50 p-8 rounded-[2.5rem] border border-amber-100 flex flex-col items-center justify-center text-center gap-4 animate-pulse">
-                              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-amber-600"><Clock size={24}/></div>
-                              <div><p className="text-[11px] font-black text-amber-800 uppercase italic leading-none">Sedang Meminta Persetujuan Guru</p><p className="text-[9px] font-bold text-amber-600 uppercase mt-2">Tunggu Guru Menerima Permintaanmu Ya ✨</p></div>
-                           </div>
-                        ) : isProcessing ? (
-                           <div className="bg-orange-50 p-8 rounded-[2.5rem] border border-orange-100 flex flex-col items-center justify-center text-center gap-4 animate-pulse">
-                              <div className="w-12 h-12 bg-white rounded-2xl flex items-center justify-center text-orange-600"><Edit3 size={24}/></div>
-                              <div><p className="text-[11px] font-black text-orange-800 uppercase italic leading-none">Sedang Di Proses</p><p className="text-[9px] font-bold text-orange-600 uppercase mt-2">Sertifikat & Rapotmu Sedang Diisi Oleh Guru ✨</p></div>
-                           </div>
+) : isWaitingRelease ? (
+  <div className="space-y-4">
+    <div className="grid grid-cols-6 gap-2">
+      {[1, 2, 3, 4, 5, 6].map(sNum => {
+        const doneLog = completedSessions.find(s => s.num === sNum);
+        return (
+          <div key={sNum} className={`w-full p-2 h-20 md:h-24 rounded-2xl font-black border-2 flex flex-col items-center justify-center gap-1.5 ${doneLog ? 'bg-white border-amber-400 text-amber-600' : 'bg-slate-50 border-transparent text-slate-200 opacity-40'}`}>
+            {doneLog ? (<><p className="text-[7px] font-black mb-1 leading-none text-amber-500">{formatDateToDMY(doneLog.date)}</p><Check size={16} strokeWidth={4}/></>) : (<span className="text-xl">{sNum}</span>)}
+            <p className="text-[6px] md:text-[7px] font-black uppercase">{doneLog ? 'DONE' : `SESI ${sNum}`}</p>
+          </div>
+        );
+      })}
+    </div>
+    <div className="bg-amber-50 p-6 rounded-[2rem] border border-amber-100 flex items-center gap-4">
+      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-amber-600 shrink-0"><Zap size={20}/></div>
+      <div><p className="text-[10px] font-black text-amber-800 uppercase italic">Penilaian Selesai!</p><p className="text-[9px] font-bold text-amber-600 uppercase mt-1">Tunggu Guru Mengirimkan Rapotmu Ke Sini ✨</p></div>
+    </div>
+  </div>
+) : isRequesting ? (
+  <div className="space-y-4">
+    <div className="grid grid-cols-6 gap-2">
+      {[1, 2, 3, 4, 5, 6].map(sNum => {
+        const doneLog = completedSessions.find(s => s.num === sNum);
+        return (
+          <div key={sNum} className={`w-full p-2 h-20 md:h-24 rounded-2xl font-black border-2 flex flex-col items-center justify-center gap-1.5 ${doneLog ? 'bg-white border-amber-400 text-amber-600' : 'bg-slate-50 border-transparent text-slate-200 opacity-40'}`}>
+            {doneLog ? (<><p className="text-[7px] font-black mb-1 leading-none text-amber-500">{formatDateToDMY(doneLog.date)}</p><Check size={16} strokeWidth={4}/></>) : (<span className="text-xl">{sNum}</span>)}
+            <p className="text-[6px] md:text-[7px] font-black uppercase">{doneLog ? 'DONE' : `SESI ${sNum}`}</p>
+          </div>
+        );
+      })}
+    </div>
+    <div className="bg-amber-50 p-6 rounded-[2rem] border border-amber-100 flex items-center gap-4">
+      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-amber-600 shrink-0"><Clock size={20}/></div>
+      <div><p className="text-[10px] font-black text-amber-800 uppercase italic leading-none">Sedang Meminta Persetujuan Guru</p><p className="text-[9px] font-bold text-amber-600 uppercase mt-1">Tunggu Guru Menerima Permintaanmu Ya ✨</p></div>
+    </div>
+  </div>
+) : isProcessing ? (
+  <div className="space-y-4">
+    <div className="grid grid-cols-6 gap-2">
+      {[1, 2, 3, 4, 5, 6].map(sNum => {
+        const doneLog = completedSessions.find(s => s.num === sNum);
+        return (
+          <div key={sNum} className={`w-full p-2 h-20 md:h-24 rounded-2xl font-black border-2 flex flex-col items-center justify-center gap-1.5 ${doneLog ? 'bg-white border-orange-400 text-orange-600' : 'bg-slate-50 border-transparent text-slate-200 opacity-40'}`}>
+            {doneLog ? (<><p className="text-[7px] font-black mb-1 leading-none text-orange-500">{formatDateToDMY(doneLog.date)}</p><Check size={16} strokeWidth={4}/></>) : (<span className="text-xl">{sNum}</span>)}
+            <p className="text-[6px] md:text-[7px] font-black uppercase">{doneLog ? 'DONE' : `SESI ${sNum}`}</p>
+          </div>
+        );
+      })}
+    </div>
+    <div className="bg-orange-50 p-6 rounded-[2rem] border border-orange-100 flex items-center gap-4">
+      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-orange-600 shrink-0"><Edit3 size={20}/></div>
+      <div><p className="text-[10px] font-black text-orange-800 uppercase italic leading-none">Sedang Di Proses</p><p className="text-[9px] font-bold text-orange-600 uppercase mt-1">Sertifikat & Rapotmu Sedang Diisi Oleh Guru ✨</p></div>
+    </div>
+  </div>
                         ) : isRejected ? (
                            <div className="space-y-6">
                               <div className="bg-rose-50 p-6 rounded-[2rem] border border-rose-100 flex items-center gap-4 shadow-sm animate-in shake">
