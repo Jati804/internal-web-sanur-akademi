@@ -776,7 +776,7 @@ const completedSessions = studentAttendanceLogs
                 : 'PAKET AKTIF ✨';
 
               return (
-                <div key={course.id || idx} e-500') className={`bg-white rounded-[3rem] border-2 border-slate-50 shadow-2xl transition-all duration-500 overflow-hidden ${isReportPublished ? (isPass ? 'hover:border-blue-500' : 'hover:border-orange-500') : isNextClass ? 'hover:border-purple-500' : 'hover:border-emerald-500'}`}>
+                <div key={course.id || idx} className={`bg-white rounded-[3rem] border-2 border-slate-50 shadow-2xl transition-all duration-500 overflow-hidden ${isReportPublished ? (isPass ? 'hover:border-blue-500' : 'hover:border-orange-500') : isNextClass ? 'hover:border-purple-500' : 'hover:border-emerald-500'}`}>
                    <div className="p-8 md:p-12 flex flex-col lg:flex-row items-center gap-10">
                       <div className="flex-1 space-y-6 text-center lg:text-left w-full lg:w-auto">
                         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
