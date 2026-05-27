@@ -248,15 +248,12 @@ const avgScore = useMemo(() => {
       const topics = reportForm.sessions.map(s => (s.material || '').toUpperCase());
       const scores = reportForm.sessions.map(s => Number(s.score) || 0);
       const payload = { 
-        status: 'REPORT_READY', 
-        sessionnumber: 6, 
-        studenttopics: { [sName]: topics }, 
-        studentscores: { [sName]: scores }, 
-        studentnarratives: { [sName]: reportForm.narrative }, 
-        reportnarrative: reportForm.narrative, 
-        periode: selectedTingkat, // ✅ SIMPAN TINGKAT
-        date: isEditMode ? selectedPackage.date : new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()) 
-      };
+  status: 'REPORT_READY', 
+  sessionnumber: 6, 
+  studenttopics: { [sName]: topics }, 
+  studentscores: { [sName]: scores }, 
+  date: isEditMode ? selectedPackage.date : new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()) 
+};
       await supabase.from('reports').update(payload).eq('id', selectedPackage.id);
       await refreshAllData();
       
