@@ -493,9 +493,9 @@ const avgScore = useMemo(() => {
 <section className="space-y-6">
   <div className="flex items-center justify-between">
     <div className="flex items-center gap-3 text-blue-600"><BookOpen size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Detail Materi & Nilai</h4></div>
-    <button onClick={() => setReportForm(prev => ({ ...prev, sessions: [...prev.sessions, { num: prev.sessions.length + 1, material: '', score: 90 }] }))} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase">
-      + TAMBAH MATERI
-    </button>
+<button onClick={() => { if (reportForm.sessions.length >= 9) return; setReportForm(prev => ({ ...prev, sessions: [...prev.sessions, { num: prev.sessions.length + 1, material: '', score: 90 }] })) }} className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase transition-all ${reportForm.sessions.length >= 9 ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-blue-600 text-white'}`}>
+  + TAMBAH MATERI
+</button>
   </div>
   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                      {reportForm.sessions.map((s, i) => (
@@ -525,12 +525,9 @@ const avgScore = useMemo(() => {
                                 className={`w-full px-5 py-3 rounded-xl font-black uppercase text-[10px] outline-none transition-all border ${showErrors && !s.material.trim() ? 'bg-rose-50 border-rose-500 placeholder:text-rose-300' : 'bg-white border-slate-200 focus:border-blue-500'}`} 
                               />
                              {reportForm.sessions.length > 1 && (
-<button 
-  onClick={() => { if (reportForm.sessions.length >= 9) return; setReportForm(prev => ({ ...prev, sessions: [...prev.sessions, { num: prev.sessions.length + 1, material: '', score: 90 }] })) }} 
-  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase transition-all ${reportForm.sessions.length >= 9 ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-blue-600 text-white'}`}
->
-  + TAMBAH MATERI
-</button>
+  <button onClick={() => setReportForm(prev => ({ ...prev, sessions: prev.sessions.filter((_, idx) => idx !== i).map((s, idx) => ({ ...s, num: idx + 1 })) }))} className="w-full py-2 text-rose-400 font-black text-[8px] uppercase hover:text-rose-600 transition-all">
+    − HAPUS MATERI INI
+  </button>
 )}
                            </div>
                         </div>
