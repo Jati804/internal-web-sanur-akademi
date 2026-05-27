@@ -81,7 +81,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, r
   const [confirmNextClass, setConfirmNextClass] = useState<any | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [showErrors, setShowErrors] = useState(false);
-  const [reportForm, setReportForm] = useState({ sessions: Array.from({ length: 6 }, (_, i) => ({ num: i + 1, material: '', score: 90 })), narrative: '' });
+  const [reportForm, setReportForm] = useState({ sessions: [{ num: 1, material: '', score: 90 }], narrative: '' });
   
   // FIXED: Menggunakan state ID agar loading tidak terjadi secara massal
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
@@ -183,26 +183,18 @@ const publishedReports = useMemo(() => {
       
       // ✅ UPDATE SESSION NUMBERS SESUAI TINGKAT
       const startSession = (tingkat - 1) * 6 + 1;
-      setReportForm({ 
-        sessions: Array.from({ length: 6 }, (_, i) => ({ 
-          num: startSession + i, 
-          material: existingTopics[i] || '', 
-          score: existingScores[i] || 90 
-        })), 
-        narrative: existingNarrative 
-      });
-    } else {
-      // ✅ SESSION NUMBERS UNTUK FORM BARU
-      const startSession = (tingkat - 1) * 6 + 1;
-      setReportForm({ 
-        sessions: Array.from({ length: 6 }, (_, i) => ({ 
-          num: startSession + i, 
-          material: '', 
-          score: 90 
-        })), 
-        narrative: '' 
-      });
-    }
+setReportForm({ 
+  sessions: existingTopics.length > 0 
+    ? existingTopics.map((mat: string, i: number) => ({ num: i + 1, material: mat || '', score: existingScores[i] || 90 }))
+    : [{ num: 1, material: '', score: 90 }],
+  narrative: existingNarrative 
+});
+} else {
+  setReportForm({ 
+    sessions: [{ num: 1, material: '', score: 90 }],
+    narrative: '' 
+  });
+}
     setActiveStep('WORKSPACE');
   };
 
@@ -490,68 +482,6 @@ const handleNextClass = async () => {
                <button onClick={() => { setSelectedPackage(null); setIsEditMode(false); setActiveStep('ANTREAN'); setShowErrors(false); }} className="p-4 bg-white/20 rounded-2xl hover:bg-white/40 transition-all"><X/></button>
             </div>
             <div className="p-8 md:p-14 space-y-16">
-               {/* ✅ SECTION PILIH PERIODE */}
-               <section className="space-y-4">
-                  <div className="flex items-center gap-3 text-purple-600"><Calendar size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Pilih Materi Kurikulum</h4></div>
-                  <div className="bg-gradient-to-br from-purple-50 to-blue-50 p-8 rounded-[3rem] border-2 border-purple-100 space-y-6">
-                     <div className="flex flex-col md:flex-row gap-6 items-start md:items-center justify-between">
-                        <div className="flex-1">
-                        <p className="text-[10px] font-black text-purple-800 uppercase tracking-wider mb-2">MATERI KURIKULUM</p>
-                        <select
-                         value={selectedTingkat}
-                           onChange={(e) => {
-                             const newTingkat = Number(e.target.value);
-                              setSelectedTingkat(newTingkat);
-                               // Update session numbers
-                                const startSession = (newTingkat - 1) * 6 + 1;
-                                 setReportForm(prev => ({
-                                    ...prev,
-                                    sessions: prev.sessions.map((s, i) => ({
-                                       ...s,
-                                       num: startSession + i
-                                    }))
-                                 }));
-                              }}
-                              className="w-full md:w-64 px-6 py-4 bg-white text-purple-600 rounded-2xl font-black text-sm uppercase cursor-pointer shadow-lg hover:shadow-xl transition-all border-2 border-purple-200"
-                           >
-                              {[1, 2, 3, 4, 5, 6].map(p => (
-                                 <option key={p} value={p}>TINGKAT {p}</option>
-                              ))}
-                           </select>
-                        </div>
-                        <div className="text-center md:text-right">
-                           <p className="text-[9px] font-black text-purple-600 uppercase tracking-widest mb-1">RANGE SESI</p>
-                           <p className="text-2xl font-black text-purple-800 italic">
-                              {((selectedTingkat - 1) * 6 + 1)} - {(selectedTingkat * 6)}
-                           </p>
-                        </div>
-                     </div>
-                     <div className="bg-white/60 p-6 rounded-2xl border border-purple-100">
-                        <p className="text-[10px] font-bold text-slate-600 leading-relaxed">
-                           <span className="font-black text-purple-600">TINGKAT {selectedTingkat}</span> mencakup materi sesi {((selectedTingkat - 1) * 6 + 1)} sampai {(selectedTingkat * 6)} dalam kurikulum. Ini adalah tingkatan pembelajaran, bukan nomor paket siswa.
-                        </p>
-                     </div>
-                  </div>
-               </section>
-               
-               <section className="space-y-4">
-   <div className="flex items-center gap-3 text-blue-600"><History size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Langkah Pembelajaran (Milestone)</h4></div>
-   <div className="bg-slate-50 p-8 rounded-[3rem] border border-slate-100">
-      {/* ✅ TAMBAH PENGECEKAN INI */}
-      {studentAttendanceLogs && Array.isArray(studentAttendanceLogs) ? (
-         <MilestoneView 
-            studentAttendanceLogs={studentAttendanceLogs} 
-            studentName={selectedPackage.studentsAttended?.[0] || ''} 
-            packageId={selectedPackage.packageId}
-            periode={selectedTingkat}
-         />
-      ) : (
-         <div className="text-center py-8">
-            <p className="text-slate-400 text-sm font-bold">Loading milestone data...</p>
-         </div>
-      )}
-   </div>
-</section>
                <section className="flex flex-col items-center">
                   <div className="bg-slate-900 p-12 rounded-[4rem] text-white text-center shadow-2xl relative overflow-hidden w-full max-w-lg">
                      <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
@@ -560,9 +490,14 @@ const handleNextClass = async () => {
                      <p className="text-[11px] font-black uppercase tracking-widest mt-6 text-emerald-500 opacity-60 relative z-10">{avgScore >= 80 ? 'KOMPETENSI: LULUS' : 'KOMPETENSI: REMEDIAL'}</p>
                   </div>
                </section>
-               <section className="space-y-6">
-                  <div className="flex items-center gap-3 text-blue-600"><BookOpen size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Detail Materi & Nilai Tiap Sesi</h4></div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+<section className="space-y-6">
+  <div className="flex items-center justify-between">
+    <div className="flex items-center gap-3 text-blue-600"><BookOpen size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Detail Materi & Nilai</h4></div>
+    <button onClick={() => setReportForm(prev => ({ ...prev, sessions: [...prev.sessions, { num: prev.sessions.length + 1, material: '', score: 90 }] }))} className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase">
+      + TAMBAH MATERI
+    </button>
+  </div>
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                      {reportForm.sessions.map((s, i) => (
                         <div key={i} className={`flex flex-col gap-4 p-8 rounded-[2.5rem] border-2 transition-all shadow-inner ${showErrors && !s.material.trim() ? 'border-rose-500 bg-rose-50/30 ring-2 ring-rose-200' : 'border-transparent bg-slate-50 focus-within:border-blue-500'}`}>
                            <div className="flex justify-between items-center border-b border-slate-200 pb-4">
@@ -589,6 +524,17 @@ const handleNextClass = async () => {
                                 }} 
                                 className={`w-full px-5 py-3 rounded-xl font-black uppercase text-[10px] outline-none transition-all border ${showErrors && !s.material.trim() ? 'bg-rose-50 border-rose-500 placeholder:text-rose-300' : 'bg-white border-slate-200 focus:border-blue-500'}`} 
                               />
+                             {reportForm.sessions.length > 1 && (
+  <button 
+  onClick={() => {
+    if (reportForm.sessions.length >= 9) return;
+    setReportForm(prev => ({ ...prev, sessions: [...prev.sessions, { num: prev.sessions.length + 1, material: '', score: 90 }] }))
+  }} 
+  className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase transition-all ${reportForm.sessions.length >= 9 ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-blue-600 text-white'}`}
+>
+  + TAMBAH MATERI
+</button>
+)}
                            </div>
                         </div>
                      ))}
