@@ -483,7 +483,7 @@ const avgScore = useMemo(() => {
 <section className="space-y-6">
   <div className="flex items-center justify-between">
     <div className="flex items-center gap-3 text-blue-600"><BookOpen size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Detail Materi & Nilai</h4></div>
-<button onClick={() => { if (reportForm.sessions.length >= 9) return; setReportForm(prev => ({ ...prev, sessions: [...prev.sessions, { num: prev.sessions.length + 1, material: '', score: 90 }] })) }} className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase transition-all ${reportForm.sessions.length >= 9 ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-blue-600 text-white'}`}>
+<button onClick={() => { if (reportForm.sessions.length >= 8) return; setReportForm(prev => ({ ...prev, sessions: [...prev.sessions, { num: prev.sessions.length + 1, material: '', score: 90 }] })) }} className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase transition-all ${reportForm.sessions.length >= 8 ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-blue-600 text-white'}`}>
   + TAMBAH MATERI
 </button>
   </div>
@@ -543,7 +543,7 @@ const avgScore = useMemo(() => {
             {publishedReports.map((req, i) => {
                const sName = req.studentsAttended?.[0] || 'SISWA';
                const scores = (Array.isArray(req.studentScores?.[sName]) ? req.studentScores?.[sName] : Array(6).fill(90)) as number[];
-               const avg = Math.round(scores.reduce((a:number,b:number)=>a+b,0)/6);
+               const avg = scores.length > 0 ? Math.round(scores.reduce((a:number,b:number)=>a+b,0)/scores.length) : 0;
                const isPass = avg >= 80;
                const isReadyToSend = req.status === 'REPORT_READY';
                const isNewlyActioned = req.id === lastActionedId;
@@ -574,7 +574,7 @@ const avgScore = useMemo(() => {
                      
                      {/* ✅ INFO BOX DENGAN PERIODE DI TENGAH */}
                      <div className="bg-slate-50 p-8 rounded-[2.5rem] mb-10">
-                        <div className="grid grid-cols-3 gap-4 items-center">
+                        <div className="flex justify-between items-center">
                            {/* NILAI */}
                            <div>
                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Rerata</p>
@@ -582,7 +582,7 @@ const avgScore = useMemo(() => {
                            </div>
                            
                            {/* TANGGAL */}
-                           <div className="text-right">
+                           <div>
                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{isReadyToSend ? 'Selesai' : 'Terkirim'}</p>
                               <p className="text-[11px] font-black text-slate-800 uppercase tracking-normal">{formatDateToDMY(req.date)}</p>
                            </div>
