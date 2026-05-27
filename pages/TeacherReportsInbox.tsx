@@ -591,15 +591,6 @@ const avgScore = useMemo(() => {
                               <p className={`text-3xl font-black italic ${isPass ? 'text-emerald-600' : 'text-orange-600'}`}>{avg}</p>
                            </div>
                            
-                            {/* ✅ TINGKAT DI TENGAH */}
-                            <div className="text-center border-x-2 border-slate-200 px-2">
-                               <p className="text-[8px] font-black text-purple-600 uppercase tracking-wider mb-1">Tingkat</p>
-                               <p className="text-2xl font-black text-purple-600 italic">{periode}</p>
-                               <p className="text-[7px] font-bold text-slate-400 uppercase mt-1">
-                                  Sesi {((periode - 1) * 6 + 1)}-{(periode * 6)}
-                               </p>
-                            </div>
-                           
                            {/* TANGGAL */}
                            <div className="text-right">
                               <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">{isReadyToSend ? 'Selesai' : 'Terkirim'}</p>
