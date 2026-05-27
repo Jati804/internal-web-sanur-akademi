@@ -874,7 +874,7 @@ const completedSessions = studentAttendanceLogs
     </div>
     <div className="bg-amber-50 p-6 rounded-[2rem] border border-amber-100 flex items-center gap-4">
       <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-amber-600 shrink-0"><Clock size={20}/></div>
-      <div><p className="text-[10px] font-black text-amber-800 uppercase italic leading-none">Sedang Meminta Persetujuan Guru</p><p className="text-[9px] font-bold text-amber-600 uppercase mt-1">Tunggu Guru Menerima Permintaanmu Ya ✨</p></div>
+      <div><p className="text-[10px] font-black text-amber-800 uppercase italic leading-none">Sedang Meminta Persetujuan Guru Untuk Rapot</p><p className="text-[9px] font-bold text-amber-600 uppercase mt-1">Tunggu Guru Menerima Permintaanmu Ya ✨</p></div>
     </div>
   </div>
 ) : isProcessing ? (
