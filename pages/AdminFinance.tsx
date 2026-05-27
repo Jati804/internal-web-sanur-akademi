@@ -367,7 +367,7 @@ useEffect(() => {
     const txId = `TX-INC-${Date.now()}`;
     try {
       await supabase.from('student_payments').update({ status: 'VERIFIED' }).eq('id', p.id);
-      await supabase.from('transactions').insert({ id: txId, type: 'INCOME', category: 'SPP SISWA', amount: p.amount, date: getWIBDate(), description: `SPP MASUK: ${p.studentName} | ${p.className}`.toUpperCase() });
+      await supabase.from('transactions').insert({ id: txId, type: 'INCOME', category: 'SPP SISWA', amount: p.amount, date: p.date, description: `SPP MASUK: ${p.studentName} | ${p.className}`.toUpperCase() });
       if (refreshAllData) await refreshAllData();
       await fetchLedgerData();
       
