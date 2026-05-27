@@ -741,7 +741,7 @@ const completedSessions = studentAttendanceLogs
               // LOGIKA KELULUSAN TERKINI
               const sName = normalizedUserName;
               const scores = reportLog ? (reportLog.studentScores?.[sName] as number[] || []) : [];
-              const avg = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / 6) : 0;
+              const avg = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
               const isPass = avg >= 80;
 
               const maxSess = new Set(completedSessions.map(s => s.num)).size;
