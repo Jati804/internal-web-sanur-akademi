@@ -793,7 +793,7 @@ const completedSessions = studentAttendanceLogs
                         </div>
                         <div className="space-y-2">
                            <div className="h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 shadow-inner">
-                              <div className={`h-full rounded-full transition-all duration-1000 ${isReportPublished ? (isPass ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]') : isNextClass ? 'bg-purple-600 shadow-[0_0_10px_rgba(147,51,234,0.4)]' : 'bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.4)]'}`} style={{ width: `${progressPercent}%` }}></div>
+                              <div className={`h-full rounded-full transition-all duration-1000 ${isReportPublished ? (isPass ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]') : isNextClass ? 'bg-purple-600 shadow-[0_0_10px_rgba(147,51,234,0.4)]' : (isRequesting || isWaitingRelease || isProcessing) ? 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.4)]' : 'bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.4)]'}`} style={{ width: `${progressPercent}%` }}></div>
                            </div>
                            <p className="text-[9px] font-black uppercase text-slate-400 text-center lg:text-left">{displayMaxSess}/6 SESI</p>
                         </div>
