@@ -39,15 +39,15 @@ const ReportTemplate: React.FC<ReportTemplateProps> = ({
   studentName 
 }) => {
   // 1. DATA GURU
-  const rawScores = getDirectValue(reportLog.studentScores, Array(6).fill(0));
-  const scores: number[] = Array.isArray(rawScores) ? rawScores : Array(6).fill(0);
-  
-  const rawTopics = getDirectValue(reportLog.studentTopics, Array(6).fill("MATERI BELUM DIISI"));
-  const topics: string[] = Array.isArray(rawTopics) ? rawTopics : Array(6).fill("MATERI BELUM DIISI");
-  
-  const totalScore = scores.reduce((a, b) => a + b, 0);
-  const avg = scores.length > 0 ? Math.round(totalScore / scores.length) : 0;
-  const isPass = avg >= 80;
+const rawScores = getDirectValue(reportLog.studentScores, null);
+const scores: number[] = Array.isArray(rawScores) && rawScores.length > 0 ? rawScores : [];
+
+const rawTopics = getDirectValue(reportLog.studentTopics, null);
+const topics: string[] = Array.isArray(rawTopics) && rawTopics.length > 0 ? rawTopics : [];
+
+const totalScore = scores.reduce((a, b) => a + b, 0);
+const avg = scores.length > 0 ? Math.round(totalScore / scores.length) : 0;
+const isPass = avg >= 80;
   
   const matpelMatch = reportLog.className?.match(/(.*) \((.*)\) - (.*)/);
   const subject = matpelMatch ? matpelMatch[1] : (reportLog.className || "PROGRAM SANUR");
