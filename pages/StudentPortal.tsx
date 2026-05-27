@@ -303,9 +303,6 @@ const executeFinalRequestReport = async () => {
       studentsattended: [normalizedUserName], 
       studentscores: {},  // ✅ TAMBAH
       studenttopics: {},  // ✅ TAMBAH
-      studentnarratives: {},  // ✅ TAMBAH
-      reportnarrative: '',  // ✅ TAMBAH
-      periode: 1  // ✅ TAMBAH (atau sesuaikan dengan tingkat siswa)
     };
     
     // ✅ GANTI KE TABEL REPORTS!
