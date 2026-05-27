@@ -793,7 +793,7 @@ const completedSessions = studentAttendanceLogs
                         </div>
                         <div className="space-y-2">
                            <div className="h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 shadow-inner">
-                              <div className={`h-full rounded-full transition-all duration-1000 ${isReportPublished ? (isPass ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]') : 'bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.4)]'}`} style={{ width: `${progressPercent}%` }}></div>
+                              <div className={`h-full rounded-full transition-all duration-1000 ${isReportPublished ? (isPass ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]') : isNextClass ? 'bg-purple-600 shadow-[0_0_10px_rgba(147,51,234,0.4)]' : 'bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.4)]'}`} style={{ width: `${progressPercent}%` }}></div>
                            </div>
                            <p className="text-[9px] font-black uppercase text-slate-400 text-center lg:text-left">{displayMaxSess}/6 SESI</p>
                         </div>
@@ -916,21 +916,22 @@ const completedSessions = studentAttendanceLogs
       <GraduationCap size={20}/> KLAIM ULANG RAPOT 🎓
     </button>
   </div>
-                        ) : (
-                          <div className="space-y-6">
-                             <div className="grid grid-cols-6 gap-2">
-                                {[1, 2, 3, 4, 5, 6].map(sNum => {
-                                   const doneLog = completedSessions.find(s => s.num === sNum);
-                                   return (
-                                     <div key={sNum} className="relative group/box">
-                                       <button 
-                                         onClick={() => setConfirmingAbsen({ course, sessionNum: sNum })}
-                                         disabled={!!doneLog || (sNum !== maxSess + 1)} 
-                                         className={`w-full p-2 h-20 md:h-24 rounded-2xl font-black transition-all border-2 flex flex-col items-center justify-center gap-1.5 ${!!doneLog ? 'bg-white border-emerald-500 text-emerald-600' : (sNum === maxSess + 1) ? 'bg-blue-50 border-blue-500 text-blue-600 animate-pulse active:scale-95' : 'bg-slate-50 border-transparent text-slate-200 opacity-60'}`}
-                                       >
-                                          {!!doneLog ? (
-                                             <>
-                                                <p className="text-[7px] font-black text-emerald-500 mb-1 leading-none">{formatDateToDMY(doneLog.date)}</p>
+                        // AFTER
+) : (
+  <div className="space-y-6">
+     <div className="grid grid-cols-6 gap-2">
+        {[1, 2, 3, 4, 5, 6].map(sNum => {
+           const doneLog = completedSessions.find(s => s.num === sNum);
+           return (
+             <div key={sNum} className="relative group/box">
+               <button 
+                 onClick={() => setConfirmingAbsen({ course, sessionNum: sNum })}
+                 disabled={!!doneLog || (sNum !== maxSess + 1)} 
+                 className={`w-full p-2 h-20 md:h-24 rounded-2xl font-black transition-all border-2 flex flex-col items-center justify-center gap-1.5 ${!!doneLog ? (isNextClass ? 'bg-white border-purple-500 text-purple-600' : 'bg-white border-emerald-500 text-emerald-600') : (sNum === maxSess + 1) ? 'bg-blue-50 border-blue-500 text-blue-600 animate-pulse active:scale-95' : 'bg-slate-50 border-transparent text-slate-200 opacity-60'}`}
+               >
+                  {!!doneLog ? (
+                     <>
+                        <p className={`text-[7px] font-black mb-1 leading-none ${isNextClass ? 'text-purple-500' : 'text-emerald-500'}`}>{formatDateToDMY(doneLog.date)}</p>
                                                 <Check size={16} strokeWidth={4}/>
                                              </>
                                           ) : (
