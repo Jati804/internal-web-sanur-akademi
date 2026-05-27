@@ -758,13 +758,13 @@ const completedSessions = studentAttendanceLogs
 
               // THEME LOGIC
               const themeColorClass = isReportPublished 
-                ? (isPass ? 'bg-emerald-600' : 'bg-orange-600')
+                ? (isPass ? 'bg-blue-600' : 'bg-orange-600')
                 : isWaitingRelease ? 'bg-amber-500' 
                 : isProcessing ? 'bg-orange-500' 
                 : isRequesting ? 'bg-amber-500' 
                 : isNextClass ? 'bg-purple-600'
                 : isRejected ? 'bg-rose-500' 
-                : 'bg-blue-600';
+                : 'bg-emerald-600';
 
               const badgeText = isReportPublished 
                 ? (isPass ? 'LULUS 🎓' : 'REMEDIAL 📜') 
@@ -776,7 +776,7 @@ const completedSessions = studentAttendanceLogs
                 : 'PAKET AKTIF ✨';
 
               return (
-                <div key={course.id || idx} className={`bg-white rounded-[3rem] border-2 border-slate-50 shadow-2xl transition-all duration-500 overflow-hidden ${isReportPublished ? (isPass ? 'hover:border-emerald-500' : 'hover:border-orange-500') : 'hover:border-blue-500'}`}>
+                <div key={course.id || idx} e-500') className={`bg-white rounded-[3rem] border-2 border-slate-50 shadow-2xl transition-all duration-500 overflow-hidden ${isReportPublished ? (isPass ? 'hover:border-blue-500' : 'hover:border-orange-500') : isNextClass ? 'hover:border-purple-500' : 'hover:border-emerald-500'}`}>
                    <div className="p-8 md:p-12 flex flex-col lg:flex-row items-center gap-10">
                       <div className="flex-1 space-y-6 text-center lg:text-left w-full lg:w-auto">
                         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
@@ -793,7 +793,7 @@ const completedSessions = studentAttendanceLogs
                         </div>
                         <div className="space-y-2">
                            <div className="h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 shadow-inner">
-                              <div className={`h-full rounded-full transition-all duration-1000 ${isReportPublished ? (isPass ? 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]') : isNextClass ? 'bg-purple-600 shadow-[0_0_10px_rgba(147,51,234,0.4)]' : (isRequesting || isWaitingRelease || isProcessing) ? 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.4)]' : 'bg-blue-600 shadow-[0_0_10px_rgba(37,99,235,0.4)]'}`} style={{ width: `${progressPercent}%` }}></div>
+                              <div className={`h-full rounded-full transition-all duration-1000 ${isReportPublished ? (isPass ? 'bg-blue-500 shadow-[0_0_10px_rgba(37,99,235,0.4)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]') : isNextClass ? 'bg-purple-600 shadow-[0_0_10px_rgba(147,51,234,0.4)]' : (isRequesting || isWaitingRelease || isProcessing) ? 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.4)]' : 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]'}`} style={{ width: `${progressPercent}%` }}></div>
                            </div>
                            <p className="text-[9px] font-black uppercase text-slate-400 text-center lg:text-left">{displayMaxSess}/6 SESI</p>
                         </div>
@@ -806,10 +806,10 @@ const completedSessions = studentAttendanceLogs
     {[1, 2, 3, 4, 5, 6].map(sNum => {
       const doneLog = completedSessions.find(s => s.num === sNum);
       return (
-        <div key={sNum} className={`w-full p-2 h-20 md:h-24 rounded-2xl font-black border-2 flex flex-col items-center justify-center gap-1.5 ${doneLog ? (isPass ? 'bg-white border-emerald-500 text-emerald-600' : 'bg-white border-orange-400 text-orange-500') : 'bg-slate-50 border-transparent text-slate-200 opacity-40'}`}>
+        <div key={sNum} className={`w-full p-2 h-20 md:h-24 rounded-2xl font-black border-2 flex flex-col items-center justify-center gap-1.5 ${doneLog ? (isPass ? 'bg-white border-blue-500 text-blue-600' : 'bg-white border-orange-400 text-orange-500') : 'bg-slate-50 border-transparent text-slate-200 opacity-40'}`}>
           {doneLog ? (
             <>
-              <p className={`text-[7px] font-black mb-1 leading-none ${isPass ? 'text-emerald-500' : 'text-orange-400'}`}>{formatDateToDMY(doneLog.date)}</p>
+              <p className={`text-[7px] font-black mb-1 leading-none ${isPass ? 'text-blue-500' : 'text-orange-400'}`}>{formatDateToDMY(doneLog.date)}</p>
               <Check size={16} strokeWidth={4}/>
             </>
           ) : (
@@ -821,7 +821,7 @@ const completedSessions = studentAttendanceLogs
     })}
   </div>
   {/* Banner lulus/remedial di bawah */}
-  <div className={`${isPass ? 'bg-emerald-600' : 'bg-orange-600'} p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden`}>
+  <div className={`${isPass ? 'bg-blue-600' : 'bg-orange-600'} p-8 rounded-[2.5rem] text-white shadow-xl relative overflow-hidden`}>
     <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full blur-2xl -mr-10 -mt-10"></div>
     <div className="flex flex-col md:flex-row items-center justify-between gap-6 relative z-10">
       <div className="flex items-center gap-5 text-left">
@@ -835,7 +835,7 @@ const completedSessions = studentAttendanceLogs
           </p>
         </div>
       </div>
-      <button onClick={() => handleDownloadPDFReport(course)} disabled={!!activeDownloadId} className={`px-8 py-4 bg-white ${isPass ? 'text-emerald-600' : 'text-orange-600'} rounded-2xl font-black text-[10px] uppercase shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-all shrink-0`}>
+      <button onClick={() => handleDownloadPDFReport(course)} disabled={!!activeDownloadId} className={`px-8 py-4 bg-white ${isPass ? 'text-blue-600' : 'text-orange-600'} rounded-2xl font-black text-[10px] uppercase shadow-lg flex items-center justify-center gap-3 active:scale-95 transition-all shrink-0`}>
         {activeDownloadId === course.id ? <Loader2 className="animate-spin" size={16} /> : <Download size={18}/>} UNDUH RAPOT
       </button>
     </div>
