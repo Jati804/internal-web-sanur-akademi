@@ -227,10 +227,10 @@ const handleNextClass = async () => {
   } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
 };
 
-  const avgScore = useMemo(() => {
-    const total = reportForm.sessions.reduce((acc, s) => acc + (Number(s.score) || 0), 0);
-    return Math.round(total / 6);
-  }, [reportForm.sessions]);
+const avgScore = useMemo(() => {
+  const total = reportForm.sessions.reduce((acc, s) => acc + (Number(s.score) || 0), 0);
+  return reportForm.sessions.length > 0 ? Math.round(total / reportForm.sessions.length) : 0;
+}, [reportForm.sessions]);
 
   const handleSaveReportToReady = async () => {
     const isMaterialEmpty = reportForm.sessions.some(s => !s.material.trim());
@@ -525,11 +525,8 @@ const handleNextClass = async () => {
                                 className={`w-full px-5 py-3 rounded-xl font-black uppercase text-[10px] outline-none transition-all border ${showErrors && !s.material.trim() ? 'bg-rose-50 border-rose-500 placeholder:text-rose-300' : 'bg-white border-slate-200 focus:border-blue-500'}`} 
                               />
                              {reportForm.sessions.length > 1 && (
-  <button 
-  onClick={() => {
-    if (reportForm.sessions.length >= 9) return;
-    setReportForm(prev => ({ ...prev, sessions: [...prev.sessions, { num: prev.sessions.length + 1, material: '', score: 90 }] }))
-  }} 
+<button 
+  onClick={() => { if (reportForm.sessions.length >= 9) return; setReportForm(prev => ({ ...prev, sessions: [...prev.sessions, { num: prev.sessions.length + 1, material: '', score: 90 }] })) }} 
   className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase transition-all ${reportForm.sessions.length >= 9 ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-blue-600 text-white'}`}
 >
   + TAMBAH MATERI
