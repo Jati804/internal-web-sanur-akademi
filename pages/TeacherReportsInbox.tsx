@@ -542,7 +542,8 @@ const avgScore = useMemo(() => {
          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
             {publishedReports.map((req, i) => {
                const sName = req.studentsAttended?.[0] || 'SISWA';
-               const scores = (Array.isArray(req.studentScores?.[sName]) ? req.studentScores?.[sName] : Array(6).fill(90)) as number[];
+               const rawScores = req.studentScores?.[sName];
+               const scores = (Array.isArray(rawScores) && rawScores.length > 0 ? rawScores : []) as number[];
                const avg = scores.length > 0 ? Math.round(scores.reduce((a:number,b:number)=>a+b,0)/scores.length) : 0;
                const isPass = avg >= 80;
                const isReadyToSend = req.status === 'REPORT_READY';
