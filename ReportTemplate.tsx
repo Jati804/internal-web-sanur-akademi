@@ -45,10 +45,8 @@ const ReportTemplate: React.FC<ReportTemplateProps> = ({
   const rawTopics = getDirectValue(reportLog.studentTopics, Array(6).fill("MATERI BELUM DIISI"));
   const topics: string[] = Array.isArray(rawTopics) ? rawTopics : Array(6).fill("MATERI BELUM DIISI");
   
-  const nar = getDirectValue(reportLog.studentNarratives, "") || reportLog.reportNarrative || "ULASAN BELUM TERSEDIA.";
-  
   const totalScore = scores.reduce((a, b) => a + b, 0);
-  const avg = scores.length > 0 ? Math.round(totalScore / 6) : 0;
+  const avg = scores.length > 0 ? Math.round(totalScore / scores.length) : 0;
   const isPass = avg >= 80;
   
   const matpelMatch = reportLog.className?.match(/(.*) \((.*)\) - (.*)/);
@@ -56,9 +54,7 @@ const ReportTemplate: React.FC<ReportTemplateProps> = ({
   const level = matpelMatch ? matpelMatch[2] : (reportLog.level || 'BASIC');
   
   // ✅ AMBIL PERIODE DARI DATABASE
-  const periode = reportLog.periode || 1;
-  const startSession = (periode - 1) * 6 + 1;
-  const sessionNumbers = Array.from({ length: 6 }, (_, i) => startSession + i);
+  const sessionNumbers = Array.from({ length: scores.length }, (_, i) => i + 1);
   
   // 2. DATA SISWA ONLY (Untuk Milestone)
 const sNameNorm = studentName.toUpperCase().trim();
