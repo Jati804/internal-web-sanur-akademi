@@ -215,8 +215,8 @@ const PortraitBlocker = () => {
         </div>
         <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wide leading-relaxed">
-            📲 Tablet & HP: Wajib Horizontal<br/>
-            💻 Desktop: Otomatis OK
+            📲 Tablet & HP: Mode Horizontal<br/>
+            💻 Laptop & Komputer: Otomatis OK
           </p>
         </div>
       </div>
