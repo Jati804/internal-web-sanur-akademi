@@ -199,22 +199,22 @@ const GuideModal = ({ role, onClose, activeTab, setActiveTab }: {
 // 🔥 MODAL ANTI PORTRAIT - NUTUPIN LAYAR KALO PORTRAIT
 const PortraitBlocker = () => {
   return (
-    <div className="fixed inset-0 z-[999999] bg-gradient-to-br from-blue-600 via-purple-600 to-emerald-600 flex items-center justify-center p-8">
-      <div className="text-center text-white space-y-8 max-w-md animate-in fade-in">
-        <div className="relative">
-          <div className="text-9xl animate-bounce">📱</div>
-          <RotateCw size={48} className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-white animate-spin" style={{ animationDuration: '3s' }} />
+    <div className="fixed inset-0 z-[999999] bg-white flex items-center justify-center p-8">
+      <div className="text-center space-y-8 max-w-sm animate-in fade-in">
+        <div className="relative flex items-center justify-center w-24 h-24 bg-slate-50 rounded-[2rem] mx-auto shadow-sm">
+          <div className="text-5xl">📱</div>
+          <RotateCw size={20} className="absolute -bottom-2 -right-2 text-blue-600 animate-spin bg-white rounded-full p-1 shadow-md" style={{ animationDuration: '3s' }} />
         </div>
-        <div className="space-y-4">
-          <h1 className="text-3xl font-black uppercase tracking-wider leading-tight">PUTAR LAYAR<br/>KE HORIZONTAL</h1>
-          <div className="h-1 w-24 bg-white/50 rounded-full mx-auto"></div>
-          <p className="text-base font-bold opacity-90 leading-relaxed">
+        <div className="space-y-3">
+          <h1 className="text-2xl font-black uppercase tracking-tight text-slate-800 leading-tight">Putar Layar<br/>ke Horizontal</h1>
+          <div className="h-0.5 w-16 bg-slate-200 rounded-full mx-auto"></div>
+          <p className="text-sm font-semibold text-slate-400 leading-relaxed">
             Untuk pengalaman terbaik,<br/>
-            gunakan mode <span className="font-black text-yellow-300">LANDSCAPE</span> ya Kak! ✨
+            gunakan mode <span className="font-black text-blue-600">LANDSCAPE</span> ya Kak!
           </p>
         </div>
-        <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
-          <p className="text-xs font-bold opacity-80 uppercase tracking-wide">
+        <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
+          <p className="text-xs font-bold text-slate-400 uppercase tracking-wide leading-relaxed">
             📲 Tablet & HP: Wajib Horizontal<br/>
             💻 Desktop: Otomatis OK
           </p>
