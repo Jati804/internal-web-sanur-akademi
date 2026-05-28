@@ -210,7 +210,7 @@ const studentOnlyLogs = (() => {
 
       {/* ✅ HALAMAN 2: TRANSKRIP (PORTRAIT) - PERIODE HIGHLIGHTED */}
       <div id={`transcript-render-${reportLog.id}`} style={{ ...PAGE_PORTRAIT, padding: '70px 60px' }}>
-        <div style={{ position: 'absolute', top: 0, right: 0, width: '350px', height: '350px', backgroundColor: '#eff6ff', borderRadius: '999px', marginRight: '-175px', marginTop: '-175px', opacity: 0.4 }}></div>
+        <div style={{ position: 'absolute', top: 0, right: 0, width: '280px', height: '280px', backgroundColor: '#eff6ff', borderRadius: '999px', marginRight: '-120px', marginTop: '-120px', opacity: 0.2 }}></div>
         
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px', position: 'relative', zIndex: 10 }}>
           <div style={{ width: '52px', height: '52px', backgroundColor: '#0f172a', color: 'white', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(6deg)' }}><Layout size={26}/></div>
