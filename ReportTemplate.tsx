@@ -256,7 +256,7 @@ const studentOnlyLogs = (() => {
         </div>
 
 {/* Footer Transkrip */}
-<div style={{ padding: '30px 40px', backgroundColor: '#0f172a', borderRadius: '42px', color: 'white', display: 'grid', gridTemplateColumns: '1fr auto 1fr', alignItems: 'center', gap: '20px', position: 'relative', overflow: 'hidden' }}>
+<div style={{ padding: '30px 40px', backgroundColor: '#0f172a', borderRadius: '42px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
   <div style={{ position: 'absolute', top: 0, right: 0, width: '230px', height: '230px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '999px', marginRight: '-130px', marginTop: '-130px' }}></div>
   
   <div style={{ position: 'relative', zIndex: 10 }}>
@@ -267,13 +267,18 @@ const studentOnlyLogs = (() => {
       <span style={{ fontSize: '18px', color: 'rgba(255,255,255,0.3)', fontWeight: '900', fontStyle: 'italic' }}>/ 100</span>
     </div>
   </div>
-
-  <div style={{ textAlign: 'center', position: 'relative', zIndex: 10 }}>
-    <p style={{ fontSize: '9px', fontWeight: '900', color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.5em', marginBottom: '4px' }}>Guru Pengajar</p>
-    <p style={{ fontSize: '13px', fontWeight: '900', fontStyle: 'italic', textTransform: 'uppercase', color: 'white' }}>{reportLog.teacherName || '-'}</p>
-  </div>
   
-  <div style={{ backgroundColor: 'rgba(255,255,255,0.1)', padding: '18px 24px', borderRadius: '25px', border: '1px solid rgba(255,255,255,0.2)', borderBottom: `6px solid ${isPass ? '#10b981' : '#f97316'}`, textAlign: 'center', minWidth: '190px', position: 'relative', zIndex: 10 }}>
+  <div style={{ 
+    backgroundColor: 'rgba(255,255,255,0.1)', 
+    padding: '18px 24px', 
+    borderRadius: '25px', 
+    border: '1px solid rgba(255,255,255,0.2)', 
+    borderBottom: `6px solid ${isPass ? '#10b981' : '#f97316'}`,
+    textAlign: 'center', 
+    minWidth: '190px', 
+    position: 'relative', 
+    zIndex: 10 
+  }}>
     <p style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#93c5fd', marginBottom: '5px' }}>Status Capaian</p>
     <p style={{ fontSize: '17px', fontWeight: '900', fontStyle: 'italic', textTransform: 'uppercase' }}>{isPass ? 'KOMPETEN' : 'REMEDIAL'}</p>
   </div>
