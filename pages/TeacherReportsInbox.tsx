@@ -473,12 +473,18 @@ const avgScore = useMemo(() => {
             </div>
             <div className="p-8 md:p-14 space-y-16">
                <section className="flex flex-col items-center">
-                  <div className="bg-slate-900 p-12 rounded-[4rem] text-white text-center shadow-2xl relative overflow-hidden w-full max-w-lg">
-                     <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
-                     <p className="text-[10px] uppercase font-black text-slate-400 mb-2 relative z-10">Skor Rata-Rata Akhir</p>
-                     <h4 className="text-8xl font-black italic text-emerald-400 relative z-10">{avgScore}</h4>
-                     <p className="text-[11px] font-black uppercase tracking-widest mt-6 text-emerald-500 opacity-60 relative z-10">{avgScore >= 80 ? 'KOMPETENSI: LULUS' : 'KOMPETENSI: REMEDIAL'}</p>
-                  </div>
+<div className="space-y-3 w-full max-w-lg">
+  <div className="flex items-center justify-center gap-6 text-[9px] font-black uppercase tracking-widest">
+    <span className="flex items-center gap-2 text-blue-500"><span className="w-2 h-2 rounded-full bg-blue-500 inline-block"></span>≥ 80: LULUS</span>
+    <span className="flex items-center gap-2 text-orange-400"><span className="w-2 h-2 rounded-full bg-orange-400 inline-block"></span>&lt; 80: REMEDIAL</span>
+  </div>
+  <div className="bg-slate-900 p-12 rounded-[4rem] text-white text-center shadow-2xl relative overflow-hidden">
+    <div className="absolute top-0 right-0 w-64 h-64 bg-white/5 rounded-full -mr-32 -mt-32"></div>
+    <p className="text-[10px] uppercase font-black text-slate-400 mb-2 relative z-10">Skor Rata-Rata Akhir</p>
+    <h4 className={`text-8xl font-black italic relative z-10 ${avgScore >= 80 ? 'text-blue-400' : 'text-orange-400'}`}>{avgScore}</h4>
+    <p className={`text-[11px] font-black uppercase tracking-widest mt-6 opacity-60 relative z-10 ${avgScore >= 80 ? 'text-blue-400' : 'text-orange-400'}`}>{avgScore >= 80 ? 'KOMPETENSI: LULUS' : 'KOMPETENSI: REMEDIAL'}</p>
+  </div>
+</div>
                </section>
 <section className="space-y-6">
   <div className="flex items-center justify-between">
