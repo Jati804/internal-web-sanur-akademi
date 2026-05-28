@@ -278,21 +278,6 @@ const studentOnlyLogs = (() => {
     <p style={{ fontSize: '17px', fontWeight: '900', fontStyle: 'italic', textTransform: 'uppercase' }}>{isPass ? 'KOMPETEN' : 'REMEDIAL'}</p>
   </div>
 </div>
-  
-  <div style={{ 
-    backgroundColor: 'rgba(255,255,255,0.1)', 
-    padding: '18px 24px', 
-    borderRadius: '25px', 
-    border: '1px solid rgba(255,255,255,0.2)', 
-    borderBottom: `6px solid ${isPass ? '#10b981' : '#f97316'}`,
-    textAlign: 'center', 
-    minWidth: '190px', 
-    position: 'relative', 
-    zIndex: 10 
-  }}>
-    <p style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#93c5fd', marginBottom: '5px' }}>Status Capaian</p>
-    <p style={{ fontSize: '17px', fontWeight: '900', fontStyle: 'italic', textTransform: 'uppercase' }}>{isPass ? 'KOMPETEN' : 'REMEDIAL'}</p>
-  </div>
 </div>
 </div>
     </div>
