@@ -209,8 +209,8 @@ const PortraitBlocker = () => {
           <h1 className="text-2xl font-black uppercase tracking-tight text-slate-800 leading-tight">Putar Layar<br/>ke Horizontal</h1>
           <div className="h-0.5 w-16 bg-slate-200 rounded-full mx-auto"></div>
           <p className="text-sm font-semibold text-slate-400 leading-relaxed">
-            Untuk pengalaman terbaik,<br/>
-            gunakan mode <span className="font-black text-blue-600">LANDSCAPE</span> ya Kak!
+            Untuk pengalaman terbaik di HP,<br/>
+            gunakan mode <span className="font-black text-blue-600">LANDSCAPE</span> ya!
           </p>
         </div>
         <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
