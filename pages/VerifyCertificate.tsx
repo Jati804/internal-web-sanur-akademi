@@ -55,7 +55,7 @@ const VerifyCertificate: React.FC = () => {
   };
 
   const scores = reportData ? (getFirstValue(reportData.studentScores) as number[] || []) : [];
-  const avg = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / 6) : 0;
+  const avg = scores.length > 0 ? Math.round(scores.reduce((a, b) => a + b, 0) / scores.length) : 0;
   const isPass = avg >= 80;
   
   const studentName = reportData?.studentsAttended?.[0] || "SISWA";
