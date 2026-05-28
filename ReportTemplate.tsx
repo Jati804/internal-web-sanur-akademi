@@ -225,7 +225,7 @@ const studentOnlyLogs = (() => {
     📚 MATERI KURIKULUM
   </p>
   <div style={{ textAlign: 'right' }}>
-    <p style={{ fontSize: '9px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.3em', margin: '0 0 3px 0' }}>Guru Pengajar</p>
+    <p style={{ fontSize: '9px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.3em', margin: '0 0 3px 0' }}>Guru Penilai</p>
     <p style={{ fontSize: '13px', fontWeight: '900', color: '#1e293b', textTransform: 'uppercase', fontStyle: 'italic', margin: 0 }}>{reportLog.teacherName || '-'}</p>
   </div>
 </div>
