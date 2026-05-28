@@ -224,8 +224,8 @@ const studentOnlyLogs = (() => {
   <p style={{ fontSize: '13px', fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', textTransform: 'uppercase', letterSpacing: '0.3em', margin: 0 }}>
     📚 MATERI KURIKULUM
   </p>
-  <div style={{ textAlign: 'right' }}>
-    <p style={{ fontSize: '9px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.3em', margin: '0 0 3px 0' }}>Guru Penilai</p>
+  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right' }}>
+    <p style={{ fontSize: '9px', fontWeight: '900', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.3em', margin: '0 -0.3em 3px 0' }}>Guru Penilai</p>
     <p style={{ fontSize: '13px', fontWeight: '900', color: '#1e293b', textTransform: 'uppercase', margin: 0 }}>{reportLog.teacherName || '-'}</p>
   </div>
 </div>
