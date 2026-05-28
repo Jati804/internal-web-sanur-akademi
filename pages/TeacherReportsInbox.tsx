@@ -554,7 +554,7 @@ const avgScore = useMemo(() => {
                   <div 
                     key={i} 
                     id={`history-card-${req.id}`}
-                    className={`bg-white p-12 md:p-14 rounded-[4rem] shadow-xl border-2 transition-all flex flex-col relative ${isNewlyActioned ? 'border-blue-500 shadow-blue-100' : isReadyToSend ? 'border-amber-400 bg-amber-50/10' : 'border-slate-100 hover:border-blue-500'}`}
+                    className={`bg-white p-12 md:p-14 rounded-[4rem] shadow-xl border-2 transition-all flex flex-col relative ${isNewlyActioned ? 'border-blue-500 shadow-blue-100' : isReadyToSend ? 'border-amber-400 bg-amber-50/10' : isPass ? 'border-slate-100 hover:border-blue-500' : 'border-slate-100 hover:border-orange-500'}`}
                   >
                     {/* ✅ BADGE CONTAINER */}
                      {isNewlyActioned && (
