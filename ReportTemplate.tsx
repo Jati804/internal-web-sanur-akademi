@@ -279,7 +279,6 @@ const studentOnlyLogs = (() => {
   </div>
 </div>
 </div>
-</div>
     </div>
   );
 };
