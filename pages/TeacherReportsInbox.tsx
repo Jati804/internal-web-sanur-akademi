@@ -482,7 +482,7 @@ const avgScore = useMemo(() => {
                </section>
 <section className="space-y-6">
   <div className="flex items-center justify-between">
-    <div className="flex items-center gap-3 text-blue-600"><BookOpen size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Detail Materi & Nilai</h4></div>
+    <div className="flex items-center gap-3 text-blue-600"><BookOpen size={20} /><h4 className="text-xs font-black uppercase tracking-widest">Detail Materi & Nilai (Rentang Nilai = 0-100)</h4></div>
 <button onClick={() => { if (reportForm.sessions.length >= 8) return; setReportForm(prev => ({ ...prev, sessions: [...prev.sessions, { num: prev.sessions.length + 1, material: '', score: 90 }] })) }} className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase transition-all ${reportForm.sessions.length >= 8 ? 'bg-slate-200 text-slate-400 cursor-not-allowed' : 'bg-blue-600 text-white'}`}>
   + TAMBAH MATERI
 </button>
