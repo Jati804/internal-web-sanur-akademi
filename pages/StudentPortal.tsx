@@ -987,7 +987,7 @@ const completedSessions = studentAttendanceLogs
 {isNextClass && (
   <div className="w-full py-5 bg-purple-600 text-white rounded-[2rem] font-black text-[10px] uppercase shadow-xl flex flex-col items-center justify-center gap-2">
     <div className="flex items-center gap-2"><Star size={16}/> LANJUTKAN BELAJAR! ⭐</div>
-    <p className="text-[10px] font-bold text-white normal-case">Materi Level {course.level || 'BASIC'} belum selesai dipelajari 🌟</p>
+    <p className="text-[10px] font-bold text-white normal-case">Materi Level {(() => { const m = (course.className || '').match(/\(([^)]+)\)/); return m ? m[1] : 'BASIC'; })()} belum selesai dipelajari 🌟</p>
   </div>
 )}
                           </div>
