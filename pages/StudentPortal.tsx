@@ -985,7 +985,6 @@ const completedSessions = studentAttendanceLogs
   </button>
 )}
 {isNextClass && (
-  <div className="space-y-3">
     <div className="bg-purple-50 p-6 rounded-[2rem] border border-purple-100 flex items-center gap-4">
       <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-purple-600 shrink-0"><BookOpen size={20}/></div>
       <div>
