@@ -291,11 +291,10 @@ const RoleCard = ({ icon: Icon, title, desc, color, onClick }: any) => {
   };
   const theme = themes[color];
   return (
-    <button onClick={onClick} className={`group p-10 bg-white rounded-[4rem] border-2 shadow-xl transition-all flex flex-col items-center text-center hover:scale-105 active:scale-95 border-slate-100 ${theme.border}`}>
-      <div className={`w-full h-full absolute inset-0 rounded-[4rem] opacity-0 group-hover:opacity-100 transition-opacity ${theme.bg}`} style={{zIndex: 0}}></div>
-      <div className={`w-20 h-20 ${theme.bg} ${theme.text} rounded-[2rem] flex items-center justify-center mb-6 shadow-inner group-hover:rotate-6 transition-transform relative z-10`}><Icon size={40} /></div>
-      <h3 className="text-xl font-black uppercase italic tracking-tighter text-slate-800 mb-2">{title}</h3>
-      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{desc}</p>
+<button onClick={onClick} className={`group p-10 bg-white rounded-[4rem] border-2 shadow-xl transition-all flex flex-col items-center text-center hover:scale-105 active:scale-95 border-slate-100 ${theme.border}`}>
+  <div className={`w-20 h-20 ${theme.bg} ${theme.text} rounded-[2rem] flex items-center justify-center mb-6 shadow-inner group-hover:rotate-6 transition-transform`}><Icon size={40} /></div>
+  <h3 className="text-xl font-black uppercase italic tracking-tighter text-slate-800 mb-2">{title}</h3>
+  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{desc}</p>
     </button>
   );
 };
