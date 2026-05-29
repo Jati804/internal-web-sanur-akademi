@@ -209,11 +209,12 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
         </div>
 
         <div className="w-full max-w-4xl">
-          {view === 'SELECTION' ? (
-            <div className="text-center mb-6">
-              <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Silakan pilih peranmu untuk melanjutkan</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+{view === 'SELECTION' ? (
+  <div className="flex flex-col gap-6">
+  <div className="text-center">
+    <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em]">Silakan pilih peranmu untuk melanjutkan</p>
+  </div>
+  <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
               <RoleCard icon={UserCog} title="Pengurus" color="blue" desc="Admin, Keuangan, Pengelolaan" onClick={() => handleSelectRole('ADMIN')} />
               <RoleCard icon={GraduationCap} title="Pengajar" color="orange" desc="Log Sesi Guru, Honor, Rapot" onClick={() => handleSelectRole('TEACHER')} />
               <RoleCard icon={Users} title="Siswa" color="emerald" desc="Pembayaran, Progres, Sertifikat" onClick={() => handleSelectRole('STUDENT')} />
@@ -221,6 +222,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
   <div className="flex items-center gap-3 px-6 py-3 bg-white border border-slate-100 rounded-full shadow-md text-slate-500">
     <Info size={14} className="text-blue-500 shrink-0"/>
     <p className="text-[10px] font-bold tracking-wide">Pilih peran di atas untuk melanjutkan ke halaman login</p>
+  </div>
   </div>
             </div>
           ) : (
