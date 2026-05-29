@@ -222,7 +222,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
     <Info size={14} className="text-blue-500 shrink-0"/>
     <p className="text-[10px] font-bold tracking-wide">Pilih peran di atas untuk melanjutkan ke halaman login</p>
   </div>
-</div>
             </div>
           ) : (
             <div className="bg-white rounded-[4rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col md:flex-row">
