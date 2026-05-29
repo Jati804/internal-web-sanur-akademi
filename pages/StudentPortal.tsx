@@ -985,16 +985,9 @@ const completedSessions = studentAttendanceLogs
   </button>
 )}
 {isNextClass && (
-    <div className="bg-purple-50 p-6 rounded-[2rem] border border-purple-100 flex items-center gap-4">
-      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-purple-600 shrink-0"><BookOpen size={20}/></div>
-      <div>
-        <p className="text-[10px] font-black text-purple-800 uppercase italic leading-none">Materi Level {course.level || 'BASIC'} Belum Selesai Dipelajari</p>
-        <p className="text-[9px] font-bold text-purple-600 uppercase mt-1">Lanjut kelas berikutnya ya! 🌟</p>
-      </div>
-    </div>
-    <div className="w-full py-5 bg-purple-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl flex items-center justify-center gap-3">
-      <Star size={20}/> LANJUTKAN BELAJAR! ⭐
-    </div>
+  <div className="w-full py-5 bg-purple-600 text-white rounded-[2rem] font-black text-[10px] uppercase shadow-xl flex flex-col items-center justify-center gap-2">
+    <div className="flex items-center gap-2"><Star size={16}/> LANJUTKAN BELAJAR! ⭐</div>
+    <p className="text-[8px] font-bold opacity-70 normal-case">Materi Level {course.level || 'BASIC'} belum selesai dipelajari 🌟</p>
   </div>
 )}
                           </div>
