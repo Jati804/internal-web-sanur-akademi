@@ -304,7 +304,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
                           <label className="text-[10px] font-black text-slate-500 uppercase ml-4 tracking-widest">Username Akun</label>
                           <div className="relative group">
                              <div className={`absolute left-6 top-1/2 -translate-y-1/2 ${currentTheme.text} opacity-30 group-focus-within:opacity-100 transition-opacity`}><Mail size={24}/></div>
-                             <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="ISI USERNAME..." className={`w-full pl-16 pr-8 py-6 bg-slate-50 border-2 border-transparent rounded-[2rem] outline-none font-black text-xs uppercase transition-all focus:bg-white focus:${currentTheme.border} focus:scale-[1.01]`} />
+                             <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="ISI USERNAME" className={`w-full pl-16 pr-8 py-6 bg-slate-50 border-2 border-transparent rounded-[2rem] outline-none font-black text-xs uppercase transition-all focus:bg-white focus:${currentTheme.border} focus:scale-[1.01]`} />
                           </div>
                        </div>
                        <div className="space-y-2">
