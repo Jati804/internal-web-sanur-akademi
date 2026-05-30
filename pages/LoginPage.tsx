@@ -82,6 +82,12 @@ const BlobStyles = () => (
     .fade-up-d2  { animation: fade-up 0.5s ease-out 0.16s both; }
     .fade-up-d3  { animation: fade-up 0.5s ease-out 0.24s both; }
     .fade-up-d4  { animation: fade-up 0.5s ease-out 0.32s both; }
+    @keyframes ping-slow {
+      0%   { transform: scale(1);   opacity: 0.5; }
+      70%  { transform: scale(1.7); opacity: 0;   }
+      100% { transform: scale(1.7); opacity: 0;   }
+    }
+    .ping-slow { animation: ping-slow 2s ease-out infinite; }
   `}</style>
 );
 
@@ -274,7 +280,10 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
           ) : (
             <div className="fade-up bg-white rounded-[4rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col md:flex-row">
               <div className={`md:w-72 p-12 ${currentTheme.bg} text-white flex flex-col justify-between items-center text-center`}>
-                 <button onClick={() => setView(systemMaintenance ? 'MAINTENANCE' : 'SELECTION')} className="p-3 bg-white/20 rounded-full hover:bg-white/40 hover:scale-110 active:scale-95 transition-all"><ArrowLeft/></button>
+                 <button onClick={() => setView(systemMaintenance ? 'MAINTENANCE' : 'SELECTION')} className="relative p-3 bg-white/20 rounded-full hover:bg-white/40 hover:scale-110 active:scale-95 transition-all">
+                   <span className="ping-slow absolute inset-0 rounded-full bg-white/30 pointer-events-none" />
+                   <ArrowLeft/>
+                 </button>
                  <div className="space-y-6">
                     <div className="icon-float w-24 h-24 bg-white/10 backdrop-blur-md rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl">
                        {role === 'ADMIN' ? <UserCog size={48}/> : role === 'TEACHER' ? <GraduationCap size={48}/> : <Users size={48}/>}
