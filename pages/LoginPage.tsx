@@ -7,19 +7,23 @@ import {
   GraduationCap, 
   Mail, 
   ArrowLeft, 
+  ChevronRight, 
   Sparkles,
   Users,
   ShieldAlert,
   UserCheck,
   Lock,
+  Cloud,
   WifiOff,
   Loader2,
+  Info,
   CheckCircle2,
+  Database,
   Eye,
   EyeOff,
+  Construction,
   Wrench,
-  AlertTriangle,
-  ChevronRight
+  AlertTriangle
 } from 'lucide-react';
 
 interface LoginPageProps {
@@ -32,6 +36,66 @@ interface LoginPageProps {
 
 type ViewState = 'SELECTION' | 'LOGIN' | 'MAINTENANCE';
 
+// Inject CSS keyframes once
+const BlobStyles = () => (
+  <style>{`
+    @keyframes blob-drift-1 {
+      0%,100% { transform: translate(0px,0px) scale(1); }
+      33%      { transform: translate(40px,-30px) scale(1.08); }
+      66%      { transform: translate(-20px,20px) scale(0.95); }
+    }
+    @keyframes blob-drift-2 {
+      0%,100% { transform: translate(0px,0px) scale(1); }
+      33%      { transform: translate(-35px,25px) scale(1.06); }
+      66%      { transform: translate(25px,-15px) scale(0.97); }
+    }
+    @keyframes blob-drift-3 {
+      0%,100% { transform: translate(0px,0px) scale(1); }
+      50%      { transform: translate(20px,30px) scale(1.1); }
+    }
+    @keyframes blob-dark-1 {
+      0%,100% { transform: translate(0px,0px) scale(1); }
+      40%      { transform: translate(30px,-40px) scale(1.1); }
+      70%      { transform: translate(-10px,15px) scale(0.92); }
+    }
+    @keyframes blob-dark-2 {
+      0%,100% { transform: translate(0px,0px) scale(1); }
+      40%      { transform: translate(-30px,20px) scale(1.08); }
+      70%      { transform: translate(15px,-20px) scale(0.95); }
+    }
+    @keyframes icon-float {
+      0%,100% { transform: rotate(3deg) translateY(0px); }
+      50%      { transform: rotate(3deg) translateY(-8px); }
+    }
+    @keyframes fade-up {
+      from { opacity:0; transform:translateY(16px); }
+      to   { opacity:1; transform:translateY(0); }
+    }
+    .blob-1      { animation: blob-drift-1 9s ease-in-out infinite; }
+    .blob-2      { animation: blob-drift-2 11s ease-in-out infinite; }
+    .blob-3      { animation: blob-drift-3 13s ease-in-out infinite; }
+    .blob-dark-1 { animation: blob-dark-1 10s ease-in-out infinite; }
+    .blob-dark-2 { animation: blob-dark-2 12s ease-in-out infinite; }
+    .icon-float  { animation: icon-float 3s ease-in-out infinite; }
+    .fade-up     { animation: fade-up 0.5s ease-out both; }
+    .fade-up-d1  { animation: fade-up 0.5s ease-out 0.08s both; }
+    .fade-up-d2  { animation: fade-up 0.5s ease-out 0.16s both; }
+    .fade-up-d3  { animation: fade-up 0.5s ease-out 0.24s both; }
+    .fade-up-d4  { animation: fade-up 0.5s ease-out 0.32s both; }
+  `}</style>
+);
+
+// Komponen Scribble (Coretan Asal) untuk penanda tombol rahasia
+const ScribbleMarker = () => (
+  <svg viewBox="0 0 100 100" className="w-full h-full stroke-slate-500 opacity-60 group-hover:opacity-100 group-hover:stroke-blue-400 transition-all duration-300 fill-none" strokeWidth="3" strokeLinecap="round">
+    <path d="M10,20 Q40,10 50,50 T90,80" className="animate-[pulse_1.5s_infinite]" />
+    <path d="M15,85 Q45,70 85,15" className="animate-[pulse_2s_infinite]" />
+    <path d="M30,30 L70,70 M70,30 L30,70" />
+    <path d="M50,10 C20,40 80,40 50,90" />
+    <circle cx="50" cy="50" r="10" className="animate-ping" />
+  </svg>
+);
+
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccounts, connectionError, isSyncing }) => {
   const [view, setView] = useState<ViewState>('SELECTION');
   const [role, setRole] = useState<Role>('ADMIN');
@@ -41,7 +105,6 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [systemMaintenance, setSystemMaintenance] = useState(false);
-  const [hoveredRole, setHoveredRole] = useState<string | null>(null);
 
   useEffect(() => {
     const checkMaintenance = async () => {
@@ -100,380 +163,189 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
     }, 600);
   };
 
-  const roleConfig = {
-    ADMIN: {
-      icon: UserCog,
-      label: 'Pengurus',
-      sub: 'Admin & Keuangan',
-      accent: 'blue',
-      accentHex: '#2563eb',
-      bg: 'bg-blue-600',
-      text: 'text-blue-600',
-      light: 'bg-blue-50',
-      border: 'border-blue-200',
-      focusBorder: 'focus:border-blue-500',
-      ring: 'focus:ring-blue-100',
-      gradient: 'from-blue-600 to-blue-700',
-      softGradient: 'from-blue-50 to-blue-100/60',
-      dot: 'bg-blue-500',
-    },
-    TEACHER: {
-      icon: GraduationCap,
-      label: 'Pengajar',
-      sub: 'Log Sesi & Honor',
-      accent: 'orange',
-      accentHex: '#ea580c',
-      bg: 'bg-orange-600',
-      text: 'text-orange-600',
-      light: 'bg-orange-50',
-      border: 'border-orange-200',
-      focusBorder: 'focus:border-orange-500',
-      ring: 'focus:ring-orange-100',
-      gradient: 'from-orange-500 to-orange-600',
-      softGradient: 'from-orange-50 to-orange-100/60',
-      dot: 'bg-orange-500',
-    },
-    STUDENT: {
-      icon: Users,
-      label: 'Siswa',
-      sub: 'Progres & Sertifikat',
-      accent: 'emerald',
-      accentHex: '#059669',
-      bg: 'bg-emerald-600',
-      text: 'text-emerald-600',
-      light: 'bg-emerald-50',
-      border: 'border-emerald-200',
-      focusBorder: 'focus:border-emerald-500',
-      ring: 'focus:ring-emerald-100',
-      gradient: 'from-emerald-500 to-emerald-600',
-      softGradient: 'from-emerald-50 to-emerald-100/60',
-      dot: 'bg-emerald-500',
-    },
+  const theme = {
+    blue:    { text: "text-blue-600",    bg: "bg-blue-600",    border: "border-blue-600"    },
+    orange:  { text: "text-orange-600",  bg: "bg-orange-600",  border: "border-orange-600"  },
+    emerald: { text: "text-emerald-600", bg: "bg-emerald-600", border: "border-emerald-600" }
   };
 
-  const currentTheme = roleConfig[role];
+  const roleLabels: Record<Role, string> = {
+    ADMIN: 'PENGURUS',
+    TEACHER: 'PENGAJAR',
+    STUDENT: 'SISWA'
+  };
 
-  // ─── MAINTENANCE VIEW ──────────────────────────────────────────────────────
+  const currentTheme = role === 'ADMIN' ? theme.blue : role === 'TEACHER' ? theme.orange : theme.emerald;
+
+  // ── MAINTENANCE ─────────────────────────────────────────────────────────
   if (view === 'MAINTENANCE') {
     return (
-      <div className="min-h-screen bg-slate-900 flex items-center justify-center p-6 relative overflow-hidden">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-orange-600/10 rounded-full blur-[100px]" />
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-blue-600/10 rounded-full blur-[100px]" />
+      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
+        <BlobStyles />
+        <div className="blob-dark-1 absolute top-0 right-0 w-[500px] h-[500px] bg-orange-600/10 rounded-full blur-[120px] -mr-48 -mt-48 pointer-events-none"></div>
+        <div className="blob-dark-2 absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] -ml-48 -mb-48 pointer-events-none"></div>
 
-        {/* Secret admin button */}
         <button
           onClick={() => { setRole('ADMIN'); setView('LOGIN'); }}
-          className="fixed left-0 top-1/2 -translate-y-1/2 w-16 h-32 z-[99999] outline-none"
+          className="fixed left-0 top-1/2 -translate-y-1/2 w-20 h-40 z-[99999] outline-none"
           aria-label="Secret Admin Access"
-        />
+        >
+          {/* BENAR-BENAR KOSONG */}
+        </button>
 
-        <div className="relative z-10 max-w-md w-full text-center space-y-8">
-          {/* Icon */}
-          <div className="mx-auto w-24 h-24 bg-orange-500/20 rounded-3xl flex items-center justify-center border border-orange-500/30">
-            <Wrench size={40} className="text-orange-400" />
-          </div>
-
-          <div className="space-y-3">
-            <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.5em]">SISTEM TIDAK TERSEDIA</p>
-            <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">
-              SEDANG<br/>MAINTENANCE
-            </h1>
-            <p className="text-slate-400 text-sm font-medium">
-              Kami sedang melakukan perawatan sistem. Harap tunggu sebentar.
-            </p>
-          </div>
-
-          <div className="bg-slate-800/60 backdrop-blur-sm rounded-2xl p-6 border border-white/5 space-y-4 text-left">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-500/20 rounded-xl flex items-center justify-center shrink-0">
-                <Wrench size={15} className="text-blue-400" />
+        <div className="max-w-md w-full space-y-10 animate-in fade-in zoom-in duration-700 relative z-10">
+           <div className="w-32 h-32 bg-orange-500 text-white rounded-[3rem] flex items-center justify-center mx-auto shadow-2xl animate-bounce border-8 border-slate-900">
+              <Construction size={64} />
+           </div>
+           <div className="space-y-4">
+              <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">SYSTEM <span className="text-orange-500">PAUSED</span></h1>
+              <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] leading-relaxed">
+                 Halo! Mohon maaf, kami sedang melakukan perbaikan sistem berkala agar aplikasi makin kencang. ✨
+              </p>
+           </div>
+           <div className="bg-slate-800/50 backdrop-blur-xl p-8 rounded-[3rem] border border-white/5 space-y-4">
+              <div className="flex items-center gap-4 text-left">
+                 <div className="w-10 h-10 bg-blue-600/20 text-blue-400 rounded-xl flex items-center justify-center shrink-0"><Wrench size={20}/></div>
+                 <div>
+                    <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Status Saat Ini:</p>
+                    <p className="text-[10px] font-bold text-white uppercase italic">Optimalisasi Database Sanur</p>
+                 </div>
               </div>
-              <div>
-                <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Status</p>
-                <p className="text-xs font-bold text-white uppercase italic">Optimalisasi Database Sanur</p>
+              <div className="flex items-center gap-4 text-left">
+                 <div className="w-10 h-10 bg-orange-600/20 text-orange-400 rounded-xl flex items-center justify-center shrink-0"><AlertTriangle size={20}/></div>
+                 <div>
+                    <p className="text-[8px] font-black text-slate-500 uppercase tracking-widest">Estimasi Selesai:</p>
+                    <p className="text-[10px] font-bold text-white uppercase italic">Segera Kembali Online</p>
+                 </div>
               </div>
-            </div>
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-orange-500/20 rounded-xl flex items-center justify-center shrink-0">
-                <AlertTriangle size={15} className="text-orange-400" />
-              </div>
-              <div>
-                <p className="text-[8px] text-slate-500 font-black uppercase tracking-widest">Estimasi</p>
-                <p className="text-xs font-bold text-white uppercase italic">Segera Kembali Online</p>
-              </div>
-            </div>
-          </div>
-
-          <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.6em]">SANUR Akademi Inspirasi</p>
+           </div>
+           <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.8em]">SANUR Akademi Inspirasi</p>
         </div>
       </div>
     );
   }
 
-  // ─── SELECTION VIEW ────────────────────────────────────────────────────────
-  if (view === 'SELECTION') {
-    return (
-      <div className="min-h-screen bg-slate-50 flex relative overflow-hidden font-sans">
-        {/* Left decorative panel */}
-        <div className="hidden lg:flex lg:w-2/5 xl:w-1/3 bg-slate-900 flex-col justify-between p-12 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600/15 rounded-full blur-[80px]" />
-          <div className="absolute bottom-0 left-0 w-80 h-80 bg-orange-600/10 rounded-full blur-[80px]" />
-
-          {/* Top: Logo */}
-          <div className="relative z-10 flex items-center gap-4">
-            <img
-              src="https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png"
-              alt="SANUR Logo"
-              className="h-10 w-auto object-contain brightness-0 invert opacity-90"
-            />
-            <div className="border-l border-white/20 pl-4">
-              <p className="text-xs font-black text-white uppercase italic tracking-tight leading-none">SANUR</p>
-              <p className="text-[9px] font-bold text-blue-400 uppercase tracking-widest">Akademi Inspirasi</p>
-            </div>
-          </div>
-
-          {/* Middle: Tagline */}
-          <div className="relative z-10 space-y-6">
-            <div className="space-y-1">
-              <p className="text-[9px] font-black text-slate-500 uppercase tracking-[0.5em]">Portal Internal</p>
-              <h2 className="text-5xl font-black text-white uppercase italic tracking-tighter leading-[0.9] space-y-1">
-                <span className="block">SATU</span>
-                <span className="block text-blue-400">PORTAL</span>
-                <span className="block">SEMUA</span>
-                <span className="block text-orange-400">AKSES</span>
-              </h2>
-            </div>
-            <p className="text-slate-400 text-sm leading-relaxed max-w-xs">
-              Kelola administrasi, pengajaran, dan pembelajaran dalam satu sistem terpadu.
-            </p>
-
-            {/* Role chips */}
-            <div className="flex flex-col gap-2">
-              {(['ADMIN', 'TEACHER', 'STUDENT'] as Role[]).map((r) => {
-                const cfg = roleConfig[r];
-                const Icon = cfg.icon;
-                return (
-                  <div key={r} className="flex items-center gap-3 py-2">
-                    <div className={`w-1.5 h-1.5 rounded-full ${cfg.dot}`} />
-                    <Icon size={14} className="text-slate-400" />
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{cfg.label}</span>
-                    <span className="text-[9px] text-slate-600 font-medium">{cfg.sub}</span>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          {/* Bottom: Status & Footer */}
-          <div className="relative z-10 space-y-4">
-            <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[9px] font-black uppercase tracking-widest ${connectionError ? 'bg-rose-900/40 text-rose-400 border-rose-800' : isSyncing ? 'bg-blue-900/40 text-blue-400 border-blue-800' : 'bg-emerald-900/40 text-emerald-400 border-emerald-800'}`}>
-              {isSyncing ? <Loader2 size={10} className="animate-spin" /> : connectionError ? <WifiOff size={10} /> : <CheckCircle2 size={10} />}
-              {isSyncing ? "Connecting..." : connectionError ? "Cloud Offline" : "Database Terkoneksi"}
-            </div>
-            <p className="text-[9px] font-black text-slate-600 uppercase tracking-widest">© 2026 SANUR Akademi</p>
-          </div>
-        </div>
-
-        {/* Right: Role Selection */}
-        <div className="flex-1 flex flex-col items-center justify-center p-8 lg:p-16 relative">
-          <div className="absolute top-0 right-0 w-96 h-96 bg-blue-100 rounded-full blur-[120px] opacity-40" />
-          <div className="absolute bottom-0 left-0 w-96 h-96 bg-orange-100 rounded-full blur-[120px] opacity-40" />
-
-          {/* Mobile logo */}
-          <div className="lg:hidden flex items-center gap-3 mb-10">
-            <img
-              src="https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png"
-              alt="SANUR Logo"
-              className="h-10 w-auto object-contain"
-            />
-            <div className="border-l-2 border-slate-100 pl-3">
-              <p className="text-sm font-black text-slate-900 uppercase italic leading-none">SANUR</p>
-              <p className="text-[9px] font-bold text-blue-600 uppercase tracking-wide">Akademi Inspirasi</p>
-            </div>
-          </div>
-
-          <div className="relative z-10 w-full max-w-lg space-y-8">
-            <div className="space-y-1">
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.5em]">Masuk Sebagai</p>
-              <h1 className="text-3xl font-black text-slate-900 uppercase italic tracking-tighter">PILIH PERAN ANDA</h1>
-            </div>
-
-            {/* Role list — vertical stack */}
-            <div className="space-y-3">
-              {(['ADMIN', 'TEACHER', 'STUDENT'] as Role[]).map((r) => {
-                const cfg = roleConfig[r];
-                const Icon = cfg.icon;
-                const isHovered = hoveredRole === r;
-                return (
-                  <button
-                    key={r}
-                    onClick={() => handleSelectRole(r)}
-                    onMouseEnter={() => setHoveredRole(r)}
-                    onMouseLeave={() => setHoveredRole(null)}
-                    className={`group w-full flex items-center gap-5 p-5 bg-white rounded-2xl border-2 transition-all duration-200 active:scale-[0.98] shadow-sm hover:shadow-lg ${
-                      isHovered
-                        ? `border-${cfg.accent}-400 shadow-${cfg.accent}-100`
-                        : 'border-slate-100'
-                    }`}
-                  >
-                    <div className={`w-14 h-14 ${cfg.light} ${cfg.text} rounded-xl flex items-center justify-center shrink-0 transition-transform group-hover:scale-110`}>
-                      <Icon size={28} />
-                    </div>
-                    <div className="flex-1 text-left">
-                      <p className="text-base font-black text-slate-800 uppercase italic tracking-tight">{cfg.label}</p>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">{cfg.sub}</p>
-                    </div>
-                    <ChevronRight size={18} className={`${cfg.text} opacity-0 group-hover:opacity-100 transition-all -translate-x-2 group-hover:translate-x-0`} />
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Mobile connection status */}
-            <div className="lg:hidden flex justify-center">
-              <div className={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full border text-[9px] font-black uppercase tracking-widest ${connectionError ? 'bg-rose-50 text-rose-600 border-rose-200' : isSyncing ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'}`}>
-                {isSyncing ? <Loader2 size={10} className="animate-spin" /> : connectionError ? <WifiOff size={10} /> : <CheckCircle2 size={10} />}
-                {isSyncing ? "Connecting..." : connectionError ? "Cloud Offline" : "Database Terkoneksi"}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // ─── LOGIN VIEW ────────────────────────────────────────────────────────────
-  const Icon = currentTheme.icon;
-  const roleLabels: Record<Role, string> = { ADMIN: 'PENGURUS', TEACHER: 'PENGAJAR', STUDENT: 'SISWA' };
-
+  // ── SELECTION + LOGIN ──────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-slate-50 flex relative overflow-hidden font-sans">
-      {/* Decorative blobs */}
-      <div className="absolute top-0 right-0 w-96 h-96 bg-blue-100 rounded-full blur-[120px] opacity-40 pointer-events-none" />
-      <div className="absolute bottom-0 left-0 w-96 h-96 bg-orange-100 rounded-full blur-[120px] opacity-40 pointer-events-none" />
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
+      <BlobStyles />
 
-      {/* Left accent strip */}
-      <div className={`hidden lg:flex w-2 bg-gradient-to-b ${currentTheme.gradient}`} />
+      {/* 3 animated blobs */}
+      <div className="blob-1 absolute top-0 right-0 w-[600px] h-[600px] bg-blue-100 rounded-full blur-[120px] -mr-48 -mt-48 opacity-40 pointer-events-none"></div>
+      <div className="blob-2 absolute bottom-0 left-0 w-[600px] h-[600px] bg-orange-100 rounded-full blur-[120px] -ml-48 -mb-48 opacity-40 pointer-events-none"></div>
+      <div className="blob-3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] bg-emerald-100 rounded-full blur-[140px] opacity-20 pointer-events-none"></div>
 
-      {/* Main content */}
-      <div className="flex-1 flex items-center justify-center p-8">
-        <div className="relative z-10 w-full max-w-md space-y-10">
-
-          {/* Top bar: back + logo */}
-          <div className="flex items-center justify-between">
-            <button
-              onClick={() => setView(systemMaintenance ? 'MAINTENANCE' : 'SELECTION')}
-              className="flex items-center gap-2 text-slate-500 hover:text-slate-800 transition-colors group"
-            >
-              <div className="w-9 h-9 bg-white rounded-xl border border-slate-200 flex items-center justify-center shadow-sm group-hover:shadow transition-shadow">
-                <ArrowLeft size={16} />
-              </div>
-              <span className="text-[10px] font-black uppercase tracking-widest">Kembali</span>
-            </button>
-
-            <div className="flex items-center gap-2.5">
+      <div className="w-full max-w-6xl flex flex-col items-center gap-12 relative z-10 animate-in fade-in duration-700">
+        <div className="text-center space-y-6">
+           <div className="fade-up inline-flex items-center gap-4 px-8 py-4 bg-white border border-slate-100 rounded-3xl shadow-xl">
               <img
                 src="https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png"
                 alt="SANUR Logo"
-                className="h-8 w-auto object-contain"
+                className="h-14 w-auto object-contain"
               />
-              <div className="border-l border-slate-200 pl-2.5">
-                <p className="text-[10px] font-black text-slate-700 uppercase italic leading-none">SANUR</p>
-                <p className="text-[8px] font-bold text-blue-600 uppercase tracking-wide">Akademi Inspirasi</p>
+              <div className="text-left border-l-2 border-slate-100 pl-4">
+                 <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">SANUR</h1>
+                 <p className="text-xs font-black text-blue-600 uppercase tracking-wide leading-tight">Akademi Inspirasi</p>
+                 <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Internal Management System</p>
+              </div>
+           </div>
+
+           <div className="fade-up-d1 flex items-center gap-4 justify-center">
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-full border text-[9px] font-black uppercase tracking-widest transition-all ${connectionError ? 'bg-rose-50 text-rose-600 border-rose-200' : isSyncing ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'}`}>
+                 {isSyncing ? <Loader2 size={14} className="animate-spin" /> : connectionError ? <WifiOff size={14} /> : <CheckCircle2 size={14} />}
+                 {isSyncing ? "Connecting..." : connectionError ? "Cloud Offline" : "Database Terkoneksi"}
+              </div>
+           </div>
+        </div>
+
+        <div className="w-full max-w-4xl">
+          {view === 'SELECTION' ? (
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="fade-up-d1"><RoleCard icon={UserCog} title="Pengurus" color="blue" desc="Admin, Keuangan, Pengelolaan" onClick={() => handleSelectRole('ADMIN')} /></div>
+              <div className="fade-up-d2"><RoleCard icon={GraduationCap} title="Pengajar" color="orange" desc="Log Sesi Guru, Honor, Rapot" onClick={() => handleSelectRole('TEACHER')} /></div>
+              <div className="fade-up-d3"><RoleCard icon={Users} title="Siswa" color="emerald" desc="Pembayaran, Progres, Sertifikat" onClick={() => handleSelectRole('STUDENT')} /></div>
+              <div className="fade-up-d4 md:col-span-3 bg-white p-8 rounded-[2.5rem] border border-slate-100 flex items-center gap-6 text-slate-600 shadow-xl shadow-slate-200/50">
+                 <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center shrink-0"><Info size={24}/></div>
+                 <p className="text-[11px] font-bold uppercase tracking-wide leading-relaxed">
+                   Halo! Selamat datang di Portal Internal SANUR Akademi Inspirasi. Silakan pilih peran di atas untuk melanjutkan ke halaman login.
+                 </p>
               </div>
             </div>
-          </div>
-
-          {/* Role badge + heading */}
-          <div className="space-y-4">
-            <div className={`inline-flex items-center gap-3 px-4 py-2 ${currentTheme.light} rounded-full border ${currentTheme.border}`}>
-              <Icon size={16} className={currentTheme.text} />
-              <span className={`text-[10px] font-black uppercase tracking-widest ${currentTheme.text}`}>
-                PORTAL {roleLabels[role]}
-              </span>
-            </div>
-            <div className="space-y-1">
-              <h2 className="text-4xl font-black text-slate-800 tracking-tight uppercase italic leading-none">
-                SELAMAT <span className={currentTheme.text}>DATANG</span>
-              </h2>
-              <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">
-                Masukkan identitas akun untuk melanjutkan
-              </p>
-            </div>
-          </div>
-
-          {/* Form card */}
-          <div className="bg-white rounded-3xl border border-slate-100 shadow-xl shadow-slate-200/50 p-8 space-y-6">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Username */}
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1">Username Akun</label>
-                <div className="relative group">
-                  <Mail size={18} className={`absolute left-4 top-1/2 -translate-y-1/2 ${currentTheme.text} opacity-40 group-focus-within:opacity-100 transition-opacity`} />
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    placeholder="ISI USERNAME..."
-                    className={`w-full pl-11 pr-4 py-4 bg-slate-50 border-2 border-transparent rounded-xl outline-none font-black text-xs uppercase transition-all placeholder:text-slate-300 focus:bg-white focus:border-current ${currentTheme.text}`}
-                  />
-                </div>
+          ) : (
+            <div className="fade-up bg-white rounded-[4rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col md:flex-row">
+              <div className={`md:w-72 p-12 ${currentTheme.bg} text-white flex flex-col justify-between items-center text-center`}>
+                 <button onClick={() => setView(systemMaintenance ? 'MAINTENANCE' : 'SELECTION')} className="p-3 bg-white/20 rounded-full hover:bg-white/40 hover:scale-110 active:scale-95 transition-all"><ArrowLeft/></button>
+                 <div className="space-y-6">
+                    <div className="icon-float w-24 h-24 bg-white/10 backdrop-blur-md rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl">
+                       {role === 'ADMIN' ? <UserCog size={48}/> : role === 'TEACHER' ? <GraduationCap size={48}/> : <Users size={48}/>}
+                    </div>
+                    <h3 className="text-3xl font-black uppercase italic tracking-tighter">PORTAL <br/> {roleLabels[role]}</h3>
+                 </div>
+                 <div className="text-[9px] font-black uppercase tracking-widest opacity-60">SANUR Akademi Inspirasi</div>
               </div>
 
-              {/* PIN */}
-              <div className="space-y-1.5">
-                <label className="text-[9px] font-black text-slate-500 uppercase tracking-widest pl-1">6 Digit PIN</label>
-                <div className="relative group">
-                  <Lock size={18} className={`absolute left-4 top-1/2 -translate-y-1/2 ${currentTheme.text} opacity-40 group-focus-within:opacity-100 transition-opacity`} />
-                  <input
-                    type={showPin ? "text" : "password"}
-                    maxLength={6}
-                    value={pin}
-                    onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
-                    placeholder="••••••"
-                    className={`w-full pl-11 pr-12 py-4 bg-slate-50 border-2 border-transparent rounded-xl outline-none font-black text-xl tracking-[0.4em] text-center transition-all placeholder:text-slate-300 focus:bg-white focus:border-current ${currentTheme.text}`}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPin(!showPin)}
-                    className={`absolute right-4 top-1/2 -translate-y-1/2 ${currentTheme.text} opacity-50 hover:opacity-100 transition-opacity`}
-                  >
-                    {showPin ? <EyeOff size={18} /> : <Eye size={18} />}
-                  </button>
-                </div>
+              <div className="flex-1 p-10 md:p-16">
+                 <form onSubmit={handleSubmit} className="space-y-10">
+                    <div className="space-y-4">
+                       <h2 className="text-4xl font-black text-slate-800 tracking-tight uppercase italic leading-none">SELAMAT <span className={currentTheme.text}>DATANG</span></h2>
+                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Masukkan identitas akun untuk melanjutkan</p>
+                    </div>
+                    <div className="space-y-6">
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-500 uppercase ml-4 tracking-widest">Username Akun</label>
+                          <div className="relative group">
+                             <div className={`absolute left-6 top-1/2 -translate-y-1/2 ${currentTheme.text} opacity-30 group-focus-within:opacity-100 transition-opacity`}><Mail size={24}/></div>
+                             <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="ISI USERNAME..." className={`w-full pl-16 pr-8 py-6 bg-slate-50 border-2 border-transparent rounded-[2rem] outline-none font-black text-xs uppercase transition-all focus:bg-white focus:${currentTheme.border} focus:scale-[1.01]`} />
+                          </div>
+                       </div>
+                       <div className="space-y-2">
+                          <label className="text-[10px] font-black text-slate-500 uppercase ml-4 tracking-widest">DIGIT PIN</label>
+                          <div className="relative group">
+                             <div className={`absolute left-6 top-1/2 -translate-y-1/2 ${currentTheme.text} opacity-30 group-focus-within:opacity-100 transition-opacity`}><Lock size={24}/></div>
+                             <input type={showPin ? "text" : "password"} maxLength={6} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} placeholder="******" className={`w-full pl-16 pr-16 py-6 bg-slate-50 border-2 border-transparent rounded-[2rem] outline-none font-black text-2xl tracking-[0.5em] text-center transition-all focus:bg-white focus:${currentTheme.border} focus:scale-[1.01]`} />
+                             <button type="button" onClick={() => setShowPin(!showPin)} className={`absolute right-6 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-white/50 hover:bg-white transition-all ${currentTheme.text}`}>{showPin ? <EyeOff size={22} /> : <Eye size={22} />}</button>
+                          </div>
+                       </div>
+                    </div>
+                    {error && (
+                      <div className="p-6 bg-rose-50 border border-rose-100 rounded-3xl flex items-center gap-4 text-rose-600 animate-bounce">
+                         <ShieldAlert size={24} className="shrink-0" />
+                         <p className="text-[10px] font-black uppercase tracking-widest">{error}</p>
+                      </div>
+                    )}
+                    <button type="submit" disabled={loading || isSyncing} className={`w-full py-7 ${currentTheme.bg} text-white rounded-[2.5rem] font-black text-xs uppercase tracking-[0.3em] shadow-2xl transition-all hover:brightness-110 hover:shadow-xl active:scale-95 flex items-center justify-center gap-4 disabled:opacity-50`}>
+                      {loading ? <Loader2 size={24} className="animate-spin" /> : <UserCheck size={24} />}
+                      {loading ? 'VERIFIKASI...' : 'MASUK SEKARANG'}
+                    </button>
+                 </form>
               </div>
-
-              {/* Error */}
-              {error && (
-                <div className="flex items-center gap-3 p-4 bg-rose-50 border border-rose-100 rounded-xl text-rose-600">
-                  <ShieldAlert size={18} className="shrink-0" />
-                  <p className="text-[10px] font-black uppercase tracking-widest">{error}</p>
-                </div>
-              )}
-
-              {/* Submit */}
-              <button
-                type="submit"
-                disabled={loading || isSyncing}
-                className={`w-full py-4 ${currentTheme.bg} text-white rounded-xl font-black text-xs uppercase tracking-[0.3em] transition-all active:scale-[0.98] flex items-center justify-center gap-3 disabled:opacity-50 shadow-lg`}
-              >
-                {loading ? <Loader2 size={18} className="animate-spin" /> : <UserCheck size={18} />}
-                {loading ? 'VERIFIKASI...' : 'MASUK SEKARANG'}
-              </button>
-            </form>
-          </div>
-
-          {/* Connection status + footer */}
-          <div className="flex items-center justify-between">
-            <div className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-[9px] font-black uppercase tracking-widest ${connectionError ? 'bg-rose-50 text-rose-600 border-rose-200' : isSyncing ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'}`}>
-              {isSyncing ? <Loader2 size={10} className="animate-spin" /> : connectionError ? <WifiOff size={10} /> : <CheckCircle2 size={10} />}
-              {isSyncing ? "Connecting..." : connectionError ? "Offline" : "Terkoneksi"}
             </div>
-            <p className="text-[9px] font-black text-slate-300 uppercase tracking-widest">© 2026 SANUR</p>
-          </div>
+          )}
         </div>
       </div>
+      <footer className="mt-20 text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">Sanur Akademi Inspirasi &copy; 2026</footer>
     </div>
+  );
+};
+
+const RoleCard = ({ icon: Icon, title, desc, color, onClick }: any) => {
+  const themes: any = {
+    blue:    { border: 'hover:border-blue-500',    hoverShadow: 'hover:shadow-blue-100/80',    text: 'text-blue-600',    bg: 'bg-blue-50'    },
+    orange:  { border: 'hover:border-orange-500',  hoverShadow: 'hover:shadow-orange-100/80',  text: 'text-orange-600',  bg: 'bg-orange-50'  },
+    emerald: { border: 'hover:border-emerald-500', hoverShadow: 'hover:shadow-emerald-100/80', text: 'text-emerald-600', bg: 'bg-emerald-50' }
+  };
+  const theme = themes[color];
+  return (
+    <button
+      onClick={onClick}
+      className={`group w-full p-10 bg-white rounded-[4rem] border-2 shadow-xl transition-all flex flex-col items-center text-center hover:scale-105 active:scale-95 border-slate-100 ${theme.border} hover:shadow-2xl ${theme.hoverShadow}`}
+    >
+      <div className={`w-20 h-20 ${theme.bg} ${theme.text} rounded-[2rem] flex items-center justify-center mb-6 shadow-inner group-hover:rotate-6 group-hover:scale-110 transition-all duration-300`}>
+        <Icon size={40} />
+      </div>
+      <h3 className="text-xl font-black uppercase italic tracking-tighter text-slate-800 mb-2">{title}</h3>
+      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{desc}</p>
+    </button>
   );
 };
 
