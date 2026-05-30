@@ -260,32 +260,21 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
 
         <div className="w-full max-w-4xl">
           {view === 'SELECTION' ? (
-            <div className="flex flex-col gap-8">
-              {/* Info bar — di atas grid */}
-              <div className="fade-up bg-white p-6 rounded-[2.5rem] border border-slate-100 flex items-center gap-6 text-slate-600 shadow-xl shadow-slate-200/50">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="fade-up-d1"><RoleCard icon={UserCog} title="Pengurus" color="blue" desc="Admin, Keuangan, Pengelolaan" onClick={() => handleSelectRole('ADMIN')} /></div>
+              <div className="fade-up-d2"><RoleCard icon={GraduationCap} title="Pengajar" color="orange" desc="Log Sesi Guru, Honor, Rapot" onClick={() => handleSelectRole('TEACHER')} /></div>
+              <div className="fade-up-d3"><RoleCard icon={Users} title="Siswa" color="emerald" desc="Pembayaran, Progres, Sertifikat" onClick={() => handleSelectRole('STUDENT')} /></div>
+              <div className="fade-up-d4 md:col-span-3 bg-white p-8 rounded-[2.5rem] border border-slate-100 flex items-center gap-6 text-slate-600 shadow-xl shadow-slate-200/50">
                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center shrink-0"><Info size={24}/></div>
-                 <div className="space-y-0.5">
-                   <p className="text-[11px] font-black uppercase tracking-wide text-slate-700">Halo! Selamat datang di Portal Internal SANUR Akademi Inspirasi.</p>
-                   <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Silakan pilih peran di bawah untuk melanjutkan ke halaman login.</p>
-                 </div>
-              </div>
-              {/* 3 Role cards */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="fade-up-d1"><RoleCard icon={UserCog} title="Pengurus" color="blue" desc="Admin, Keuangan, Pengelolaan" onClick={() => handleSelectRole('ADMIN')} /></div>
-                <div className="fade-up-d2"><RoleCard icon={GraduationCap} title="Pengajar" color="orange" desc="Log Sesi Guru, Honor, Rapot" onClick={() => handleSelectRole('TEACHER')} /></div>
-                <div className="fade-up-d3"><RoleCard icon={Users} title="Siswa" color="emerald" desc="Pembayaran, Progres, Sertifikat" onClick={() => handleSelectRole('STUDENT')} /></div>
+                 <p className="text-[11px] font-bold uppercase tracking-wide leading-relaxed">
+                   Halo! Selamat datang di Portal Internal SANUR Akademi Inspirasi. Silakan pilih peran di atas untuk melanjutkan ke halaman login.
+                 </p>
               </div>
             </div>
           ) : (
             <div className="fade-up bg-white rounded-[4rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col md:flex-row">
               <div className={`md:w-72 p-12 ${currentTheme.bg} text-white flex flex-col justify-between items-center text-center`}>
-                 <button
-                   onClick={() => setView(systemMaintenance ? 'MAINTENANCE' : 'SELECTION')}
-                   className="flex items-center gap-2 px-4 py-2.5 bg-rose-500 hover:bg-rose-400 active:scale-95 rounded-full transition-all shadow-lg"
-                 >
-                   <ArrowLeft size={16}/>
-                   <span className="text-[9px] font-black uppercase tracking-widest">Kembali</span>
-                 </button>
+                 <button onClick={() => setView(systemMaintenance ? 'MAINTENANCE' : 'SELECTION')} className="p-3 bg-white/20 rounded-full hover:bg-white/40 hover:scale-110 active:scale-95 transition-all"><ArrowLeft/></button>
                  <div className="space-y-6">
                     <div className="icon-float w-24 h-24 bg-white/10 backdrop-blur-md rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl">
                        {role === 'ADMIN' ? <UserCog size={48}/> : role === 'TEACHER' ? <GraduationCap size={48}/> : <Users size={48}/>}
