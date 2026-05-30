@@ -111,7 +111,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
       setPayForm({ ...payForm, receiptData: compressedBase64 });
       setShowErrors(false);
     } catch (err) {
-      alert("Gagal memproses gambar. Coba lagi ya Kak!");
+      alert("Gagal memproses gambar. Coba lagi ya!");
     } finally {
       setLoading(false);
     }
@@ -181,7 +181,7 @@ const findOfficialReportLog = (course: any) => {
   const handleLaporBayar = async () => {
     if (!payForm.subject || !payForm.room || !payForm.amount || !payForm.receiptData) {
       setShowErrors(true);
-      return alert("Waduh Kak! Tolong lengkapi kolom yang warna merah dulu yaa ✨");
+      return alert("Waduh! Tolong lengkapi kolom yang warna merah dulu yaa ✨");
     }
     setLoading(true);
     try {
@@ -333,7 +333,7 @@ const executeFinalRequestReport = async () => {
 
   const handleDownloadPDFReport = async (course: any) => {
     const reportLog = findOfficialReportLog(course);
-    if (!reportLog) return alert("Rapot belum siap diunduh Kak! Tunggu Guru selesai input nilai ya. ✨");
+    if (!reportLog) return alert("Rapot belum siap diunduh! Tunggu Guru selesai input nilai ya. ✨");
     setDownloadProgress(5);
     setActiveDownloadId(course.id);
     try {
@@ -562,7 +562,7 @@ const executeFinalRequestReport = async () => {
               <div className="flex items-center justify-center md:justify-start gap-2">
                  <Sparkles size={14} className="text-orange-400" />
                  <p className="text-[11px] font-black text-orange-800 uppercase tracking-widest leading-relaxed">
-                    "Lapor bayar di sini ya Kak! ✨ Setelah kirim, status akan <span className="bg-orange-200 text-orange-800 px-2 py-0.5 rounded-lg">PENDING</span> (sedang dicek Admin). Jika sudah <span className="bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded-lg">BERHASIL</span>, silakan unduh Kuitansi resmi dan kelas Kakak otomatis aktif di menu "Kelas Saya"! 🚀"
+                    "Lapor bayar di sini ya! ✨ Setelah kirim, status akan <span className="bg-orange-200 text-orange-800 px-2 py-0.5 rounded-lg">PENDING</span> (sedang dicek Admin). Jika sudah <span className="bg-emerald-200 text-emerald-800 px-2 py-0.5 rounded-lg">BERHASIL</span>, silakan unduh Kuitansi resmi dan kelas otomatis aktif di menu "Kelas Saya"! 🚀"
                  </p>
               </div>
            </div>
@@ -588,7 +588,7 @@ const executeFinalRequestReport = async () => {
     </div>
   )}
   
-  <div className="flex items-center gap-8 relative z-10"><div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-3xl flex items-center justify-center shadow-inner shrink-0"><Receipt size={36} /></div><div><h3 className="text-3xl font-black text-slate-800 uppercase italic leading-none">{isEditing ? 'Update Laporan' : 'Lapor Bayar'}</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Pastikan bukti transfer jelas ya Kak ✨</p></div>{isEditing && <button onClick={resetForm} className="ml-auto p-4 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>}</div>
+  <div className="flex items-center gap-8 relative z-10"><div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-3xl flex items-center justify-center shadow-inner shrink-0"><Receipt size={36} /></div><div><h3 className="text-3xl font-black text-slate-800 uppercase italic leading-none">{isEditing ? 'Update Laporan' : 'Lapor Bayar'}</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Pastikan bukti transfer jelas ya ✨</p></div>{isEditing && <button onClick={resetForm} className="ml-auto p-4 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>}</div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
                 <div className="space-y-3">
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Mata Pelajaran</label>
@@ -1023,7 +1023,7 @@ const completedSessions = studentAttendanceLogs
            <div className="bg-white w-full max-w-[340px] rounded-[2rem] p-8 text-center space-y-6 shadow-2xl relative border-t-4 border-rose-500 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setConfirmDeletePayment(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
               <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mx-auto shadow-sm animate-bounce"><AlertTriangle size={32} /></div>
-              <div className="space-y-2"><h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Hapus Laporan?</h4><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4">Data laporan bayar <span className="text-slate-800 font-black underline">{confirmDeletePayment.className}</span> akan dihapus permanen Kak.</p></div>
+              <div className="space-y-2"><h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Hapus Laporan?</h4><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4">Data laporan bayar <span className="text-slate-800 font-black underline">{confirmDeletePayment.className}</span> akan dihapus permanen.</p></div>
               <div className="flex gap-3"><button onClick={() => setConfirmDeletePayment(null)} className="flex-1 py-4 bg-slate-50 text-slate-400 rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">BATAL</button><button onClick={executeDeletePayment} disabled={loading} className="flex-1 py-4 bg-rose-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 flex items-center justify-center gap-2">{loading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} HAPUS</button></div>
            </div>
         </div>
@@ -1050,7 +1050,7 @@ const completedSessions = studentAttendanceLogs
                   </div>
                   <div className="flex-1">
                     <p className="text-[11px] font-black text-amber-900 uppercase italic leading-relaxed">
-                      Setelah klik "YAKIN LANJUTKAN!", tanggal sesi yang sudah kamu input <span className="bg-amber-200 text-amber-900 px-2 py-0.5 rounded-lg">TIDAK BISA DIUBAH</span> lagi ya Kak! 
+                      Setelah klik "YAKIN LANJUTKAN!", tanggal sesi yang sudah kamu input <span className="bg-amber-200 text-amber-900 px-2 py-0.5 rounded-lg">TIDAK BISA DIUBAH</span> lagi ya! 
                     </p>
                     <p className="text-[9px] font-bold text-amber-700 mt-3 leading-relaxed">
                       Pastikan semua tanggal sudah benar sebelum melanjutkan. ✨
@@ -1097,7 +1097,7 @@ const completedSessions = studentAttendanceLogs
            <div className="bg-white w-full max-w-[360px] rounded-[2rem] p-8 shadow-2xl text-center space-y-6 relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setRequestingReportFor(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
               <div className="space-y-3"><div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto shadow-xl rotate-3"><GraduationCap size={28} /></div><div><h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Klaim Rapot</h4><p className="text-[8px] font-black text-blue-600 uppercase tracking-widest mt-1 truncate">{requestingReportFor.className}</p></div></div>
-              <div className="bg-slate-50 p-5 rounded-2xl text-left space-y-3 border border-slate-100"><p className="text-[9px] font-bold text-slate-600 leading-tight">"Pilih Guru Pembimbing Kakak untuk mengirim data ke antrean Rapot & Sertifikat."</p><div className="space-y-1.5"><label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest flex items-center gap-1.5"><UserCog size={10}/> Pilih Guru Pembimbing</label><select value={selectedTeacherForReport} onChange={e => setSelectedTeacherForReport(e.target.value)} className="w-full px-4 py-3 bg-white rounded-xl font-black text-[10px] uppercase italic outline-none border-2 border-blue-50 shadow-sm appearance-none"><option value="">-- PILIH GURU --</option>{teachers.filter(t => t.role === 'TEACHER').map(t => <option key={t.id} value={t.id}>{t.name.toUpperCase()}</option>)}</select></div></div>
+              <div className="bg-slate-50 p-5 rounded-2xl text-left space-y-3 border border-slate-100"><p className="text-[9px] font-bold text-slate-600 leading-tight">"Pilih Guru Pembimbing untuk mengirim data ke antrean Rapot & Sertifikat."</p><div className="space-y-1.5"><label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest flex items-center gap-1.5"><UserCog size={10}/> Pilih Guru Pembimbing</label><select value={selectedTeacherForReport} onChange={e => setSelectedTeacherForReport(e.target.value)} className="w-full px-4 py-3 bg-white rounded-xl font-black text-[10px] uppercase italic outline-none border-2 border-blue-50 shadow-sm appearance-none"><option value="">-- PILIH GURU --</option>{teachers.filter(t => t.role === 'TEACHER').map(t => <option key={t.id} value={t.id}>{t.name.toUpperCase()}</option>)}</select></div></div>
               <button onClick={handleRequestReport} disabled={!selectedTeacherForReport || loading} className="w-full py-4 bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.1em] shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">{loading ? <Loader2 size={14} className="animate-spin" /> : <><Sparkles size={14} /> AJUKAN SEKARANG ✨</>}</button>
            </div>
         </div>
