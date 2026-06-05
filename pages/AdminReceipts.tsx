@@ -556,9 +556,10 @@ if (imgHeight <= pageHeight) {
       width: '210mm',
       minHeight: '297mm',
       boxSizing: 'border-box',
+      position: 'relative',
     }}
     ref={slipRef}
-    className="bg-white p-12 md:p-20 space-y-10 overflow-hidden text-slate-900 border-8 border-double border-slate-100 shadow-2xl"
+    className="bg-white p-12 md:p-20 overflow-hidden text-slate-900 border-8 border-double border-slate-100 shadow-2xl"
   >
                 {/* Header */}
                 <div className="flex justify-between items-start border-b-2 border-slate-900 pb-10">
@@ -656,19 +657,22 @@ if (imgHeight <= pageHeight) {
                 </div>
 
 {/* Footer */}
-                <div className="border-t border-slate-200 pt-6 space-y-4">
+                <div
+                  style={{ position: 'absolute', bottom: '2rem', left: '5rem', right: '5rem' }}
+                  className="space-y-4"
+                >
                   {/* Legal + Admin */}
-                  <div className="flex justify-between items-start">
+                  <div className="border-t border-slate-200 pt-5 flex justify-between items-start">
                     <p className="text-[9px] font-bold text-slate-400 italic max-w-xs">
                       "{generatedReceipt.type === 'income'
                         ? 'Kuitansi ini sah sebagai bukti pembayaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal.'
                         : 'Bon ini sah sebagai bukti pengeluaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal.'
                       }"
                     </p>
-                    <div className="text-center flex flex-col items-center shrink-0">
-                      <ShieldCheck size={28} className="text-slate-900 opacity-20 mb-1" />
-                      <p className="text-[11px] font-black uppercase text-slate-900 tracking-tight leading-none">Admin Sanur</p>
-                      <p className="text-[7px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1">Official Receipt</p>
+                    <div className="flex flex-col items-center gap-1 shrink-0">
+                      <ShieldCheck size={18} className="text-slate-400" />
+                      <p className="text-[10px] font-black uppercase text-slate-700 leading-none">Admin Sanur</p>
+                      <p className="text-[7px] font-bold text-slate-400 uppercase tracking-wider">Official Receipt</p>
                     </div>
                   </div>
                   {/* Identitas Institusi */}
