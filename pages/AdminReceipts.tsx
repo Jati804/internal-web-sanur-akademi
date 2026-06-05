@@ -51,7 +51,7 @@ const [items, setItems] = useState<PaymentItem[]>([
   ]);
 
 const addItem = () => {
-    if (items.length >= 3) return;
+    if (items.length >= 5) return;
     setItems([...items, { id: Date.now().toString(), description: '', qty: '1', price: '', amount: '' }]);
   };
 
