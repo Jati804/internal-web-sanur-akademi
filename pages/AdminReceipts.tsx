@@ -351,7 +351,7 @@ const isFormValid = () => {
               </label>
               <button
                 onClick={addItem}
-                disabled={items.length >= 3}
+                disabled={items.length >= 5}
                 className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
                   activeTab === 'income'
                     ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
