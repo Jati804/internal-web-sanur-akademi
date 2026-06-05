@@ -612,30 +612,30 @@ const isFormValid = () => {
 {/* Items Table - struk style */}
                   <div className="divide-y divide-slate-100">
                     {generatedReceipt.items.map((item: any, idx: number) => (
-                      <div key={idx} className="py-2 grid grid-cols-12 gap-2 items-center">
-                        <p className="col-span-5 text-[11px] font-bold text-slate-700 uppercase">{item.description}</p>
+                      <div key={idx} className="py-3 grid grid-cols-12 gap-2 items-center">
+                        <p className="col-span-5 text-[11px] font-bold text-slate-800 uppercase leading-tight">{item.description}</p>
                         <p className="col-span-4 text-[10px] text-slate-400 text-center">
                           {Number(item.qty) > 1 ? `${item.qty} × Rp ${Number(item.price).toLocaleString('id-ID')}` : ''}
                         </p>
-                        <p className="col-span-3 text-[11px] font-bold text-slate-700 text-right">Rp {item.amount.toLocaleString('id-ID')}</p>
+                        <p className="col-span-3 text-[11px] font-bold text-slate-800 text-right">Rp {item.amount.toLocaleString('id-ID')}</p>
                       </div>
                     ))}
                   </div>
 
                   {/* Total + Metode */}
-                  <div className={`border-t-2 pt-4 ${
+                  <div className={`border-t-2 pt-4 space-y-2 ${
                     generatedReceipt.type === 'income' ? 'border-blue-200' : 'border-orange-200'
                   }`}>
-                    <div className="flex justify-between items-center mb-3">
-                      <p className={`text-[13px] font-black uppercase tracking-wide ${
+                    <div className="flex justify-between items-center">
+                      <p className={`text-[11px] font-black uppercase tracking-wide ${
                         generatedReceipt.type === 'income' ? 'text-blue-700' : 'text-orange-600'
                       }`}>TOTAL</p>
-                      <p className={`text-[14px] font-black ${
+                      <p className={`text-[11px] font-black ${
                         generatedReceipt.type === 'income' ? 'text-blue-700' : 'text-orange-600'
                       }`}>Rp {generatedReceipt.total.toLocaleString('id-ID')}</p>
                     </div>
                     <div className="flex justify-between items-center">
-                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Metode Pembayaran:</p>
+                      <p className="text-[11px] font-black text-slate-400 uppercase tracking-wide">Metode Pembayaran</p>
                       <p className={`text-[11px] font-black uppercase ${
                         generatedReceipt.type === 'income' ? 'text-blue-600' : 'text-orange-500'
                       }`}>{generatedReceipt.paymentMethod}</p>
