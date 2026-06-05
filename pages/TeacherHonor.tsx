@@ -435,23 +435,22 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
          )}
       </div>
 
-      <div className="fixed left-[-9999px] top-0 pointer-events-none">
+<div className="fixed left-[-9999px] top-0 pointer-events-none">
         {cycleGroups.filter(p => p.status === 'LUNAS').map(pkg => (
           <div id={`hidden-slip-${pkg.id}`} key={`slip-${pkg.id}`} className="bg-white p-12 md:p-20 space-y-8 w-[700px] mx-auto overflow-hidden text-slate-900">
             <div className="flex justify-between items-start border-b-2 border-slate-900 pb-10">
-              <div className="min-w-0">
-                <h1 className="text-3xl font-black italic tracking-tighter text-slate-900 leading-none">SANUR</h1>
-                <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1">Akademi Inspirasi</p>
+              <div className="min-w-0 text-left">
+                <img src="https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png" style={{ maxHeight: '90px', width: 'auto', objectFit: 'contain' }} />
               </div>
               <div className="text-right flex flex-col items-end">
-                <h2 className="text-xl font-black uppercase italic text-slate-800 leading-none">SLIP HONOR DIGITAL</h2>
+                <h2 className="text-xl font-black uppercase text-slate-800 leading-none">SLIP HONOR DIGITAL</h2>
                 <p className="text-[10px] font-black text-slate-800 uppercase tracking-widest mt-2 whitespace-nowrap">REF: {generateProRef(pkg.id)}</p>
               </div>
             </div>
             <div className="grid grid-cols-12 gap-8">
               <div className="col-span-4 pr-6 border-r border-slate-50">
                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Nama Pengajar:</p>
-                <p className="text-[13px] font-black text-slate-900 uppercase italic leading-tight">{user.name}</p>
+                <p className="text-[13px] font-black text-slate-900 uppercase leading-tight">{user.name}</p>
               </div>
               <div className="col-span-5 pr-6 border-r border-slate-50">
                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Ruangan Kelas:</p>
@@ -459,13 +458,13 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                 {pkg.category === 'PRIVATE' && (
                   <div className="mt-2">
                     <p className="text-[7px] font-black text-blue-400 uppercase tracking-widest">Siswa Private:</p>
-                    <p className="text-[11px] font-black text-blue-600 uppercase italic leading-none">{pkg.studentName}</p>
+                    <p className="text-[11px] font-black text-blue-600 uppercase leading-none">{pkg.studentName}</p>
                   </div>
                 )}
               </div>
               <div className="col-span-3 text-right">
                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Bulan Terbit:</p>
-                <p className="text-[13px] font-black text-blue-600 uppercase italic leading-tight">{getFullMonthName()}</p>
+                <p className="text-[13px] font-black text-blue-600 uppercase leading-tight">{getFullMonthName()}</p>
               </div>
             </div>
             <div className="space-y-4">
@@ -491,14 +490,14 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
               </table>
             </div>
             <div className="pt-8 border-t-2 border-slate-900">
-              <div className="flex justify-between items-start h-[32px]">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">TOTAL TERAKUMULASI:</p>
+              <div className="flex justify-between items-start min-h-[32px]">
+                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">VERIFIKASI SISTEM:</p>
                 <div className="text-right flex flex-col items-end">
-                  <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] italic">Terverifikasi Sistem</p>
-                  <p className="text-[10px] font-black text-emerald-600 uppercase tracking-widest mt-1">Status: LUNAS</p>
+                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Terverifikasi Digital</p>
+                  <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mt-1">Status: LUNAS</p>
                 </div>
               </div>
-              <p className="text-5xl font-black text-emerald-600 italic leading-none mt-4 text-left">Rp {pkg.myTotalPaid.toLocaleString()}</p>
+              <p className="text-5xl font-black text-blue-600 leading-none mt-4 text-left">Rp {pkg.myTotalPaid.toLocaleString()}</p>
             </div>
             <div className="pt-10 border-t border-slate-100 flex justify-between items-end gap-10">
               <div className="max-w-xs text-left">
