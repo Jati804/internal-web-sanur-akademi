@@ -633,50 +633,39 @@ if (imgHeight <= pageHeight) {
                       </div>
                     </div>
                     
-                    {/* Payment Method */}
-                    <div className="px-6 py-4 border-t border-slate-200/60">
-                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Metode Pembayaran:</p>
-                      <p className="text-[11px] font-black uppercase text-left text-blue-600">
-                        {generatedReceipt.paymentMethod}
-                      </p>
+{/* Payment Method + Status sejajar */}
+                    <div className="px-6 py-4 border-t border-slate-200/60 flex justify-between items-center">
+                      <div>
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Metode Pembayaran:</p>
+                        <p className={`text-[11px] font-black uppercase ${
+                          generatedReceipt.type === 'income' ? 'text-blue-600' : 'text-orange-500'
+                        }`}>
+                          {generatedReceipt.paymentMethod}
+                        </p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Status:</p>
+                        <p className={`text-[11px] font-black uppercase ${
+                          generatedReceipt.type === 'income' ? 'text-blue-600' : 'text-orange-500'
+                        }`}>
+                          {generatedReceipt.type === 'income' ? '✓ LUNAS' : '✓ TERBAYAR'}
+                        </p>
+                      </div>
                     </div>
                   </div>
-                </div>
-
-                {/* Amount Section */}
-                <div className="pt-8 border-t-2 border-slate-900">
-                  <div className="flex justify-between items-start min-h-[32px]">
-                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">VERIFIKASI SISTEM:</p>
-                    <div className="text-right flex flex-col items-end">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Terverifikasi Digital</p>
-                      <p className={`text-[9px] font-black uppercase tracking-widest mt-1 ${
-                        generatedReceipt.type === 'income' ? 'text-blue-600' : 'text-orange-500'
-                      }`}>
-                        Status: {generatedReceipt.type === 'income' ? 'LUNAS' : 'TERBAYAR'}
-                      </p>
-                    </div>
-                  </div>
-                  <p className={`text-5xl font-black leading-none text-left mt-4 ${
-                    generatedReceipt.type === 'income' ? 'text-blue-600' : 'text-orange-500'
-                  }`}>
-                    Rp {generatedReceipt.total.toLocaleString('id-ID')}
-                  </p>
                 </div>
 
                 {/* Footer */}
-                <div className="pt-10 border-t border-slate-100 flex justify-between items-end gap-10">
-                  <div className="max-w-xs text-left">
-                    <p className="text-[10px] font-bold text-slate-400 italic text-left">
-                      "{generatedReceipt.type === 'income' 
-                        ? 'Kuitansi ini sah sebagai bukti pembayaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal.'
-                        : 'Bon ini sah sebagai bukti pengeluaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal.'
-                      }"
-                    </p>
-                  </div>
-                  <div className="text-center flex flex-col items-center shrink-0">
-                    <ShieldCheck size={44} className="text-slate-900 opacity-20 mb-2" />
-                    <p className="text-[13px] font-black uppercase text-slate-900 tracking-tight leading-none">Admin Sanur</p>
-                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1.5">Official Receipt</p>
+                <div className="pt-6 border-t border-slate-200 flex justify-between items-center">
+                  <p className="text-[8px] font-bold text-slate-400 italic">
+                    Dokumen ini sah sebagai bukti resmi SANUR Akademi Inspirasi.
+                  </p>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <ShieldCheck size={16} className="text-slate-400" />
+                    <div className="text-right">
+                      <p className="text-[10px] font-black uppercase text-slate-700 leading-none">Admin Sanur</p>
+                      <p className="text-[7px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Official Receipt</p>
+                    </div>
                   </div>
                 </div>
               </div>
