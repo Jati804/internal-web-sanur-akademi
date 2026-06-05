@@ -50,7 +50,8 @@ const [items, setItems] = useState<PaymentItem[]>([
     { id: '1', description: '', qty: '1', price: '', amount: '' }
   ]);
 
-  const addItem = () => {
+const addItem = () => {
+    if (items.length >= 3) return;
     setItems([...items, { id: Date.now().toString(), description: '', qty: '1', price: '', amount: '' }]);
   };
 
@@ -348,7 +349,8 @@ const isFormValid = () => {
               </label>
               <button
                 onClick={addItem}
-                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase transition-all ${
+                disabled={items.length >= 3}
+                className={`flex items-center gap-2 px-4 py-2 rounded-xl font-black text-[9px] uppercase transition-all disabled:opacity-30 disabled:cursor-not-allowed ${
                   activeTab === 'income'
                     ? 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
                     : 'bg-rose-50 text-rose-600 hover:bg-rose-100'
@@ -614,7 +616,7 @@ const isFormValid = () => {
                           <p className="text-[11px] font-bold text-slate-700 shrink-0 ml-4">Rp {item.amount.toLocaleString('id-ID')}</p>
                         </div>
                         {item.qty > 1 && (
-                          <p className="text-[9px] text-slate-400 mt-0.5">{item.qty} × Rp {item.price.toLocaleString('id-ID')}</p>
+                          <p className="text-[9px] text-slate-400 mt-0.5">{item.qty} × Rp {Number(item.price).toLocaleString('id-ID')}</p>
                         )}
                       </div>
                     ))}
