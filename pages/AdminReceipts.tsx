@@ -615,7 +615,7 @@ const isFormValid = () => {
                           <p className="text-[11px] font-bold text-slate-700 uppercase">{item.description}</p>
                           <p className="text-[11px] font-bold text-slate-700 shrink-0 ml-4">Rp {item.amount.toLocaleString('id-ID')}</p>
                         </div>
-                        {item.qty > 1 && (
+                        {Number(item.qty) > 1 && (
                           <p className="text-[9px] text-slate-400 mt-0.5">{item.qty} × Rp {Number(item.price).toLocaleString('id-ID')}</p>
                         )}
                       </div>
