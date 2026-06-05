@@ -98,6 +98,8 @@ const isFormValid = () => {
       receivedFrom: form.receivedFrom.trim(),
       items: validItems.map(item => ({
         description: item.description.trim(),
+        qty: parseFloat(item.qty) || 1,
+        price: parseFloat(item.price) || 0,
         amount: parseFloat(item.amount)
       })),
       total: calculateTotal(),
