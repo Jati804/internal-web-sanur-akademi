@@ -655,17 +655,27 @@ if (imgHeight <= pageHeight) {
                   </div>
                 </div>
 
-                {/* Footer */}
-                <div className="pt-6 border-t border-slate-200 flex justify-between items-center">
-                  <p className="text-[8px] font-bold text-slate-400 italic">
-                    Dokumen ini sah sebagai bukti resmi SANUR Akademi Inspirasi.
-                  </p>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <ShieldCheck size={16} className="text-slate-400" />
-                    <div className="text-right">
-                      <p className="text-[10px] font-black uppercase text-slate-700 leading-none">Admin Sanur</p>
-                      <p className="text-[7px] font-bold text-slate-400 uppercase tracking-wider mt-0.5">Official Receipt</p>
+{/* Footer */}
+                <div className="border-t border-slate-200 pt-6 space-y-4">
+                  {/* Legal + Admin */}
+                  <div className="flex justify-between items-start">
+                    <p className="text-[9px] font-bold text-slate-400 italic max-w-xs">
+                      "{generatedReceipt.type === 'income'
+                        ? 'Kuitansi ini sah sebagai bukti pembayaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal.'
+                        : 'Bon ini sah sebagai bukti pengeluaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal.'
+                      }"
+                    </p>
+                    <div className="text-center flex flex-col items-center shrink-0">
+                      <ShieldCheck size={28} className="text-slate-900 opacity-20 mb-1" />
+                      <p className="text-[11px] font-black uppercase text-slate-900 tracking-tight leading-none">Admin Sanur</p>
+                      <p className="text-[7px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1">Official Receipt</p>
                     </div>
+                  </div>
+                  {/* Identitas Institusi */}
+                  <div className="border-t border-slate-100 pt-3 text-center">
+                    <p className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">
+                      Jl. H. Iming No.107, Beji, Kota Depok, Jawa Barat 16421&nbsp;&nbsp;|&nbsp;&nbsp;+62 813-1548-8000&nbsp;&nbsp;|&nbsp;&nbsp;sanurakademi.com
+                    </p>
                   </div>
                 </div>
               </div>
