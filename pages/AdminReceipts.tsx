@@ -200,25 +200,19 @@ const AdminReceipts: React.FC = () => {
         format: 'a4'
       });
 
-const imgWidth = 210;
+const pageWidth = 210;
+const pageHeight = 297;
+const imgWidth = pageWidth;
 const imgHeight = (canvas.height * imgWidth) / canvas.width;
-const pageHeight = 297; // tinggi A4 dalam mm
 
 if (imgHeight <= pageHeight) {
+  // Konten muat di 1 halaman, langsung masuk
   pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
 } else {
-  // Kalau konten lebih panjang dari A4, tambahin halaman baru
-  let position = 0;
-  let remainingHeight = imgHeight;
-
-  while (remainingHeight > 0) {
-    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
-    remainingHeight -= pageHeight;
-    position -= pageHeight;
-    if (remainingHeight > 0) {
-      pdf.addPage();
-    }
-  }
+  // Konten terlalu panjang, scale down supaya pas di 1 halaman
+  const scaledWidth = (pageHeight * canvas.width) / canvas.height;
+  const xOffset = (pageWidth - scaledWidth) / 2;
+  pdf.addImage(imgData, 'PNG', xOffset, 0, scaledWidth, pageHeight);
 }
       const docType = generatedReceipt.type === 'income' ? 'KUITANSI' : 'BON';
       pdf.save(`${docType}_${generatedReceipt.id}_${generatedReceipt.receivedFrom.replace(/\s+/g, '_')}.pdf`);
