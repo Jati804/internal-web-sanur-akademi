@@ -193,7 +193,7 @@ const studentOnlyLogs = (() => {
           </div>
 
 {/* ✅ FOOTER - CUMA TANGGAL TERBIT + ID SERTIFIKAT */}
-<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0', marginTop: 'auto' }}>
+<div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', paddingTop: '0', marginTop: 'auto' }}>
   <div style={{ textAlign: 'center' }}>
     <p style={{ fontSize: '9px', fontWeight: '900', color: isPass ? '#60a5fa' : '#fb923c', textTransform: 'uppercase', letterSpacing: '0.2em', marginBottom: '3px' }}>Tanggal Terbit</p>
     <p style={{ fontSize: '13px', fontWeight: '900', color: '#64748b', fontStyle: 'italic' }}>{formatDateToDMY(reportLog.date)}</p>
@@ -211,7 +211,7 @@ const studentOnlyLogs = (() => {
       {/* ✅ HALAMAN 2: TRANSKRIP (PORTRAIT) - PERIODE HIGHLIGHTED */}
       <div id={`transcript-render-${reportLog.id}`} style={{ ...PAGE_PORTRAIT, padding: '70px 60px' }}>
         
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px', marginBottom: '20px', position: 'relative', zIndex: 10 }}>
+        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '16px', marginBottom: '20px', position: 'relative', zIndex: 10 }}>
           <div style={{ width: '52px', height: '52px', backgroundColor: '#0f172a', color: 'white', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(6deg)' }}><Layout size={26}/></div>
           <div>
             <h1 style={{ fontSize: '34px', fontWeight: '900', fontStyle: 'italic', color: '#1e293b', textTransform: 'uppercase', letterSpacing: '-0.05em', lineHeight: 1 }}>Transkrip <span style={{ color: isPass ? '#2563eb' : '#ea580c' }}>Nilai</span></h1>
