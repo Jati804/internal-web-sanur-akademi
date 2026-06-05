@@ -569,7 +569,8 @@ const isFormValid = () => {
 <div className="flex justify-center">
               <div 
                 ref={slipRef}
-                className="bg-white p-12 md:p-20 space-y-10 w-full max-w-[700px] overflow-hidden text-slate-900 border-8 border-double border-slate-100 shadow-2xl"
+                style={{ width: '210mm', minHeight: '297mm', boxSizing: 'border-box' }}
+                className="bg-white p-12 md:p-20 space-y-10 overflow-hidden text-slate-900 border-8 border-double border-slate-100 shadow-2xl"
               >
                 {/* Header */}
                 <div className="flex justify-between items-start border-b-2 border-slate-900 pb-10">
