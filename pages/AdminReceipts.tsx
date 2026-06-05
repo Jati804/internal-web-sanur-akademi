@@ -540,7 +540,7 @@ const AdminReceipts: React.FC = () => {
             </div>
 
             {/* Rendered Receipt */}
-            <div className="flex justify-center">
+<div className="flex justify-center">
               <div 
                 ref={slipRef}
                 className="bg-white p-12 md:p-20 space-y-10 w-full max-w-[700px] overflow-hidden text-slate-900 border-8 border-double border-slate-100 shadow-2xl"
@@ -548,12 +548,11 @@ const AdminReceipts: React.FC = () => {
                 {/* Header */}
                 <div className="flex justify-between items-start border-b-2 border-slate-900 pb-10">
                   <div className="min-w-0 text-left">
-                    <h1 className="text-3xl font-black italic tracking-tighter text-slate-900 leading-none">SANUR</h1>
-                    <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1 text-left">Akademi Inspirasi</p>
+                    <img src="https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png" style={{ maxHeight: '90px', width: 'auto', objectFit: 'contain' }} />
                   </div>
                   <div className="text-right flex flex-col items-end">
-                    <h2 className={`text-xl font-black uppercase italic leading-none ${
-                      generatedReceipt.type === 'income' ? 'text-emerald-700' : 'text-slate-700'
+                    <h2 className={`text-xl font-black uppercase leading-none ${
+                      generatedReceipt.type === 'income' ? 'text-blue-700' : 'text-orange-600'
                     }`}>
                       {generatedReceipt.type === 'income' ? 'KUITANSI RESMI' : 'BON PENGELUARAN'}
                     </h2>
@@ -567,11 +566,11 @@ const AdminReceipts: React.FC = () => {
                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">
                       {generatedReceipt.type === 'income' ? 'Diterima Dari:' : 'Dibayar Kepada:'}
                     </p>
-                    <p className="text-lg font-black text-slate-900 uppercase italic text-left">{generatedReceipt.receivedFrom}</p>
+                    <p className="text-lg font-black text-slate-900 uppercase text-left">{generatedReceipt.receivedFrom}</p>
                   </div>
                   <div className="col-span-4 text-right">
                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Tanggal:</p>
-                    <p className="text-base font-black text-slate-800 uppercase italic">{formatDateToDMY(generatedReceipt.date)}</p>
+                    <p className="text-base font-black text-slate-800 uppercase">{formatDateToDMY(generatedReceipt.date)}</p>
                   </div>
                 </div>
 
@@ -600,18 +599,18 @@ const AdminReceipts: React.FC = () => {
                       
                       {/* Total Row */}
                       <div className={`grid grid-cols-12 gap-4 p-6 ${
-                        generatedReceipt.type === 'income' ? 'bg-emerald-100' : 'bg-slate-200'
+                        generatedReceipt.type === 'income' ? 'bg-blue-100' : 'bg-orange-100'
                       }`}>
                         <div className="col-span-8 text-left">
                           <p className={`text-[13px] font-black uppercase tracking-wide ${
-                            generatedReceipt.type === 'income' ? 'text-emerald-700' : 'text-slate-700'
+                            generatedReceipt.type === 'income' ? 'text-blue-700' : 'text-orange-600'
                           }`}>
                             TOTAL
                           </p>
                         </div>
                         <div className="col-span-4 text-right">
                           <p className={`text-[14px] font-black ${
-                            generatedReceipt.type === 'income' ? 'text-emerald-700' : 'text-slate-700'
+                            generatedReceipt.type === 'income' ? 'text-blue-700' : 'text-orange-600'
                           }`}>
                             Rp {generatedReceipt.total.toLocaleString('id-ID')}
                           </p>
@@ -631,19 +630,19 @@ const AdminReceipts: React.FC = () => {
 
                 {/* Amount Section */}
                 <div className="pt-8 border-t-2 border-slate-900">
-                  <div className="flex justify-between items-start mb-4">
+                  <div className="flex justify-between items-start min-h-[32px]">
                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">VERIFIKASI SISTEM:</p>
                     <div className="text-right flex flex-col items-end">
-                      <p className="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em] italic">Terverifikasi Digital</p>
-                      <p className={`text-[10px] font-black uppercase tracking-widest mt-1 ${
-                        generatedReceipt.type === 'income' ? 'text-emerald-600' : 'text-slate-600'
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Terverifikasi Digital</p>
+                      <p className={`text-[9px] font-black uppercase tracking-widest mt-1 ${
+                        generatedReceipt.type === 'income' ? 'text-blue-600' : 'text-orange-500'
                       }`}>
                         Status: {generatedReceipt.type === 'income' ? 'LUNAS' : 'TERBAYAR'}
                       </p>
                     </div>
                   </div>
-                  <p className={`text-5xl font-black italic leading-none text-left ${
-                    generatedReceipt.type === 'income' ? 'text-emerald-600' : 'text-slate-700'
+                  <p className={`text-5xl font-black leading-none text-left mt-4 ${
+                    generatedReceipt.type === 'income' ? 'text-blue-600' : 'text-orange-500'
                   }`}>
                     Rp {generatedReceipt.total.toLocaleString('id-ID')}
                   </p>
