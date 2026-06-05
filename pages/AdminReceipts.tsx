@@ -24,6 +24,8 @@ const generateReceiptId = (type: 'income' | 'expense') => {
 interface PaymentItem {
   id: string;
   description: string;
+  qty: string;
+  price: string;
   amount: string;
 }
 
@@ -44,12 +46,12 @@ const AdminReceipts: React.FC = () => {
     paymentMethod: 'TRANSFER'
   });
 
-  const [items, setItems] = useState<PaymentItem[]>([
-    { id: '1', description: '', amount: '' }
+const [items, setItems] = useState<PaymentItem[]>([
+    { id: '1', description: '', qty: '1', price: '', amount: '' }
   ]);
 
   const addItem = () => {
-    setItems([...items, { id: Date.now().toString(), description: '', amount: '' }]);
+    setItems([...items, { id: Date.now().toString(), description: '', qty: '1', price: '', amount: '' }]);
   };
 
   const removeItem = (id: string) => {
@@ -58,12 +60,15 @@ const AdminReceipts: React.FC = () => {
     }
   };
 
-  const updateItem = (id: string, field: 'description' | 'amount', value: string) => {
-    setItems(items.map(item => 
-      item.id === id 
-        ? { ...item, [field]: field === 'amount' ? value.replace(/[.,]/g, '') : value }
-        : item
-    ));
+const updateItem = (id: string, field: 'description' | 'qty' | 'price', value: string) => {
+    setItems(items.map(item => {
+      if (item.id !== id) return item;
+      const updated = { ...item, [field]: value.replace(/[.,]/g, '') };
+      const qty = parseFloat(updated.qty) || 0;
+      const price = parseFloat(updated.price) || 0;
+      updated.amount = (qty * price).toString();
+      return updated;
+    }));
   };
 
   const calculateTotal = () => {
@@ -71,8 +76,8 @@ const AdminReceipts: React.FC = () => {
   };
 
   const isFormValid = () => {
-    const hasReceivedFrom = form.receivedFrom.trim().length > 0;
-    const hasValidItems = items.some(item => item.description.trim() && parseFloat(item.amount) > 0);
+    const hasReceivedFrom = form.receivedFrom.trim().length > 0;const hasValidItems = items.some(item => item.description.trim() && parseFloat(item.price) > 0 && parseFloat(item.qty) > 0);
+    const hasValidItems = items.some(item => item.description.trim() && parseFloat(item.price) > 0 && parseFloat(item.qty) > 0);
     const total = calculateTotal();
     return hasReceivedFrom && hasValidItems && total > 0;
   };
@@ -355,36 +360,53 @@ const AdminReceipts: React.FC = () => {
 
             <div className="space-y-3">
               {items.map((item, index) => (
-                <div key={item.id} className="flex gap-3 items-start">
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div key={item.id} className="flex gap-3 items-center">
+                  <div className="flex-1 grid grid-cols-12 gap-3">
+                    {/* Deskripsi */}
                     <input
                       type="text"
                       value={item.description}
                       onChange={(e) => updateItem(item.id, 'description', e.target.value)}
                       placeholder="Nama item / keterangan"
-                      className={`w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold text-sm outline-none border-2 transition-all ${
-                        showErrors && !item.description.trim() 
-                          ? 'border-rose-300 bg-rose-50' 
+                      className={`col-span-5 px-4 py-4 bg-slate-50 rounded-2xl font-bold text-sm outline-none border-2 transition-all ${
+                        showErrors && !item.description.trim()
+                          ? 'border-rose-300 bg-rose-50'
                           : 'border-transparent focus:border-blue-200 focus:bg-white'
                       }`}
                     />
+                    {/* Qty */}
                     <input
                       type="number"
-                      value={item.amount}
-                      onChange={(e) => updateItem(item.id, 'amount', e.target.value)}
-                      placeholder="Nominal (Rp)"
+                      value={item.qty}
+                      onChange={(e) => updateItem(item.id, 'qty', e.target.value)}
+                      placeholder="Qty"
+                      min="1"
+                      className="col-span-2 px-4 py-4 bg-slate-50 rounded-2xl font-bold text-sm outline-none border-2 border-transparent focus:border-blue-200 focus:bg-white transition-all text-center"
+                    />
+                    {/* Harga */}
+                    <input
+                      type="number"
+                      value={item.price}
+                      onChange={(e) => updateItem(item.id, 'price', e.target.value)}
+                      placeholder="Harga (Rp)"
                       min="0"
-                      className={`w-full px-6 py-4 bg-slate-50 rounded-2xl font-bold text-sm outline-none border-2 transition-all ${
-                        showErrors && (!item.amount || parseFloat(item.amount) <= 0) 
-                          ? 'border-rose-300 bg-rose-50' 
+                      className={`col-span-3 px-4 py-4 bg-slate-50 rounded-2xl font-bold text-sm outline-none border-2 transition-all ${
+                        showErrors && (!item.price || parseFloat(item.price) <= 0)
+                          ? 'border-rose-300 bg-rose-50'
                           : 'border-transparent focus:border-blue-200 focus:bg-white'
                       }`}
                     />
+                    {/* Subtotal */}
+                    <div className="col-span-2 px-4 py-4 bg-slate-100 rounded-2xl flex items-center justify-end">
+                      <p className="font-black text-xs text-slate-500">
+                        {parseFloat(item.amount) > 0 ? `Rp ${parseFloat(item.amount).toLocaleString('id-ID')}` : '-'}
+                      </p>
+                    </div>
                   </div>
                   {items.length > 1 && (
                     <button
                       onClick={() => removeItem(item.id)}
-                      className="p-4 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-100 transition-all"
+                      className="p-4 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-100 transition-all shrink-0"
                     >
                       <Trash2 size={18} />
                     </button>
@@ -583,47 +605,38 @@ const AdminReceipts: React.FC = () => {
                     </p>
                   </div>
                   
-                  {/* Items Table */}
-                  <div className="bg-slate-50 rounded-[2.5rem] border border-slate-100 overflow-hidden">
-                    <div className="divide-y divide-slate-200/60">
-                      {generatedReceipt.items.map((item: any, idx: number) => (
-                        <div key={idx} className="grid grid-cols-12 gap-4 p-6">
-                          <div className="col-span-8 text-left">
-                            <p className="text-[12px] font-black text-slate-800 uppercase">{item.description}</p>
-                          </div>
-                          <div className="col-span-4 text-right">
-                            <p className="text-[12px] font-black text-slate-800">Rp {item.amount.toLocaleString('id-ID')}</p>
-                          </div>
+{/* Items Table - struk style */}
+                  <div className="divide-y divide-slate-100">
+                    {generatedReceipt.items.map((item: any, idx: number) => (
+                      <div key={idx} className="py-2">
+                        <div className="flex justify-between items-center">
+                          <p className="text-[11px] font-bold text-slate-700 uppercase">{item.description}</p>
+                          <p className="text-[11px] font-bold text-slate-700 shrink-0 ml-4">Rp {item.amount.toLocaleString('id-ID')}</p>
                         </div>
-                      ))}
-                      
-                      {/* Total Row */}
-                      <div className={`grid grid-cols-12 gap-4 p-6 ${
-                        generatedReceipt.type === 'income' ? 'bg-blue-100' : 'bg-orange-100'
-                      }`}>
-                        <div className="col-span-8 text-left">
-                          <p className={`text-[13px] font-black uppercase tracking-wide ${
-                            generatedReceipt.type === 'income' ? 'text-blue-700' : 'text-orange-600'
-                          }`}>
-                            TOTAL
-                          </p>
-                        </div>
-                        <div className="col-span-4 text-right">
-                          <p className={`text-[14px] font-black ${
-                            generatedReceipt.type === 'income' ? 'text-blue-700' : 'text-orange-600'
-                          }`}>
-                            Rp {generatedReceipt.total.toLocaleString('id-ID')}
-                          </p>
-                        </div>
+                        {item.qty > 1 && (
+                          <p className="text-[9px] text-slate-400 mt-0.5">{item.qty} × Rp {item.price.toLocaleString('id-ID')}</p>
+                        )}
                       </div>
+                    ))}
+                  </div>
+
+                  {/* Total + Metode */}
+                  <div className={`border-t-2 pt-4 ${
+                    generatedReceipt.type === 'income' ? 'border-blue-200' : 'border-orange-200'
+                  }`}>
+                    <div className="flex justify-between items-center mb-3">
+                      <p className={`text-[13px] font-black uppercase tracking-wide ${
+                        generatedReceipt.type === 'income' ? 'text-blue-700' : 'text-orange-600'
+                      }`}>TOTAL</p>
+                      <p className={`text-[14px] font-black ${
+                        generatedReceipt.type === 'income' ? 'text-blue-700' : 'text-orange-600'
+                      }`}>Rp {generatedReceipt.total.toLocaleString('id-ID')}</p>
                     </div>
-                    
-                    {/* Payment Method */}
-                    <div className="px-6 py-4 border-t border-slate-200/60">
-                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Metode Pembayaran:</p>
-                      <p className="text-[11px] font-black uppercase text-left text-blue-600">
-                        {generatedReceipt.paymentMethod}
-                      </p>
+                    <div className="flex justify-between items-center">
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Metode Pembayaran:</p>
+                      <p className={`text-[11px] font-black uppercase ${
+                        generatedReceipt.type === 'income' ? 'text-blue-600' : 'text-orange-500'
+                      }`}>{generatedReceipt.paymentMethod}</p>
                     </div>
                   </div>
                 </div>
