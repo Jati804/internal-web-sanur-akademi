@@ -75,8 +75,8 @@ const updateItem = (id: string, field: 'description' | 'qty' | 'price', value: s
     return items.reduce((sum, item) => sum + (parseFloat(item.amount) || 0), 0);
   };
 
-  const isFormValid = () => {
-    const hasReceivedFrom = form.receivedFrom.trim().length > 0;const hasValidItems = items.some(item => item.description.trim() && parseFloat(item.price) > 0 && parseFloat(item.qty) > 0);
+const isFormValid = () => {
+    const hasReceivedFrom = form.receivedFrom.trim().length > 0;
     const hasValidItems = items.some(item => item.description.trim() && parseFloat(item.price) > 0 && parseFloat(item.qty) > 0);
     const total = calculateTotal();
     return hasReceivedFrom && hasValidItems && total > 0;
