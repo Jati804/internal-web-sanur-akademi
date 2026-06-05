@@ -610,14 +610,12 @@ const isFormValid = () => {
 {/* Items Table - struk style */}
                   <div className="divide-y divide-slate-100">
                     {generatedReceipt.items.map((item: any, idx: number) => (
-                      <div key={idx} className="py-2">
-                        <div className="flex justify-between items-center">
-                          <p className="text-[11px] font-bold text-slate-700 uppercase">{item.description}</p>
-                          <p className="text-[11px] font-bold text-slate-700 shrink-0 ml-4">Rp {item.amount.toLocaleString('id-ID')}</p>
-                        </div>
-                        {Number(item.qty) > 1 && (
-                          <p className="text-[9px] text-slate-400 mt-0.5">{item.qty} × Rp {Number(item.price).toLocaleString('id-ID')}</p>
-                        )}
+                      <div key={idx} className="py-2 grid grid-cols-12 gap-2 items-center">
+                        <p className="col-span-5 text-[11px] font-bold text-slate-700 uppercase">{item.description}</p>
+                        <p className="col-span-4 text-[10px] text-slate-400 text-center">
+                          {Number(item.qty) > 1 ? `${item.qty} × Rp ${Number(item.price).toLocaleString('id-ID')}` : ''}
+                        </p>
+                        <p className="col-span-3 text-[11px] font-bold text-slate-700 text-right">Rp {item.amount.toLocaleString('id-ID')}</p>
                       </div>
                     ))}
                   </div>
