@@ -200,20 +200,10 @@ const AdminReceipts: React.FC = () => {
         format: 'a4'
       });
 
-const pageWidth = 210;
-const pageHeight = 297;
-const imgWidth = pageWidth;
-const imgHeight = (canvas.height * imgWidth) / canvas.width;
-
-if (imgHeight <= pageHeight) {
-  // Konten muat di 1 halaman, langsung masuk
-  pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-} else {
-  // Konten terlalu panjang, scale down supaya pas di 1 halaman
-  const scaledWidth = (pageHeight * canvas.width) / canvas.height;
-  const xOffset = (pageWidth - scaledWidth) / 2;
-  pdf.addImage(imgData, 'PNG', xOffset, 0, scaledWidth, pageHeight);
-}
+      const imgWidth = 210;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
       const docType = generatedReceipt.type === 'income' ? 'KUITANSI' : 'BON';
       pdf.save(`${docType}_${generatedReceipt.id}_${generatedReceipt.receivedFrom.replace(/\s+/g, '_')}.pdf`);
       
@@ -551,16 +541,10 @@ if (imgHeight <= pageHeight) {
 
             {/* Rendered Receipt */}
 <div className="flex justify-center">
-  <div
-    style={{
-      width: '210mm',
-      minHeight: '297mm',
-      boxSizing: 'border-box',
-      position: 'relative',
-    }}
-    ref={slipRef}
-    className="bg-white p-12 md:p-20 overflow-hidden text-slate-900 border-8 border-double border-slate-100 shadow-2xl"
-  >
+              <div 
+                ref={slipRef}
+                className="bg-white p-12 md:p-20 space-y-10 w-full max-w-[700px] overflow-hidden text-slate-900 border-8 border-double border-slate-100 shadow-2xl"
+              >
                 {/* Header */}
                 <div className="flex justify-between items-start border-b-2 border-slate-900 pb-10">
                   <div className="min-w-0 text-left">
@@ -634,52 +618,50 @@ if (imgHeight <= pageHeight) {
                       </div>
                     </div>
                     
-{/* Payment Method + Status sejajar */}
-                    <div className="px-6 py-4 border-t border-slate-200/60 flex justify-between items-center">
-                      <div>
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Metode Pembayaran:</p>
-                        <p className={`text-[11px] font-black uppercase ${
-                          generatedReceipt.type === 'income' ? 'text-blue-600' : 'text-orange-500'
-                        }`}>
-                          {generatedReceipt.paymentMethod}
-                        </p>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Status:</p>
-                        <p className={`text-[11px] font-black uppercase ${
-                          generatedReceipt.type === 'income' ? 'text-blue-600' : 'text-orange-500'
-                        }`}>
-                          {generatedReceipt.type === 'income' ? '✓ LUNAS' : '✓ TERBAYAR'}
-                        </p>
-                      </div>
+                    {/* Payment Method */}
+                    <div className="px-6 py-4 border-t border-slate-200/60">
+                      <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Metode Pembayaran:</p>
+                      <p className="text-[11px] font-black uppercase text-left text-blue-600">
+                        {generatedReceipt.paymentMethod}
+                      </p>
                     </div>
                   </div>
                 </div>
 
-{/* Footer */}
-                <div
-                  style={{ position: 'absolute', bottom: '2rem', left: '5rem', right: '5rem' }}
-                  className="space-y-4"
-                >
-                  {/* Legal + Admin */}
-                  <div className="border-t border-slate-200 pt-5 flex justify-between items-start">
-                    <p className="text-[9px] font-bold text-slate-400 italic max-w-xs">
-                      "{generatedReceipt.type === 'income'
+                {/* Amount Section */}
+                <div className="pt-8 border-t-2 border-slate-900">
+                  <div className="flex justify-between items-start min-h-[32px]">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">VERIFIKASI SISTEM:</p>
+                    <div className="text-right flex flex-col items-end">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Terverifikasi Digital</p>
+                      <p className={`text-[9px] font-black uppercase tracking-widest mt-1 ${
+                        generatedReceipt.type === 'income' ? 'text-blue-600' : 'text-orange-500'
+                      }`}>
+                        Status: {generatedReceipt.type === 'income' ? 'LUNAS' : 'TERBAYAR'}
+                      </p>
+                    </div>
+                  </div>
+                  <p className={`text-5xl font-black leading-none text-left mt-4 ${
+                    generatedReceipt.type === 'income' ? 'text-blue-600' : 'text-orange-500'
+                  }`}>
+                    Rp {generatedReceipt.total.toLocaleString('id-ID')}
+                  </p>
+                </div>
+
+                {/* Footer */}
+                <div className="pt-10 border-t border-slate-100 flex justify-between items-end gap-10">
+                  <div className="max-w-xs text-left">
+                    <p className="text-[10px] font-bold text-slate-400 italic text-left">
+                      "{generatedReceipt.type === 'income' 
                         ? 'Kuitansi ini sah sebagai bukti pembayaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal.'
                         : 'Bon ini sah sebagai bukti pengeluaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal.'
                       }"
                     </p>
-                    <div className="flex flex-col items-center gap-1 shrink-0">
-                      <ShieldCheck size={18} className="text-slate-400" />
-                      <p className="text-[10px] font-black uppercase text-slate-700 leading-none">Admin Sanur</p>
-                      <p className="text-[7px] font-bold text-slate-400 uppercase tracking-wider">Official Receipt</p>
-                    </div>
                   </div>
-                  {/* Identitas Institusi */}
-                  <div className="border-t border-slate-100 pt-3 text-center">
-                    <p className="text-[7px] font-bold text-slate-400 uppercase tracking-widest">
-                      Jl. H. Iming No.107, Beji, Kota Depok, Jawa Barat 16421&nbsp;&nbsp;|&nbsp;&nbsp;+62 813-1548-8000&nbsp;&nbsp;|&nbsp;&nbsp;sanurakademi.com
-                    </p>
+                  <div className="text-center flex flex-col items-center shrink-0">
+                    <ShieldCheck size={44} className="text-slate-900 opacity-20 mb-2" />
+                    <p className="text-[13px] font-black uppercase text-slate-900 tracking-tight leading-none">Admin Sanur</p>
+                    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1.5">Official Receipt</p>
                   </div>
                 </div>
               </div>
