@@ -219,7 +219,7 @@ const studentOnlyLogs = (() => {
         </div>
         
         
-<div style={{ marginBottom: '30px', position: 'relative', zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+<div style={{ marginBottom: '30px', position: 'relative', zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
   <p style={{ fontSize: '13px', fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', textTransform: 'uppercase', letterSpacing: '0.3em', margin: 0 }}>
     📚 MATERI KURIKULUM
   </p>
