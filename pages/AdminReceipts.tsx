@@ -200,10 +200,26 @@ const AdminReceipts: React.FC = () => {
         format: 'a4'
       });
 
-      const imgWidth = 210;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+const imgWidth = 210;
+const imgHeight = (canvas.height * imgWidth) / canvas.width;
+const pageHeight = 297; // tinggi A4 dalam mm
+
+if (imgHeight <= pageHeight) {
+  pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
+} else {
+  // Kalau konten lebih panjang dari A4, tambahin halaman baru
+  let position = 0;
+  let remainingHeight = imgHeight;
+
+  while (remainingHeight > 0) {
+    pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+    remainingHeight -= pageHeight;
+    position -= pageHeight;
+    if (remainingHeight > 0) {
+      pdf.addPage();
+    }
+  }
+}
       const docType = generatedReceipt.type === 'income' ? 'KUITANSI' : 'BON';
       pdf.save(`${docType}_${generatedReceipt.id}_${generatedReceipt.receivedFrom.replace(/\s+/g, '_')}.pdf`);
       
@@ -541,10 +557,15 @@ const AdminReceipts: React.FC = () => {
 
             {/* Rendered Receipt */}
 <div className="flex justify-center">
-              <div 
-                ref={slipRef}
-                className="bg-white p-12 md:p-20 space-y-10 w-full max-w-[700px] overflow-hidden text-slate-900 border-8 border-double border-slate-100 shadow-2xl"
-              >
+  <div
+    style={{
+      width: '210mm',
+      minHeight: '297mm',
+      boxSizing: 'border-box',
+    }}
+    ref={slipRef}
+    className="bg-white p-12 md:p-20 space-y-10 overflow-hidden text-slate-900 border-8 border-double border-slate-100 shadow-2xl"
+  >
                 {/* Header */}
                 <div className="flex justify-between items-start border-b-2 border-slate-900 pb-10">
                   <div className="min-w-0 text-left">
