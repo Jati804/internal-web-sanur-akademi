@@ -232,17 +232,10 @@ setFieldErrors({ username: false, pin: false });
                  </div>
               </div>
            </div>
-           <>
-  
-    href="https://wa.me/6281293047069?text=Halo%20Admin%20SANUR%2C%20saya%20mau%20menanyakan%20status%20sistem%20yang%20sedang%20maintenance.%20Kapan%20kira-kira%20bisa%20diakses%20kembali%3F%20%F0%9F%99%8F"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
-  >
-    💬 Hubungi Admin via WhatsApp
-  </a>
-  <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.8em]">SANUR Akademi Inspirasi</p>
-</>
+           <a href="https://wa.me/6281293047069?text=Halo%20Admin%20SANUR%2C%20saya%20mau%20menanyakan%20status%20sistem%20yang%20sedang%20maintenance.%20Kapan%20kira-kira%20bisa%20diakses%20kembali%3F%20%F0%9F%99%8F" target="_blank" rel="noopener noreferrer" className="flex items-center justify-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
+              💬 Hubungi Admin via WhatsApp
+           </a>
+           <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.8em]">SANUR Akademi Inspirasi</p>
         </div>
       </div>
     );
