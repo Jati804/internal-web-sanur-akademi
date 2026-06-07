@@ -280,19 +280,16 @@ setFieldErrors({ username: false, pin: false });
               <div className="fade-up-d1"><RoleCard icon={UserCog} title="Pengurus" color="blue" desc="Admin, Keuangan, Pengelolaan" onClick={() => handleSelectRole('ADMIN')} /></div>
               <div className="fade-up-d2"><RoleCard icon={GraduationCap} title="Pengajar" color="orange" desc="Log Sesi Guru, Honor, Rapot" onClick={() => handleSelectRole('TEACHER')} /></div>
               <div className="fade-up-d3"><RoleCard icon={Users} title="Siswa" color="emerald" desc="Pembayaran, Progres, Sertifikat" onClick={() => handleSelectRole('STUDENT')} /></div>
-              <div className="fade-up-d4 md:col-span-3 bg-white p-6 rounded-[2.5rem] border border-slate-100 flex items-center gap-6 text-slate-600 shadow-xl shadow-slate-200/50">
-                 <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center shrink-0"><Info size={24}/></div>
-                 <div className="flex-1">
-  <p className="text-[11px] font-bold tracking-wide leading-relaxed">
-    Halo! Selamat datang di Portal Internal SANUR Akademi Inspirasi. Silakan pilih peran di atas untuk melanjutkan ke halaman login.
-  </p>
-  <div className="flex items-center gap-3 mt-3">
-    <p className="text-[10px] font-bold text-slate-400 tracking-wide">Ada masalah atau pertanyaan?</p>
-    <a href="https://wa.me/6281293047069?text=Halo%20Admin%20SANUR%2C%20saya%20ingin%20bertanya%20mengenai%20akses%20login%20portal%20internal.%20Mohon%20bantuannya." target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full text-[9px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
-      💬 Hubungi Admin
-    </a>
-  </div>
-</div>
+              <div className="fade-up-d4 md:col-span-3 flex items-center justify-between px-4 py-2 text-slate-500">
+                 <p className="text-[11px] font-bold tracking-wide leading-relaxed">
+                   Halo! Selamat datang di Portal Internal SANUR Akademi Inspirasi. Silakan pilih peran di atas untuk melanjutkan.
+                 </p>
+                 <div className="flex items-center gap-3 shrink-0 ml-6">
+                   <p className="text-[10px] font-bold text-slate-400 tracking-wide whitespace-nowrap">Ada masalah?</p>
+                   <a href="https://wa.me/6281293047069?text=Halo%20Admin%20SANUR%2C%20saya%20ingin%20bertanya%20mengenai%20akses%20login%20portal%20internal.%20Mohon%20bantuannya." target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full text-[9px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95 whitespace-nowrap">
+                     💬 Hubungi Admin
+                   </a>
+                 </div>
               </div>
             </div>
           ) : (
