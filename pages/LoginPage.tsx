@@ -253,16 +253,16 @@ setFieldErrors({ username: false, pin: false });
 
       <div className="w-full max-w-6xl flex flex-col items-center gap-6 relative z-10 animate-in fade-in duration-700">
         <div className="text-center space-y-6">
-           <div className="fade-up inline-flex items-center gap-4">
+           <div className="fade-up inline-flex items-center gap-4 px-8 py-4 bg-white border border-slate-100 rounded-3xl shadow-xl">
               <img
                 src="https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png"
                 alt="SANUR Logo"
-                className="h-20 w-auto object-contain drop-shadow-md"
+                className="h-14 w-auto object-contain"
               />
-              <div className="text-left border-l-2 border-slate-300 pl-4">
-                 <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">SANUR</h1>
-                 <p className="text-sm font-black text-blue-600 uppercase tracking-wide leading-tight">Akademi Inspirasi</p>
-                 <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mt-1">Internal Management System</p>
+              <div className="text-left border-l-2 border-slate-100 pl-4">
+                 <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">SANUR</h1>
+                 <p className="text-xs font-black text-blue-600 uppercase tracking-wide leading-tight">Akademi Inspirasi</p>
+                 <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Internal Management System</p>
               </div>
            </div>
 
@@ -362,12 +362,12 @@ const RoleCard = ({ icon: Icon, title, desc, color, onClick }: any) => {
   return (
     <button
       onClick={onClick}
-      className={`group w-full p-8 bg-white rounded-[4rem] border-2 shadow-xl transition-all flex flex-col items-center text-center hover:scale-105 active:scale-95 border-slate-100 ${theme.border} hover:shadow-2xl ${theme.hoverShadow} min-h-[260px]`}
+      className={`group w-full p-10 bg-white rounded-[4rem] border-2 shadow-xl transition-all flex flex-col items-center text-center hover:scale-105 active:scale-95 border-slate-100 ${theme.border} hover:shadow-2xl ${theme.hoverShadow} min-h-[280px]`}
     >
-      <div className={`w-16 h-16 ${theme.bg} ${theme.text} rounded-[1.5rem] flex items-center justify-center mb-5 shadow-inner group-hover:rotate-6 group-hover:scale-110 transition-all duration-300`}>
-        <Icon size={32} />
+      <div className={`w-20 h-20 ${theme.bg} ${theme.text} rounded-[2rem] flex items-center justify-center mb-6 shadow-inner group-hover:rotate-6 group-hover:scale-110 transition-all duration-300`}>
+        <Icon size={40} />
       </div>
-      <h3 className="text-lg font-black uppercase italic tracking-tighter text-slate-800 mb-2">{title}</h3>
+      <h3 className="text-xl font-black uppercase italic tracking-tighter text-slate-800 mb-2">{title}</h3>
       <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{desc}</p>
     </button>
   );
