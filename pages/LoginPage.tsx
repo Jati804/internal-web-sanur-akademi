@@ -251,7 +251,7 @@ setFieldErrors({ username: false, pin: false });
       <div className="blob-2 absolute bottom-0 left-0 w-[600px] h-[600px] bg-orange-100 rounded-full blur-[120px] -ml-48 -mb-48 opacity-40 pointer-events-none"></div>
       <div className="blob-3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] bg-emerald-100 rounded-full blur-[140px] opacity-20 pointer-events-none"></div>
 
-      <div className="w-full max-w-6xl flex flex-col items-center gap-12 relative z-10 animate-in fade-in duration-700">
+      <div className="w-full max-w-6xl flex flex-col items-center gap-6 relative z-10 animate-in fade-in duration-700">
         <div className="text-center space-y-6">
            <div className="fade-up inline-flex items-center gap-4 px-8 py-4 bg-white border border-slate-100 rounded-3xl shadow-xl">
               <img
@@ -280,16 +280,18 @@ setFieldErrors({ username: false, pin: false });
               <div className="fade-up-d1"><RoleCard icon={UserCog} title="Pengurus" color="blue" desc="Admin, Keuangan, Pengelolaan" onClick={() => handleSelectRole('ADMIN')} /></div>
               <div className="fade-up-d2"><RoleCard icon={GraduationCap} title="Pengajar" color="orange" desc="Log Sesi Guru, Honor, Rapot" onClick={() => handleSelectRole('TEACHER')} /></div>
               <div className="fade-up-d3"><RoleCard icon={Users} title="Siswa" color="emerald" desc="Pembayaran, Progres, Sertifikat" onClick={() => handleSelectRole('STUDENT')} /></div>
-              <div className="fade-up-d4 md:col-span-3 bg-white p-8 rounded-[2.5rem] border border-slate-100 flex items-center gap-6 text-slate-600 shadow-xl shadow-slate-200/50">
+              <div className="fade-up-d4 md:col-span-3 bg-white p-6 rounded-[2.5rem] border border-slate-100 flex items-center gap-6 text-slate-600 shadow-xl shadow-slate-200/50">
                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center shrink-0"><Info size={24}/></div>
                  <div className="flex-1">
-  <p className="text-[11px] font-bold uppercase tracking-wide leading-relaxed">
+  <p className="text-[11px] font-bold tracking-wide leading-relaxed">
     Halo! Selamat datang di Portal Internal SANUR Akademi Inspirasi. Silakan pilih peran di atas untuk melanjutkan ke halaman login.
   </p>
-  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-2">
-    Ada masalah atau pertanyaan?{' '}
-    <a href="https://wa.me/6281293047069?text=Halo%20Admin%20SANUR%2C%20saya%20ingin%20bertanya%20mengenai%20akses%20login%20portal%20internal.%20Mohon%20bantuannya." target="_blank" rel="noopener noreferrer" className="text-emerald-600 hover:text-emerald-700 underline underline-offset-2">Hubungi Admin via WhatsApp</a>
-  </p>
+  <div className="flex items-center gap-3 mt-3">
+    <p className="text-[10px] font-bold text-slate-400 tracking-wide">Ada masalah atau pertanyaan?</p>
+    <a href="https://wa.me/6281293047069?text=Halo%20Admin%20SANUR%2C%20saya%20ingin%20bertanya%20mengenai%20akses%20login%20portal%20internal.%20Mohon%20bantuannya." target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full text-[9px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
+      💬 Hubungi Admin
+    </a>
+  </div>
 </div>
               </div>
             </div>
@@ -363,7 +365,7 @@ const RoleCard = ({ icon: Icon, title, desc, color, onClick }: any) => {
   return (
     <button
       onClick={onClick}
-      className={`group w-full p-10 bg-white rounded-[4rem] border-2 shadow-xl transition-all flex flex-col items-center text-center hover:scale-105 active:scale-95 border-slate-100 ${theme.border} hover:shadow-2xl ${theme.hoverShadow}`}
+      className={`group w-full p-10 bg-white rounded-[4rem] border-2 shadow-xl transition-all flex flex-col items-center text-center hover:scale-105 active:scale-95 border-slate-100 ${theme.border} hover:shadow-2xl ${theme.hoverShadow} min-h-[280px]`}
     >
       <div className={`w-20 h-20 ${theme.bg} ${theme.text} rounded-[2rem] flex items-center justify-center mb-6 shadow-inner group-hover:rotate-6 group-hover:scale-110 transition-all duration-300`}>
         <Icon size={40} />
