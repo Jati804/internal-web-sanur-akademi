@@ -110,25 +110,28 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
   const [showPin, setShowPin] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [fieldErrors, setFieldErrors] = useState({ username: false, pin: false });
   const [systemMaintenance, setSystemMaintenance] = useState(false);
 
-  useEffect(() => {
-    const checkMaintenance = async () => {
-      try {
-        const { data } = await supabase.from('settings').select('*').eq('key', 'system_status').single();
-        if (data?.value?.maintenance) {
-          setSystemMaintenance(true);
-          setView('MAINTENANCE');
-        } else {
-          setSystemMaintenance(false);
-          setView('SELECTION');
-        }
-      } catch (e) {
-        console.warn("Maintenance check bypassed.");
+useEffect(() => {
+  const checkMaintenance = async () => {
+    try {
+      const { data } = await supabase.from('settings').select('*').eq('key', 'system_status').single();
+      if (data?.value?.maintenance) {
+        setSystemMaintenance(true);
+        setView('MAINTENANCE');
+      } else {
+        setSystemMaintenance(false);
+        setView('SELECTION');
       }
-    };
-    checkMaintenance();
-  }, []);
+    } catch (e) {
+      console.warn("Maintenance check bypassed.");
+    }
+  };
+  checkMaintenance();
+  const interval = setInterval(checkMaintenance, 30000); // cek tiap 30 detik
+  return () => clearInterval(interval);
+}, []);
 
   const handleSelectRole = (selectedRole: Role) => {
     setRole(selectedRole);
@@ -141,10 +144,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!username.trim() || !pin.trim()) {
-      setError(`Username & PIN wajib diisi.`);
-      return;
-    }
+    const usernameEmpty = !username.trim();
+const pinEmpty = !pin.trim();
+if (usernameEmpty || pinEmpty) {
+  setFieldErrors({ username: usernameEmpty, pin: pinEmpty });
+  setError('Username & PIN wajib diisi.');
+  return;
+}
+setFieldErrors({ username: false, pin: false });
     setLoading(true);
     setError('');
     setTimeout(() => {
@@ -225,7 +232,14 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
                  </div>
               </div>
            </div>
-           <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.8em]">SANUR Akademi Inspirasi</p>
+           href="https://wa.me/6281293047069?text=Halo%20Admin%20SANUR%2C%20saya%20mau%20menanyakan%20status%20sistem%20yang%20sedang%20maintenance.%20Kapan%20kira-kira%20bisa%20diakses%20kembali%3F%20%F0%9F%99%8F"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="flex items-center gap-2 px-5 py-3 bg-emerald-600 hover:bg-emerald-500 text-white rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95"
+>
+  💬 Hubungi Admin via WhatsApp
+</a>
+<p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.8em]">SANUR Akademi Inspirasi</p>
         </div>
       </div>
     );
@@ -272,9 +286,22 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
               <div className="fade-up-d3"><RoleCard icon={Users} title="Siswa" color="emerald" desc="Pembayaran, Progres, Sertifikat" onClick={() => handleSelectRole('STUDENT')} /></div>
               <div className="fade-up-d4 md:col-span-3 bg-white p-8 rounded-[2.5rem] border border-slate-100 flex items-center gap-6 text-slate-600 shadow-xl shadow-slate-200/50">
                  <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-full flex items-center justify-center shrink-0"><Info size={24}/></div>
-                 <p className="text-[11px] font-bold uppercase tracking-wide leading-relaxed">
-                   Halo! Selamat datang di Portal Internal SANUR Akademi Inspirasi. Silakan pilih peran di atas untuk melanjutkan ke halaman login.
-                 </p>
+                 <div className="flex-1">
+  <p className="text-[11px] font-bold uppercase tracking-wide leading-relaxed">
+    Halo! Selamat datang di Portal Internal SANUR Akademi Inspirasi. Silakan pilih peran di atas untuk melanjutkan ke halaman login.
+  </p>
+  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wide mt-2">
+    Ada masalah atau pertanyaan?{' '}
+    
+      href="https://wa.me/6281293047069?text=Halo%20Admin%20SANUR%2C%20saya%20ingin%20bertanya%20mengenai%20akses%20login%20portal%20internal.%20Mohon%20bantuannya%20%F0%9F%99%8F"
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-emerald-600 hover:text-emerald-700 underline underline-offset-2"
+    >
+      Hubungi Admin via WhatsApp
+    </a>
+  </p>
+</div>
               </div>
             </div>
           ) : (
@@ -304,35 +331,35 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
                           <label className="text-[10px] font-black text-slate-500 uppercase ml-4 tracking-widest">Username Akun</label>
                           <div className="relative group">
                              <div className={`absolute left-6 top-1/2 -translate-y-1/2 ${currentTheme.text} opacity-30 group-focus-within:opacity-100 transition-opacity`}><Mail size={24}/></div>
-                             <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder="ISI USERNAME" className={`w-full pl-16 pr-8 py-6 bg-slate-50 border-2 border-transparent rounded-[2rem] outline-none font-black text-xs uppercase transition-all focus:bg-white focus:${currentTheme.border} focus:scale-[1.01]`} />
+                             <input type="text" value={username} onChange={(e) => { setUsername(e.target.value); setFieldErrors(f => ({ ...f, username: false })); }} placeholder="ISI USERNAME" className={`w-full pl-16 pr-8 py-6 bg-slate-50 border-2 rounded-[2rem] outline-none font-black text-xs uppercase transition-all focus:bg-white focus:scale-[1.01] ${fieldErrors.username ? 'border-rose-400 bg-rose-50' : `border-transparent focus:${currentTheme.border}`}`} />
                           </div>
                        </div>
                        <div className="space-y-2">
                           <label className="text-[10px] font-black text-slate-500 uppercase ml-4 tracking-widest">DIGIT PIN</label>
                           <div className="relative group">
                              <div className={`absolute left-6 top-1/2 -translate-y-1/2 ${currentTheme.text} opacity-30 group-focus-within:opacity-100 transition-opacity`}><Lock size={24}/></div>
-                             <input type={showPin ? "text" : "password"} maxLength={6} value={pin} onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))} placeholder="******" className={`w-full pl-16 pr-16 py-6 bg-slate-50 border-2 border-transparent rounded-[2rem] outline-none font-black text-2xl tracking-[0.5em] text-center transition-all focus:bg-white focus:${currentTheme.border} focus:scale-[1.01]`} />
+                             <input type={showPin ? "text" : "password"} maxLength={6} value={pin} onChange={(e) => { setPin(e.target.value.replace(/\D/g, '')); setFieldErrors(f => ({ ...f, pin: false })); }} placeholder="******" className={`w-full pl-16 pr-16 py-6 bg-slate-50 border-2 rounded-[2rem] outline-none font-black text-2xl tracking-[0.5em] text-center transition-all focus:bg-white focus:scale-[1.01] ${fieldErrors.pin ? 'border-rose-400 bg-rose-50' : `border-transparent focus:${currentTheme.border}`}`} />
                              <button type="button" onClick={() => setShowPin(!showPin)} className={`absolute right-6 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-white/50 hover:bg-white transition-all ${currentTheme.text}`}>{showPin ? <EyeOff size={22} /> : <Eye size={22} />}</button>
                           </div>
                        </div>
                     </div>
                     {error && (
-                      <div className="p-6 bg-rose-50 border border-rose-100 rounded-3xl flex items-center gap-4 text-rose-600 animate-bounce">
+                      <div className="p-6 bg-rose-50 border border-rose-100 rounded-3xl flex items-center gap-4 text-rose-600 animate-in fade-in slide-in-from-top-2 duration-300">
                          <ShieldAlert size={24} className="shrink-0" />
                          <p className="text-[10px] font-black uppercase tracking-widest">{error}</p>
                       </div>
                     )}
                     <button type="submit" disabled={loading || isSyncing} className={`w-full py-7 ${currentTheme.bg} text-white rounded-[2.5rem] font-black text-xs uppercase tracking-[0.3em] shadow-2xl transition-all hover:brightness-110 hover:shadow-xl active:scale-95 flex items-center justify-center gap-4 disabled:opacity-50`}>
-                      {loading ? <Loader2 size={24} className="animate-spin" /> : <UserCheck size={24} />}
-                      {loading ? 'VERIFIKASI...' : 'MASUK SEKARANG'}
-                    </button>
+  {loading || isSyncing ? <Loader2 size={24} className="animate-spin" /> : <UserCheck size={24} />}
+  {loading ? 'VERIFIKASI...' : isSyncing ? 'MENGHUBUNGKAN...' : 'MASUK SEKARANG'}
+</button>
                  </form>
               </div>
             </div>
           )}
         </div>
       </div>
-      <footer className="mt-20 text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">Sanur Akademi Inspirasi &copy; 2026</footer>
+      <footer className="mt-20 text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">Sanur Akademi Inspirasi &copy; {new Date().getFullYear()}</footer>
     </div>
   );
 };
