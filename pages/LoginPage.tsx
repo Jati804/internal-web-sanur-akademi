@@ -257,12 +257,12 @@ setFieldErrors({ username: false, pin: false });
               <img
                 src="https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png"
                 alt="SANUR Logo"
-                className="h-14 w-auto object-contain drop-shadow-md"
+                className="h-20 w-auto object-contain drop-shadow-md"
               />
               <div className="text-left border-l-2 border-slate-300 pl-4">
-                 <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">SANUR</h1>
-                 <p className="text-xs font-black text-blue-600 uppercase tracking-wide leading-tight">Akademi Inspirasi</p>
-                 <p className="text-[8px] font-black text-slate-600 uppercase tracking-widest mt-1">Internal Management System</p>
+                 <h1 className="text-2xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">SANUR</h1>
+                 <p className="text-sm font-black text-blue-600 uppercase tracking-wide leading-tight">Akademi Inspirasi</p>
+                 <p className="text-[10px] font-black text-slate-600 uppercase tracking-widest mt-1">Internal Management System</p>
               </div>
            </div>
 
