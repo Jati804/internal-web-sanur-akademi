@@ -354,9 +354,9 @@ setFieldErrors({ username: false, pin: false });
 
 const RoleCard = ({ icon: Icon, title, desc, color, onClick }: any) => {
   const themes: any = {
-    blue:    { border: 'hover:border-blue-500',    hoverShadow: 'hover:shadow-blue-100/80',    text: 'text-blue-600',    bg: 'bg-blue-50'    },
-    orange:  { border: 'hover:border-orange-500',  hoverShadow: 'hover:shadow-orange-100/80',  text: 'text-orange-600',  bg: 'bg-orange-50'  },
-    emerald: { border: 'hover:border-emerald-500', hoverShadow: 'hover:shadow-emerald-100/80', text: 'text-emerald-600', bg: 'bg-emerald-50' }
+    blue:    { border: 'hover:border-blue-500',    hoverShadow: 'hover:shadow-blue-200/80',    text: 'text-white',    bg: 'bg-blue-500'    },
+    orange:  { border: 'hover:border-orange-500',  hoverShadow: 'hover:shadow-orange-200/80',  text: 'text-white',    bg: 'bg-orange-500'  },
+    emerald: { border: 'hover:border-emerald-500', hoverShadow: 'hover:shadow-emerald-200/80', text: 'text-white',    bg: 'bg-emerald-500' }
   };
   const theme = themes[color];
   return (
