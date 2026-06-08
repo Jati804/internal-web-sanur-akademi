@@ -260,9 +260,8 @@ setFieldErrors({ username: false, pin: false });
                 className="h-14 w-auto object-contain"
               />
               <div className="text-left border-l-2 border-slate-100 pl-4">
-                 <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">SANUR</h1>
-                 <p className="text-xs font-black text-blue-600 uppercase tracking-wide leading-tight">Akademi Inspirasi</p>
-                 <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-1">Internal Management System</p>
+                 <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">INTERNAL</h1>
+                 <p className="text-xs font-black text-blue-600 uppercase tracking-wide leading-tight">Management System</p>
               </div>
            </div>
 
