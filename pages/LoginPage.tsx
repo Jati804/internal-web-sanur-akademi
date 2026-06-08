@@ -346,7 +346,17 @@ setFieldErrors({ username: false, pin: false });
           )}
         </div>
       </div>
-      <footer className="mt-20 text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">Sanur Akademi Inspirasi &copy; {new Date().getFullYear()}</footer>
+      <footer className="mt-20">
+        <a
+          href="https://sanurakademi.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group inline-flex items-center gap-2 text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] hover:text-slate-500 transition-colors duration-300"
+        >
+          Sanur Akademi Inspirasi
+          <ChevronRight size={12} className="opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-300" />
+        </a>
+      </footer>
     </div>
   );
 };
