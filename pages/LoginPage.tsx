@@ -351,10 +351,11 @@ setFieldErrors({ username: false, pin: false });
           href="https://sanurakademi.com"
           target="_blank"
           rel="noopener noreferrer"
-          className="group inline-flex items-center gap-2 text-[10px] font-black text-slate-300 uppercase tracking-[0.4em] hover:text-slate-500 transition-colors duration-300"
+          className="group inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-full shadow-sm hover:shadow-md hover:border-slate-300 hover:scale-105 active:scale-95 transition-all duration-300"
         >
-          Sanur Akademi Inspirasi
-          <ChevronRight size={12} className="opacity-0 group-hover:opacity-100 -translate-x-1 group-hover:translate-x-0 transition-all duration-300" />
+          <span className="text-slate-400 group-hover:text-blue-500 transition-colors duration-300">🌐</span>
+          <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] group-hover:text-slate-600 transition-colors duration-300">SANUR Akademi Inspirasi</span>
+          <ChevronRight size={11} className="text-slate-300 group-hover:text-blue-400 -translate-x-0.5 group-hover:translate-x-0.5 transition-all duration-300" />
         </a>
       </footer>
     </div>
