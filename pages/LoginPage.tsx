@@ -243,80 +243,54 @@ setFieldErrors({ username: false, pin: false });
 
   // ── SELECTION + LOGIN ──────────────────────────────────────────────────
   return (
-    <div className="min-h-screen flex flex-col relative overflow-hidden font-sans" style={{ background: 'linear-gradient(135deg, #eef4ff 0%, #f0f7ff 40%, #e8f0fe 100%)' }}>
+    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
       <BlobStyles />
 
-      {/* Background blobs */}
-      <div className="blob-1 absolute top-[-120px] right-[-120px] w-[500px] h-[500px] bg-blue-200 rounded-full blur-[100px] opacity-30 pointer-events-none"></div>
-      <div className="blob-2 absolute bottom-[-80px] left-[-80px] w-[400px] h-[400px] bg-blue-100 rounded-full blur-[100px] opacity-40 pointer-events-none"></div>
-      <div className="blob-3 absolute top-1/2 right-1/4 w-[300px] h-[300px] bg-indigo-100 rounded-full blur-[80px] opacity-20 pointer-events-none"></div>
+      {/* 3 animated blobs */}
+      <div className="blob-1 absolute top-0 right-0 w-[600px] h-[600px] bg-blue-100 rounded-full blur-[120px] -mr-48 -mt-48 opacity-40 pointer-events-none"></div>
+      <div className="blob-2 absolute bottom-0 left-0 w-[600px] h-[600px] bg-orange-100 rounded-full blur-[120px] -ml-48 -mb-48 opacity-40 pointer-events-none"></div>
+      <div className="blob-3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] bg-emerald-100 rounded-full blur-[140px] opacity-20 pointer-events-none"></div>
 
-      {/* ── NAVBAR ── */}
-      <nav className="relative z-20 w-full px-8 py-4 flex items-center justify-between bg-white/70 backdrop-blur-md border-b border-blue-50 shadow-sm">
-        <div className="flex items-center gap-3">
-          <img
-            src="https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png"
-            alt="SANUR Logo"
-            className="h-12 w-auto object-contain"
-          />
-          <div className="border-l-2 border-slate-200 pl-3">
-            <p className="text-base font-black text-slate-800 leading-none tracking-tight">SANUR</p>
-            <p className="text-[11px] font-semibold text-slate-500 tracking-wide">INTERNAL SYSTEM</p>
-          </div>
+      <div className="w-full max-w-6xl flex flex-col items-center gap-6 relative z-10 animate-in fade-in duration-700">
+        <div className="text-center space-y-6">
+           <div className="fade-up inline-flex items-center gap-4 px-8 py-4 bg-white border border-slate-100 rounded-3xl shadow-xl">
+              <img
+                src="https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png"
+                alt="SANUR Logo"
+                className="h-14 w-auto object-contain"
+              />
+              <div className="text-left border-l-2 border-slate-100 pl-4">
+                 <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">INTERNAL</h1>
+                 <p className="text-xs font-black text-blue-600 uppercase tracking-wide leading-tight">Management System</p>
+              </div>
+           </div>
+
+           <div className="fade-up-d1 flex items-center gap-4 justify-center">
+              <div className={`flex items-center gap-2 px-4 py-2 rounded-full border text-[9px] font-black uppercase tracking-widest transition-all ${connectionError ? 'bg-rose-50 text-rose-600 border-rose-200' : isSyncing ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'}`}>
+                 {isSyncing ? <Loader2 size={14} className="animate-spin" /> : connectionError ? <WifiOff size={14} /> : <CheckCircle2 size={14} />}
+                 {isSyncing ? "Connecting..." : connectionError ? "Cloud Offline" : "Database Terkoneksi"}
+              </div>
+           </div>
         </div>
-        <div className="flex items-center gap-3">
-          {/* Connection status badge */}
-          <div className={`hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold transition-all ${connectionError ? 'bg-rose-50 text-rose-600 border-rose-200' : isSyncing ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'}`}>
-            {isSyncing ? <Loader2 size={12} className="animate-spin" /> : connectionError ? <WifiOff size={12} /> : <CheckCircle2 size={12} />}
-            {isSyncing ? "Connecting..." : connectionError ? "Cloud Offline" : "Terkoneksi"}
-          </div>
-          <span className="text-sm text-slate-500 hidden md:inline">Butuh bantuan?</span>
-          <a
-            href="https://wa.me/6281293047069?text=Halo%20Admin%20SANUR%2C%20saya%20ingin%20bertanya%20mengenai%20akses%20login%20portal%20internal.%20Mohon%20bantuannya."
-            target="_blank" rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 px-5 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-full text-xs font-bold transition-all hover:scale-105 active:scale-95 shadow-md shadow-blue-200"
-          >
-            💬 HUBUNGI ADMIN
-          </a>
-        </div>
-      </nav>
 
-      {/* ── MAIN CONTENT ── */}
-      <div className="flex-1 flex flex-col items-center justify-center px-6 py-12 relative z-10">
-        <div className="w-full max-w-5xl flex flex-col items-center gap-10">
-
+        <div className="w-full max-w-4xl">
           {view === 'SELECTION' ? (
-            <>
-              {/* Hero text */}
-              <div className="fade-up text-center space-y-3">
-                <p className="text-slate-500 text-lg font-medium">Halo! Selamat datang di</p>
-                <h1 className="text-4xl md:text-5xl font-black text-slate-800 leading-tight">
-                  <span className="text-blue-600">SANUR</span> Internal System
-                </h1>
-                <p className="text-slate-500 text-sm mt-2">Silakan pilih peran Anda untuk melanjutkan ke sistem.</p>
+            <div className="flex flex-col items-center gap-6">
+              <p className="fade-up-d1 text-[11px] font-bold text-slate-500 tracking-wide leading-relaxed text-center">
+                Halo! Selamat datang di Portal Internal SANUR Akademi Inspirasi. Silakan pilih peran di bawah untuk melanjutkan.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
+                <div className="fade-up-d2"><RoleCard icon={UserCog} title="Pengurus" color="blue" desc="Admin, Keuangan, Pengelolaan" onClick={() => handleSelectRole('ADMIN')} /></div>
+                <div className="fade-up-d3"><RoleCard icon={GraduationCap} title="Pengajar" color="orange" desc="Log Sesi Guru, Honor, Rapot" onClick={() => handleSelectRole('TEACHER')} /></div>
+                <div className="fade-up-d4"><RoleCard icon={Users} title="Siswa" color="emerald" desc="Pembayaran, Progres, Sertifikat" onClick={() => handleSelectRole('STUDENT')} /></div>
               </div>
-
-              {/* Role cards */}
-              <div className="fade-up-d1 grid grid-cols-1 md:grid-cols-3 gap-6 w-full">
-                <RoleCard icon={UserCog} title="Pengurus" color="blue" desc="Admin, Keuangan, Pengelolaan" onClick={() => handleSelectRole('ADMIN')} />
-                <RoleCard icon={GraduationCap} title="Pengajar" color="orange" desc="Log Sesi Guru, Honor, Rapot" onClick={() => handleSelectRole('TEACHER')} />
-                <RoleCard icon={Users} title="Siswa" color="emerald" desc="Pembayaran, Progres, Sertifikat" onClick={() => handleSelectRole('STUDENT')} />
-              </div>
-
-              {/* Bottom help bar */}
-              <div className="fade-up-d2 flex items-center gap-3 px-8 py-4 bg-white/80 backdrop-blur rounded-2xl border border-slate-100 shadow-sm">
-                <span className="text-slate-400">🎧</span>
-                <span className="text-sm text-slate-500">Ada masalah atau pertanyaan?</span>
-                <span className="text-slate-300">|</span>
-                <a
-                  href="https://wa.me/6281293047069?text=Halo%20Admin%20SANUR%2C%20saya%20ingin%20bertanya%20mengenai%20akses%20login%20portal%20internal.%20Mohon%20bantuannya."
-                  target="_blank" rel="noopener noreferrer"
-                  className="text-sm font-bold text-blue-600 hover:text-blue-700 hover:underline transition-all"
-                >
-                  HUBUNGI ADMIN
+              <div className="fade-up-d4 flex items-center gap-3">
+                <p className="text-[10px] font-bold text-slate-400 tracking-wide">Ada masalah atau pertanyaan?</p>
+                <a href="https://wa.me/6281293047069?text=Halo%20Admin%20SANUR%2C%20saya%20ingin%20bertanya%20mengenai%20akses%20login%20portal%20internal.%20Mohon%20bantuannya." target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full text-[9px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
+                  💬 Hubungi Admin
                 </a>
               </div>
-            </>
+            </div>
           ) : (
             <div className="fade-up bg-white rounded-[4rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col md:flex-row">
               <div className={`md:w-72 p-12 ${currentTheme.bg} text-white flex flex-col justify-between items-center text-center`}>
@@ -372,49 +346,28 @@ setFieldErrors({ username: false, pin: false });
           )}
         </div>
       </div>
-
-      <footer className="relative z-10 text-center py-5 text-[10px] font-semibold text-slate-400 uppercase tracking-widest">
-        Sanur Akademi Inspirasi &copy; {new Date().getFullYear()}
-      </footer>
+      <footer className="mt-20 text-[10px] font-black text-slate-300 uppercase tracking-[0.4em]">Sanur Akademi Inspirasi &copy; {new Date().getFullYear()}</footer>
     </div>
   );
 };
 
 const RoleCard = ({ icon: Icon, title, desc, color, onClick }: any) => {
   const themes: any = {
-    blue:    { accent: '#2563eb', iconBg: '#eff6ff', iconText: 'text-blue-600',    bar: 'bg-blue-600',    shadow: 'hover:shadow-blue-100'    },
-    orange:  { accent: '#ea580c', iconBg: '#fff7ed', iconText: 'text-orange-500',  bar: 'bg-orange-500',  shadow: 'hover:shadow-orange-100'  },
-    emerald: { accent: '#16a34a', iconBg: '#f0fdf4', iconText: 'text-emerald-600', bar: 'bg-emerald-600', shadow: 'hover:shadow-emerald-100' }
+    blue:    { border: 'hover:border-blue-500',    hoverShadow: 'hover:shadow-blue-100/80',    text: 'text-blue-600',    bg: 'bg-blue-50'    },
+    orange:  { border: 'hover:border-orange-500',  hoverShadow: 'hover:shadow-orange-100/80',  text: 'text-orange-600',  bg: 'bg-orange-50'  },
+    emerald: { border: 'hover:border-emerald-500', hoverShadow: 'hover:shadow-emerald-100/80', text: 'text-emerald-600', bg: 'bg-emerald-50' }
   };
   const theme = themes[color];
   return (
     <button
       onClick={onClick}
-      className={`group w-full bg-white rounded-3xl shadow-lg border border-slate-100 transition-all duration-300 flex flex-col items-center text-center hover:scale-[1.03] active:scale-95 hover:shadow-2xl ${theme.shadow} overflow-hidden`}
+      className={`group w-full p-10 bg-white rounded-[4rem] border-2 shadow-xl transition-all flex flex-col items-center text-center hover:scale-105 active:scale-95 border-slate-100 ${theme.border} hover:shadow-2xl ${theme.hoverShadow} min-h-[280px]`}
     >
-      {/* Top accent bar */}
-      <div className={`w-full h-1.5 ${theme.bar} rounded-t-3xl`} />
-
-      <div className="p-10 flex flex-col items-center gap-5 w-full">
-        {/* Icon circle */}
-        <div
-          className="w-20 h-20 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300"
-          style={{ backgroundColor: theme.iconBg }}
-        >
-          <Icon size={38} className={theme.iconText} />
-        </div>
-
-        {/* Text */}
-        <div className="space-y-2">
-          <h3 className="text-xl font-black text-slate-800 uppercase tracking-wide">{title}</h3>
-          <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-widest leading-relaxed">
-            {desc.split(', ').join(',\n')}
-          </p>
-        </div>
-
-        {/* Bottom accent line */}
-        <div className={`w-10 h-1 ${theme.bar} rounded-full mt-2`} />
+      <div className={`w-20 h-20 ${theme.bg} ${theme.text} rounded-[2rem] flex items-center justify-center mb-6 shadow-inner group-hover:rotate-6 group-hover:scale-110 transition-all duration-300`}>
+        <Icon size={40} />
       </div>
+      <h3 className="text-xl font-black uppercase italic tracking-tighter text-slate-800 mb-2">{title}</h3>
+      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{desc}</p>
     </button>
   );
 };
