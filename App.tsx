@@ -156,7 +156,7 @@ const GuideModal = ({ role, onClose, activeTab, setActiveTab }: {
               <div className="pt-4 border-t border-slate-50">
                 <div className="bg-slate-50 p-4 rounded-2xl flex items-center gap-3">
                   <Info size={16} className="text-slate-400 shrink-0" />
-                  <p className="text-[9px] font-black text-slate-400 uppercase leading-tight italic">Hubungi Admin jika ada kendala teknis lebih lanjut ya Kak! ✨</p>
+                  <p className="text-[9px] font-black text-slate-400 uppercase leading-tight italic">Hubungi Admin jika ada kendala teknis lebih lanjut ya! ✨</p>
                 </div>
               </div>
             </div>
