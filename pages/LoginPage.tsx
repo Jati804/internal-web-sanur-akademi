@@ -282,7 +282,7 @@ setFieldErrors({ username: false, pin: false });
         <div className="w-full max-w-4xl">
           {view === 'SELECTION' ? (
             <div className="flex flex-col items-center gap-6">
-              <p className="fade-up-d1 text-[11px] font-bold text-slate-600 tracking-wide leading-relaxed text-center">
+              <p className="fade-up-d1 text-[11px] font-bold text-slate-500 tracking-wide leading-relaxed text-center">
                 Halo! Selamat datang di Portal Internal SANUR Akademi Inspirasi. Silakan pilih peran di bawah untuk melanjutkan.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
@@ -291,7 +291,7 @@ setFieldErrors({ username: false, pin: false });
                 <div className="fade-up-d4"><RoleCard icon={Users} title="Siswa" color="emerald" desc="Pembayaran, Progres, Sertifikat" onClick={() => handleSelectRole('STUDENT')} /></div>
               </div>
               <div className="fade-up-d4 flex items-center gap-3">
-                <p className="text-[10px] font-bold text-slate-600 tracking-wide">Ada masalah atau pertanyaan?</p>
+                <p className="text-[10px] font-bold text-slate-500 tracking-wide">Ada masalah atau pertanyaan?</p>
                 <a href="https://wa.me/6281293047069?text=Halo%20Admin%20SANUR%2C%20saya%20ingin%20bertanya%20mengenai%20akses%20login%20portal%20internal.%20Mohon%20bantuannya." target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full text-[9px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
                   💬 Hubungi Admin
                 </a>
