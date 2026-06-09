@@ -359,7 +359,7 @@ setFieldErrors({ username: false, pin: false });
             {!showFooter && <span className="absolute inset-0 rounded-full bg-blue-400/30 animate-ping pointer-events-none" />}
             <button
               onClick={() => setShowFooter(v => !v)}
-              className={`relative w-10 h-10 bg-white/80 backdrop-blur-sm border border-white shadow-lg rounded-full flex items-center justify-center hover:bg-white hover:scale-110 active:scale-95 transition-all duration-300 group ${!showFooter ? 'animate-bounce' : ''}`}
+              className="relative w-10 h-10 bg-white/80 backdrop-blur-sm border border-white shadow-lg rounded-full flex items-center justify-center hover:bg-white hover:scale-110 active:scale-95 transition-all duration-300 group"
             >
               <ChevronDown size={18} className={`text-blue-500 transition-all duration-300 ${showFooter ? 'rotate-180' : ''}`} />
             </button>
