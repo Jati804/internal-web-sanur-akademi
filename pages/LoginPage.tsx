@@ -350,7 +350,7 @@ setFieldErrors({ username: false, pin: false });
         </div>
       </div>
       {view === 'SELECTION' && (
-        <footer className="mt-10 mb-4">
+        <div className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm border-t border-slate-100 py-4 flex items-center justify-center z-20">
           <a
             href="https://sanurakademi.com"
             target="_blank"
@@ -361,7 +361,7 @@ setFieldErrors({ username: false, pin: false });
             <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] group-hover:text-slate-600 transition-colors duration-300">SANUR Akademi Inspirasi</span>
             <ChevronRight size={11} className="text-slate-300 group-hover:text-blue-400 -translate-x-0.5 group-hover:translate-x-0.5 transition-all duration-300" />
           </a>
-        </footer>
+        </div>
       )}
     </div>
   );
