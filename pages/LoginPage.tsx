@@ -7,7 +7,8 @@ import {
   GraduationCap, 
   Mail, 
   ArrowLeft, 
-  ChevronRight, 
+  ChevronRight,
+  ChevronDown,
   Sparkles,
   Users,
   ShieldAlert,
@@ -112,6 +113,7 @@ const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccount
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({ username: false, pin: false });
   const [systemMaintenance, setSystemMaintenance] = useState(false);
+  const [showFooter, setShowFooter] = useState(false);
 
 useEffect(() => {
   const checkMaintenance = async () => {
@@ -353,17 +355,35 @@ setFieldErrors({ username: false, pin: false });
       </div>{/* end flex-1 content area */}
 
       {view === 'SELECTION' && (
-        <div className="relative z-10 bg-white border-t border-slate-200 py-5 flex items-center justify-center">
-          <a
-            href="https://sanurakademi.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="group inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-full shadow-sm hover:shadow-md hover:border-slate-300 hover:scale-105 active:scale-95 transition-all duration-300"
+        <div className="relative z-10">
+          {/* Tab trigger */}
+          <div className="flex justify-center">
+            <button
+              onClick={() => setShowFooter(v => !v)}
+              className="flex items-center gap-2 px-5 py-2 bg-white border border-slate-200 border-b-0 rounded-t-2xl shadow-sm hover:shadow-md transition-all duration-300 group -mb-px"
+            >
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] group-hover:text-slate-600 transition-colors">SANUR Akademi</span>
+              <ChevronDown size={13} className={`text-slate-400 group-hover:text-blue-400 transition-all duration-300 ${showFooter ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
+          {/* Slide-up strip */}
+          <div
+            className="overflow-hidden transition-all duration-300 ease-in-out bg-white border-t border-slate-200"
+            style={{ maxHeight: showFooter ? '80px' : '0px', opacity: showFooter ? 1 : 0 }}
           >
-            <span className="text-slate-400 group-hover:text-blue-500 transition-colors duration-300">🌐</span>
-            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] group-hover:text-slate-600 transition-colors duration-300">SANUR Akademi Inspirasi</span>
-            <ChevronRight size={11} className="text-slate-300 group-hover:text-blue-400 -translate-x-0.5 group-hover:translate-x-0.5 transition-all duration-300" />
-          </a>
+            <div className="py-4 flex items-center justify-center">
+              <a
+                href="https://sanurakademi.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-full shadow-sm hover:shadow-md hover:border-slate-300 hover:scale-105 active:scale-95 transition-all duration-300"
+              >
+                <span className="text-slate-400 group-hover:text-blue-500 transition-colors duration-300">🌐</span>
+                <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] group-hover:text-slate-600 transition-colors duration-300">SANUR Akademi Inspirasi</span>
+                <ChevronRight size={11} className="text-slate-300 group-hover:text-blue-400 -translate-x-0.5 group-hover:translate-x-0.5 transition-all duration-300" />
+              </a>
+            </div>
+          </div>
         </div>
       )}
     </div>
