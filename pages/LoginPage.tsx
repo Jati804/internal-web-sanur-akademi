@@ -243,7 +243,7 @@ setFieldErrors({ username: false, pin: false });
 
   // ── SELECTION + LOGIN ──────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-slate-50 flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
+    <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans" style={{ backgroundImage: "url('https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/Background%20Login%20Page.png')", backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
       <BlobStyles />
 
       {/* 3 animated blobs */}
