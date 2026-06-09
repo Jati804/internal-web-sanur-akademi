@@ -352,14 +352,18 @@ setFieldErrors({ username: false, pin: false });
           )}
         </div>
       </div>
-        {/* Arrow button at bottom of wallpaper */}
+        {/* Arrow button at bottom-right of wallpaper */}
         {view === 'SELECTION' && (
-          <button
-            onClick={() => setShowFooter(v => !v)}
-            className="absolute bottom-4 left-1/2 -translate-x-1/2 w-9 h-9 bg-white/70 backdrop-blur-sm border border-white/80 rounded-full shadow-lg flex items-center justify-center hover:bg-white hover:scale-110 active:scale-95 transition-all duration-300 group"
-          >
-            <ChevronDown size={18} className={`text-slate-500 group-hover:text-blue-500 transition-all duration-300 ${showFooter ? 'rotate-180' : ''}`} />
-          </button>
+          <div className="absolute bottom-5 right-6">
+            {/* Pulse ring */}
+            {!showFooter && <span className="absolute inset-0 rounded-full bg-blue-400/30 animate-ping pointer-events-none" />}
+            <button
+              onClick={() => setShowFooter(v => !v)}
+              className={`relative w-10 h-10 bg-white/80 backdrop-blur-sm border border-white shadow-lg rounded-full flex items-center justify-center hover:bg-white hover:scale-110 active:scale-95 transition-all duration-300 group ${!showFooter ? 'animate-bounce' : ''}`}
+            >
+              <ChevronDown size={18} className={`text-blue-500 transition-all duration-300 ${showFooter ? 'rotate-180' : ''}`} />
+            </button>
+          </div>
         )}
       </div>{/* end flex-1 content area */}
 
