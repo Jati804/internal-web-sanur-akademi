@@ -243,7 +243,10 @@ setFieldErrors({ username: false, pin: false });
 
   // ── SELECTION + LOGIN ──────────────────────────────────────────────────
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans" style={{ backgroundImage: "url('https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/Background%20Login%20Page.png')", backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' }}>
+    <div
+      className="min-h-screen flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans"
+      style={view === 'SELECTION' ? { backgroundImage: "url('https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/Background%20Login%20Page.png')", backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' } : { backgroundColor: '#f8fafc' }}
+    >
       <BlobStyles />
 
       {/* 3 animated blobs */}
@@ -346,18 +349,20 @@ setFieldErrors({ username: false, pin: false });
           )}
         </div>
       </div>
-      <footer className="mt-20">
-        <a
-          href="https://sanurakademi.com"
-          target="_blank"
-          rel="noopener noreferrer"
-          className="group inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-full shadow-sm hover:shadow-md hover:border-slate-300 hover:scale-105 active:scale-95 transition-all duration-300"
-        >
-          <span className="text-slate-400 group-hover:text-blue-500 transition-colors duration-300">🌐</span>
-          <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] group-hover:text-slate-600 transition-colors duration-300">SANUR Akademi Inspirasi</span>
-          <ChevronRight size={11} className="text-slate-300 group-hover:text-blue-400 -translate-x-0.5 group-hover:translate-x-0.5 transition-all duration-300" />
-        </a>
-      </footer>
+      {view === 'SELECTION' && (
+        <footer className="mt-10 mb-4">
+          <a
+            href="https://sanurakademi.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="group inline-flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 rounded-full shadow-sm hover:shadow-md hover:border-slate-300 hover:scale-105 active:scale-95 transition-all duration-300"
+          >
+            <span className="text-slate-400 group-hover:text-blue-500 transition-colors duration-300">🌐</span>
+            <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] group-hover:text-slate-600 transition-colors duration-300">SANUR Akademi Inspirasi</span>
+            <ChevronRight size={11} className="text-slate-300 group-hover:text-blue-400 -translate-x-0.5 group-hover:translate-x-0.5 transition-all duration-300" />
+          </a>
+        </footer>
+      )}
     </div>
   );
 };
