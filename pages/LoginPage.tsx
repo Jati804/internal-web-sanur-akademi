@@ -352,23 +352,22 @@ setFieldErrors({ username: false, pin: false });
           )}
         </div>
       </div>
+        {/* Arrow button at bottom of wallpaper */}
+        {view === 'SELECTION' && (
+          <button
+            onClick={() => setShowFooter(v => !v)}
+            className="absolute bottom-4 left-1/2 -translate-x-1/2 w-9 h-9 bg-white/70 backdrop-blur-sm border border-white/80 rounded-full shadow-lg flex items-center justify-center hover:bg-white hover:scale-110 active:scale-95 transition-all duration-300 group"
+          >
+            <ChevronDown size={18} className={`text-slate-500 group-hover:text-blue-500 transition-all duration-300 ${showFooter ? 'rotate-180' : ''}`} />
+          </button>
+        )}
       </div>{/* end flex-1 content area */}
 
       {view === 'SELECTION' && (
         <div className="relative z-10">
-          {/* Tab trigger */}
-          <div className="flex justify-center">
-            <button
-              onClick={() => setShowFooter(v => !v)}
-              className="flex items-center gap-2 px-5 py-2 bg-white border border-slate-200 border-b-0 rounded-t-2xl shadow-sm hover:shadow-md transition-all duration-300 group -mb-px"
-            >
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] group-hover:text-slate-600 transition-colors">SANUR Akademi</span>
-              <ChevronDown size={13} className={`text-slate-400 group-hover:text-blue-400 transition-all duration-300 ${showFooter ? 'rotate-180' : ''}`} />
-            </button>
-          </div>
           {/* Slide-up strip */}
           <div
-            className="overflow-hidden transition-all duration-300 ease-in-out bg-white border-t border-slate-200"
+            className="overflow-hidden transition-all duration-500 ease-in-out bg-white border-t border-slate-200"
             style={{ maxHeight: showFooter ? '80px' : '0px', opacity: showFooter ? 1 : 0 }}
           >
             <div className="py-4 flex items-center justify-center">
