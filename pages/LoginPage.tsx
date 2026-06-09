@@ -243,19 +243,18 @@ setFieldErrors({ username: false, pin: false });
 
   // ── SELECTION + LOGIN ──────────────────────────────────────────────────
   return (
-    <div
-      className="min-h-screen flex flex-col font-sans relative overflow-hidden"
-      style={view === 'SELECTION' ? { backgroundImage: "url('https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/Background%20Login%20Page.png')", backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' } : { backgroundColor: '#f8fafc' }}
-    >
+    <div className="min-h-screen flex flex-col font-sans" style={view === 'LOGIN' ? { backgroundColor: '#f8fafc' } : {}}>
       <BlobStyles />
 
+      {/* Main content area — grows to fill space, wallpaper only here */}
+      <div
+        className="flex-1 flex flex-col items-center justify-center p-6 relative overflow-hidden z-10"
+        style={view === 'SELECTION' ? { backgroundImage: "url('https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/Background%20Login%20Page.png')", backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' } : {}}
+      >
       {/* 3 animated blobs */}
       <div className="blob-1 absolute top-0 right-0 w-[600px] h-[600px] bg-blue-100 rounded-full blur-[120px] -mr-48 -mt-48 opacity-40 pointer-events-none"></div>
       <div className="blob-2 absolute bottom-0 left-0 w-[600px] h-[600px] bg-orange-100 rounded-full blur-[120px] -ml-48 -mb-48 opacity-40 pointer-events-none"></div>
       <div className="blob-3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] bg-emerald-100 rounded-full blur-[140px] opacity-20 pointer-events-none"></div>
-
-      {/* Main content area — grows to fill space */}
-      <div className="flex-1 flex flex-col items-center justify-center p-6 relative z-10">
       <div className="w-full max-w-6xl flex flex-col items-center gap-6 animate-in fade-in duration-700">
         <div className="text-center space-y-6">
            <div className="fade-up inline-flex items-center gap-4 px-8 py-4 bg-white border border-slate-100 rounded-3xl shadow-xl">
