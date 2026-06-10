@@ -253,11 +253,13 @@ setFieldErrors({ username: false, pin: false });
         className="flex-1 flex flex-col items-center justify-center p-6 relative overflow-hidden z-10"
         style={view === 'SELECTION' ? { backgroundImage: "url('https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/Background%20Login%20Page.png')", backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' } : {}}
       >
-      {/* Vignette tipis merata agar wallpaper tidak mendominasi */}
+      {/* Vignette merata semua sisi */}
       {view === 'SELECTION' && (
-        <div className="absolute inset-0 pointer-events-none z-0"
-          style={{ background: 'radial-gradient(ellipse at center, transparent 30%, rgba(255,255,255,0.25) 100%)' }}
-        />
+        <>
+          <div className="absolute inset-0 pointer-events-none z-0" style={{ background: 'radial-gradient(ellipse at center, transparent 25%, rgba(255,255,255,0.35) 100%)' }} />
+          <div className="absolute inset-0 pointer-events-none z-0" style={{ background: 'linear-gradient(to right, rgba(255,255,255,0.18) 0%, transparent 20%, transparent 80%, rgba(255,255,255,0.18) 100%)' }} />
+          <div className="absolute inset-0 pointer-events-none z-0" style={{ background: 'linear-gradient(to bottom, rgba(255,255,255,0.18) 0%, transparent 20%, transparent 80%, rgba(255,255,255,0.18) 100%)' }} />
+        </>
       )}
 
       {/* 3 animated blobs */}
