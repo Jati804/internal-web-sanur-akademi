@@ -262,10 +262,7 @@ setFieldErrors({ username: false, pin: false });
         </>
       )}
 
-      {/* 3 animated blobs */}
-      <div className="blob-1 absolute top-0 right-0 w-[600px] h-[600px] bg-blue-100 rounded-full blur-[120px] -mr-48 -mt-48 opacity-40 pointer-events-none"></div>
-      <div className="blob-2 absolute bottom-0 left-0 w-[600px] h-[600px] bg-orange-100 rounded-full blur-[120px] -ml-48 -mb-48 opacity-40 pointer-events-none"></div>
-      <div className="blob-3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] bg-emerald-100 rounded-full blur-[140px] opacity-20 pointer-events-none"></div>
+
       <div className="w-full max-w-6xl flex flex-col items-center gap-6 animate-in fade-in duration-700">
         <div className="text-center space-y-6">
            {view === 'SELECTION' && (
