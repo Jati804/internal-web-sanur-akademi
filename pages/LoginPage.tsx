@@ -310,7 +310,7 @@ setFieldErrors({ username: false, pin: false });
           ) : (
             <div className="fade-up bg-white rounded-[4rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col md:flex-row">
               <div className={`md:w-72 p-12 ${currentTheme.bg} text-white flex flex-col justify-between items-center text-center`}>
-                 <button onClick={() => setView(systemMaintenance ? 'MAINTENANCE' : 'SELECTION')} className="relative p-3 bg-white/20 rounded-full hover:bg-white/40 hover:scale-110 active:scale-95 transition-all">
+                 <button onClick={() => setView(systemMaintenance ? 'MAINTENANCE' : 'SELECTION')} className={`relative p-3 bg-white rounded-full hover:bg-white/80 hover:scale-110 active:scale-95 transition-all ${currentTheme.text}`}>
                    <span className="ping-slow absolute inset-0 rounded-full bg-white/30 pointer-events-none" />
                    <ArrowLeft/>
                  </button>
