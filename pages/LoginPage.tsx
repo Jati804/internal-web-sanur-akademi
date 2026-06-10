@@ -372,8 +372,8 @@ setFieldErrors({ username: false, pin: false });
                  </form>
               </div>
               </div>
-            </div>{/* end card */}
-            </div>{/* end relative wrapper */}
+            </div>
+            </div>
           )}
         </div>
       </div>
