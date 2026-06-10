@@ -308,26 +308,20 @@ setFieldErrors({ username: false, pin: false });
               </div>
             </div>
           ) : (
-            <div className="fade-up relative flex flex-col md:flex-row items-stretch gap-4">
-              {/* Tombol kembali di area abu-abu kiri */}
-              <div className="hidden md:flex items-center justify-center">
+            <div className="fade-up relative">
+              {/* Tombol kembali pojok kanan atas */}
+              <div className="absolute -top-10 right-0 z-10">
                 <button
                   onClick={() => setView(systemMaintenance ? 'MAINTENANCE' : 'SELECTION')}
-                  className={`flex flex-col items-center gap-2 px-4 py-4 bg-white rounded-3xl shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all ${currentTheme.text}`}
+                  className={`flex items-center gap-2 px-4 py-2 bg-white rounded-2xl shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all ${currentTheme.text}`}
                 >
-                  <ArrowLeft size={20}/>
-                  <span className="text-[9px] font-black uppercase tracking-widest text-slate-500">Kembali</span>
+                  <ArrowLeft size={16}/>
+                  <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Kembali</span>
                 </button>
               </div>
 
               <div className="bg-white rounded-[4rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col md:flex-row">
               <div className={`md:w-72 p-12 ${currentTheme.bg} text-white flex flex-col justify-center items-center text-center`}>
-                 {/* Tombol kembali mobile (tetap di dalam panel untuk layar kecil) */}
-                 <div className="md:hidden mb-6">
-                   <button onClick={() => setView(systemMaintenance ? 'MAINTENANCE' : 'SELECTION')} className="relative p-3 bg-white/20 rounded-full hover:bg-white/40 hover:scale-110 active:scale-95 transition-all">
-                     <ArrowLeft/>
-                   </button>
-                 </div>
                  <div className="space-y-6">
                     <div className="w-24 h-24 bg-white/10 backdrop-blur-md rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl">
                        {role === 'ADMIN' ? <UserCog size={48}/> : role === 'TEACHER' ? <GraduationCap size={48}/> : <Users size={48}/>}
@@ -339,9 +333,6 @@ setFieldErrors({ username: false, pin: false });
 
               <div className="flex-1 p-10 md:p-16">
                  <form onSubmit={handleSubmit} className="space-y-10">
-                    <div className="space-y-4">
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Masukkan identitas akun untuk melanjutkan</p>
-                    </div>
                     <div className="space-y-6">
                        <div className="space-y-2">
                           <label className="text-[10px] font-black text-slate-500 uppercase ml-4 tracking-widest">Username Akun</label>
