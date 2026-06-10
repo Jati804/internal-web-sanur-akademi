@@ -259,6 +259,7 @@ setFieldErrors({ username: false, pin: false });
       <div className="blob-3 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[420px] h-[420px] bg-emerald-100 rounded-full blur-[140px] opacity-20 pointer-events-none"></div>
       <div className="w-full max-w-6xl flex flex-col items-center gap-6 animate-in fade-in duration-700">
         <div className="text-center space-y-6">
+           {view === 'SELECTION' && (
            <div className="fade-up inline-flex items-center gap-4 px-8 py-4 bg-white border border-slate-100 rounded-3xl shadow-xl">
               <img
                 src="https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png"
@@ -270,13 +271,16 @@ setFieldErrors({ username: false, pin: false });
                  <p className="text-xs font-black text-blue-600 uppercase tracking-wide leading-tight">Management System</p>
               </div>
            </div>
+           )}
 
+           {view === 'SELECTION' && (
            <div className="fade-up-d1 flex items-center gap-4 justify-center">
               <div className={`flex items-center gap-2 px-4 py-2 rounded-full border text-[9px] font-black uppercase tracking-widest transition-all ${connectionError ? 'bg-rose-50 text-rose-600 border-rose-200' : isSyncing ? 'bg-blue-50 text-blue-600 border-blue-200' : 'bg-emerald-50 text-emerald-600 border-emerald-200'}`}>
                  {isSyncing ? <Loader2 size={14} className="animate-spin" /> : connectionError ? <WifiOff size={14} /> : <CheckCircle2 size={14} />}
                  {isSyncing ? "Connecting..." : connectionError ? "Cloud Offline" : "Database Terkoneksi"}
               </div>
            </div>
+           )}
         </div>
 
         <div className="w-full max-w-4xl">
