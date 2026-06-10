@@ -316,7 +316,7 @@ setFieldErrors({ username: false, pin: false });
                    onClick={() => setView(systemMaintenance ? 'MAINTENANCE' : 'SELECTION')}
                    className="flex items-center gap-2 px-6 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-2xl transition-all hover:scale-105 active:scale-95"
                  >
-                   <ArrowLeft size={14}/>
+                   <ArrowLeft size={14} strokeWidth={3}/>
                    <span className="text-[10px] font-black uppercase tracking-widest">Kembali</span>
                  </button>
                  <div className="space-y-6">
