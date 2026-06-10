@@ -248,15 +248,7 @@ setFieldErrors({ username: false, pin: false });
     <div className="min-h-screen flex flex-col font-sans" style={view === 'LOGIN' ? { backgroundColor: '#f8fafc' } : {}}>
       <BlobStyles />
 
-      {view === 'LOGIN' && (
-        <button
-          onClick={() => setView(systemMaintenance ? 'MAINTENANCE' : 'SELECTION')}
-          className={`fixed top-5 right-6 z-50 flex items-center gap-2 px-4 py-2 bg-white rounded-2xl shadow-md hover:shadow-lg hover:scale-105 active:scale-95 transition-all ${currentTheme.text}`}
-        >
-          <ArrowLeft size={16}/>
-          <span className="text-[10px] font-black uppercase tracking-widest text-slate-500">Kembali</span>
-        </button>
-      )}
+
 
       {/* Main content area — grows to fill space, wallpaper only here */}
       <div
@@ -320,7 +312,13 @@ setFieldErrors({ username: false, pin: false });
           ) : (
             <div className="fade-up bg-white rounded-[4rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col md:flex-row">
               <div className={`md:w-72 p-12 ${currentTheme.bg} text-white flex flex-col justify-between items-center text-center`}>
-                 <div></div>
+                 <button
+                   onClick={() => setView(systemMaintenance ? 'MAINTENANCE' : 'SELECTION')}
+                   className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-2xl transition-all hover:scale-105 active:scale-95"
+                 >
+                   <ArrowLeft size={16}/>
+                   <span className="text-[10px] font-black uppercase tracking-widest">Kembali</span>
+                 </button>
                  <div className="space-y-6">
                     <div className="w-24 h-24 bg-white/10 backdrop-blur-md rounded-[2.5rem] flex items-center justify-center mx-auto shadow-2xl">
                        {role === 'ADMIN' ? <UserCog size={48}/> : role === 'TEACHER' ? <GraduationCap size={48}/> : <Users size={48}/>}
