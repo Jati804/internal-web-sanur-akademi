@@ -314,7 +314,7 @@ setFieldErrors({ username: false, pin: false });
               <div className={`md:w-72 p-12 ${currentTheme.bg} text-white flex flex-col justify-between items-center text-center`}>
                  <button
                    onClick={() => setView(systemMaintenance ? 'MAINTENANCE' : 'SELECTION')}
-                   className="flex items-center gap-2 px-6 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-2xl transition-all hover:scale-105 active:scale-95 self-center"
+                   className="flex items-center gap-2 px-8 pr-10 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-2xl transition-all hover:scale-105 active:scale-95"
                  >
                    <ArrowLeft size={14} strokeWidth={3}/>
                    <span className="text-[10px] font-black uppercase tracking-widest">Kembali</span>
