@@ -373,7 +373,6 @@ setFieldErrors({ username: false, pin: false });
               </div>
               </div>
             </div>
-            </div>
           )}
         </div>
       </div>
