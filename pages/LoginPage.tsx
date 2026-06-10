@@ -325,9 +325,6 @@ setFieldErrors({ username: false, pin: false });
 
               <div className="flex-1 p-10 md:p-16">
                  <form onSubmit={handleSubmit} className="space-y-10">
-                    <div className="space-y-4">
-                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Masukkan identitas akun untuk melanjutkan</p>
-                    </div>
                     <div className="space-y-6">
                        <div className="space-y-2">
                           <label className="text-[10px] font-black text-slate-500 uppercase ml-4 tracking-widest">Username Akun</label>
