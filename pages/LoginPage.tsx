@@ -296,7 +296,7 @@ setFieldErrors({ username: false, pin: false });
                 Halo! Selamat datang di Portal Internal SANUR Akademi Inspirasi. Silakan pilih peran di bawah untuk melanjutkan.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
-                <div className="fade-up-d2"><RoleCard icon={UserCog} title="Pengurus" color="blue" desc="Admin, Keuangan, Pengelolaan" onClick={() => handleSelectRole('ADMIN')} /></div>
+                <div className="fade-up-d2"><RoleCard icon={UserCog} title="Pengurus" color="blue" desc="Administrasi, Operasional" onClick={() => handleSelectRole('ADMIN')} /></div>
                 <div className="fade-up-d3"><RoleCard icon={GraduationCap} title="Pengajar" color="orange" desc="Log Sesi Guru, Honor, Rapot" onClick={() => handleSelectRole('TEACHER')} /></div>
                 <div className="fade-up-d4"><RoleCard icon={Users} title="Siswa" color="emerald" desc="Pembayaran, Progres, Sertifikat" onClick={() => handleSelectRole('STUDENT')} /></div>
               </div>
