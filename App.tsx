@@ -1,8 +1,8 @@
 // FORCE REBUILD - CLEAR CACHE v3.1 - ANTI PORTRAIT MODE
 import React, { useState, useEffect, useCallback } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
-const { HashRouter, Routes, Route, Navigate, Link, useLocation, useNavigate } = ReactRouterDOM as any;
-const Router = HashRouter;
+const { BrowserRouter, Routes, Route, Navigate, Link, useLocation, useNavigate } = ReactRouterDOM as any;
+const Router = BrowserRouter;
 
 import { 
   LayoutDashboard, Receipt, Menu, CreditCard, BookOpen, Book, UserCog, 
