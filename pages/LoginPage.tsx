@@ -253,7 +253,7 @@ setFieldErrors({ username: false, pin: false });
       {/* Main content area — grows to fill space, wallpaper only here */}
       <div
         className="flex-1 flex flex-col items-center justify-center p-6 relative overflow-hidden z-10"
-        style={view === 'SELECTION' ? { backgroundImage: "url('https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/Background%20Login.png')", backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' } : {}}
+        style={view === 'SELECTION' ? { backgroundImage: "url('https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/Background%20Login%20Laptop.png')", backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' } : {}}
       >
       {/* Vignette merata semua sisi */}
       {view === 'SELECTION' && (
