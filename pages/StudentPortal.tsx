@@ -334,108 +334,252 @@ const executeFinalRequestReport = async () => {
 const handleDownloadPDFReport = async (course: any) => {
   const reportLog = findOfficialReportLog(course);
   if (!reportLog) return alert("Rapot belum siap diunduh! Tunggu Guru selesai input nilai ya. ✨");
-  setDownloadProgress(5);
-  setActiveDownloadId(course.id);
-  
-  try {
-    // 1. Tunggu semua font selesai load
-    await document.fonts.ready;
 
-    // 2. Preload semua gambar eksternal dulu sebelum capture
-    const logoUrl = `https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png`;
-    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`https://sanur-verify.vercel.app/#/verify?id=${reportLog.id}`)}`;
-    
-    await Promise.all([
-      new Promise<void>((res) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => res(); i.onerror = () => res(); i.src = logoUrl; }),
-      new Promise<void>((res) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => res(); i.onerror = () => res(); i.src = qrUrl; }),
-    ]);
+  const rawScores = reportLog.studentScores ? Object.values(reportLog.studentScores)[0] : null;
+  const scores: number[] = Array.isArray(rawScores) ? rawScores : [];
+  const rawTopics = reportLog.studentTopics ? Object.values(reportLog.studentTopics)[0] : null;
+  const topics: string[] = Array.isArray(rawTopics) ? rawTopics : [];
+  const avg = scores.length > 0 ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length) : 0;
+  const isPass = avg >= 80;
+  const matpelMatch = reportLog.className?.match(/(.*) \((.*)\) - (.*)/);
+  const subject = matpelMatch ? matpelMatch[1] : (reportLog.className || "PROGRAM SANUR");
+  const level = matpelMatch ? matpelMatch[2] : (reportLog.level || 'BASIC');
+  const verifyUrl = `https://sanur-verify.vercel.app/#/verify?id=${reportLog.id}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(verifyUrl)}`;
+  const logoUrl = `https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png`;
+  const formatDate = (d: string) => { if (!d || !d.includes('-')) return d; const p = d.split('-'); return `${p[2]}/${p[1]}/${p[0]}`; };
 
-    // 3. Kasih waktu tambahan buat render DOM
-    await new Promise(r => setTimeout(r, 1000));
+  const mainColor = isPass ? '#1e3a8a' : '#ea580c';
+  const accentColor = isPass ? '#2563eb' : '#ea580c';
+  const gradientSidebar = isPass
+    ? 'linear-gradient(180deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)'
+    : 'linear-gradient(180deg, #f97316 0%, #ea580c 50%, #dc2626 100%)';
+  const gradientBox = isPass
+    ? 'linear-gradient(135deg, #1e3a8a, #0f172a)'
+    : 'linear-gradient(135deg, #ea580c, #0f172a)';
 
-    const pdf = new jsPDF({ orientation: 'l', unit: 'px', format: 'a4', hotfixes: ["px_rendering"] });
-    const pw1 = pdf.internal.pageSize.getWidth();
-    const ph1 = pdf.internal.pageSize.getHeight();
+  const tableRows = scores.map((score, i) => `
+    <tr style="border-bottom: 1px solid #f1f5f9; height: 78px;">
+      <td style="padding: 0 35px; vertical-align: middle;">
+        <span style="font-weight:900; color:#1e293b; font-size:20px; text-transform:uppercase; font-style:italic; letter-spacing:-0.01em; line-height:1.1; display:block;">
+          ${topics[i] || 'MATERI PEMBELAJARAN'}
+        </span>
+      </td>
+      <td style="text-align:center; vertical-align:middle;">
+        <span style="font-weight:900; color:${accentColor}; font-size:20px; font-style:italic;">${score}</span>
+        <span style="color:#94a3b8; font-weight:700; font-size:11px;">/100</span>
+      </td>
+    </tr>
+  `).join('');
 
-    // ✅ FIX: allowTaint: false, windowWidth harus sama dengan width
-    const captureOptionsLandscape = {
-      scale: 2,
-      useCORS: true,
-      allowTaint: false,       // ✅ false kalau useCORS: true
-      backgroundColor: '#ffffff',
-      width: 1123,
-      height: 794,
-      windowWidth: 1123,       // ✅ sama dengan width
-      windowHeight: 794,       // ✅ sama dengan height
-      logging: false,
-      imageTimeout: 20000,
-    };
+  const html = `<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Rapot_Sanur_${user.name.toUpperCase().replace(/\s+/g, '_')}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,700;0,900;1,700;1,900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
 
-    setDownloadProgress(20);
-    const el1 = document.getElementById(`cert-render-${reportLog.id}`);
-    if (el1) {
-      el1.style.width = '1123px';
-      el1.style.height = '794px';
-      el1.style.position = 'fixed';
-      el1.style.left = '0';
-      el1.style.top = '0';
-      el1.style.zIndex = '-1';
-      await new Promise(r => setTimeout(r, 300));
-      const canvas1 = await html2canvas(el1, captureOptionsLandscape);
-      const img1 = canvas1.toDataURL('image/png', 1.0);
-      pdf.addImage(img1, 'PNG', 0, 0, pw1, ph1, undefined, 'FAST');
-      el1.style.position = '';
-      el1.style.left = '';
-      el1.style.top = '';
-      el1.style.zIndex = '';
+    body {
+      font-family: 'Inter', serif;
+      background: #111;
     }
 
-    setDownloadProgress(45);
-    pdf.addPage('a4', 'p');
-    const pw2 = pdf.internal.pageSize.getWidth();
-    const ph2 = pdf.internal.pageSize.getHeight();
-
-    // ✅ FIX: windowWidth harus 794, bukan 1200!
-    const captureOptionsPortrait = {
-      scale: 2,
-      useCORS: true,
-      allowTaint: false,       // ✅ false
-      backgroundColor: '#ffffff',
-      width: 794,
-      height: 1123,
-      windowWidth: 794,        // ✅ DIFIX dari 1200 → 794
-      windowHeight: 1123,
-      logging: false,
-      imageTimeout: 20000,
-    };
-
-    const el2 = document.getElementById(`transcript-render-${reportLog.id}`);
-    if (el2) {
-      el2.style.width = '794px';
-      el2.style.height = '1123px';
-      el2.style.position = 'fixed';
-      el2.style.left = '0';
-      el2.style.top = '0';
-      el2.style.zIndex = '-1';
-      await new Promise(r => setTimeout(r, 300));
-      const canvas2 = await html2canvas(el2, captureOptionsPortrait);
-      const img2 = canvas2.toDataURL('image/png', 1.0);
-      pdf.addImage(img2, 'PNG', 0, 0, pw2, ph2, undefined, 'FAST');
-      el2.style.position = '';
-      el2.style.left = '';
-      el2.style.top = '';
-      el2.style.zIndex = '';
+    .page-wrapper {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 100vw;
+      min-height: 100vh;
+      background: #111;
+      padding: 40px 0;
     }
 
-    setDownloadProgress(95);
-    pdf.save(`Rapot_Sanur_${user.name.toUpperCase().replace(/\s+/g, '_')}.pdf`);
-    setDownloadProgress(100);
-    await new Promise(r => setTimeout(r, 500));
-  } catch (e) {
-    alert("Gagal memproses PDF.");
-  } finally {
-    setActiveDownloadId(null);
-    setDownloadProgress(0);
+    .page-landscape {
+      width: 297mm;
+      height: 210mm;
+      background: white;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      border: 25px double ${mainColor};
+      flex-shrink: 0;
+    }
+
+    .page-landscape-inner {
+      width: 100%;
+      height: 100%;
+      border: 4px solid #cbd5e1;
+      display: flex;
+      flex-direction: row;
+      box-sizing: border-box;
+    }
+
+    .page-portrait {
+      width: 210mm;
+      height: 297mm;
+      background: white;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      padding: 70px 60px;
+      flex-shrink: 0;
+    }
+
+    @media print {
+      @page:first { size: A4 landscape; margin: 0; }
+      @page { size: A4 portrait; margin: 0; }
+      body { background: white; margin: 0; }
+      .page-wrapper {
+        display: block;
+        width: auto;
+        min-height: auto;
+        padding: 0;
+        background: white;
+      }
+      .page-landscape { page-break-after: always; border: 25px double ${mainColor}; }
+      .no-print { display: none !important; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="no-print" style="position:fixed; top:16px; right:16px; z-index:9999;">
+  <button onclick="window.print()" style="background:#2563eb; color:white; border:none; padding:10px 24px; border-radius:12px; font-weight:900; font-size:13px; cursor:pointer; text-transform:uppercase; letter-spacing:0.1em;">
+    🖨️ Print / Save PDF
+  </button>
+</div>
+
+<!-- HALAMAN 1: SERTIFIKAT LANDSCAPE -->
+<div class="page-wrapper">
+  <div class="page-landscape">
+    <div class="page-landscape-inner">
+
+      <!-- SIDEBAR QR -->
+      <div style="width:140px; background:${gradientSidebar}; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 15px; flex-shrink:0;">
+        <div style="background:white; padding:12px; border-radius:15px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+          <img src="${qrUrl}" style="width:100px; height:100px; display:block;" />
+        </div>
+        <p style="font-size:8px; font-weight:900; color:white; text-align:center; margin-top:12px; text-transform:uppercase; letter-spacing:0.1em;">Scan untuk verifikasi</p>
+      </div>
+
+      <!-- KONTEN UTAMA -->
+      <div style="flex:1; display:flex; flex-direction:column; padding:50px 80px;">
+
+        <!-- LOGO -->
+        <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:50px;">
+          <img src="${logoUrl}" style="max-width:240px; max-height:80px; object-fit:contain;" />
+        </div>
+
+        <!-- BODY -->
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+          <h2 style="font-size:38px; font-family:serif; font-style:italic; color:${mainColor}; margin:0 0 25px 0;">
+            ${isPass ? 'Sertifikat Kelulusan' : 'Capaian Pembelajaran'}
+          </h2>
+          <p style="font-size:14px; font-family:serif; font-style:italic; color:#64748b; margin:0 0 15px 0;">Diberikan kepada:</p>
+          <div style="display:inline-block; margin-bottom:40px;">
+            <h3 style="font-size:34px; font-weight:900; color:${accentColor}; text-transform:uppercase; letter-spacing:0.05em; margin:0; line-height:1.1;">
+              ${user.name.toUpperCase()}
+            </h3>
+            <div style="width:100%; height:4px; background:${isPass ? '#dbeafe' : '#ffedd5'}; margin-top:10px; border-radius:10px;"></div>
+          </div>
+          <p style="font-size:14px; font-family:serif; font-style:italic; color:#475569; line-height:1.7; margin:0 0 8px 0; padding:0 100px;">
+            ${isPass ? 'Telah menyelesaikan seluruh materi pelatihan dan lulus dalam ujian standar kompetensi' : 'Telah berkomitmen mengikuti dan menyelesaikan seluruh rangkaian program pelatihan'}
+          </p>
+          <p style="font-size:14px; font-family:serif; font-style:italic; color:${mainColor}; font-weight:700; margin:0 0 40px 0;">
+            Sanur Akademi Inspirasi
+          </p>
+          <div style="background:${gradientBox}; width:700px; padding:30px 20px; border-radius:35px; display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:0 12px 30px -8px rgba(0,0,0,0.15); margin-bottom:50px;">
+            <p style="font-size:22px; font-weight:900; color:white; text-transform:uppercase; font-style:italic; margin:0; line-height:1.2;">${subject}</p>
+            <p style="font-size:16px; font-weight:900; color:rgba(255,255,255,0.8); text-transform:uppercase; letter-spacing:0.3em; margin:8px 0 0 0;">LEVEL ${level}</p>
+          </div>
+        </div>
+
+        <!-- FOOTER -->
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:auto;">
+          <div style="text-align:center;">
+            <p style="font-size:9px; font-weight:900; color:${isPass ? '#60a5fa' : '#fb923c'}; text-transform:uppercase; letter-spacing:0.2em; margin-bottom:3px;">Tanggal Terbit</p>
+            <p style="font-size:13px; font-weight:900; color:#64748b; font-style:italic;">${formatDate(reportLog.date)}</p>
+          </div>
+          <div style="text-align:center;">
+            <p style="font-size:9px; font-weight:900; color:${isPass ? '#60a5fa' : '#fb923c'}; text-transform:uppercase; letter-spacing:0.2em; margin-bottom:3px;">ID Sertifikat</p>
+            <p style="font-size:11px; font-weight:900; color:#64748b; font-style:italic;">${reportLog.id.toUpperCase()}</p>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HALAMAN 2: TRANSKRIP PORTRAIT -->
+<div class="page-wrapper">
+  <div class="page-portrait">
+
+    <!-- HEADER -->
+    <div style="display:flex; align-items:flex-end; gap:16px; margin-bottom:20px;">
+      <div style="width:52px; height:52px; background:#0f172a; color:white; border-radius:18px; display:flex; align-items:center; justify-content:center; transform:rotate(6deg); flex-shrink:0;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      </div>
+      <h1 style="font-size:34px; font-weight:900; font-style:italic; color:#1e293b; text-transform:uppercase; letter-spacing:-0.05em; line-height:1;">
+        Transkrip <span style="color:${accentColor};">Nilai</span>
+      </h1>
+    </div>
+
+    <!-- SUBHEADER -->
+    <div style="margin-bottom:30px; display:flex; justify-content:space-between; align-items:flex-end;">
+      <p style="font-size:13px; font-weight:900; color:${accentColor}; text-transform:uppercase; letter-spacing:0.3em; margin:0;">📚 MATERI KURIKULUM</p>
+      <div style="display:flex; flex-direction:column; align-items:flex-end; text-align:right;">
+        <p style="font-size:9px; font-weight:900; color:#94a3b8; text-transform:uppercase; letter-spacing:0.3em; margin:0 0 3px 0;">Guru Penilai</p>
+        <p style="font-size:13px; font-weight:900; color:#1e293b; text-transform:uppercase; margin:0; letter-spacing:0.05em;">${reportLog.teacherName || '-'}</p>
+      </div>
+    </div>
+
+    <!-- TABEL -->
+    <div style="background:white; border-radius:35px; border:3px solid #f1f5f9; overflow:hidden; margin-bottom:30px;">
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr style="background:#0f172a; color:white;">
+            <th style="padding:14px; text-align:center; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em;">Materi</th>
+            <th style="padding:14px; text-align:center; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; width:120px;">Nilai</th>
+          </tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+
+    <!-- FOOTER TRANSKRIP -->
+    <div style="padding:30px 40px; background:#0f172a; border-radius:42px; color:white; display:flex; justify-content:space-between; align-items:center; position:relative; overflow:hidden;">
+      <div style="position:absolute; top:0; right:0; width:230px; height:230px; background:rgba(255,255,255,0.05); border-radius:999px; margin-right:-130px; margin-top:-130px;"></div>
+      <div style="position:relative; z-index:10;">
+        <p style="font-size:9px; font-weight:900; color:#60a5fa; text-transform:uppercase; letter-spacing:0.5em; margin-bottom:4px;">Evaluasi Kumulatif</p>
+        <div style="display:flex; align-items:baseline; gap:14px;">
+          <p style="font-size:15px; font-weight:900; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.1em;">RATA-RATA:</p>
+          <h4 style="font-size:60px; font-weight:900; font-style:italic; letter-spacing:-0.05em;">${avg}</h4>
+          <span style="font-size:18px; color:rgba(255,255,255,0.3); font-weight:900; font-style:italic;">/ 100</span>
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,0.1); padding:18px 24px; border-radius:25px; border:1px solid rgba(255,255,255,0.2); border-bottom:6px solid ${isPass ? '#10b981' : '#f97316'}; text-align:center; min-width:190px; position:relative; z-index:10;">
+        <p style="font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; color:#93c5fd; margin-bottom:5px;">Status Capaian</p>
+        <p style="font-size:17px; font-weight:900; font-style:italic; text-transform:uppercase;">${isPass ? 'KOMPETEN' : 'REMEDIAL'}</p>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const printWindow = window.open(url, '_blank');
+  if (printWindow) {
+    printWindow.onload = () => {
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    };
   }
 };
 
