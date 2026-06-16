@@ -10,9 +10,6 @@ import {
   Filter // ✅ TAMBAH INI KALAU BELUM ADA
 } from 'lucide-react';
 
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
-
 interface TeacherReportsInboxProps {
   user: User;
   logs: Attendance[];
