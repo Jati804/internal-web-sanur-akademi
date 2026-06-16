@@ -249,12 +249,12 @@ const studentOnlyLogs = (() => {
                 <tr key={i} style={{ borderBottom: '1px solid #f1f5f9', height: '78px' }}>
                   <td style={{ padding: '0 35px', verticalAlign: 'middle' }}>
                     <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                        <span style={{ fontWeight: '900', color: '#1e293b', fontSize: '20px', textTransform: 'uppercase', fontStyle: 'italic', letterSpacing: '-0.01em', lineHeight: 1.1, display: 'block' }}>{topics[i] || "MATERI PEMBELAJARAN"}</span>
+                        <span style={{ fontWeight: '900', color: '#1e293b', fontSize: '20px', textTransform: 'uppercase', letterSpacing: '-0.01em', lineHeight: 1.1, display: 'block' }}>{topics[i] || "MATERI PEMBELAJARAN"}</span>
                     </div>
                   </td>
                   <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', height: '100%' }}>
-                      <span style={{ fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', fontSize: '20px', fontStyle: 'italic' }}>{scores[i] || 0}</span>
+                      <span style={{ fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', fontSize: '20px' }}>{scores[i] || 0}</span>
                       <span style={{ color: '#94a3b8', fontWeight: '700', fontSize: '11px' }}>/100</span>
                     </div>
                   </td>
