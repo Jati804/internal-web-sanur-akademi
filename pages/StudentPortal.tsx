@@ -394,15 +394,23 @@ if (el1) {
       imageTimeout: 15000,
     };
 
-    const el2 = document.getElementById(`transcript-render-${reportLog.id}`);
-    if (el2) {
-      el2.style.width = '794px';
-      el2.style.height = '1123px';
-      await new Promise(r => setTimeout(r, 300));
-      const canvas2 = await html2canvas(el2, captureOptionsPortrait);
-      const img2 = canvas2.toDataURL('image/png', 1.0);
-      pdf.addImage(img2, 'PNG', 0, 0, pw2, ph2, undefined, 'FAST');
-    }
+const el2 = document.getElementById(`transcript-render-${reportLog.id}`);
+if (el2) {
+  el2.style.width = '794px';
+  el2.style.height = '1123px';
+  el2.style.position = 'fixed';
+  el2.style.left = '0';
+  el2.style.top = '0';
+  el2.style.zIndex = '-1';
+  await new Promise(r => setTimeout(r, 500));
+  const canvas2 = await html2canvas(el2, captureOptionsPortrait);
+  const img2 = canvas2.toDataURL('image/png', 1.0);
+  pdf.addImage(img2, 'PNG', 0, 0, pw2, ph2, undefined, 'FAST');
+  el2.style.position = '';
+  el2.style.left = '';
+  el2.style.top = '';
+  el2.style.zIndex = '';
+}
 
     setDownloadProgress(95);
     pdf.save(`Rapot_Sanur_${user.name.toUpperCase().replace(/\s+/g, '_')}.pdf`);
