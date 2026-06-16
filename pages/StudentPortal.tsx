@@ -447,9 +447,56 @@ const handleDownloadPDFReport = async (course: any) => {
 <body>
 
 <div class="no-print" style="position:fixed; top:16px; right:16px; z-index:9999;">
-  <button onclick="window.print()" style="background:#2563eb; color:white; border:none; padding:10px 24px; border-radius:12px; font-weight:900; font-size:13px; cursor:pointer; text-transform:uppercase; letter-spacing:0.1em;">
+  <button onclick="document.getElementById('print-modal').style.display='flex'" style="background:#2563eb; color:white; border:none; padding:10px 24px; border-radius:12px; font-weight:900; font-size:13px; cursor:pointer; text-transform:uppercase; letter-spacing:0.1em;">
     🖨️ Print / Save PDF
   </button>
+</div>
+
+<!-- MODAL PANDUAN -->
+<div id="print-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:99999; align-items:center; justify-content:center;">
+  <div style="background:white; border-radius:24px; padding:40px; max-width:480px; width:90%; box-shadow:0 25px 60px rgba(0,0,0,0.4);">
+    
+    <h2 style="font-size:20px; font-weight:900; color:#0f172a; text-transform:uppercase; letter-spacing:-0.02em; margin-bottom:6px;">📄 Cara Save sebagai PDF</h2>
+    <p style="font-size:13px; color:#64748b; margin-bottom:28px;">Ikuti langkah berikut agar sertifikat tersimpan dengan benar</p>
+
+    <!-- STEP 1 -->
+    <div style="display:flex; gap:16px; align-items:flex-start; margin-bottom:20px;">
+      <div style="width:32px; height:32px; background:#2563eb; color:white; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; flex-shrink:0;">1</div>
+      <div>
+        <p style="font-weight:900; color:#0f172a; font-size:14px; margin-bottom:2px;">Pilih Destination: <span style="color:#2563eb;">Save as PDF</span></p>
+        <p style="font-size:12px; color:#64748b;">Di dialog print yang muncul, ganti printer ke <strong>"Save as PDF"</strong></p>
+      </div>
+    </div>
+
+    <!-- STEP 2 -->
+    <div style="display:flex; gap:16px; align-items:flex-start; margin-bottom:20px;">
+      <div style="width:32px; height:32px; background:#2563eb; color:white; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; flex-shrink:0;">2</div>
+      <div>
+        <p style="font-weight:900; color:#0f172a; font-size:14px; margin-bottom:2px;">Centang <span style="color:#2563eb;">Background Graphics</span></p>
+        <p style="font-size:12px; color:#64748b;">Klik <strong>"More settings"</strong> lalu centang <strong>"Background graphics"</strong> — agar warna, gradient, dan gambar ikut tercetak</p>
+      </div>
+    </div>
+
+    <!-- STEP 3 -->
+    <div style="display:flex; gap:16px; align-items:flex-start; margin-bottom:32px;">
+      <div style="width:32px; height:32px; background:#2563eb; color:white; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; flex-shrink:0;">3</div>
+      <div>
+        <p style="font-weight:900; color:#0f172a; font-size:14px; margin-bottom:2px;">Klik <span style="color:#2563eb;">Save</span></p>
+        <p style="font-size:12px; color:#64748b;">Pilih lokasi penyimpanan dan klik <strong>"Save"</strong></p>
+      </div>
+    </div>
+
+    <!-- TOMBOL -->
+    <div style="display:flex; gap:12px;">
+      <button onclick="document.getElementById('print-modal').style.display='none'" style="flex:1; padding:12px; border:2px solid #e2e8f0; background:white; border-radius:12px; font-weight:900; font-size:13px; cursor:pointer; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;">
+        Batal
+      </button>
+      <button onclick="document.getElementById('print-modal').style.display='none'; window.print();" style="flex:2; padding:12px; background:#2563eb; color:white; border:none; border-radius:12px; font-weight:900; font-size:13px; cursor:pointer; text-transform:uppercase; letter-spacing:0.05em;">
+        🖨️ Mengerti, Lanjut Print!
+      </button>
+    </div>
+
+  </div>
 </div>
 
 <!-- HALAMAN 1: SERTIFIKAT LANDSCAPE -->
