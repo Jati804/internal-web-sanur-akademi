@@ -336,81 +336,96 @@ const handleDownloadPDFReport = async (course: any) => {
   if (!reportLog) return alert("Rapot belum siap diunduh! Tunggu Guru selesai input nilai ya. ✨");
   setDownloadProgress(5);
   setActiveDownloadId(course.id);
+  
   try {
+    // 1. Tunggu semua font selesai load
     await document.fonts.ready;
-    await new Promise(r => setTimeout(r, 3000));
+
+    // 2. Preload semua gambar eksternal dulu sebelum capture
+    const logoUrl = `https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png`;
+    const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(`https://sanur-verify.vercel.app/#/verify?id=${reportLog.id}`)}`;
+    
+    await Promise.all([
+      new Promise<void>((res) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => res(); i.onerror = () => res(); i.src = logoUrl; }),
+      new Promise<void>((res) => { const i = new Image(); i.crossOrigin = 'anonymous'; i.onload = () => res(); i.onerror = () => res(); i.src = qrUrl; }),
+    ]);
+
+    // 3. Kasih waktu tambahan buat render DOM
+    await new Promise(r => setTimeout(r, 1000));
+
     const pdf = new jsPDF({ orientation: 'l', unit: 'px', format: 'a4', hotfixes: ["px_rendering"] });
     const pw1 = pdf.internal.pageSize.getWidth();
     const ph1 = pdf.internal.pageSize.getHeight();
 
-    // ✅ FIX: paksa windowWidth = lebar elemen agar tidak terpengaruh zoom browser
+    // ✅ FIX: allowTaint: false, windowWidth harus sama dengan width
     const captureOptionsLandscape = {
       scale: 2,
       useCORS: true,
-      allowTaint: true,
+      allowTaint: false,       // ✅ false kalau useCORS: true
       backgroundColor: '#ffffff',
       width: 1123,
       height: 794,
-      windowWidth: 1123,   // 👈 INI KUNCINYA
-      windowHeight: 794,
+      windowWidth: 1123,       // ✅ sama dengan width
+      windowHeight: 794,       // ✅ sama dengan height
       logging: false,
-      imageTimeout: 15000, // tunggu logo dari GitHub
+      imageTimeout: 20000,
     };
 
     setDownloadProgress(20);
     const el1 = document.getElementById(`cert-render-${reportLog.id}`);
-if (el1) {
-  el1.style.width = '1123px';
-  el1.style.height = '794px';
-  el1.style.position = 'fixed';
-  el1.style.left = '0';
-  el1.style.top = '0';
-  el1.style.zIndex = '-1';
-  await new Promise(r => setTimeout(r, 500));
-  const canvas1 = await html2canvas(el1, captureOptionsLandscape);
-  const img1 = canvas1.toDataURL('image/png', 1.0);
-  pdf.addImage(img1, 'PNG', 0, 0, pw1, ph1, undefined, 'FAST');
-  el1.style.position = '';
-  el1.style.left = '';
-  el1.style.top = '';
-  el1.style.zIndex = '';
-}
+    if (el1) {
+      el1.style.width = '1123px';
+      el1.style.height = '794px';
+      el1.style.position = 'fixed';
+      el1.style.left = '0';
+      el1.style.top = '0';
+      el1.style.zIndex = '-1';
+      await new Promise(r => setTimeout(r, 300));
+      const canvas1 = await html2canvas(el1, captureOptionsLandscape);
+      const img1 = canvas1.toDataURL('image/png', 1.0);
+      pdf.addImage(img1, 'PNG', 0, 0, pw1, ph1, undefined, 'FAST');
+      el1.style.position = '';
+      el1.style.left = '';
+      el1.style.top = '';
+      el1.style.zIndex = '';
+    }
 
     setDownloadProgress(45);
     pdf.addPage('a4', 'p');
     const pw2 = pdf.internal.pageSize.getWidth();
     const ph2 = pdf.internal.pageSize.getHeight();
 
-const captureOptionsPortrait = {
-  scale: 2,
-  useCORS: true,
-  allowTaint: true,
-  backgroundColor: '#ffffff',
-  width: 794,
-  height: 1123,
-  windowWidth: 1200,
-  windowHeight: 1123,
-  logging: false,
-  imageTimeout: 15000,
-};
+    // ✅ FIX: windowWidth harus 794, bukan 1200!
+    const captureOptionsPortrait = {
+      scale: 2,
+      useCORS: true,
+      allowTaint: false,       // ✅ false
+      backgroundColor: '#ffffff',
+      width: 794,
+      height: 1123,
+      windowWidth: 794,        // ✅ DIFIX dari 1200 → 794
+      windowHeight: 1123,
+      logging: false,
+      imageTimeout: 20000,
+    };
 
-const el2 = document.getElementById(`transcript-render-${reportLog.id}`);
-if (el2) {
-  el2.style.width = '794px';
-  el2.style.height = '1123px';
-  el2.style.position = 'fixed';
-  el2.style.left = '0';
-  el2.style.top = '0';
-  el2.style.zIndex = '-1';
-  await new Promise(r => setTimeout(r, 500));
-  const canvas2 = await html2canvas(el2, captureOptionsPortrait);
-  const img2 = canvas2.toDataURL('image/png', 1.0);
-  pdf.addImage(img2, 'PNG', 0, 0, pw2, ph2, undefined, 'FAST');
-  el2.style.position = '';
-  el2.style.left = '';
-  el2.style.top = '';
-  el2.style.zIndex = '';
-}
+    const el2 = document.getElementById(`transcript-render-${reportLog.id}`);
+    if (el2) {
+      el2.style.width = '794px';
+      el2.style.height = '1123px';
+      el2.style.position = 'fixed';
+      el2.style.left = '0';
+      el2.style.top = '0';
+      el2.style.zIndex = '-1';
+      await new Promise(r => setTimeout(r, 300));
+      const canvas2 = await html2canvas(el2, captureOptionsPortrait);
+      const img2 = canvas2.toDataURL('image/png', 1.0);
+      pdf.addImage(img2, 'PNG', 0, 0, pw2, ph2, undefined, 'FAST');
+      el2.style.position = '';
+      el2.style.left = '';
+      el2.style.top = '';
+      el2.style.zIndex = '';
+    }
 
     setDownloadProgress(95);
     pdf.save(`Rapot_Sanur_${user.name.toUpperCase().replace(/\s+/g, '_')}.pdf`);
