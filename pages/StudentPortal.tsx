@@ -381,18 +381,18 @@ if (el1) {
     const pw2 = pdf.internal.pageSize.getWidth();
     const ph2 = pdf.internal.pageSize.getHeight();
 
-    const captureOptionsPortrait = {
-      scale: 2,
-      useCORS: true,
-      allowTaint: true,
-      backgroundColor: '#ffffff',
-      width: 794,
-      height: 1123,
-      windowWidth: 794,   // 👈 INI KUNCINYA
-      windowHeight: 1123,
-      logging: false,
-      imageTimeout: 15000,
-    };
+const captureOptionsPortrait = {
+  scale: 2,
+  useCORS: true,
+  allowTaint: true,
+  backgroundColor: '#ffffff',
+  width: 794,
+  height: 1123,
+  windowWidth: 1200,
+  windowHeight: 1123,
+  logging: false,
+  imageTimeout: 15000,
+};
 
 const el2 = document.getElementById(`transcript-render-${reportLog.id}`);
 if (el2) {
