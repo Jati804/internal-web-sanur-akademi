@@ -81,7 +81,7 @@ const studentOnlyLogs = (() => {
 
   // LOGIKA QR CODE
   const statusLabel = isPass ? "LULUS & KOMPETEN" : "PESERTA PELATIHAN";
-  const verifyUrl = `https://sanur-verify.vercel.app/#/verify?id=${reportLog.id}`;
+  const verifyUrl = `https://sanur-verify.vercel.app/verify?id=${reportLog.id}`;
   const finalQrData = verifyUrl;
 
     // 👇 TAMBAH INI
