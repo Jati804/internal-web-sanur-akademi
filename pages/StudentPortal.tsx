@@ -579,8 +579,8 @@ const handleDownloadPDFReport = async (course: any) => {
     <div style="margin-bottom:30px; display:flex; justify-content:space-between; align-items:flex-end;">
       <p style="font-size:13px; font-weight:900; color:${accentColor}; text-transform:uppercase; letter-spacing:0.3em; margin:0;">📚 MATERI KURIKULUM</p>
       <div style="display:flex; flex-direction:column; align-items:flex-end; text-align:right;">
-        <p style="font-size:9px; font-weight:900; color:#94a3b8; text-transform:uppercase; margin:0 0 3px 0;">Guru Penilai</p>
-        <p style="font-size:13px; font-weight:900; color:#1e293b; text-transform:uppercase; margin:0; white-space:nowrap;">${reportLog.teacherName || '-'}</p>
+        <p style="font-size:9px; font-weight:900; color:#94a3b8; text-transform:uppercase; letter-spacing:0.3em; margin:0 -0.3em 3px 0;">Guru Penilai</p>
+        <p style="font-size:13px; font-weight:900; color:#1e293b; text-transform:uppercase; letter-spacing:0.05em; margin:0 -0.05em 0 0; white-space:nowrap;">${reportLog.teacherName || '-'}</p>
       </div>
     </div>
 
