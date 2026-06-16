@@ -359,15 +359,22 @@ const handleDownloadPDFReport = async (course: any) => {
 
     setDownloadProgress(20);
     const el1 = document.getElementById(`cert-render-${reportLog.id}`);
-    if (el1) {
-      // paksa ukuran eksplisit sebelum capture
-      el1.style.width = '1123px';
-      el1.style.height = '794px';
-      await new Promise(r => setTimeout(r, 300)); // tunggu reflow
-      const canvas1 = await html2canvas(el1, captureOptionsLandscape);
-      const img1 = canvas1.toDataURL('image/png', 1.0);
-      pdf.addImage(img1, 'PNG', 0, 0, pw1, ph1, undefined, 'FAST');
-    }
+if (el1) {
+  el1.style.width = '1123px';
+  el1.style.height = '794px';
+  el1.style.position = 'fixed';
+  el1.style.left = '0';
+  el1.style.top = '0';
+  el1.style.zIndex = '-1';
+  await new Promise(r => setTimeout(r, 500));
+  const canvas1 = await html2canvas(el1, captureOptionsLandscape);
+  const img1 = canvas1.toDataURL('image/png', 1.0);
+  pdf.addImage(img1, 'PNG', 0, 0, pw1, ph1, undefined, 'FAST');
+  el1.style.position = '';
+  el1.style.left = '';
+  el1.style.top = '';
+  el1.style.zIndex = '';
+}
 
     setDownloadProgress(45);
     pdf.addPage('a4', 'p');
