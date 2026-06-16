@@ -10,9 +10,6 @@ import {
   Filter // ✅ TAMBAH INI KALAU BELUM ADA
 } from 'lucide-react';
 
-import html2canvas from 'html2canvas';
-import { jsPDF } from 'jspdf';
-
 interface TeacherReportsInboxProps {
   user: User;
   logs: Attendance[];
@@ -266,51 +263,209 @@ const avgScore = useMemo(() => {
     } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
   };
 
-  const handleDownloadPDF = async (req: any) => {
-    setDownloadProgress(5);
-    setActiveDownloadId(req.id);
-    
-    try {
-      // 🎯 HALAMAN 1: LANDSCAPE (Sertifikat Horizontal)
-      const pdf = new jsPDF({ orientation: 'l', unit: 'px', format: 'a4', hotfixes: ["px_rendering"] });
-      const pw1 = pdf.internal.pageSize.getWidth();
-      const ph1 = pdf.internal.pageSize.getHeight();
-      const captureOptionsLandscape = { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: 1123, height: 794, logging: false };
+const handleDownloadPDF = async (req: any) => {
+  const studentName = req.studentsAttended?.[0] || 'SISWA';
+  const rawScores = req.studentScores ? Object.values(req.studentScores)[0] : null;
+  const scores: number[] = Array.isArray(rawScores) ? rawScores : [];
+  const rawTopics = req.studentTopics ? Object.values(req.studentTopics)[0] : null;
+  const topics: string[] = Array.isArray(rawTopics) ? rawTopics : [];
+  const avg = scores.length > 0 ? Math.round(scores.reduce((a: number, b: number) => a + b, 0) / scores.length) : 0;
+  const isPass = avg >= 80;
+  const matpelMatch = req.className?.match(/(.*) \((.*)\) - (.*)/);
+  const subject = matpelMatch ? matpelMatch[1] : (req.className || "PROGRAM SANUR");
+  const level = matpelMatch ? matpelMatch[2] : (req.level || 'BASIC');
+  const verifyUrl = `https://sanur-verify.vercel.app/#/verify?id=${req.id}`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(verifyUrl)}`;
+  const logoUrl = `https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png`;
+  const formatDate = (d: string) => { if (!d || !d.includes('-')) return d; const p = d.split('-'); return `${p[2]}/${p[1]}/${p[0]}`; };
 
-      setDownloadProgress(20);
-      const el1 = document.getElementById(`cert-render-${req.id}`);
-      if (el1) {
-        const canvas1 = await html2canvas(el1, captureOptionsLandscape);
-        const img1 = canvas1.toDataURL('image/png', 1.0);
-        pdf.addImage(img1, 'PNG', 0, 0, pw1, ph1, undefined, 'FAST');
-      }
-      setDownloadProgress(45);
-      
-      // 🎯 HALAMAN 2: PORTRAIT (Transkrip Nilai)
-      pdf.addPage('a4', 'p');
-      const pw2 = pdf.internal.pageSize.getWidth();
-      const ph2 = pdf.internal.pageSize.getHeight();
-      const captureOptionsPortrait = { scale: 3, useCORS: true, backgroundColor: '#ffffff', width: 794, height: 1123, logging: false };
-      
-      const el2 = document.getElementById(`transcript-render-${req.id}`);
-      if (el2) {
-        const canvas2 = await html2canvas(el2, captureOptionsPortrait);
-        const img2 = canvas2.toDataURL('image/png', 1.0);
-        pdf.addImage(img2, 'PNG', 0, 0, pw2, ph2, undefined, 'FAST');
-      }
-      setDownloadProgress(95);
-      
-      pdf.save(`Rapot_Sanur_${req.studentsAttended?.[0]}.pdf`);
-      setDownloadProgress(100);
-      
-      await new Promise(r => setTimeout(r, 500));
-    } catch (e) { 
-      alert("Gagal proses PDF."); 
-    } finally { 
-      setActiveDownloadId(null); 
-      setDownloadProgress(0);
+  const mainColor = isPass ? '#1e3a8a' : '#ea580c';
+  const accentColor = isPass ? '#2563eb' : '#ea580c';
+  const gradientSidebar = isPass
+    ? 'linear-gradient(180deg, #3b82f6 0%, #8b5cf6 50%, #ec4899 100%)'
+    : 'linear-gradient(180deg, #f97316 0%, #ea580c 50%, #dc2626 100%)';
+  const gradientBox = isPass
+    ? 'linear-gradient(135deg, #1e3a8a, #0f172a)'
+    : 'linear-gradient(135deg, #ea580c, #0f172a)';
+
+  const tableRows = scores.map((score, i) => `
+    <tr style="border-bottom: 1px solid #f1f5f9; height: 78px;">
+      <td style="padding: 0 35px; vertical-align: middle;">
+        <span style="font-weight:900; color:#1e293b; font-size:20px; text-transform:uppercase; font-style:italic; letter-spacing:-0.01em; line-height:1.1; display:block;">
+          ${topics[i] || 'MATERI PEMBELAJARAN'}
+        </span>
+      </td>
+      <td style="text-align:center; vertical-align:middle;">
+        <span style="font-weight:900; color:${accentColor}; font-size:20px; font-style:italic;">${score}</span>
+        <span style="color:#94a3b8; font-weight:700; font-size:11px;">/100</span>
+      </td>
+    </tr>
+  `).join('');
+
+  const html = `<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Rapot_Sanur_${studentName.replace(/\s+/g, '_')}</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,400;0,700;0,900;1,700;1,900&display=swap" rel="stylesheet">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', serif; background: #111; }
+    .page-wrapper { display: flex; align-items: center; justify-content: center; width: 100vw; min-height: 100vh; background: #111; padding: 40px 0; }
+    .page-landscape { width: 297mm; height: 210mm; background: white; overflow: hidden; display: flex; flex-direction: column; border: 25px double ${mainColor}; flex-shrink: 0; }
+    .page-landscape-inner { width: 100%; height: 100%; border: 4px solid #cbd5e1; display: flex; flex-direction: row; box-sizing: border-box; }
+    .page-portrait { width: 210mm; height: 297mm; background: white; overflow: hidden; display: flex; flex-direction: column; padding: 70px 60px; flex-shrink: 0; }
+    @media print {
+      @page:first { size: A4 landscape; margin: 0; }
+      @page { size: A4 portrait; margin: 0; }
+      body { background: white; margin: 0; }
+      .page-wrapper { display: block; width: auto; min-height: auto; padding: 0; background: white; }
+      .page-landscape { page-break-after: always; border: 25px double ${mainColor}; }
+      .no-print { display: none !important; }
     }
-  };
+  </style>
+</head>
+<body>
+
+<div class="no-print" style="position:fixed; top:16px; right:16px; z-index:9999;">
+  <button onclick="document.getElementById('print-modal').style.display='flex'" style="background:#2563eb; color:white; border:none; padding:10px 24px; border-radius:12px; font-weight:900; font-size:13px; cursor:pointer; text-transform:uppercase; letter-spacing:0.1em;">
+    🖨️ Print / Save PDF
+  </button>
+</div>
+
+<div id="print-modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:99999; align-items:center; justify-content:center;">
+  <div style="background:white; border-radius:24px; padding:40px; max-width:480px; width:90%; box-shadow:0 25px 60px rgba(0,0,0,0.4);">
+    <h2 style="font-size:20px; font-weight:900; color:#0f172a; text-transform:uppercase; letter-spacing:-0.02em; margin-bottom:6px;">📄 Cara Save sebagai PDF</h2>
+    <p style="font-size:13px; color:#64748b; margin-bottom:28px;">Ikuti langkah berikut agar sertifikat tersimpan dengan benar</p>
+    <div style="display:flex; gap:16px; align-items:flex-start; margin-bottom:20px;">
+      <div style="width:32px; height:32px; background:#2563eb; color:white; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; flex-shrink:0;">1</div>
+      <div>
+        <p style="font-weight:900; color:#0f172a; font-size:14px; margin-bottom:2px;">Pilih Destination: <span style="color:#2563eb;">Save as PDF</span></p>
+        <p style="font-size:12px; color:#64748b;">Di dialog print yang muncul, ganti printer ke <strong>"Save as PDF"</strong></p>
+      </div>
+    </div>
+    <div style="display:flex; gap:16px; align-items:flex-start; margin-bottom:20px;">
+      <div style="width:32px; height:32px; background:#2563eb; color:white; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; flex-shrink:0;">2</div>
+      <div>
+        <p style="font-weight:900; color:#0f172a; font-size:14px; margin-bottom:2px;">Centang <span style="color:#2563eb;">Background Graphics</span></p>
+        <p style="font-size:12px; color:#64748b;">Klik <strong>"More settings"</strong> lalu centang <strong>"Background graphics"</strong> — agar warna, gradient, dan gambar ikut tercetak</p>
+      </div>
+    </div>
+    <div style="display:flex; gap:16px; align-items:flex-start; margin-bottom:32px;">
+      <div style="width:32px; height:32px; background:#2563eb; color:white; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; flex-shrink:0;">3</div>
+      <div>
+        <p style="font-weight:900; color:#0f172a; font-size:14px; margin-bottom:2px;">Klik <span style="color:#2563eb;">Save</span></p>
+        <p style="font-size:12px; color:#64748b;">Pilih lokasi penyimpanan dan klik <strong>"Save"</strong></p>
+      </div>
+    </div>
+    <div style="display:flex; gap:12px;">
+      <button onclick="document.getElementById('print-modal').style.display='none'" style="flex:1; padding:12px; border:2px solid #e2e8f0; background:white; border-radius:12px; font-weight:900; font-size:13px; cursor:pointer; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;">Batal</button>
+      <button onclick="document.getElementById('print-modal').style.display='none'; window.print();" style="flex:2; padding:12px; background:#2563eb; color:white; border:none; border-radius:12px; font-weight:900; font-size:13px; cursor:pointer; text-transform:uppercase; letter-spacing:0.05em;">🖨️ Mengerti, Lanjut Print!</button>
+    </div>
+  </div>
+</div>
+
+<!-- HALAMAN 1: SERTIFIKAT LANDSCAPE -->
+<div class="page-wrapper">
+  <div class="page-landscape">
+    <div class="page-landscape-inner">
+      <div style="width:140px; background:${gradientSidebar}; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 15px; flex-shrink:0;">
+        <div style="background:white; padding:12px; border-radius:15px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
+          <img src="${qrUrl}" style="width:100px; height:100px; display:block;" />
+        </div>
+        <p style="font-size:8px; font-weight:900; color:white; text-align:center; margin-top:12px; text-transform:uppercase; letter-spacing:0.1em;">Scan untuk verifikasi</p>
+      </div>
+      <div style="flex:1; display:flex; flex-direction:column; padding:50px 80px;">
+        <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:50px;">
+          <img src="${logoUrl}" style="max-width:240px; max-height:80px; object-fit:contain;" />
+        </div>
+        <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
+          <h2 style="font-size:38px; font-family:serif; font-style:italic; color:${mainColor}; margin:0 0 25px 0;">${isPass ? 'Sertifikat Kelulusan' : 'Capaian Pembelajaran'}</h2>
+          <p style="font-size:14px; font-family:serif; font-style:italic; color:#64748b; margin:0 0 15px 0;">Diberikan kepada:</p>
+          <div style="display:inline-block; margin-bottom:40px;">
+            <h3 style="font-size:34px; font-weight:900; color:${accentColor}; text-transform:uppercase; letter-spacing:0.05em; margin:0; line-height:1.1;">${studentName.toUpperCase()}</h3>
+            <div style="width:100%; height:4px; background:${isPass ? '#dbeafe' : '#ffedd5'}; margin-top:10px; border-radius:10px;"></div>
+          </div>
+          <p style="font-size:14px; font-family:serif; font-style:italic; color:#475569; line-height:1.7; margin:0 0 8px 0; padding:0 100px;">${isPass ? 'Telah menyelesaikan seluruh materi pelatihan dan lulus dalam ujian standar kompetensi' : 'Telah berkomitmen mengikuti dan menyelesaikan seluruh rangkaian program pelatihan'}</p>
+          <p style="font-size:14px; font-family:serif; font-style:italic; color:${mainColor}; font-weight:700; margin:0 0 40px 0;">Sanur Akademi Inspirasi</p>
+          <div style="background:${gradientBox}; width:700px; padding:30px 20px; border-radius:35px; display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:0 12px 30px -8px rgba(0,0,0,0.15); margin-bottom:50px;">
+            <p style="font-size:22px; font-weight:900; color:white; text-transform:uppercase; font-style:italic; margin:0; line-height:1.2;">${subject}</p>
+            <p style="font-size:16px; font-weight:900; color:rgba(255,255,255,0.8); text-transform:uppercase; letter-spacing:0.3em; margin:8px 0 0 0;">LEVEL ${level}</p>
+          </div>
+        </div>
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; margin-top:auto;">
+          <div style="text-align:center;">
+            <p style="font-size:9px; font-weight:900; color:${isPass ? '#60a5fa' : '#fb923c'}; text-transform:uppercase; letter-spacing:0.2em; margin-bottom:3px;">Tanggal Terbit</p>
+            <p style="font-size:13px; font-weight:900; color:#64748b; font-style:italic;">${formatDate(req.date)}</p>
+          </div>
+          <div style="text-align:center;">
+            <p style="font-size:9px; font-weight:900; color:${isPass ? '#60a5fa' : '#fb923c'}; text-transform:uppercase; letter-spacing:0.2em; margin-bottom:3px;">ID Sertifikat</p>
+            <p style="font-size:11px; font-weight:900; color:#64748b; font-style:italic;">${req.id.toUpperCase()}</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HALAMAN 2: TRANSKRIP PORTRAIT -->
+<div class="page-wrapper">
+  <div class="page-portrait">
+    <div style="display:flex; align-items:flex-end; gap:16px; margin-bottom:20px;">
+      <div style="width:52px; height:52px; background:#0f172a; color:white; border-radius:18px; display:flex; align-items:center; justify-content:center; transform:rotate(6deg); flex-shrink:0;">
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+      </div>
+      <h1 style="font-size:34px; font-weight:900; font-style:italic; color:#1e293b; text-transform:uppercase; letter-spacing:-0.05em; line-height:1;">Transkrip <span style="color:${accentColor};">Nilai</span></h1>
+    </div>
+    <div style="margin-bottom:30px; display:flex; justify-content:space-between; align-items:flex-end;">
+      <p style="font-size:13px; font-weight:900; color:${accentColor}; text-transform:uppercase; letter-spacing:0.3em; margin:0;">📚 MATERI KURIKULUM</p>
+      <div style="display:flex; flex-direction:column; align-items:flex-end; text-align:right;">
+        <p style="font-size:9px; font-weight:900; color:#94a3b8; text-transform:uppercase; letter-spacing:0.3em; margin:0 0 3px 0;">Guru Penilai</p>
+        <p style="font-size:13px; font-weight:900; color:#1e293b; text-transform:uppercase; margin:0; letter-spacing:0.05em;">${req.teacherName || '-'}</p>
+      </div>
+    </div>
+    <div style="background:white; border-radius:35px; border:3px solid #f1f5f9; overflow:hidden; margin-bottom:30px;">
+      <table style="width:100%; border-collapse:collapse;">
+        <thead>
+          <tr style="background:#0f172a; color:white;">
+            <th style="padding:14px; text-align:center; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em;">Materi</th>
+            <th style="padding:14px; text-align:center; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; width:120px;">Nilai</th>
+          </tr>
+        </thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+    <div style="padding:30px 40px; background:#0f172a; border-radius:42px; color:white; display:flex; justify-content:space-between; align-items:center; position:relative; overflow:hidden;">
+      <div style="position:absolute; top:0; right:0; width:230px; height:230px; background:rgba(255,255,255,0.05); border-radius:999px; margin-right:-130px; margin-top:-130px;"></div>
+      <div style="position:relative; z-index:10;">
+        <p style="font-size:9px; font-weight:900; color:#60a5fa; text-transform:uppercase; letter-spacing:0.5em; margin-bottom:4px;">Evaluasi Kumulatif</p>
+        <div style="display:flex; align-items:baseline; gap:14px;">
+          <p style="font-size:15px; font-weight:900; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.1em;">RATA-RATA:</p>
+          <h4 style="font-size:60px; font-weight:900; font-style:italic; letter-spacing:-0.05em;">${avg}</h4>
+          <span style="font-size:18px; color:rgba(255,255,255,0.3); font-weight:900; font-style:italic;">/ 100</span>
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,0.1); padding:18px 24px; border-radius:25px; border:1px solid rgba(255,255,255,0.2); border-bottom:6px solid ${isPass ? '#10b981' : '#f97316'}; text-align:center; min-width:190px; position:relative; z-index:10;">
+        <p style="font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; color:#93c5fd; margin-bottom:5px;">Status Capaian</p>
+        <p style="font-size:17px; font-weight:900; font-style:italic; text-transform:uppercase;">${isPass ? 'KOMPETEN' : 'REMEDIAL'}</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>`;
+
+  const blob = new Blob([html], { type: 'text/html' });
+  const url = URL.createObjectURL(blob);
+  const printWindow = window.open(url, '_blank');
+  if (printWindow) {
+    printWindow.onload = () => {
+      setTimeout(() => URL.revokeObjectURL(url), 60000);
+    };
+  }
+};
 
   return (
     <>
@@ -637,19 +792,6 @@ const avgScore = useMemo(() => {
             )}
          </div>
       )}
-
-      {/* RENDER PDF HIDDEN MENGGUNAKAN MASTER TEMPLATE */}
-<div className="fixed left-[-9999px] top-0 pointer-events-none">
-   {publishedReports.map((req) => (
-      <ReportTemplate 
-        key={req.id} 
-        reportLog={req} 
-        allLogs={logs}
-        studentAttendanceLogs={studentAttendanceLogs} // ✅ INI HARUS ADA!
-        studentName={req.studentsAttended?.[0] || 'SISWA'} 
-      />
-   ))}
-</div>
 
       {showMilestoneFor && (
         <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
