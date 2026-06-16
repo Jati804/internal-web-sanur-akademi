@@ -361,12 +361,12 @@ const handleDownloadPDFReport = async (course: any) => {
   const tableRows = scores.map((score, i) => `
     <tr style="border-bottom: 1px solid #f1f5f9; height: 78px;">
       <td style="padding: 0 35px; vertical-align: middle;">
-        <span style="font-weight:900; color:#1e293b; font-size:20px; text-transform:uppercase; font-style:italic; letter-spacing:-0.01em; line-height:1.1; display:block;">
+        <span style="font-weight:900; color:#1e293b; font-size:20px; text-transform:uppercase; letter-spacing:-0.01em; line-height:1.1; display:block;">
           ${topics[i] || 'MATERI PEMBELAJARAN'}
         </span>
       </td>
       <td style="text-align:center; vertical-align:middle;">
-        <span style="font-weight:900; color:${accentColor}; font-size:20px; font-style:italic;">${score}</span>
+        <span style="font-weight:900; color:${accentColor}; font-size:20px;">${score}</span>
         <span style="color:#94a3b8; font-weight:700; font-size:11px;">/100</span>
       </td>
     </tr>
