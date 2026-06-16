@@ -344,7 +344,7 @@ const handleDownloadPDFReport = async (course: any) => {
   const matpelMatch = reportLog.className?.match(/(.*) \((.*)\) - (.*)/);
   const subject = matpelMatch ? matpelMatch[1] : (reportLog.className || "PROGRAM SANUR");
   const level = matpelMatch ? matpelMatch[2] : (reportLog.level || 'BASIC');
-  const verifyUrl = `https://sanur-verify.vercel.app/#/verify?id=${reportLog.id}`;
+  const verifyUrl = `https://sanur-verify.vercel.app/verify?id=${reportLog.id}`;
   const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(verifyUrl)}`;
   const logoUrl = `https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png`;
   const formatDate = (d: string) => { if (!d || !d.includes('-')) return d; const p = d.split('-'); return `${p[2]}/${p[1]}/${p[0]}`; };
