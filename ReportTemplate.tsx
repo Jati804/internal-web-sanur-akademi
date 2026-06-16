@@ -209,7 +209,7 @@ const studentOnlyLogs = (() => {
       </div> {/* Tutup halaman 1 */}
 
       {/* ✅ HALAMAN 2: TRANSKRIP (PORTRAIT) - PERIODE HIGHLIGHTED */}
-      <div id={`transcript-render-${reportLog.id}`} style={{ ...PAGE_PORTRAIT, padding: '70px 60px' }}>
+      <div id={`transcript-render-${reportLog.id}`} style={{ ...PAGE_PORTRAIT, padding: '70px 60px', fontFamily: 'Georgia, "Times New Roman", serif' }}>
         
         <div style={{ display: 'flex', alignItems: 'flex-end', gap: '16px', marginBottom: '20px', position: 'relative', zIndex: 10 }}>
           <div style={{ width: '52px', height: '52px', backgroundColor: '#0f172a', color: 'white', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(6deg)' }}><Layout size={26}/></div>
