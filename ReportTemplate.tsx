@@ -84,6 +84,11 @@ const studentOnlyLogs = (() => {
   const verifyUrl = `https://sanur-verify.vercel.app/#/verify?id=${reportLog.id}`;
   const finalQrData = verifyUrl;
 
+    // 👇 TAMBAH INI
+  const FONT_STYLE = `
+    @import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,900;1,900&display=swap');
+  `;
+
   // ✅ HALAMAN 1: LANDSCAPE (1123x794px)
   const PAGE_LANDSCAPE: React.CSSProperties = {
     width: '1123px',
