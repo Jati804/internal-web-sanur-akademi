@@ -10,6 +10,9 @@ import {
   Filter // ✅ TAMBAH INI KALAU BELUM ADA
 } from 'lucide-react';
 
+import html2canvas from 'html2canvas';
+import { jsPDF } from 'jspdf';
+
 interface TeacherReportsInboxProps {
   user: User;
   logs: Attendance[];
@@ -466,7 +469,6 @@ const handleDownloadPDF = async (req: any) => {
     };
   }
 };
-
   return (
     <>
       <style>{`
@@ -792,6 +794,7 @@ const handleDownloadPDF = async (req: any) => {
             )}
          </div>
       )}
+
 
       {showMilestoneFor && (
         <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
