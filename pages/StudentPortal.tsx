@@ -338,7 +338,7 @@ const handleDownloadPDFReport = async (course: any) => {
   setActiveDownloadId(course.id);
   try {
     await document.fonts.ready;
-    await new Promise(r => setTimeout(r, 1000));
+    await new Promise(r => setTimeout(r, 3000));
     const pdf = new jsPDF({ orientation: 'l', unit: 'px', format: 'a4', hotfixes: ["px_rendering"] });
     const pw1 = pdf.internal.pageSize.getWidth();
     const ph1 = pdf.internal.pageSize.getHeight();
