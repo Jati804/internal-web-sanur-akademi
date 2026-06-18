@@ -494,7 +494,6 @@ const handleDragEnd = () => {
                     </button>
                  </div>
               </div>
-              <p className="mt-8 text-[9px] font-bold text-slate-300 uppercase tracking-widest text-center italic">Perubahan akan langsung muncul di HP guru Kak ✨</p>
            </div>
         </div>
       )}
