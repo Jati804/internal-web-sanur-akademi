@@ -76,30 +76,6 @@ const [addForm, setAddForm] = useState({
   description: ''
 });
 
-// ✅ Auto scroll modal ke tengah viewport (body bebas scroll)
-useEffect(() => {
-  const hasModal = !!(
-    selectedPayout || 
-    confirmingSpp || 
-    showAddModal || 
-    editingTransaction || 
-    confirmDeleteTx || 
-    showImportModal || 
-    previewImg
-  );
-  
-  if (hasModal) {
-    const timer = setTimeout(() => {
-      const modalElement = document.querySelector('[data-modal-container]');
-      if (modalElement) {
-        modalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 150);
-    
-    return () => clearTimeout(timer);
-  }
-}, [selectedPayout, confirmingSpp, showAddModal, editingTransaction, confirmDeleteTx, showImportModal, previewImg]);
-
 // ✅ TAMBAHIN INI (useEffect baru untuk baca location.state)
 useEffect(() => {
   if (location?.state?.highlightTx) {
@@ -621,7 +597,7 @@ const executePayTeacher = async () => {
         }
       `}</style>
       
-    <div className="space-y-12 animate-in pb-40 px-2">
+    <div className="space-y-12 pb-40 px-2">
       <div className="bg-[#0F172A] p-12 md:p-16 rounded-[4rem] text-white shadow-2xl relative overflow-hidden flex flex-col items-center">
         <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600 rounded-full blur-[120px] opacity-20"></div>
         <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter mb-12 relative z-10">KAS <span className="text-blue-500">SANUR</span></h2>
