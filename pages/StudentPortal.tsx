@@ -720,7 +720,7 @@ const handleDownloadPDFReport = async (course: any) => {
   }
 `}</style>
 
-      <div className="max-w-6xl mx-auto space-y-8 pb-40 px-4 animate-in fade-in duration-700">
+      <div className="max-w-6xl mx-auto space-y-8 pb-40 px-4">
       {(activeDownloadId || loading) && (
   <div data-modal-container className="fixed inset-0 z-[300000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
      <div className="bg-white w-full max-w-[320px] rounded-[2rem] p-10 shadow-2xl flex flex-col items-center text-center space-y-6 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
