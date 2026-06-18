@@ -102,27 +102,6 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, r
     }
   }, [activeStep, lastActionedId]);
 
-  // ✅ Auto scroll modal ke tengah viewport (body bebas scroll)
-  useEffect(() => {
-    const hasModal = !!(
-      activeDownloadId || 
-      showMilestoneFor || 
-      confirmReject
-    );
-    
-    if (hasModal) {
-      // Tunggu dikit biar DOM modal udah ada, baru scroll
-      const timer = setTimeout(() => {
-        const modalElement = document.querySelector('[data-modal-container]');
-        if (modalElement) {
-          modalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 150);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [activeDownloadId, showMilestoneFor, confirmReject]);
-
   const reportRequests = useMemo(() => {
   const requests = reports.filter(r =>
     (r.status === 'REQ' || r.status === 'REPORT_PROCESSING') &&
@@ -490,7 +469,7 @@ const handleDownloadPDF = async (req: any) => {
         }
       `}</style>
 
-      <div className="max-w-7xl mx-auto space-y-12 pb-40 px-4 animate-in fade-in duration-700">
+      <div className="max-w-7xl mx-auto space-y-12 pb-40 px-4">
       {/* LOADING MODAL TENGAH - DENGAN REAL PROGRESS BAR */}
       {activeDownloadId && (
         <div data-modal-container className="fixed inset-0 z-[300000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
