@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, Attendance } from '../types';
+import ModalPortal from '../ModalPortal.tsx';
 import { supabase } from '../services/supabase.ts';
 import { 
   ClipboardCheck, Loader2, Clock, Send, Zap, HeartPulse,
@@ -539,6 +540,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
 
       {/* MODAL BLOCKING SLOT OWNERSHIP */}
       {blockModal && (
+        <ModalPortal>
         <div data-modal-container className="fixed inset-0 z-[300000] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
           <div className="bg-white w-full max-w-md rounded-[4rem] p-12 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
             <button 
@@ -607,6 +609,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
             </button>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
     </>
