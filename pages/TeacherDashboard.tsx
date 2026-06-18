@@ -545,14 +545,6 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
           <div className="bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl relative border-t-8 border-rose-600 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
             <div className="p-8">
 
-              {/* Tombol tutup */}
-              <button
-                onClick={() => setBlockModal(null)}
-                className="absolute top-5 right-5 w-8 h-8 bg-slate-100 hover:bg-rose-500 hover:text-white text-slate-500 rounded-full flex items-center justify-center transition-all"
-              >
-                <X size={16}/>
-              </button>
-
               {/* Layout 2 kolom */}
               <div className="grid grid-cols-2 gap-5">
 
