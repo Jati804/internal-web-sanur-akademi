@@ -12,6 +12,7 @@ import {
 
 import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
+import ModalPortal from '../ModalPortal.tsx';
 
 interface StudentPortalProps {
   user: User;
@@ -722,6 +723,7 @@ const handleDownloadPDFReport = async (course: any) => {
 
       <div className="max-w-6xl mx-auto space-y-8 pb-40 px-4">
       {(activeDownloadId || loading) && (
+        <ModalPortal>
   <div data-modal-container className="fixed inset-0 z-[300000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
      <div className="bg-white w-full max-w-[320px] rounded-[2rem] p-10 shadow-2xl flex flex-col items-center text-center space-y-6 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <div className="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center shadow-xl animate-bounce">
@@ -744,12 +746,7 @@ const handleDownloadPDFReport = async (course: any) => {
               )}
            </div>
         </div>
-      )}
-
-      {showSuccess && (
-        <div className="fixed top-10 left-1/2 -translate-x-1/2 z-[300000] px-10 py-6 bg-emerald-600 text-white rounded-[2.5rem] font-black text-xs uppercase tracking-widest shadow-2xl flex items-center gap-4 border-4 border-white/20 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out forwards'}}>
-           <CheckCircle2 size={28} /> DATA DIPERBARUI! ✨
-        </div>
+        </ModalPortal>
       )}
 
       <header className="relative py-16 px-12 bg-emerald-600 rounded-[4rem] text-white shadow-2xl overflow-hidden group">
@@ -1240,6 +1237,7 @@ const completedSessions = studentAttendanceLogs
       )}
 
       {showEditDateModal && (
+        <ModalPortal>
         <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
            <div className="bg-white w-full max-w-[340px] rounded-[2.5rem] p-8 shadow-2xl text-center space-y-6 relative border-t-4 border-blue-500 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setShowEditDateModal(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
@@ -1249,9 +1247,11 @@ const completedSessions = studentAttendanceLogs
               <div className="flex gap-3"><button onClick={() => setShowEditDateModal(null)} className="flex-1 py-4 bg-slate-50 text-slate-400 rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">BATAL</button><button onClick={executeUpdateSessionDate} disabled={loading} className="flex-[2] py-4 bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 flex items-center justify-center gap-2">{loading ? <Loader2 size={14} className="animate-spin" /> : <><Save size={14}/> SIMPAN PERUBAHAN ✨</>}</button></div>
            </div>
         </div>
+        </ModalPortal>
       )}
 
       {confirmDeletePayment && (
+        <ModalPortal>
         <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
            <div className="bg-white w-full max-w-[340px] rounded-[2rem] p-8 text-center space-y-6 shadow-2xl relative border-t-4 border-rose-500 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setConfirmDeletePayment(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
@@ -1260,9 +1260,11 @@ const completedSessions = studentAttendanceLogs
               <div className="flex gap-3"><button onClick={() => setConfirmDeletePayment(null)} className="flex-1 py-4 bg-slate-50 text-slate-400 rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">BATAL</button><button onClick={executeDeletePayment} disabled={loading} className="flex-1 py-4 bg-rose-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 flex items-center justify-center gap-2">{loading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} HAPUS</button></div>
            </div>
         </div>
+        </ModalPortal>
       )}
 
       {showFinalConfirmation && (
+        <ModalPortal>
         <div data-modal-container className="fixed inset-0 z-[130000] flex items-center justify-center p-6 bg-slate-900/95 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
            <div className="bg-white w-full max-w-[380px] rounded-[2.5rem] p-10 shadow-2xl text-center space-y-8 relative overflow-hidden border-t-4 border-amber-500 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setShowFinalConfirmation(false)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
@@ -1309,11 +1311,13 @@ const completedSessions = studentAttendanceLogs
               </div>
            </div>
         </div>
+        </ModalPortal>
       )}
 
-      {previewModal && (<div data-modal-container className="fixed inset-0 z-[300000] flex items-center justify-center p-6 bg-slate-900/95 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}} onClick={() => setPreviewModal(null)}><div className="relative max-w-4xl w-full flex flex-col items-center opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}><button className="absolute -top-14 right-0 p-4 text-white hover:text-rose-500 transition-colors" onClick={() => setPreviewModal(null)}><X size={40}/></button><img src={previewModal} className="max-w-full max-h-[75vh] rounded-[3rem] shadow-2xl border-4 border-white/10 object-contain" alt="Preview" /><div className="mt-8 text-center"><p className="text-[10px] font-black text-white/40 uppercase tracking-[0.8em] italic">Sanur Payment Verification ✨</p></div></div></div>)}
+      {previewModal && (<ModalPortal><div data-modal-container className="fixed inset-0 z-[300000] flex items-center justify-center p-6 bg-slate-900/95 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}} onClick={() => setPreviewModal(null)}><div className="relative max-w-4xl w-full flex flex-col items-center opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}><button className="absolute -top-14 right-0 p-4 text-white hover:text-rose-500 transition-colors" onClick={() => setPreviewModal(null)}><X size={40}/></button><img src={previewModal} className="max-w-full max-h-[75vh] rounded-[3rem] shadow-2xl border-4 border-white/10 object-contain" alt="Preview" /><div className="mt-8 text-center"><p className="text-[10px] font-black text-white/40 uppercase tracking-[0.8em] italic">Sanur Payment Verification ✨</p></div></div></div></ModalPortal>)}
       
       {confirmingAbsen && (
+        <ModalPortal>
         <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
            <div className="bg-white w-full max-w-[340px] rounded-[2rem] p-8 shadow-2xl text-center space-y-6 relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setConfirmingAbsen(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
@@ -1323,9 +1327,11 @@ const completedSessions = studentAttendanceLogs
               <button onClick={handleConfirmAbsen} disabled={loading} className="w-full py-4 bg-emerald-600 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">{loading ? <Loader2 size={14} className="animate-spin" /> : 'SAYA SUDAH BELAJAR! ✨'}</button>
            </div>
         </div>
+        </ModalPortal>
       )}
 
       {requestingReportFor && (
+        <ModalPortal>
         <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
            <div className="bg-white w-full max-w-[360px] rounded-[2rem] p-8 shadow-2xl text-center space-y-6 relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setRequestingReportFor(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
@@ -1334,6 +1340,7 @@ const completedSessions = studentAttendanceLogs
               <button onClick={handleRequestReport} disabled={!selectedTeacherForReport || loading} className="w-full py-4 bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.1em] shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">{loading ? <Loader2 size={14} className="animate-spin" /> : <><Sparkles size={14} /> AJUKAN SEKARANG ✨</>}</button>
            </div>
         </div>
+        </ModalPortal>
       )}
       
       <div className="fixed left-[-9999px] top-0 pointer-events-none">
