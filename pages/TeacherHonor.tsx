@@ -168,27 +168,6 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
     }
   }, [highlightId, cycleGroups]);
 
-  // âœ… Auto scroll modal ke tengah viewport (body bebas scroll)
-  useEffect(() => {
-    const hasModal = !!(
-      showProofModal || 
-      showPurgedInfo || 
-      confirmDeletePkg
-    );
-    
-    if (hasModal) {
-      // Tunggu dikit biar DOM modal udah ada, baru scroll
-      const timer = setTimeout(() => {
-        const modalElement = document.querySelector('[data-modal-container]');
-        if (modalElement) {
-          modalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 150);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [showProofModal, showPurgedInfo, confirmDeletePkg]);
-
   const unpaidTotal = useMemo(() => 
     logs.filter(l => 
       l.teacherId === user.id && 
@@ -222,7 +201,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
         }
       `}</style>
 
-      <div className="max-w-7xl mx-auto space-y-12 pb-40 px-4 animate-in">
+      <div className="max-w-7xl mx-auto space-y-12 pb-40 px-4">
 
       {isDeleting && (
         <div className="fixed inset-0 z-[300000] bg-slate-900/60 backdrop-blur-xl flex flex-col items-center justify-center text-white">
