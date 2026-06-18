@@ -83,23 +83,6 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
     }
   }, [editData, user.id]);
 
-  // ✅ Auto scroll modal ke tengah viewport (body bebas scroll)
-  useEffect(() => {
-    const hasModal = !!blockModal;
-    
-    if (hasModal) {
-      // Tunggu dikit biar DOM modal udah ada, baru scroll
-      const timer = setTimeout(() => {
-        const modalElement = document.querySelector('[data-modal-container]');
-        if (modalElement) {
-          modalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 150);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [blockModal]);
-
   const estimatedHonor = useMemo(() => {
     const hourlyRate = form.category === 'PRIVATE' ? (salaryConfig?.privateRate || 25000) : (salaryConfig?.regulerRate || 15000);
     return Math.round(hourlyRate * form.duration);
@@ -268,7 +251,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
         }
       `}</style>
 
-      <div className="max-w-4xl mx-auto space-y-12 pb-40 px-4 animate-in">
+      <div className="max-w-4xl mx-auto space-y-12 pb-40 px-4">
       {(loading || isDetecting) && (
         <div className="fixed inset-0 z-[200000] bg-slate-900/80 backdrop-blur-xl flex flex-col items-center justify-center text-white animate-in fade-in">
            <div className="w-24 h-24 bg-blue-600 rounded-[2.5rem] flex items-center justify-center shadow-xl mb-8 animate-bounce">
