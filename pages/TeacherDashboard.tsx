@@ -542,74 +542,77 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
       {blockModal && (
         <ModalPortal>
         <div data-modal-container className="fixed inset-0 z-[300000] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-          <div className="bg-white w-full max-w-md max-h-[85vh] rounded-[4rem] shadow-2xl relative border-t-8 border-rose-600 opacity-0 overflow-hidden flex flex-col" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-  <div className="flex-1 overflow-y-auto custom-scrollbar p-12 text-center space-y-8">
-    <div className="flex justify-end">
-      <button 
-        onClick={() => setBlockModal(null)} 
-        className="p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"
-      >
-        <X size={20}/>
-      </button>
-    </div>
+          <div className="bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl relative border-t-8 border-rose-600 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+            <div className="p-8">
 
-    <div className="w-24 h-24 bg-rose-50 text-rose-600 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-inner animate-pulse border-4 border-rose-100">
-              <AlertTriangle size={48} />
-            </div>
-            
-            <div className="space-y-4">
-              <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">
-                Slot Sedang Digunakan! ⚠️
-              </h4>
-              
-              <div className="p-6 bg-rose-50 rounded-[2rem] border-2 border-rose-100 space-y-3">
-                <p className="text-[11px] font-bold text-rose-800 uppercase leading-relaxed">
-                  Kelas <span className="font-black text-rose-600">"{blockModal.className}"</span> sedang berjalan oleh:
-                </p>
-                <div className="py-4 px-6 bg-white rounded-2xl shadow-sm border border-rose-100">
-                  <p className="text-lg font-black text-slate-800 uppercase italic">
-                    {blockModal.ownerName}
-                  </p>
+              {/* Tombol tutup */}
+              <button
+                onClick={() => setBlockModal(null)}
+                className="absolute top-5 right-5 w-8 h-8 bg-slate-100 hover:bg-rose-500 hover:text-white text-slate-500 rounded-full flex items-center justify-center transition-all"
+              >
+                <X size={16}/>
+              </button>
+
+              {/* Layout 2 kolom */}
+              <div className="grid grid-cols-2 gap-5">
+
+                {/* KOLOM KIRI: warning + info guru */}
+                <div className="bg-rose-50 rounded-[1.5rem] p-5 flex flex-col gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-9 h-9 bg-rose-200 rounded-xl flex items-center justify-center shrink-0">
+                      <AlertTriangle size={18} className="text-rose-800"/>
+                    </div>
+                    <p className="text-[11px] font-black text-rose-700 uppercase tracking-wider leading-tight">Slot Sedang Digunakan!</p>
+                  </div>
+
+                  <div className="border-t border-rose-200 pt-4 space-y-3">
+                    <p className="text-[10px] font-bold text-rose-700 uppercase leading-relaxed">
+                      Kelas ini sedang berjalan oleh:
+                    </p>
+                    <div className="bg-white rounded-xl px-4 py-2">
+                      <p className="text-[9px] font-bold text-rose-400 uppercase tracking-wide leading-relaxed">{blockModal.className}</p>
+                    </div>
+                    <div className="bg-white rounded-xl px-4 py-3 flex items-center gap-3">
+                      <div className="w-8 h-8 rounded-full bg-rose-700 flex items-center justify-center text-white text-[10px] font-black shrink-0">
+                        {blockModal.ownerName.split(' ').slice(0,2).map((n: string) => n[0]).join('')}
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-black text-slate-800 uppercase">{blockModal.ownerName}</p>
+                        <p className="text-[10px] font-bold text-rose-500">Sesi {blockModal.currentSession} / 6</p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                <p className="text-[10px] font-bold text-rose-700 italic">
-                  Saat ini mereka di Sesi {blockModal.currentSession}/6
-                </p>
-              </div>
-              
-              <div className="p-5 bg-blue-50 rounded-2xl border border-blue-100 text-left space-y-2">
-                <div className="flex items-start gap-3">
-                  <Info size={16} className="text-blue-600 shrink-0 mt-0.5" />
-                  <p className="text-[10px] font-bold text-blue-800 leading-relaxed">
-                    <span className="font-black">Kakak bisa input kelas ini setelah:</span>
-                  </p>
+
+                {/* KOLOM KANAN: solusi + tombol */}
+                <div className="flex flex-col gap-4">
+                  <div className="bg-slate-50 rounded-[1.5rem] p-5 flex-1">
+                    <p className="text-[11px] font-black text-slate-700 uppercase tracking-wide mb-4">Kakak bisa input setelah:</p>
+                    <div className="space-y-3">
+                      <div className="flex items-start gap-2">
+                        <Check size={14} className="text-emerald-500 shrink-0 mt-0.5"/>
+                        <p className="text-[10px] font-bold text-slate-600 leading-relaxed">Beliau menyelesaikan <span className="font-black text-slate-800">Sesi 6</span></p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Check size={14} className="text-emerald-500 shrink-0 mt-0.5"/>
+                        <p className="text-[10px] font-bold text-slate-600 leading-relaxed">Beliau <span className="font-black text-slate-800">mendelegasikan</span> sesi kepada Kakak</p>
+                      </div>
+                      <div className="flex items-start gap-2">
+                        <Check size={14} className="text-emerald-500 shrink-0 mt-0.5"/>
+                        <p className="text-[10px] font-bold text-slate-600 leading-relaxed">Hubungi <span className="font-black text-slate-800">Admin</span> untuk koordinasi tukar kelas</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setBlockModal(null)}
+                    className="w-full py-4 bg-slate-900 hover:bg-blue-600 text-white rounded-[1.25rem] font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
+                  >
+                    <Check size={16}/> Saya Mengerti
+                  </button>
                 </div>
-                <ul className="ml-7 space-y-1.5 text-[9px] font-bold text-blue-700">
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-400">•</span>
-                    <span>Beliau menyelesaikan <span className="font-black">Sesi 6</span>, atau</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-400">•</span>
-                    <span>Beliau <span className="font-black">mendelegasikan</span> sesi kepada Kakak, atau</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <span className="text-blue-400">•</span>
-                    <span>Hubungi <span className="font-black">Admin</span> untuk koordinasi tukar kelas</span>
-                  </li>
-                </ul>
+
               </div>
-              
-              <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest italic px-4 leading-relaxed">
-                "Sistem ini mencegah bentrok data agar honor Kakak dan rekan tetap akurat! ✨"
-              </p>
-            </div>
-            
-            <button 
-              onClick={() => setBlockModal(null)} 
-              className="w-full py-6 bg-slate-900 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-widest shadow-xl hover:bg-blue-600 active:scale-95 transition-all flex items-center justify-center gap-3"
-            >
-              <Check size={20}/> SAYA MENGERTI
-            </button>
             </div>
           </div>
         </div>
