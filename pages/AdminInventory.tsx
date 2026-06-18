@@ -73,7 +73,6 @@ const canAddSales = useMemo(() => {
     requestAnimationFrame(() => {
       const modalElement = document.querySelector('[data-modal-container]');
       if (modalElement) {
-        modalElement.scrollIntoView({ behavior: 'instant', block: 'center' });
         // ✨ PAKSA FOCUS KE MODAL BIAR KELIATAN
         (modalElement as HTMLElement).focus();
       }
@@ -370,7 +369,7 @@ const canAddSales = useMemo(() => {
       }
     `}</style>
 
-    <div className="space-y-12 animate-in pb-40 px-2">
+    <div className="space-y-12 pb-40 px-2">
       {isLoading && (
         <div data-modal-container className="fixed inset-0 z-[200000] bg-slate-900/60 backdrop-blur-md flex flex-col items-center justify-center text-white opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
           <Loader2 size={48} className="animate-spin mb-4" />
