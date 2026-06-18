@@ -91,7 +91,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
     if (error) throw error;
     if (refreshAllData) await refreshAllData();
     
-    setConfirmDeletePkg(null); // âœ… Langsung close modal aja
+    setConfirmDeletePkg(null); // Langsung close modal aja
   } catch (e: any) {
     alert("Terjadi kendala saat menghapus: " + e.message);
   } finally {
@@ -106,7 +106,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
     const relevantLogs = logs.filter(l => 
   (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG') && 
   (l.teacherId === user.id || l.originalTeacherId === user.id) &&
-  l.teacherId !== 'SISWA_MANDIRI' && // âœ… TAMBAHAN BARIS INI
+  l.teacherId !== 'SISWA_MANDIRI' && // TAMBAHAN BARIS INI
   l.date.startsWith(selectedYear) &&
   (l.earnings || 0) > 0
 );
@@ -499,7 +499,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
            <div className="relative max-w-2xl w-full opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button className="absolute -top-12 right-0 p-4 text-white hover:text-rose-500 transition-colors" onClick={() => setShowProofModal(null)}><X size={32}/></button>
               <img src={showProofModal} className="w-full h-auto rounded-[3rem] shadow-2xl border-4 border-white/10" alt="Bukti Transfer" />
-              <div className="mt-8 text-center"><p className="text-[10px] font-black text-white/50 uppercase tracking-[0.5em] italic">Bukti Transfer Sah dari Pengurus Sanur âœ¨</p></div>
+              <div className="mt-8 text-center"><p className="text-[10px] font-black text-white/50 uppercase tracking-[0.5em] italic">Bukti Transfer Sah dari Pengurus Sanur</p></div>
            </div>
         </div>
         </ModalPortal>
@@ -537,7 +537,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
               <div className="space-y-2">
                  <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Hapus Kotak Honor?</h4>
                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4 italic">
-                    "Data pengajaran Kakak di kotak <span className="font-black text-rose-600">{confirmDeletePkg.className}</span> akan dihapus permanen dari antrean. Lakukan ini hanya jika data salah input ya Kak! âœ¨"
+                    "Data pengajaran Kakak di kotak <span className="font-black text-rose-600">{confirmDeletePkg.className}</span> akan dihapus permanen dari antrean. Lakukan ini hanya jika data salah input ya Kak!"
                  </p>
               </div>
               <div className="flex gap-4">
