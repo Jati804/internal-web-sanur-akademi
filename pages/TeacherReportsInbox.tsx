@@ -20,7 +20,7 @@ interface TeacherReportsInboxProps {
   refreshAllData: () => Promise<void>;
 }
 
-const MilestoneView = ({ studentAttendanceLogs, studentName, packageId, periode = 1 }: { studentAttendanceLogs: any[], studentName: string, packageId: string, periode?: number }) => {
+const MilestoneView = ({ studentAttendanceLogs, studentName, packageId, className: className_ }: { studentAttendanceLogs: any[], studentName: string, packageId: string, className?: string }) => {
   const sNameNorm = studentName.toUpperCase().trim();
   const pkgIdNorm = packageId.toUpperCase().trim();
 
@@ -31,27 +31,25 @@ const MilestoneView = ({ studentAttendanceLogs, studentName, packageId, periode 
     )
     .sort((a,b) => (a.sessionnumber || 0) - (b.sessionnumber || 0));
 
-  // ✅ HITUNG SESSION NUMBERS DINAMIS SESUAI TINGKAT
-  const startSession = (periode - 1) * 6 + 1;
-  const sessionNumbers = Array.from({ length: 6 }, (_, i) => startSession + i);
+  const sessionNumbers = Array.from({ length: 6 }, (_, i) => i + 1);
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       <div className="flex items-center gap-3 text-slate-400 border-b border-slate-100 pb-2">
-        <ClipboardList size={16} />
-        <p className="text-[10px] font-black uppercase tracking-widest">Milestone Pembelajaran Siswa - Tingkat {periode}</p>
+        <ClipboardList size={14} />
+        <p className="text-[10px] font-black uppercase tracking-widest truncate">{className_ || 'Milestone Pembelajaran'}</p>
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+      <div className="grid grid-cols-6 gap-2">
         {sessionNumbers.map((sessionNum, idx) => {
-          const log = sortedLogs.find(l => l.sessionnumber === (idx + 1)); // ✅ TETAP CARI DI 1-6
+          const log = sortedLogs.find(l => l.sessionnumber === sessionNum);
           return (
-            <div key={sessionNum} className={`p-4 rounded-2xl border flex flex-col items-center justify-center gap-2 transition-all ${log ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-transparent opacity-40'}`}>
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center font-black italic text-[10px] ${log ? 'bg-emerald-600 text-white shadow-lg' : 'bg-slate-200 text-slate-400'}`}>{sessionNum < 10 ? `0${sessionNum}` : sessionNum}</div>
+            <div key={sessionNum} className={`p-2.5 rounded-xl border flex flex-col items-center justify-center gap-1.5 transition-all ${log ? 'bg-emerald-50 border-emerald-100' : 'bg-slate-50 border-transparent opacity-40'}`}>
+              <div className={`w-7 h-7 rounded-full flex items-center justify-center font-black italic text-[9px] ${log ? 'bg-emerald-600 text-white shadow-md' : 'bg-slate-200 text-slate-400'}`}>{`0${sessionNum}`}</div>
               <div className="text-center">
-                <p className="text-[9px] font-black text-slate-800 uppercase italic leading-none">Sesi {sessionNum}</p>
-                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-tighter mt-1">{log ? formatDateToDMY(log.date) : 'Kosong'}</p>
+                <p className="text-[8px] font-black text-slate-800 uppercase italic leading-none">Sesi {sessionNum}</p>
+                <p className="text-[7px] font-bold text-slate-400 uppercase tracking-tighter mt-0.5">{log ? formatDateToDMY(log.date) : 'Kosong'}</p>
               </div>
-              {log && <div className="w-5 h-5 bg-white rounded-full flex items-center justify-center text-emerald-600 shadow-sm"><Check size={12} strokeWidth={4}/></div>}
+              {log && <div className="w-4 h-4 bg-white rounded-full flex items-center justify-center text-emerald-600 shadow-sm"><Check size={10} strokeWidth={4}/></div>}
             </div>
           );
         })}
@@ -785,7 +783,7 @@ const handleDownloadPDF = async (req: any) => {
                 studentAttendanceLogs={studentAttendanceLogs} 
                 studentName={showMilestoneFor.studentsAttended?.[0] || ''} 
                 packageId={showMilestoneFor.packageId}
-                periode={showMilestoneFor.periode || 1}
+                className={showMilestoneFor.className || ''}
               />
               <button onClick={() => setShowMilestoneFor(null)} className="w-full py-5 bg-slate-900 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-[0.3em] shadow-xl">TUTUP MILESTONE ✨</button>
            </div>
