@@ -543,15 +543,17 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
         <ModalPortal>
         <div data-modal-container className="fixed inset-0 z-[300000] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
           <div className="bg-white w-full max-w-md max-h-[85vh] rounded-[4rem] shadow-2xl relative border-t-8 border-rose-600 opacity-0 overflow-hidden flex flex-col" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-            <button 
-              onClick={() => setBlockModal(null)} 
-              className="absolute top-8 right-8 z-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"
-            >
-              <X size={20}/>
-            </button>
+  <div className="flex-1 overflow-y-auto custom-scrollbar p-12 text-center space-y-8">
+    <div className="flex justify-end">
+      <button 
+        onClick={() => setBlockModal(null)} 
+        className="p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"
+      >
+        <X size={20}/>
+      </button>
+    </div>
 
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-12 text-center space-y-8">
-            <div className="w-24 h-24 bg-rose-50 text-rose-600 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-inner animate-pulse border-4 border-rose-100">
+    <div className="w-24 h-24 bg-rose-50 text-rose-600 rounded-[2.5rem] flex items-center justify-center mx-auto shadow-inner animate-pulse border-4 border-rose-100">
               <AlertTriangle size={48} />
             </div>
             
