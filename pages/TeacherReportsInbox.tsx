@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { User, Attendance } from '../types';
 import { supabase } from '../services/supabase.ts';
 import ReportTemplate, { formatDateToDMY } from '../ReportTemplate.tsx';
+import ModalPortal from '../ModalPortal.tsx';
 import { 
   GraduationCap, Search, X, Loader2, Check, Sparkles,
   History, Trophy, Edit3, CheckCircle2, UserCheck, Layout, BookOpen, Printer,
@@ -472,6 +473,7 @@ const handleDownloadPDF = async (req: any) => {
       <div className="max-w-7xl mx-auto space-y-12 pb-40 px-4">
       {/* LOADING MODAL TENGAH - DENGAN REAL PROGRESS BAR */}
       {activeDownloadId && (
+        <ModalPortal>
         <div data-modal-container className="fixed inset-0 z-[300000] bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
            <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-12 shadow-2xl flex flex-col items-center text-center space-y-8 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <div className="w-20 h-20 bg-blue-600 text-white rounded-[2.2rem] flex items-center justify-center shadow-xl animate-bounce">
@@ -496,6 +498,7 @@ const handleDownloadPDF = async (req: any) => {
               </div>
            </div>
         </div>
+        </ModalPortal>
       )}
 
       <header className="flex flex-col md:flex-row md:items-end justify-between gap-10 px-2">
@@ -773,6 +776,7 @@ const handleDownloadPDF = async (req: any) => {
 
 
       {showMilestoneFor && (
+        <ModalPortal>
         <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
            <div className="bg-white w-full max-w-2xl rounded-[4rem] p-12 shadow-2xl relative overflow-hidden space-y-10 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setShowMilestoneFor(null)} className="absolute top-10 right-10 p-3 bg-slate-50 text-slate-400 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
@@ -786,9 +790,11 @@ const handleDownloadPDF = async (req: any) => {
               <button onClick={() => setShowMilestoneFor(null)} className="w-full py-5 bg-slate-900 text-white rounded-[2rem] font-black text-[11px] uppercase tracking-[0.3em] shadow-xl">TUTUP MILESTONE ✨</button>
            </div>
         </div>
+        </ModalPortal>
       )}
 
       {confirmReject && (
+         <ModalPortal>
          <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
             <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
                <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm animate-pulse"><AlertCircle size={48} /></div>
@@ -802,8 +808,10 @@ const handleDownloadPDF = async (req: any) => {
 </button>
             </div>
          </div>
+         </ModalPortal>
   )}
   {confirmNextClass && (
+  <ModalPortal>
   <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
     <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
       <div className="w-20 h-20 bg-purple-50 text-purple-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm animate-pulse"><ChevronRight size={48} /></div>
@@ -819,6 +827,7 @@ const handleDownloadPDF = async (req: any) => {
       </div>
     </div>
   </div>
+  </ModalPortal>
       )}
     </div>
     </>
