@@ -511,7 +511,7 @@ console.log('\n✅ BACKUP MILESTONE SELESAI');
               <div className="space-y-2">
                  <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Hapus Akun?</h4>
                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4">
-                    Akses milik <span className="text-slate-800 font-black underline">{showDeleteConfirm.name}</span> akan dihapus. Perhatikan: Menghapus akun tidak akan menghapus riwayat mereka di database utama (Presensi/SPP).
+                    Akses milik <span className="text-slate-800 font-black underline">{showDeleteConfirm.name}</span> akan dihapus. Perhatikan: Menghapus akun tidak akan menghapus riwayat rapot siswa.
                  </p>
               </div>
               <div className="flex gap-4">
