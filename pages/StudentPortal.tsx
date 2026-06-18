@@ -668,31 +668,6 @@ const handleDownloadPDFReport = async (course: any) => {
     } catch (e: any) { alert(e.message); } finally { setLoading(false); }
   };
 
-  // ✅ Auto scroll modal ke tengah viewport (body bebas scroll)
-  useEffect(() => {
-    const hasModal = !!(
-      showEditDateModal || 
-      confirmDeletePayment || 
-      showFinalConfirmation || 
-      previewModal || 
-      confirmingAbsen || 
-      requestingReportFor ||
-      activeDownloadId ||
-      loading 
-    );
-    
-    if (hasModal) {
-      // Tunggu dikit biar DOM modal udah ada, baru scroll
-      const timer = setTimeout(() => {
-        const modalElement = document.querySelector('[data-modal-container]');
-        if (modalElement) {
-          modalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        }
-      }, 150);
-      
-      return () => clearTimeout(timer);
-    }
-  }, [showEditDateModal, confirmDeletePayment, showFinalConfirmation, previewModal, confirmingAbsen, requestingReportFor, activeDownloadId, loading]);
   return (
     <>
       <style>{`
