@@ -341,10 +341,10 @@ const pendingReportsCount = Array.isArray(reports) ?
       )}
       <aside className={`fixed lg:static inset-y-0 left-0 bg-white border-r border-slate-100 z-[81000] transform transition-all duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarCollapsed ? 'lg:w-24 w-72' : 'w-72'}`}>
         <div className={`h-full flex flex-col ${isSidebarCollapsed ? 'lg:p-4 p-8' : 'p-8'}`}>
-          <div className={`flex items-center mb-10 px-2 ${isSidebarCollapsed ? 'lg:flex-col lg:gap-3 justify-between' : 'justify-between'}`}>
-            <div className={`flex items-center gap-3 ${isSidebarCollapsed ? 'lg:gap-0' : ''}`}>
-              <div className={`w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shrink-0 ${isSidebarCollapsed ? 'lg:rotate-0' : 'rotate-3'}`}><BookOpen size={24} /></div>
-              <div className={isSidebarCollapsed ? 'lg:hidden' : ''}>
+          <div className={`flex items-center mb-10 px-2 justify-between ${isSidebarCollapsed ? 'lg:justify-center' : ''}`}>
+            <div className={`flex items-center gap-3 ${isSidebarCollapsed ? 'lg:hidden' : ''}`}>
+              <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shrink-0 rotate-3"><BookOpen size={24} /></div>
+              <div>
                 <h1 className="font-black text-slate-800 text-xl tracking-tighter uppercase italic leading-none">SANUR</h1>
                 <p className="text-[8px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1.5">Sistem Internal</p>
               </div>
@@ -352,13 +352,13 @@ const pendingReportsCount = Array.isArray(reports) ?
             <button
               onClick={() => setIsSidebarCollapsed(v => !v)}
               title={isSidebarCollapsed ? 'Buka sidebar' : 'Ciutkan sidebar'}
-              className="hidden lg:flex items-center justify-center w-9 h-9 text-slate-400 hover:text-blue-600 hover:bg-slate-50 rounded-xl transition-all shrink-0"
+              className="hidden lg:flex items-center justify-center w-9 h-9 text-blue-600 border border-blue-200 hover:bg-blue-50 hover:border-blue-300 rounded-xl transition-all shrink-0"
             >
               {isSidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
             </button>
             <button onClick={closeSidebar} className="lg:hidden p-2 text-slate-300 hover:text-rose-500"><X size={24} /></button>
           </div>
-          <nav className={`flex-1 overflow-y-auto overflow-x-visible custom-scrollbar pr-2 ${isSidebarCollapsed ? 'lg:space-y-3 space-y-1' : 'space-y-1'}`}>
+          <nav className={`flex-1 overflow-y-auto overflow-x-visible custom-scrollbar ${isSidebarCollapsed ? 'lg:space-y-3 lg:pr-0 space-y-1 pr-2' : 'space-y-1 pr-2'}`}>
             {user.role === 'ADMIN' && (
               <>
                 <p className={`px-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest ${isSidebarCollapsed ? 'lg:hidden' : ''}`}>Utama</p>
