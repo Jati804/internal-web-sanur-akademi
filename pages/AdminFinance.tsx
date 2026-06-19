@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Attendance, Transaction, StudentPayment } from '../types';
-import ModalPortal from '../ModalPortal.tsx';
 import { supabase } from '../services/supabase.ts';
 import { 
   X, Search, Banknote, Loader2, ArrowUpCircle, ArrowDownCircle, Upload, CheckCircle2, 
@@ -76,6 +75,30 @@ const [addForm, setAddForm] = useState({
   date: getWIBDate(),
   description: ''
 });
+
+// ✅ Auto scroll modal ke tengah viewport (body bebas scroll)
+useEffect(() => {
+  const hasModal = !!(
+    selectedPayout || 
+    confirmingSpp || 
+    showAddModal || 
+    editingTransaction || 
+    confirmDeleteTx || 
+    showImportModal || 
+    previewImg
+  );
+  
+  if (hasModal) {
+    const timer = setTimeout(() => {
+      const modalElement = document.querySelector('[data-modal-container]');
+      if (modalElement) {
+        modalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }, 150);
+    
+    return () => clearTimeout(timer);
+  }
+}, [selectedPayout, confirmingSpp, showAddModal, editingTransaction, confirmDeleteTx, showImportModal, previewImg]);
 
 // ✅ TAMBAHIN INI (useEffect baru untuk baca location.state)
 useEffect(() => {
@@ -598,7 +621,7 @@ const executePayTeacher = async () => {
         }
       `}</style>
       
-    <div className="space-y-12 pb-40 px-2">
+    <div className="space-y-12 animate-in pb-40 px-2">
       <div className="bg-[#0F172A] p-12 md:p-16 rounded-[4rem] text-white shadow-2xl relative overflow-hidden flex flex-col items-center">
         <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600 rounded-full blur-[120px] opacity-20"></div>
         <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter mb-12 relative z-10">KAS <span className="text-blue-500">SANUR</span></h2>
@@ -999,237 +1022,183 @@ const executePayTeacher = async () => {
       )}
 
       {selectedPayout && (
-        <ModalPortal>
   <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-     <div className="bg-white w-full max-w-3xl rounded-[4rem] shadow-2xl relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-              <div className="p-10 md:p-12">
-              <button onClick={() => { setSelectedPayout(null); setPayForm({ receiptData: '' }); }} className="absolute top-10 right-10 z-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
-
-              <div className="flex flex-col items-center text-center mb-10">
-                 <div className={`w-16 h-16 ${selectedPayout.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'} rounded-[1.5rem] flex items-center justify-center shadow-inner rotate-3 mb-4`}><Banknote size={32}/></div>
-                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Cairkan Honor</h4>
-                 <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-2">{selectedPayout.teacherName} - {selectedPayout.className.replace(/PELATIHAN\s*/i, '')}</p>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* KOLOM KIRI: Info */}
-                <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 flex flex-col justify-center">
-                   <div className="flex justify-between items-center text-[8px] font-black text-slate-400 uppercase tracking-widest"><p>Detail:</p><p className={selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'}>{selectedPayout.sessionCount} SESI</p></div>
-                   <div className="text-center border-t border-slate-100 pt-3"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Transfer</p><p className={`text-2xl font-black ${selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'} italic`}>Rp {selectedPayout.amount.toLocaleString()}</p></div>
-                </div>
-
-                {/* KOLOM KANAN: Upload Bukti (dibuat kompak, sejajar tinggi sama kolom kiri) */}
-                <div>
-                   {payForm.receiptData ? (
-                      <div className="relative group cursor-pointer h-full" onClick={() => setPreviewImg(payForm.receiptData)}>
-                         <img src={payForm.receiptData} className="w-full h-full min-h-[104px] object-cover rounded-3xl shadow-lg border-4 border-emerald-500" alt="Proof" />
-                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-all rounded-[1.3rem]"><Maximize2 size={24} className="mb-1"/><p className="text-[7px] font-black uppercase">KLIK PREVIEW</p></div>
-                         <button onClick={(e) => { e.stopPropagation(); setPayForm({ receiptData: '' }); }} className="absolute top-3 right-3 p-2 bg-rose-600 text-white rounded-full shadow-xl hover:bg-rose-700 transition-all"><Trash2 size={14}/></button>
-                      </div>
-                   ) : (
-                      <div className="relative h-full"><input type="file" ref={fileInputPayoutRef} onChange={handleUploadProof} className="hidden" accept="image/*" /><button onClick={() => fileInputPayoutRef.current?.click()} className={`w-full h-full min-h-[104px] bg-slate-50 rounded-3xl border-2 border-dashed ${selectedPayout.category === 'PRIVATE' ? 'border-orange-200 text-orange-600' : 'border-blue-200 text-blue-600'} font-black text-[9px] uppercase hover:bg-white transition-all flex flex-col items-center justify-center gap-2`}>{isLoading ? <Loader2 className="animate-spin" size={20} /> : <><ImageIcon size={24}/><p>UPLOAD BUKTI<br/>TRANSFER</p></>}</button></div>
-                   )}
-                </div>
-              </div>
-
-              <button onClick={executePayTeacher} disabled={isLoading || !payForm.receiptData} className={`w-full mt-10 py-6 ${selectedPayout.category === 'PRIVATE' ? 'bg-[#0F172A]' : 'bg-blue-600'} text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl hover:bg-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-30`}>{isLoading ? <Loader2 size={18} className="animate-spin" /> : <><CheckCircle2 size={18}/> SELESAIKAN PEMBAYARAN ✨</>}</button>
-              </div>
-        </div>
-        </ModalPortal>
-      )}
-
-      {confirmingSpp && (
-        <ModalPortal>
-  <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-     <div className={`bg-white w-full ${confirmingSpp.receiptData ? 'max-w-2xl' : 'max-w-sm'} max-h-[90vh] rounded-[4rem] shadow-2xl relative overflow-hidden flex flex-col opacity-0`} style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-10 md:p-12">
-
-              <div className="flex items-center gap-5 mb-10">
-                 <div className="w-16 h-16 shrink-0 bg-emerald-50 text-emerald-600 rounded-[1.5rem] flex items-center justify-center shadow-inner rotate-3"><CheckCircle2 size={32}/></div>
-                 <div>
-                   <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Verifikasi SPP</h4>
-                   <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-2">{confirmingSpp.studentName}</p>
+     <div className="bg-white w-full max-w-sm rounded-[4rem] p-12 shadow-2xl relative overflow-hidden flex flex-col items-center opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+              <button onClick={() => { setSelectedPayout(null); setPayForm({ receiptData: '' }); }} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
+              <div className={`w-20 h-20 ${selectedPayout.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'} rounded-[2rem] flex items-center justify-center mb-8 shadow-inner rotate-3`}><Banknote size={40}/></div>
+              <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-2 leading-none text-center">Cairkan Honor</h4>
+              <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-10 text-center">{selectedPayout.teacherName}</p>
+              <div className="w-full space-y-6">
+                 <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100">
+                    <div className="flex justify-between items-center text-[8px] font-black text-slate-400 uppercase tracking-widest"><p>Detail:</p><p className={selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'}>{selectedPayout.category} | {selectedPayout.sessionCount} SESI</p></div>
+                    <div className="text-center border-t border-slate-100 pt-3"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Transfer</p><p className={`text-2xl font-black ${selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'} italic`}>Rp {selectedPayout.amount.toLocaleString()}</p></div>
                  </div>
-              </div>
-
-              <div className={confirmingSpp.receiptData ? 'grid md:grid-cols-2 gap-10' : ''}>
-                {/* KOLOM KIRI: Info */}
-                <div className="flex flex-col">
-                  <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 text-center shadow-inner w-full">
-                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{confirmingSpp.className}</p>
-                     <div className="pt-3 border-t border-slate-200"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Diterima</p><p className="text-3xl font-black text-emerald-600 italic tracking-tighter">Rp {confirmingSpp.amount.toLocaleString()}</p></div>
-                  </div>
-                </div>
-
-                {/* KOLOM KANAN: Bukti (kalau ada) */}
-                {confirmingSpp.receiptData && (
-                   <div className="flex flex-col space-y-2">
-                     <p className="text-[9px] font-black text-slate-400 uppercase ml-4 tracking-widest">Bukti Dari Siswa:</p>
-                     <div className="relative group cursor-pointer" onClick={() => setPreviewImg(confirmingSpp.receiptData!)}>
-                        <img src={confirmingSpp.receiptData} className="w-full h-56 object-cover rounded-[2rem] shadow-lg border-4 border-emerald-100" alt="Receipt" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-all rounded-[1.8rem]"><Maximize2 size={24} className="mb-2"/><p className="text-[7px] font-black uppercase">PREVIEW BUKTI</p></div>
-                     </div>
-                   </div>
-                )}
-              </div>
-
-              <div className="flex gap-4 mt-10">
-                 <button onClick={() => setConfirmingSpp(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all">BATAL</button>
-                 <button onClick={() => handleVerifySPP(confirmingSpp)} disabled={!!actionLoadingId} className="flex-[2] py-5 bg-emerald-600 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center gap-2">{actionLoadingId === confirmingSpp.id ? <Loader2 size={18} className="animate-spin" /> : <><Check size={18}/> KONFIRMASI ✨</>}</button>
-              </div>
+                 <div className="space-y-2">
+                    <label className="text-[9px] font-black text-slate-400 uppercase ml-4 tracking-widest">Bukti Transfer (Wajib)</label>
+                    {payForm.receiptData ? (
+                       <div className="relative group cursor-pointer" onClick={() => setPreviewImg(payForm.receiptData)}>
+                          <img src={payForm.receiptData} className="w-full h-48 object-cover rounded-[2rem] shadow-lg border-4 border-emerald-500" alt="Proof" />
+                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-all rounded-[1.8rem]"><Maximize2 size={32} className="mb-2"/><p className="text-[8px] font-black uppercase">KLIK PREVIEW</p></div>
+                          <button onClick={(e) => { e.stopPropagation(); setPayForm({ receiptData: '' }); }} className="absolute top-4 right-4 p-3 bg-rose-600 text-white rounded-full shadow-xl hover:bg-rose-700 transition-all"><Trash2 size={16}/></button>
+                       </div>
+                    ) : (
+                       <div className="relative"><input type="file" ref={fileInputPayoutRef} onChange={handleUploadProof} className="hidden" accept="image/*" /><button onClick={() => fileInputPayoutRef.current?.click()} className={`w-full py-12 bg-slate-50 rounded-[2.5rem] border-2 border-dashed ${selectedPayout.category === 'PRIVATE' ? 'border-orange-200 text-orange-600' : 'border-blue-200 text-blue-600'} font-black text-[10px] uppercase hover:bg-white transition-all flex flex-col items-center gap-3`}>{isLoading ? <Loader2 className="animate-spin" size={24} /> : <><ImageIcon size={32}/><p>UPLOAD BUKTI TRANSFER</p></>}</button></div>
+                    )}
+                 </div>
+                 <button onClick={executePayTeacher} disabled={isLoading || !payForm.receiptData} className={`w-full py-6 ${selectedPayout.category === 'PRIVATE' ? 'bg-[#0F172A]' : 'bg-blue-600'} text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl hover:bg-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-30`}>{isLoading ? <Loader2 size={18} className="animate-spin" /> : <><CheckCircle2 size={18}/> SELESAIKAN PEMBAYARAN ✨</>}</button>
               </div>
            </div>
         </div>
-        </ModalPortal>
+      )}
+
+      {confirmingSpp && (
+  <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+     <div className="bg-white w-full max-w-sm rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden flex flex-col items-center opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+              <button onClick={() => setConfirmingSpp(null)} className="absolute top-8 right-8 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
+              <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-[2rem] flex items-center justify-center mb-6 shadow-inner rotate-3"><CheckCircle2 size={40}/></div>
+              <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-1 leading-none text-center">Verifikasi SPP</h4>
+              <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-8 text-center">{confirmingSpp.studentName}</p>
+              <div className="w-full space-y-6">
+                 <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 text-center shadow-inner">
+                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{confirmingSpp.className}</p>
+                    <div className="pt-3 border-t border-slate-200"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Diterima</p><p className="text-3xl font-black text-emerald-600 italic tracking-tighter">Rp {confirmingSpp.amount.toLocaleString()}</p></div>
+                 </div>
+                 {confirmingSpp.receiptData && (
+                   <div className="space-y-2">
+                     <p className="text-[9px] font-black text-slate-400 uppercase ml-4 tracking-widest">Bukti Dari Siswa:</p>
+                     <div className="relative group cursor-pointer" onClick={() => setPreviewImg(confirmingSpp.receiptData!)}>
+                        <img src={confirmingSpp.receiptData} className="w-full h-40 object-cover rounded-[2rem] shadow-lg border-4 border-emerald-100" alt="Receipt" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-all rounded-[1.8rem]"><Maximize2 size={24} className="mb-2"/><p className="text-[7px] font-black uppercase">PREVIEW BUKTI</p></div>
+                     </div>
+                   </div>
+                 )}
+                 <div className="flex gap-4">
+                    <button onClick={() => setConfirmingSpp(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all">BATAL</button>
+                    <button onClick={() => handleVerifySPP(confirmingSpp)} disabled={!!actionLoadingId} className="flex-[2] py-5 bg-emerald-600 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center gap-2">{actionLoadingId === confirmingSpp.id ? <Loader2 size={18} className="animate-spin" /> : <><Check size={18}/> KONFIRMASI ✨</>}</button>
+                 </div>
+              </div>
+           </div>
+        </div>
       )}
 
 {showAddModal && (
-        <ModalPortal>
   <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-     <div className="bg-white w-full max-w-2xl max-h-[90vh] rounded-[3.5rem] shadow-2xl relative overflow-hidden flex flex-col opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-               <div className="flex-1 overflow-y-auto custom-scrollbar p-10 md:p-12">
-               <button onClick={() => setShowAddModal(false)} className="absolute top-10 right-10 z-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
+     <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 md:p-12 shadow-2xl relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+               <button onClick={() => setShowAddModal(false)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
                <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-8 tracking-tighter">Input <span className="text-blue-600">Manual</span></h4>
                <form onSubmit={handleAddTransaction} className="space-y-6">
                   <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl"><button type="button" onClick={() => setAddForm({...addForm, type: 'INCOME'})} className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase transition-all ${addForm.type === 'INCOME' ? 'bg-white text-emerald-600 shadow-md' : 'text-slate-400'}`}>Masuk</button><button type="button" onClick={() => setAddForm({...addForm, type: 'EXPENSE'})} className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase transition-all ${addForm.type === 'EXPENSE' ? 'bg-white text-rose-600 shadow-md' : 'text-slate-400'}`}>Keluar</button></div>
+                  <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Deskripsi Transaksi</label><input type="text" placeholder="MISAL: BAYAR LISTRIK..." value={addForm.description} onChange={e => setAddForm({...addForm, description: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
+                
+ <div className="space-y-2 relative">
+  <label className="text-[9px] font-black text-slate-400 uppercase ml-4">Kategori</label>
+  <input 
+    type="text" 
+    placeholder="KETIK KATEGORI..." 
+    value={addForm.category} 
+    onChange={e => {
+      setAddForm({...addForm, category: e.target.value.toUpperCase()});
+      setShowCategorySuggestions(true);
+    }}
+    onFocus={() => setShowCategorySuggestions(true)}
+    onBlur={() => setTimeout(() => setShowCategorySuggestions(false), 200)}
+    className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" 
+  />
+  
+  {showCategorySuggestions && addForm.category.trim() && (
+    <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-200 max-h-48 overflow-y-auto">
+      {uniqueCategories
+        .filter(cat => cat.includes(addForm.category.toUpperCase()))
+        .slice(0, 5)
+        .map(cat => (
+          <button
+            key={cat}
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              setAddForm({...addForm, category: cat});
+              setShowCategorySuggestions(false);
+            }}
+            className="w-full px-4 py-2 text-left text-[10px] font-black hover:bg-blue-50 transition-all text-slate-700 border-b last:border-0"
+          >
+            {cat}
+          </button>
+        ))
+      }
+    </div>
+  )}
+</div> 
 
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {/* KOLOM KIRI */}
-                    <div className="space-y-6">
-                      <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Deskripsi Transaksi</label><input type="text" placeholder="MISAL: BAYAR LISTRIK..." value={addForm.description} onChange={e => setAddForm({...addForm, description: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
-
-                      <div className="space-y-2 relative">
-                        <label className="text-[9px] font-black text-slate-400 uppercase ml-4">Kategori</label>
-                        <input 
-                          type="text" 
-                          placeholder="KETIK KATEGORI..." 
-                          value={addForm.category} 
-                          onChange={e => {
-                            setAddForm({...addForm, category: e.target.value.toUpperCase()});
-                            setShowCategorySuggestions(true);
-                          }}
-                          onFocus={() => setShowCategorySuggestions(true)}
-                          onBlur={() => setTimeout(() => setShowCategorySuggestions(false), 200)}
-                          className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" 
-                        />
-                        
-                        {showCategorySuggestions && addForm.category.trim() && (
-                          <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-200 max-h-48 overflow-y-auto">
-                            {uniqueCategories
-                              .filter(cat => cat.includes(addForm.category.toUpperCase()))
-                              .slice(0, 5)
-                              .map(cat => (
-                                <button
-                                  key={cat}
-                                  type="button"
-                                  onMouseDown={(e) => {
-                                    e.preventDefault();
-                                    setAddForm({...addForm, category: cat});
-                                    setShowCategorySuggestions(false);
-                                  }}
-                                  className="w-full px-4 py-2 text-left text-[10px] font-black hover:bg-blue-50 transition-all text-slate-700 border-b last:border-0"
-                                >
-                                  {cat}
-                                </button>
-                              ))
-                            }
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* KOLOM KANAN */}
-                    <div className="space-y-6">
-                      <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Nominal (Rp)</label><input type="number" placeholder="0" value={addForm.amount || ''} onChange={e => setAddForm({...addForm, amount: parseInt(e.target.value) || 0})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-lg outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
-                      <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Tanggal</label><input type="date" value={addForm.date} onChange={e => setAddForm({...addForm, date: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
-                    </div>
-                  </div>
-
+                  <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Nominal (Rp)</label><input type="number" placeholder="0" value={addForm.amount || ''} onChange={e => setAddForm({...addForm, amount: parseInt(e.target.value) || 0})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-lg outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
+                  <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Tanggal</label><input type="date" value={addForm.date} onChange={e => setAddForm({...addForm, date: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
                   <button type="submit" disabled={isLoading} className="w-full py-6 bg-blue-600 text-white rounded-[2rem] font-black text-[10px] uppercase shadow-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2">{isLoading ? <Loader2 size={18} className="animate-spin"/> : 'SIMPAN TRANSAKSI ✨'}</button>
                </form>
-               </div>
             </div>
          </div>
-        </ModalPortal>
       )}
 
       {editingTransaction && (
-        <ModalPortal>
   <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-     <div className="bg-white w-full max-w-2xl max-h-[90vh] rounded-[3.5rem] shadow-2xl relative overflow-hidden flex flex-col opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-               <div className="flex-1 overflow-y-auto custom-scrollbar p-10 md:p-12">
-               <button onClick={() => setEditingTransaction(null)} className="absolute top-10 right-10 z-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
+     <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 md:p-12 shadow-2xl relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+               <button onClick={() => setEditingTransaction(null)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
                <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-8 tracking-tighter">Edit <span className="text-blue-600">Transaksi</span></h4>
                <form onSubmit={handleUpdateTx} className="space-y-6">
                   <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl">
                     <button type="button" onClick={() => setEditingTransaction({...editingTransaction, type: 'INCOME'})} className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase transition-all ${editingTransaction.type === 'INCOME' ? 'bg-white text-emerald-600 shadow-md' : 'text-slate-400'}`}>Masuk</button>
                     <button type="button" onClick={() => setEditingTransaction({...editingTransaction, type: 'EXPENSE'})} className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase transition-all ${editingTransaction.type === 'EXPENSE' ? 'bg-white text-rose-600 shadow-md' : 'text-slate-400'}`}>Keluar</button>
                   </div>
+                  <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Deskripsi Transaksi</label><input type="text" placeholder="MISAL: BAYAR LISTRIK..." value={editingTransaction.description} onChange={e => setEditingTransaction({...editingTransaction, description: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
+                  
+<div className="space-y-2 relative">
+  <label className="text-[9px] font-black text-slate-400 uppercase ml-4">Kategori</label>
+  <input 
+    type="text" 
+    placeholder="KETIK KATEGORI..." 
+    value={editingTransaction.category} 
+    onChange={e => {
+      setEditingTransaction({...editingTransaction, category: e.target.value.toUpperCase()});
+      setShowCategorySuggestions(true);
+    }}
+    onFocus={() => setShowCategorySuggestions(true)}
+    onBlur={() => setTimeout(() => setShowCategorySuggestions(false), 200)}
+    className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" 
+  />
+  
+  {showCategorySuggestions && editingTransaction.category.trim() && (
+    <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-200 max-h-48 overflow-y-auto">
+      {uniqueCategories
+        .filter(cat => cat.includes(editingTransaction.category.toUpperCase()))
+        .slice(0, 5)
+        .map(cat => (
+          <button
+            key={cat}
+            type="button"
+            onMouseDown={(e) => {
+              e.preventDefault();
+              setEditingTransaction({...editingTransaction, category: cat});
+              setShowCategorySuggestions(false);
+            }}
+            className="w-full px-4 py-2 text-left text-[10px] font-black hover:bg-blue-50 transition-all text-slate-700 border-b last:border-0"
+          >
+            {cat}
+          </button>
+        ))
+      }
+    </div>
+  )}
+</div>
 
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {/* KOLOM KIRI */}
-                    <div className="space-y-6">
-                      <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Deskripsi Transaksi</label><input type="text" placeholder="MISAL: BAYAR LISTRIK..." value={editingTransaction.description} onChange={e => setEditingTransaction({...editingTransaction, description: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
-
-                      <div className="space-y-2 relative">
-                        <label className="text-[9px] font-black text-slate-400 uppercase ml-4">Kategori</label>
-                        <input 
-                          type="text" 
-                          placeholder="KETIK KATEGORI..." 
-                          value={editingTransaction.category} 
-                          onChange={e => {
-                            setEditingTransaction({...editingTransaction, category: e.target.value.toUpperCase()});
-                            setShowCategorySuggestions(true);
-                          }}
-                          onFocus={() => setShowCategorySuggestions(true)}
-                          onBlur={() => setTimeout(() => setShowCategorySuggestions(false), 200)}
-                          className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" 
-                        />
-                        
-                        {showCategorySuggestions && editingTransaction.category.trim() && (
-                          <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-200 max-h-48 overflow-y-auto">
-                            {uniqueCategories
-                              .filter(cat => cat.includes(editingTransaction.category.toUpperCase()))
-                              .slice(0, 5)
-                              .map(cat => (
-                                <button
-                                  key={cat}
-                                  type="button"
-                                  onMouseDown={(e) => {
-                                    e.preventDefault();
-                                    setEditingTransaction({...editingTransaction, category: cat});
-                                    setShowCategorySuggestions(false);
-                                  }}
-                                  className="w-full px-4 py-2 text-left text-[10px] font-black hover:bg-blue-50 transition-all text-slate-700 border-b last:border-0"
-                                >
-                                  {cat}
-                                </button>
-                              ))
-                            }
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* KOLOM KANAN */}
-                    <div className="space-y-6">
-                      <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Nominal (Rp)</label><input type="number" placeholder="0" value={editingTransaction.amount || ''} onChange={e => setEditingTransaction({...editingTransaction, amount: parseInt(e.target.value) || 0})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-lg outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
-                      <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Tanggal</label><input type="date" value={editingTransaction.date} onChange={e => setEditingTransaction({...editingTransaction, date: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
-                    </div>
-                  </div>
-
+                  <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Nominal (Rp)</label><input type="number" placeholder="0" value={editingTransaction.amount || ''} onChange={e => setEditingTransaction({...editingTransaction, amount: parseInt(e.target.value) || 0})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-lg outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
+                  <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Tanggal</label><input type="date" value={editingTransaction.date} onChange={e => setEditingTransaction({...editingTransaction, date: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
                   <button type="submit" disabled={isLoading} className="w-full py-6 bg-blue-600 text-white rounded-[2rem] font-black text-[10px] uppercase shadow-xl hover:bg-blue-700 transition-all flex items-center justify-center gap-2">{isLoading ? <Loader2 size={18} className="animate-spin"/> : 'SIMPAN PERUBAHAN ✨'}</button>
                </form>
-               </div>
             </div>
          </div>
-        </ModalPortal>
       )}
 
       {confirmDeleteTx && (
-        <ModalPortal>
   <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-     <div className="bg-white w-full max-w-[340px] max-h-[85vh] overflow-y-auto custom-scrollbar rounded-[3rem] p-10 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+     <div className="bg-white w-full max-w-[340px] rounded-[3rem] p-10 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
                <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner animate-pulse"><Trash2 size={40} /></div>
                <div className="space-y-2">
                   <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Hapus Transaksi?</h4>
@@ -1245,25 +1214,19 @@ const executePayTeacher = async () => {
                </div>
             </div>
          </div>
-        </ModalPortal>
       )}
 
       {showImportModal && (
-        <ModalPortal>
   <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-     <div className="bg-white w-full max-w-lg max-h-[85vh] rounded-[4rem] shadow-2xl relative overflow-hidden flex flex-col opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-               <div className="flex-1 overflow-y-auto custom-scrollbar p-10 md:p-12">
-               <button onClick={() => setShowImportModal(false)} className="absolute top-10 right-10 z-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
+     <div className="bg-white w-full max-w-lg rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+               <button onClick={() => setShowImportModal(false)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
                <div className="flex items-center gap-4 mb-8"><div className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl"><ClipboardList size={24}/></div><div><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Smart Import Box</h4><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2 italic">Format: TGL, DESKRIPSI, KATEGORI, TIPE, NOMINAL ✨</p></div></div>
                <div className="space-y-6"><div className="p-6 bg-blue-50 rounded-[2rem] border border-blue-100"><p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-3 text-center">Urutan Kolom Harus Sesuai:</p><code className="text-[9px] font-mono font-bold text-slate-500 block bg-white p-4 rounded-xl border border-blue-50 leading-relaxed text-center uppercase">TANGGAL, DESKRIPSI, KATEGORI, TIPE, NOMINAL</code></div><textarea value={importText} onChange={e => setImportText(e.target.value)} placeholder="TEMPEL DATA DARI EXCEL DI SINI (COPY SELURUH TABEL)..." rows={8} className="w-full p-8 bg-slate-50 rounded-[2rem] font-mono text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all shadow-inner" /><div className="flex items-center gap-3 bg-orange-50 p-4 rounded-2xl border border-orange-100"><Zap size={16} className="text-orange-500 shrink-0" /><p className="text-[8px] font-bold text-orange-800 uppercase italic">Tips: Tipe bisa berisi "INCOME" atau "EXPENSE" ✨</p></div><button onClick={handleImportCSV} disabled={isLoading || !importText.trim()} className="w-full py-7 bg-blue-600 text-white rounded-[2.5rem] font-black text-[10px] uppercase shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">{isLoading ? <Loader2 size={24} className="animate-spin"/> : <><Check size={20}/> PROSES IMPORT MASSAL ✨</>}</button></div>
-               </div>
             </div>
          </div>
-        </ModalPortal>
       )}
 
       {previewImg && (
-        <ModalPortal>
   <div data-modal-container className="fixed inset-0 z-[300000] bg-slate-900/95 flex flex-col items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}} onClick={() => setPreviewImg(null)}>
      <div className="relative max-w-4xl w-full flex flex-col items-center opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
         <button className="absolute -top-14 right-0 p-4 text-white hover:text-rose-500 transition-colors" onClick={() => setPreviewImg(null)}><X size={40}/></button>
@@ -1271,7 +1234,6 @@ const executePayTeacher = async () => {
               <div className="mt-8 text-center"><p className="text-[10px] font-black text-white/40 uppercase tracking-[0.8em] italic">Sanur Payment Verification ✨</p></div>
            </div>
         </div>
-        </ModalPortal>
       )}
     </div>
     </>
