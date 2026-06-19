@@ -1001,20 +1001,20 @@ const executePayTeacher = async () => {
       {selectedPayout && (
         <ModalPortal>
   <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-     <div className="bg-white w-full max-w-3xl max-h-[90vh] rounded-[4rem] shadow-2xl relative overflow-hidden flex flex-col opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-10 md:p-12">
-              <button onClick={() => { setSelectedPayout(null); setPayForm({ receiptData: '' }); }} className="absolute top-10 right-10 z-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
+     <div className="bg-white w-full max-w-3xl rounded-[4rem] shadow-2xl relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+              <div className="p-10 md:p-12">
+              <button onClick={() => { setSelectedPayout(null); setPayForm({ receiptData: '' }); }} className="absolute top-10 right-10 z-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
 
               <div className="flex flex-col items-center text-center mb-10">
                  <div className={`w-16 h-16 ${selectedPayout.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'} rounded-[1.5rem] flex items-center justify-center shadow-inner rotate-3 mb-4`}><Banknote size={32}/></div>
                  <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Cairkan Honor</h4>
-                 <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-2">{selectedPayout.teacherName}</p>
+                 <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-2">{selectedPayout.teacherName} - {selectedPayout.className.replace(/PELATIHAN\s*/i, '')}</p>
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
                 {/* KOLOM KIRI: Info */}
                 <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 flex flex-col justify-center">
-                   <div className="flex justify-between items-center text-[8px] font-black text-slate-400 uppercase tracking-widest"><p>Detail:</p><p className={selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'}>{selectedPayout.category} | {selectedPayout.sessionCount} SESI</p></div>
+                   <div className="flex justify-between items-center text-[8px] font-black text-slate-400 uppercase tracking-widest"><p>Detail:</p><p className={selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'}>{selectedPayout.sessionCount} SESI</p></div>
                    <div className="text-center border-t border-slate-100 pt-3"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Transfer</p><p className={`text-2xl font-black ${selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'} italic`}>Rp {selectedPayout.amount.toLocaleString()}</p></div>
                 </div>
 
@@ -1034,7 +1034,6 @@ const executePayTeacher = async () => {
 
               <button onClick={executePayTeacher} disabled={isLoading || !payForm.receiptData} className={`w-full mt-10 py-6 ${selectedPayout.category === 'PRIVATE' ? 'bg-[#0F172A]' : 'bg-blue-600'} text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl hover:bg-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-30`}>{isLoading ? <Loader2 size={18} className="animate-spin" /> : <><CheckCircle2 size={18}/> SELESAIKAN PEMBAYARAN ✨</>}</button>
               </div>
-           </div>
         </div>
         </ModalPortal>
       )}
