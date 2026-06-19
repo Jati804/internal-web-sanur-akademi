@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Receipt, Menu, CreditCard, BookOpen, Book, UserCog, 
   ClipboardCheck, Wallet, GraduationCap, Power, 
   Settings as SettingsIcon, Database, X,
-  Sparkles, HelpCircle, Info, RotateCw
+  Sparkles, HelpCircle, Info, RotateCw, ChevronLeft, ChevronRight
 } from 'lucide-react';
 
 import { supabase } from './services/supabase.ts';
@@ -31,7 +31,7 @@ import VerifyCertificate from './pages/VerifyCertificate.tsx';
 import { User, Attendance, Transaction, StudentProfile, StudentPayment } from './types.ts';
 import { INITIAL_SUBJECTS, CLASS_ROOM_OPTIONS } from './constants.tsx';
 
-const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }: { to: string, icon: any, label: string, activeColor?: string, onClick?: () => void, badge?: number }) => {
+const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge, collapsed = false }: { to: string, icon: any, label: string, activeColor?: string, onClick?: () => void, badge?: number, collapsed?: boolean }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
   const colors: any = {
@@ -43,14 +43,15 @@ const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }
     <Link 
       to={to} 
       onClick={onClick}
-      className={`flex items-center justify-between gap-3 px-6 py-4 font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all ${colors[activeColor]}`}
+      title={collapsed ? label : undefined}
+      className={`relative flex items-center font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all ${colors[activeColor]} ${collapsed ? 'justify-center px-0 py-4' : 'justify-between gap-3 px-6 py-4'}`}
     >
-      <div className="flex items-center gap-3">
+      <div className={`flex items-center ${collapsed ? '' : 'gap-3'}`}>
         <Icon size={18} />
-        {label}
+        {!collapsed && label}
       </div>
 {badge && badge > 0 ? (
-  <span className="bg-rose-500 text-white text-[9px] px-2 py-1 min-w-[20px] text-center rounded-full animate-pulse shadow-lg shadow-rose-200">{badge}</span>
+  <span className={`bg-rose-500 text-white text-[9px] px-2 py-1 min-w-[20px] text-center rounded-full animate-pulse shadow-lg shadow-rose-200 ${collapsed ? 'absolute -top-1 -right-1' : ''}`}>{badge}</span>
 ) : null}
     </Link>
   );
@@ -231,6 +232,11 @@ const AppContent = ({
   const location = useLocation();
   const [showGuide, setShowGuide] = useState(false);
 const [guideTab, setGuideTab] = useState<'text' | 'video'>('text');
+const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => localStorage.getItem('sanur_sidebar_collapsed') === '1');
+
+useEffect(() => {
+  localStorage.setItem('sanur_sidebar_collapsed', isSidebarCollapsed ? '1' : '0');
+}, [isSidebarCollapsed]);
   
   // 🎯 DETEKSI DOMAIN - FUTURE PROOF!
   // Vercel domain (.vercel.app) = verify only
@@ -333,12 +339,12 @@ const pendingReportsCount = Array.isArray(reports) ?
       {isSidebarOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80000] lg:hidden animate-in fade-in" onClick={closeSidebar} />
       )}
-      <aside className={`fixed lg:static inset-y-0 left-0 w-72 bg-white border-r border-slate-100 z-[81000] transform transition-transform duration-500 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-8 h-full flex flex-col">
-          <div className="flex items-center justify-between mb-12 px-2">
-            <div className="flex items-center gap-3">
+      <aside className={`fixed lg:static inset-y-0 left-0 bg-white border-r border-slate-100 z-[81000] transform transition-all duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarCollapsed ? 'lg:w-20 w-72' : 'w-72'}`}>
+        <div className={`h-full flex flex-col ${isSidebarCollapsed ? 'lg:p-4 p-8' : 'p-8'}`}>
+          <div className={`flex items-center mb-12 px-2 ${isSidebarCollapsed ? 'lg:justify-center lg:mb-8 justify-between' : 'justify-between'}`}>
+            <div className={`flex items-center gap-3 ${isSidebarCollapsed ? 'lg:gap-0' : ''}`}>
               <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl rotate-3 shrink-0"><BookOpen size={24} /></div>
-              <div>
+              <div className={isSidebarCollapsed ? 'lg:hidden' : ''}>
                 <h1 className="font-black text-slate-800 text-xl tracking-tighter uppercase italic leading-none">SANUR</h1>
                 <p className="text-[8px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1.5">Sistem Internal</p>
               </div>
@@ -348,53 +354,60 @@ const pendingReportsCount = Array.isArray(reports) ?
           <nav className="flex-1 space-y-1 overflow-y-auto custom-scrollbar pr-2">
             {user.role === 'ADMIN' && (
               <>
-                <p className="px-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest">Utama</p>
-                <NavItem to="/admin" icon={LayoutDashboard} label="Dashboard" onClick={closeSidebar} />
-                <NavItem to="/admin/finance" icon={Wallet} label="Keuangan" onClick={closeSidebar} />
-                <NavItem to="/admin/receipts" icon={Receipt} label="Kuitansi" onClick={closeSidebar} />
-                <p className="px-6 mt-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest">Manajemen</p>
-                <NavItem to="/admin/buku-induk" icon={Book} label="Buku Induk" onClick={closeSidebar} />
-                <NavItem to="/admin/staff" icon={UserCog} label="Akses User" onClick={closeSidebar} />
-                <NavItem to="/admin/academic" icon={SettingsIcon} label="Pengaturan" onClick={closeSidebar} />
-                <NavItem to="/admin/maintenance" icon={Database} label="Sistem" onClick={closeSidebar} />
+                <p className={`px-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest ${isSidebarCollapsed ? 'lg:hidden' : ''}`}>Utama</p>
+                <NavItem to="/admin" icon={LayoutDashboard} label="Dashboard" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
+                <NavItem to="/admin/finance" icon={Wallet} label="Keuangan" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
+                <NavItem to="/admin/receipts" icon={Receipt} label="Kuitansi" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
+                <p className={`px-6 mt-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest ${isSidebarCollapsed ? 'lg:hidden' : ''}`}>Manajemen</p>
+                <NavItem to="/admin/buku-induk" icon={Book} label="Buku Induk" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
+                <NavItem to="/admin/staff" icon={UserCog} label="Akses User" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
+                <NavItem to="/admin/academic" icon={SettingsIcon} label="Pengaturan" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
+                <NavItem to="/admin/maintenance" icon={Database} label="Sistem" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
               </>
             )}
             {user.role === 'TEACHER' && (
               <>
-                <NavItem to="/teacher" icon={ClipboardCheck} label="Lapor Presensi" onClick={closeSidebar} />
-                <NavItem to="/teacher/honor" icon={Wallet} label="Honor Saya" activeColor="blue" onClick={closeSidebar} />
-                <NavItem to="/teacher/reports" icon={GraduationCap} label="Rapot Siswa" activeColor="blue" onClick={closeSidebar} badge={pendingReportsCount} />
+                <NavItem to="/teacher" icon={ClipboardCheck} label="Lapor Presensi" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
+                <NavItem to="/teacher/honor" icon={Wallet} label="Honor Saya" activeColor="blue" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
+                <NavItem to="/teacher/reports" icon={GraduationCap} label="Rapot Siswa" activeColor="blue" onClick={closeSidebar} badge={pendingReportsCount} collapsed={isSidebarCollapsed} />
               </>
             )}
             {user.role === 'STUDENT' && (
               <>
-                <NavItem to="/student" icon={GraduationCap} label="Kelas Saya" activeColor="blue" onClick={closeSidebar} />
-                <NavItem to="/student/payments" icon={CreditCard} label="Pembayaran" activeColor="blue" onClick={closeSidebar} />
+                <NavItem to="/student" icon={GraduationCap} label="Kelas Saya" activeColor="blue" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
+                <NavItem to="/student/payments" icon={CreditCard} label="Pembayaran" activeColor="blue" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
               </>
             )}
           </nav>
+          <button
+            onClick={() => setIsSidebarCollapsed(v => !v)}
+            className="hidden lg:flex items-center justify-center gap-2 py-3 mt-4 text-slate-400 hover:text-blue-600 hover:bg-slate-50 rounded-2xl transition-all text-[10px] font-black uppercase tracking-widest"
+            title={isSidebarCollapsed ? 'Buka sidebar' : 'Ciutkan sidebar'}
+          >
+            {isSidebarCollapsed ? <ChevronRight size={16} /> : <><ChevronLeft size={16} /> Ciutkan</>}
+          </button>
         </div>
       </aside>
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden bg-[#F8FAFC]">
-        <header className="h-24 bg-white border-b border-slate-100 flex items-center justify-between px-8 md:px-12 sticky top-0 z-[1000] shadow-sm shrink-0">
+        <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-6 md:px-8 sticky top-0 z-[1000] shadow-sm shrink-0">
           <div className="flex items-center gap-4">
-            <button onClick={() => setIsSidebarOpen(true)} className="p-3 bg-slate-50 text-slate-400 rounded-xl lg:hidden"><Menu size={24}/></button>
+            <button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-slate-50 text-slate-400 rounded-xl lg:hidden"><Menu size={20}/></button>
 <div className="flex flex-col">
-  <h1 className="font-black italic uppercase text-slate-800 tracking-tighter text-lg md:text-xl leading-none">
+  <h1 className="font-black italic uppercase text-slate-800 tracking-tighter text-sm md:text-base leading-none">
     {user?.name || user?.username || 'USER'}
   </h1>
-  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
+  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mt-0.5">
     STATUS: {user?.role === 'ADMIN' ? 'ADMIN' : user?.role === 'TEACHER' ? 'GURU' : 'SISWA'}
   </p>
 </div>
           </div>
-          <div className="flex items-center gap-3">
-<button onClick={() => setShowGuide(true)} className={`p-4 ${roleGuideColor} text-white rounded-2xl shadow-xl hover:opacity-90 active:scale-95 transition-all`}>
-   <HelpCircle size={20} />
+          <div className="flex items-center gap-2">
+<button onClick={() => setShowGuide(true)} className={`p-2.5 ${roleGuideColor} text-white rounded-xl shadow-md hover:opacity-90 active:scale-95 transition-all`}>
+   <HelpCircle size={16} />
 </button>
-<button onClick={executeLogout} className="p-4 bg-rose-600 text-white rounded-2xl shadow-xl hover:bg-rose-700 active:scale-95 transition-all">
-   <Power size={20} />
+<button onClick={executeLogout} className="p-2.5 bg-rose-600 text-white rounded-xl shadow-md hover:bg-rose-700 active:scale-95 transition-all">
+   <Power size={16} />
 </button>
           </div>
         </header>
