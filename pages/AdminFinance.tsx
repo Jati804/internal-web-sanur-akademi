@@ -1090,42 +1090,34 @@ const executePayTeacher = async () => {
       {confirmingSpp && (
         <ModalPortal>
   <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-     <div className="bg-white w-full max-w-2xl max-h-[90vh] rounded-[4rem] shadow-2xl relative overflow-hidden flex flex-col opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-              <div className="flex-1 overflow-y-auto custom-scrollbar p-10 md:p-12">
+     <div className="bg-white w-full max-w-2xl rounded-[4rem] shadow-2xl relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+              <div className="p-10 md:p-12">
 
-              <div className="flex flex-col items-center text-center gap-3 mb-10">
-                 <div className="w-16 h-16 shrink-0 bg-emerald-50 text-emerald-600 rounded-[1.5rem] flex items-center justify-center shadow-inner rotate-3"><CheckCircle2 size={32}/></div>
-                 <div>
-                   <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Verifikasi SPP</h4>
-                   <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-2">{confirmingSpp.studentName}</p>
-                 </div>
+              <button onClick={() => setConfirmingSpp(null)} className="absolute top-10 right-10 z-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
+
+              <div className="flex flex-col items-center text-center mb-10">
+                 <div className="w-16 h-16 shrink-0 bg-emerald-50 text-emerald-600 rounded-[1.5rem] flex items-center justify-center shadow-inner rotate-3 mb-4"><CheckCircle2 size={32}/></div>
+                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Verifikasi SPP</h4>
+                 <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-2">{confirmingSpp.studentName}</p>
               </div>
 
-              <div className={confirmingSpp.receiptData ? 'grid md:grid-cols-2 gap-10' : ''}>
+              <div className={confirmingSpp.receiptData ? 'grid md:grid-cols-2 gap-6' : ''}>
                 {/* KOLOM KIRI: Info */}
-                <div className="flex flex-col h-56">
-                  <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 text-center shadow-inner w-full h-full flex flex-col justify-center">
-                     <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{confirmingSpp.className}</p>
-                     <div className="pt-3 border-t border-slate-200"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Diterima</p><p className="text-3xl font-black text-emerald-600 italic tracking-tighter">Rp {confirmingSpp.amount.toLocaleString()}</p></div>
-                  </div>
+                <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 flex flex-col justify-center">
+                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">{confirmingSpp.className}</p>
+                   <div className="pt-3 border-t border-slate-200 text-center"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Diterima</p><p className="text-2xl font-black text-emerald-600 italic">Rp {confirmingSpp.amount.toLocaleString()}</p></div>
                 </div>
 
                 {/* KOLOM KANAN: Bukti (kalau ada) */}
                 {confirmingSpp.receiptData && (
-                   <div className="flex flex-col space-y-2 h-56">
-                     <p className="text-[9px] font-black text-slate-400 uppercase ml-4 tracking-widest">Bukti Dari Siswa:</p>
-                     <div className="relative group cursor-pointer flex-1" onClick={() => setPreviewImg(confirmingSpp.receiptData!)}>
-                        <img src={confirmingSpp.receiptData} className="w-full h-full object-cover rounded-[2rem] shadow-lg border-4 border-emerald-100" alt="Receipt" />
-                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-all rounded-[1.8rem]"><Maximize2 size={24} className="mb-2"/><p className="text-[7px] font-black uppercase">PREVIEW BUKTI</p></div>
-                     </div>
+                   <div className="relative group cursor-pointer h-36" onClick={() => setPreviewImg(confirmingSpp.receiptData!)}>
+                      <img src={confirmingSpp.receiptData} className="w-full h-36 object-cover rounded-3xl shadow-lg border-4 border-emerald-100" alt="Receipt" />
+                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-all rounded-[1.3rem]"><Maximize2 size={24} className="mb-1"/><p className="text-[7px] font-black uppercase">KLIK PREVIEW</p></div>
                    </div>
                 )}
               </div>
 
-              <div className="flex gap-4 mt-10">
-                 <button onClick={() => setConfirmingSpp(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all">BATAL</button>
-                 <button onClick={() => handleVerifySPP(confirmingSpp)} disabled={!!actionLoadingId} className="flex-[2] py-5 bg-emerald-600 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-widest shadow-xl hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center gap-2">{actionLoadingId === confirmingSpp.id ? <Loader2 size={18} className="animate-spin" /> : <><Check size={18}/> KONFIRMASI ✨</>}</button>
-              </div>
+              <button onClick={() => handleVerifySPP(confirmingSpp)} disabled={!!actionLoadingId} className="w-full mt-10 py-6 bg-emerald-600 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-30">{actionLoadingId === confirmingSpp.id ? <Loader2 size={18} className="animate-spin" /> : <><Check size={18}/> KONFIRMASI ✨</>}</button>
               </div>
            </div>
         </div>
