@@ -1005,13 +1005,17 @@ const executePayTeacher = async () => {
               <div className="flex-1 overflow-y-auto custom-scrollbar p-10 md:p-12">
               <button onClick={() => { setSelectedPayout(null); setPayForm({ receiptData: '' }); }} className="absolute top-10 right-10 z-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
 
+              <div className="flex items-center gap-5 mb-10">
+                 <div className={`w-16 h-16 shrink-0 ${selectedPayout.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'} rounded-[1.5rem] flex items-center justify-center shadow-inner rotate-3`}><Banknote size={32}/></div>
+                 <div>
+                   <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Cairkan Honor</h4>
+                   <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-2">{selectedPayout.teacherName}</p>
+                 </div>
+              </div>
+
               <div className="grid md:grid-cols-2 gap-10">
                 {/* KOLOM KIRI: Info */}
-                <div className="flex flex-col items-center md:items-start text-center md:text-left">
-                  <div className={`w-20 h-20 ${selectedPayout.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'} rounded-[2rem] flex items-center justify-center mb-8 shadow-inner rotate-3`}><Banknote size={40}/></div>
-                  <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-2 leading-none">Cairkan Honor</h4>
-                  <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-8">{selectedPayout.teacherName}</p>
-
+                <div className="flex flex-col">
                   <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 w-full">
                      <div className="flex justify-between items-center text-[8px] font-black text-slate-400 uppercase tracking-widest"><p>Detail:</p><p className={selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'}>{selectedPayout.category} | {selectedPayout.sessionCount} SESI</p></div>
                      <div className="text-center border-t border-slate-100 pt-3"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Transfer</p><p className={`text-2xl font-black ${selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'} italic`}>Rp {selectedPayout.amount.toLocaleString()}</p></div>
@@ -1019,7 +1023,7 @@ const executePayTeacher = async () => {
                 </div>
 
                 {/* KOLOM KANAN: Upload Bukti */}
-                <div className="flex flex-col justify-center space-y-3">
+                <div className="flex flex-col space-y-3">
                    <label className="text-[9px] font-black text-slate-400 uppercase ml-4 tracking-widest">Bukti Transfer (Wajib)</label>
                    {payForm.receiptData ? (
                       <div className="relative group cursor-pointer" onClick={() => setPreviewImg(payForm.receiptData)}>
@@ -1046,12 +1050,17 @@ const executePayTeacher = async () => {
      <div className={`bg-white w-full ${confirmingSpp.receiptData ? 'max-w-2xl' : 'max-w-sm'} max-h-[90vh] rounded-[4rem] shadow-2xl relative overflow-hidden flex flex-col opacity-0`} style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <div className="flex-1 overflow-y-auto custom-scrollbar p-10 md:p-12">
 
+              <div className="flex items-center gap-5 mb-10">
+                 <div className="w-16 h-16 shrink-0 bg-emerald-50 text-emerald-600 rounded-[1.5rem] flex items-center justify-center shadow-inner rotate-3"><CheckCircle2 size={32}/></div>
+                 <div>
+                   <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Verifikasi SPP</h4>
+                   <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-2">{confirmingSpp.studentName}</p>
+                 </div>
+              </div>
+
               <div className={confirmingSpp.receiptData ? 'grid md:grid-cols-2 gap-10' : ''}>
                 {/* KOLOM KIRI: Info */}
-                <div className="flex flex-col items-center text-center">
-                  <div className="w-20 h-20 bg-emerald-50 text-emerald-600 rounded-[2rem] flex items-center justify-center mb-6 shadow-inner rotate-3"><CheckCircle2 size={40}/></div>
-                  <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-1 leading-none">Verifikasi SPP</h4>
-                  <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mb-8">{confirmingSpp.studentName}</p>
+                <div className="flex flex-col">
                   <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 text-center shadow-inner w-full">
                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{confirmingSpp.className}</p>
                      <div className="pt-3 border-t border-slate-200"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Diterima</p><p className="text-3xl font-black text-emerald-600 italic tracking-tighter">Rp {confirmingSpp.amount.toLocaleString()}</p></div>
@@ -1060,7 +1069,7 @@ const executePayTeacher = async () => {
 
                 {/* KOLOM KANAN: Bukti (kalau ada) */}
                 {confirmingSpp.receiptData && (
-                   <div className="flex flex-col justify-center space-y-2">
+                   <div className="flex flex-col space-y-2">
                      <p className="text-[9px] font-black text-slate-400 uppercase ml-4 tracking-widest">Bukti Dari Siswa:</p>
                      <div className="relative group cursor-pointer" onClick={() => setPreviewImg(confirmingSpp.receiptData!)}>
                         <img src={confirmingSpp.receiptData} className="w-full h-56 object-cover rounded-[2rem] shadow-lg border-4 border-emerald-100" alt="Receipt" />
