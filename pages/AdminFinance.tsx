@@ -1005,34 +1005,29 @@ const executePayTeacher = async () => {
               <div className="flex-1 overflow-y-auto custom-scrollbar p-10 md:p-12">
               <button onClick={() => { setSelectedPayout(null); setPayForm({ receiptData: '' }); }} className="absolute top-10 right-10 z-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
 
-              <div className="flex items-center gap-5 mb-10">
-                 <div className={`w-16 h-16 shrink-0 ${selectedPayout.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'} rounded-[1.5rem] flex items-center justify-center shadow-inner rotate-3`}><Banknote size={32}/></div>
-                 <div>
-                   <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Cairkan Honor</h4>
-                   <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-2">{selectedPayout.teacherName}</p>
-                 </div>
+              <div className="flex flex-col items-center text-center mb-10">
+                 <div className={`w-16 h-16 ${selectedPayout.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'} rounded-[1.5rem] flex items-center justify-center shadow-inner rotate-3 mb-4`}><Banknote size={32}/></div>
+                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Cairkan Honor</h4>
+                 <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-2">{selectedPayout.teacherName}</p>
               </div>
 
-              <div className="grid md:grid-cols-2 gap-10">
+              <div className="grid md:grid-cols-2 gap-6">
                 {/* KOLOM KIRI: Info */}
-                <div className="flex flex-col">
-                  <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 w-full">
-                     <div className="flex justify-between items-center text-[8px] font-black text-slate-400 uppercase tracking-widest"><p>Detail:</p><p className={selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'}>{selectedPayout.category} | {selectedPayout.sessionCount} SESI</p></div>
-                     <div className="text-center border-t border-slate-100 pt-3"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Transfer</p><p className={`text-2xl font-black ${selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'} italic`}>Rp {selectedPayout.amount.toLocaleString()}</p></div>
-                  </div>
+                <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 flex flex-col justify-center">
+                   <div className="flex justify-between items-center text-[8px] font-black text-slate-400 uppercase tracking-widest"><p>Detail:</p><p className={selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'}>{selectedPayout.category} | {selectedPayout.sessionCount} SESI</p></div>
+                   <div className="text-center border-t border-slate-100 pt-3"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Transfer</p><p className={`text-2xl font-black ${selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'} italic`}>Rp {selectedPayout.amount.toLocaleString()}</p></div>
                 </div>
 
-                {/* KOLOM KANAN: Upload Bukti */}
-                <div className="flex flex-col space-y-3">
-                   <label className="text-[9px] font-black text-slate-400 uppercase ml-4 tracking-widest">Bukti Transfer (Wajib)</label>
+                {/* KOLOM KANAN: Upload Bukti (dibuat kompak, sejajar tinggi sama kolom kiri) */}
+                <div>
                    {payForm.receiptData ? (
-                      <div className="relative group cursor-pointer" onClick={() => setPreviewImg(payForm.receiptData)}>
-                         <img src={payForm.receiptData} className="w-full h-56 object-cover rounded-[2rem] shadow-lg border-4 border-emerald-500" alt="Proof" />
-                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-all rounded-[1.8rem]"><Maximize2 size={32} className="mb-2"/><p className="text-[8px] font-black uppercase">KLIK PREVIEW</p></div>
-                         <button onClick={(e) => { e.stopPropagation(); setPayForm({ receiptData: '' }); }} className="absolute top-4 right-4 p-3 bg-rose-600 text-white rounded-full shadow-xl hover:bg-rose-700 transition-all"><Trash2 size={16}/></button>
+                      <div className="relative group cursor-pointer h-full" onClick={() => setPreviewImg(payForm.receiptData)}>
+                         <img src={payForm.receiptData} className="w-full h-full min-h-[104px] object-cover rounded-3xl shadow-lg border-4 border-emerald-500" alt="Proof" />
+                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-all rounded-[1.3rem]"><Maximize2 size={24} className="mb-1"/><p className="text-[7px] font-black uppercase">KLIK PREVIEW</p></div>
+                         <button onClick={(e) => { e.stopPropagation(); setPayForm({ receiptData: '' }); }} className="absolute top-3 right-3 p-2 bg-rose-600 text-white rounded-full shadow-xl hover:bg-rose-700 transition-all"><Trash2 size={14}/></button>
                       </div>
                    ) : (
-                      <div className="relative"><input type="file" ref={fileInputPayoutRef} onChange={handleUploadProof} className="hidden" accept="image/*" /><button onClick={() => fileInputPayoutRef.current?.click()} className={`w-full py-16 bg-slate-50 rounded-[2.5rem] border-2 border-dashed ${selectedPayout.category === 'PRIVATE' ? 'border-orange-200 text-orange-600' : 'border-blue-200 text-blue-600'} font-black text-[10px] uppercase hover:bg-white transition-all flex flex-col items-center gap-3`}>{isLoading ? <Loader2 className="animate-spin" size={24} /> : <><ImageIcon size={32}/><p>UPLOAD BUKTI TRANSFER</p></>}</button></div>
+                      <div className="relative h-full"><input type="file" ref={fileInputPayoutRef} onChange={handleUploadProof} className="hidden" accept="image/*" /><button onClick={() => fileInputPayoutRef.current?.click()} className={`w-full h-full min-h-[104px] bg-slate-50 rounded-3xl border-2 border-dashed ${selectedPayout.category === 'PRIVATE' ? 'border-orange-200 text-orange-600' : 'border-blue-200 text-blue-600'} font-black text-[9px] uppercase hover:bg-white transition-all flex flex-col items-center justify-center gap-2`}>{isLoading ? <Loader2 className="animate-spin" size={20} /> : <><ImageIcon size={24}/><p>UPLOAD BUKTI<br/>TRANSFER</p></>}</button></div>
                    )}
                 </div>
               </div>
