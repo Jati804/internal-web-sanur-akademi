@@ -803,7 +803,7 @@ const handleDownloadPDFReport = async (course: any) => {
         <section className="space-y-12">
            <div 
   id="form-bayar" 
-  className={`bg-white p-12 md:p-16 rounded-[4rem] border-2 shadow-2xl space-y-12 relative overflow-hidden scroll-mt-32 transition-all duration-500 ${
+  className={`bg-white p-12 md:p-16 rounded-[4rem] border-2 shadow-2xl space-y-12 relative overflow-hidden scroll-mt-32 transition-colors duration-500 ${
     isEditing 
       ? 'border-orange-500 edit-mode-glow edit-mode-highlight' 
       : 'border-slate-50'
