@@ -1012,13 +1012,13 @@ const executePayTeacher = async () => {
                 {/* KOLOM KANAN: Upload Bukti (dibuat kompak, sejajar tinggi sama kolom kiri) */}
                 <div>
                    {payForm.receiptData ? (
-                      <div className="relative group cursor-pointer h-full" onClick={() => setPreviewImg(payForm.receiptData)}>
-                         <img src={payForm.receiptData} className="w-full h-full min-h-[104px] object-cover rounded-3xl shadow-lg border-4 border-emerald-500" alt="Proof" />
+                      <div className="relative group cursor-pointer h-36" onClick={() => setPreviewImg(payForm.receiptData)}>
+                         <img src={payForm.receiptData} className="w-full h-36 object-cover rounded-3xl shadow-lg border-4 border-emerald-500" alt="Proof" />
                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-all rounded-[1.3rem]"><Maximize2 size={24} className="mb-1"/><p className="text-[7px] font-black uppercase">KLIK PREVIEW</p></div>
                          <button onClick={(e) => { e.stopPropagation(); setPayForm({ receiptData: '' }); }} className="absolute top-3 right-3 p-2 bg-rose-600 text-white rounded-full shadow-xl hover:bg-rose-700 transition-all"><Trash2 size={14}/></button>
                       </div>
                    ) : (
-                      <div className="relative h-full"><input type="file" ref={fileInputPayoutRef} onChange={handleUploadProof} className="hidden" accept="image/*" /><button onClick={() => fileInputPayoutRef.current?.click()} className={`w-full h-full min-h-[104px] bg-slate-50 rounded-3xl border-2 border-dashed ${selectedPayout.category === 'PRIVATE' ? 'border-orange-200 text-orange-600' : 'border-blue-200 text-blue-600'} font-black text-[9px] uppercase hover:bg-white transition-all flex flex-col items-center justify-center gap-2`}>{isLoading ? <Loader2 className="animate-spin" size={20} /> : <><ImageIcon size={24}/><p>UPLOAD BUKTI<br/>TRANSFER</p></>}</button></div>
+                      <div className="relative h-36"><input type="file" ref={fileInputPayoutRef} onChange={handleUploadProof} className="hidden" accept="image/*" /><button onClick={() => fileInputPayoutRef.current?.click()} className={`w-full h-36 bg-slate-50 rounded-3xl border-2 border-dashed ${selectedPayout.category === 'PRIVATE' ? 'border-orange-200 text-orange-600' : 'border-blue-200 text-blue-600'} font-black text-[9px] uppercase hover:bg-white transition-all flex flex-col items-center justify-center gap-2`}>{isLoading ? <Loader2 className="animate-spin" size={20} /> : <><ImageIcon size={24}/><p>UPLOAD BUKTI<br/>TRANSFER</p></>}</button></div>
                    )}
                 </div>
               </div>
@@ -1033,7 +1033,7 @@ const executePayTeacher = async () => {
       {confirmingSpp && (
         <ModalPortal>
   <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-     <div className={`bg-white w-full ${confirmingSpp.receiptData ? 'max-w-2xl' : 'max-w-sm'} max-h-[90vh] rounded-[4rem] shadow-2xl relative overflow-hidden flex flex-col opacity-0`} style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+     <div className="bg-white w-full max-w-2xl max-h-[90vh] rounded-[4rem] shadow-2xl relative overflow-hidden flex flex-col opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <div className="flex-1 overflow-y-auto custom-scrollbar p-10 md:p-12">
 
               <div className="flex items-center gap-5 mb-10">
