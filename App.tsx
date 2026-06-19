@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Receipt, Menu, CreditCard, BookOpen, Book, UserCog, 
   ClipboardCheck, Wallet, GraduationCap, Power, 
   Settings as SettingsIcon, Database, X,
-  Sparkles, HelpCircle, Info, RotateCw, PanelLeftClose, PanelLeftOpen
+  Sparkles, HelpCircle, Info, RotateCw
 } from 'lucide-react';
 
 import { supabase } from './services/supabase.ts';
@@ -31,7 +31,7 @@ import VerifyCertificate from './pages/VerifyCertificate.tsx';
 import { User, Attendance, Transaction, StudentProfile, StudentPayment } from './types.ts';
 import { INITIAL_SUBJECTS, CLASS_ROOM_OPTIONS } from './constants.tsx';
 
-const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge, collapsed = false }: { to: string, icon: any, label: string, activeColor?: string, onClick?: () => void, badge?: number, collapsed?: boolean }) => {
+const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }: { to: string, icon: any, label: string, activeColor?: string, onClick?: () => void, badge?: number }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
   const colors: any = {
@@ -43,15 +43,14 @@ const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge, 
     <Link 
       to={to} 
       onClick={onClick}
-      title={collapsed ? label : undefined}
-      className={`relative flex items-center font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all ${colors[activeColor]} ${collapsed ? 'justify-center w-12 h-12 mx-auto' : 'justify-between gap-3 px-6 py-4'}`}
+      className={`flex items-center justify-between gap-3 px-6 py-4 font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all ${colors[activeColor]}`}
     >
-      <div className={`flex items-center ${collapsed ? '' : 'gap-3'}`}>
-        <Icon size={collapsed ? 24 : 18} />
-        {!collapsed && label}
+      <div className="flex items-center gap-3">
+        <Icon size={18} />
+        {label}
       </div>
 {badge && badge > 0 ? (
-  <span className={`bg-rose-500 text-white text-[9px] px-2 py-1 min-w-[20px] text-center rounded-full animate-pulse shadow-lg shadow-rose-200 ${collapsed ? 'absolute -top-1.5 -right-1.5' : ''}`}>{badge}</span>
+  <span className="bg-rose-500 text-white text-[9px] px-2 py-1 min-w-[20px] text-center rounded-full animate-pulse shadow-lg shadow-rose-200">{badge}</span>
 ) : null}
     </Link>
   );
@@ -232,11 +231,6 @@ const AppContent = ({
   const location = useLocation();
   const [showGuide, setShowGuide] = useState(false);
 const [guideTab, setGuideTab] = useState<'text' | 'video'>('text');
-const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => localStorage.getItem('sanur_sidebar_collapsed') === '1');
-
-useEffect(() => {
-  localStorage.setItem('sanur_sidebar_collapsed', isSidebarCollapsed ? '1' : '0');
-}, [isSidebarCollapsed]);
   
   // 🎯 DETEKSI DOMAIN - FUTURE PROOF!
   // Vercel domain (.vercel.app) = verify only
@@ -339,50 +333,43 @@ const pendingReportsCount = Array.isArray(reports) ?
       {isSidebarOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80000] lg:hidden animate-in fade-in" onClick={closeSidebar} />
       )}
-      <aside className={`fixed lg:static inset-y-0 left-0 bg-white border-r border-slate-100 z-[81000] transform transition-all duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} ${isSidebarCollapsed ? 'lg:w-24 w-72' : 'w-72'}`}>
-        <div className={`h-full flex flex-col ${isSidebarCollapsed ? 'lg:p-4 p-8' : 'p-8'}`}>
-          <div className={`flex items-center mb-10 px-2 justify-between ${isSidebarCollapsed ? 'lg:justify-center' : ''}`}>
-            <div className={`flex items-center gap-3 ${isSidebarCollapsed ? 'lg:hidden' : ''}`}>
-              <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shrink-0 rotate-3"><BookOpen size={24} /></div>
+      <aside className={`fixed lg:static inset-y-0 left-0 w-72 bg-white border-r border-slate-100 z-[81000] transform transition-transform duration-500 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+        <div className="p-8 h-full flex flex-col">
+          <div className="flex items-center justify-between mb-12 px-2">
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl rotate-3 shrink-0"><BookOpen size={24} /></div>
               <div>
                 <h1 className="font-black text-slate-800 text-xl tracking-tighter uppercase italic leading-none">SANUR</h1>
                 <p className="text-[8px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1.5">Sistem Internal</p>
               </div>
             </div>
-            <button
-              onClick={() => setIsSidebarCollapsed(v => !v)}
-              title={isSidebarCollapsed ? 'Buka sidebar' : 'Ciutkan sidebar'}
-              className="hidden lg:flex items-center justify-center w-9 h-9 text-blue-600 border border-blue-200 hover:bg-blue-50 hover:border-blue-300 rounded-xl transition-all shrink-0"
-            >
-              {isSidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
-            </button>
             <button onClick={closeSidebar} className="lg:hidden p-2 text-slate-300 hover:text-rose-500"><X size={24} /></button>
           </div>
-          <nav className={`flex-1 overflow-y-auto overflow-x-visible custom-scrollbar ${isSidebarCollapsed ? 'lg:space-y-3 lg:pr-0 space-y-1 pr-2' : 'space-y-1 pr-2'}`}>
+          <nav className="flex-1 space-y-1 overflow-y-auto custom-scrollbar pr-2">
             {user.role === 'ADMIN' && (
               <>
-                <p className={`px-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest ${isSidebarCollapsed ? 'lg:hidden' : ''}`}>Utama</p>
-                <NavItem to="/admin" icon={LayoutDashboard} label="Dashboard" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
-                <NavItem to="/admin/finance" icon={Wallet} label="Keuangan" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
-                <NavItem to="/admin/receipts" icon={Receipt} label="Kuitansi" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
-                <p className={`px-6 mt-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest ${isSidebarCollapsed ? 'lg:hidden' : ''}`}>Manajemen</p>
-                <NavItem to="/admin/buku-induk" icon={Book} label="Buku Induk" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
-                <NavItem to="/admin/staff" icon={UserCog} label="Akses User" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
-                <NavItem to="/admin/academic" icon={SettingsIcon} label="Pengaturan" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
-                <NavItem to="/admin/maintenance" icon={Database} label="Sistem" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
+                <p className="px-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest">Utama</p>
+                <NavItem to="/admin" icon={LayoutDashboard} label="Dashboard" onClick={closeSidebar} />
+                <NavItem to="/admin/finance" icon={Wallet} label="Keuangan" onClick={closeSidebar} />
+                <NavItem to="/admin/receipts" icon={Receipt} label="Kuitansi" onClick={closeSidebar} />
+                <p className="px-6 mt-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest">Manajemen</p>
+                <NavItem to="/admin/buku-induk" icon={Book} label="Buku Induk" onClick={closeSidebar} />
+                <NavItem to="/admin/staff" icon={UserCog} label="Akses User" onClick={closeSidebar} />
+                <NavItem to="/admin/academic" icon={SettingsIcon} label="Pengaturan" onClick={closeSidebar} />
+                <NavItem to="/admin/maintenance" icon={Database} label="Sistem" onClick={closeSidebar} />
               </>
             )}
             {user.role === 'TEACHER' && (
               <>
-                <NavItem to="/teacher" icon={ClipboardCheck} label="Lapor Presensi" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
-                <NavItem to="/teacher/honor" icon={Wallet} label="Honor Saya" activeColor="blue" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
-                <NavItem to="/teacher/reports" icon={GraduationCap} label="Rapot Siswa" activeColor="blue" onClick={closeSidebar} badge={pendingReportsCount} collapsed={isSidebarCollapsed} />
+                <NavItem to="/teacher" icon={ClipboardCheck} label="Lapor Presensi" onClick={closeSidebar} />
+                <NavItem to="/teacher/honor" icon={Wallet} label="Honor Saya" activeColor="blue" onClick={closeSidebar} />
+                <NavItem to="/teacher/reports" icon={GraduationCap} label="Rapot Siswa" activeColor="blue" onClick={closeSidebar} badge={pendingReportsCount} />
               </>
             )}
             {user.role === 'STUDENT' && (
               <>
-                <NavItem to="/student" icon={GraduationCap} label="Kelas Saya" activeColor="blue" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
-                <NavItem to="/student/payments" icon={CreditCard} label="Pembayaran" activeColor="blue" onClick={closeSidebar} collapsed={isSidebarCollapsed} />
+                <NavItem to="/student" icon={GraduationCap} label="Kelas Saya" activeColor="blue" onClick={closeSidebar} />
+                <NavItem to="/student/payments" icon={CreditCard} label="Pembayaran" activeColor="blue" onClick={closeSidebar} />
               </>
             )}
           </nav>
@@ -390,8 +377,7 @@ const pendingReportsCount = Array.isArray(reports) ?
       </aside>
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden bg-[#F8FAFC]">
-        <div className="flex-1 overflow-y-auto custom-scrollbar">
-        <header className="h-24 bg-white border-b border-slate-100 flex items-center justify-between px-8 md:px-12 shadow-sm shrink-0">
+        <header className="h-24 bg-white border-b border-slate-100 flex items-center justify-between px-8 md:px-12 sticky top-0 z-[1000] shadow-sm shrink-0">
           <div className="flex items-center gap-4">
             <button onClick={() => setIsSidebarOpen(true)} className="p-3 bg-slate-50 text-slate-400 rounded-xl lg:hidden"><Menu size={24}/></button>
 <div className="flex flex-col">
@@ -413,7 +399,7 @@ const pendingReportsCount = Array.isArray(reports) ?
           </div>
         </header>
         
-        <div className="p-6 lg:p-12">
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-12">
           <div className="max-w-7xl mx-auto">
             <Routes>
               <Route path="/admin" element={<AdminDashboard user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} setAttendanceLogs={setAttendanceLogs} teachers={teachers} transactions={transactions} studentProfiles={studentProfiles} />} />
@@ -440,7 +426,6 @@ const pendingReportsCount = Array.isArray(reports) ?
               <Route path="/" element={<Navigate to={user.role === 'ADMIN' ? '/admin' : user.role === 'TEACHER' ? '/teacher' : '/student'} replace />} />
             </Routes>
           </div>
-        </div>
         </div>
       </main>
     </div>
