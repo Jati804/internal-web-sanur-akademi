@@ -33,6 +33,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
   });
   const [isLoading, setIsLoading] = useState(false);
   const [highlightTx, setHighlightTx] = useState<{ id: string; type: 'INCOME' | 'EXPENSE' } | null>(null);
+  const [scrollToTxId, setScrollToTxId] = useState<string | null>(null);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
   
   const fileInputPayoutRef = useRef<HTMLInputElement>(null);
@@ -97,6 +98,24 @@ useEffect(() => {
     };
   }
 }, [highlightTx]);
+
+// ✅ AUTO-SCROLL khusus untuk transaksi yang baru ditambahkan manual (bukan saat edit)
+// Nunggu isLoadingLedger selesai dulu, soalnya kalau transaksinya ada di halaman lain,
+// kita pindah halaman dulu (yang artinya ada proses fetch ulang) sebelum baris-nya muncul di DOM.
+useEffect(() => {
+  if (scrollToTxId && !isLoadingLedger) {
+    const scrollTimer = setTimeout(() => {
+      const el = document.getElementById(`tx-row-${scrollToTxId}`);
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        setScrollToTxId(null);
+      }
+      // kalau belum ketemu (misal masih di tengah proses pindah halaman),
+      // biarkan scrollToTxId tetap nyala, nanti dicoba lagi otomatis pas isLoadingLedger berubah lagi
+    }, 150);
+    return () => clearTimeout(scrollTimer);
+  }
+}, [scrollToTxId, isLoadingLedger]);
 
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -235,6 +254,35 @@ if (ledgerFilters.category !== 'ALL') {
     setIsLoadingLedger(false);
   }
 };
+
+// ✅ Hitung transaksi baru jatuh di halaman berapa (pakai filter & urutan sort yang sama dengan fetchLedgerData)
+const findPageForTx = async (txId: string, txDate: string): Promise<number> => {
+  try {
+    let q = supabase
+      .from('transactions')
+      .select('id', { count: 'exact', head: true })
+      .or(`date.gt.${txDate},and(date.eq.${txDate},id.gt.${txId})`);
+
+    if (ledgerSearch.trim()) {
+      const searchTerm = `%${ledgerSearch.trim()}%`;
+      q = q.or(`description.ilike.${searchTerm},category.ilike.${searchTerm}`);
+    }
+    if (ledgerFilters.category !== 'ALL') {
+      q = q.eq('category', ledgerFilters.category.toUpperCase());
+    }
+    if (ledgerFilters.type !== 'ALL') {
+      q = q.eq('type', ledgerFilters.type.toUpperCase());
+    }
+
+    const { count, error } = await q;
+    if (error) throw error;
+
+    const rank = count || 0;
+    return Math.floor(rank / itemsPerPage) + 1;
+  } catch {
+    return 1; // fallback aman: anggap halaman 1
+  }
+};
   
   const stats = useMemo(() => {
     const income = transactions.filter(t => t.type === 'INCOME').reduce((a, b) => a + b.amount, 0);
@@ -354,12 +402,21 @@ useEffect(() => {
       const { error } = await supabase.from('transactions').insert({ id: txId, ...addForm, description: addForm.description.toUpperCase(), category: addForm.category.toUpperCase() });
       if (error) throw error;
       if (refreshAllData) await refreshAllData();
-      await fetchLedgerData();
+
+      const targetPage = await findPageForTx(txId, addForm.date);
+
       setShowAddModal(false);
       setAddForm({ type: 'INCOME', category: 'UMUM', amount: 0, date: getWIBDate(), description: '' });
-      
+
       setHighlightTx({ id: txId, type: addForm.type });
       setActiveTab('LEDGER');
+      setScrollToTxId(txId);
+
+      if (targetPage !== currentPage) {
+        setCurrentPage(targetPage); // ini akan memicu fetchLedgerData ulang ke halaman yang benar
+      } else {
+        await fetchLedgerData();
+      }
     } catch (e: any) { alert(e.message); } finally { setIsLoading(false); }
   };
 
@@ -1036,7 +1093,7 @@ const executePayTeacher = async () => {
      <div className="bg-white w-full max-w-2xl max-h-[90vh] rounded-[4rem] shadow-2xl relative overflow-hidden flex flex-col opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <div className="flex-1 overflow-y-auto custom-scrollbar p-10 md:p-12">
 
-              <div className="flex items-center gap-5 mb-10">
+              <div className="flex flex-col items-center text-center gap-3 mb-10">
                  <div className="w-16 h-16 shrink-0 bg-emerald-50 text-emerald-600 rounded-[1.5rem] flex items-center justify-center shadow-inner rotate-3"><CheckCircle2 size={32}/></div>
                  <div>
                    <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Verifikasi SPP</h4>
@@ -1046,8 +1103,8 @@ const executePayTeacher = async () => {
 
               <div className={confirmingSpp.receiptData ? 'grid md:grid-cols-2 gap-10' : ''}>
                 {/* KOLOM KIRI: Info */}
-                <div className="flex flex-col">
-                  <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 text-center shadow-inner w-full">
+                <div className="flex flex-col h-56">
+                  <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 text-center shadow-inner w-full h-full flex flex-col justify-center">
                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">{confirmingSpp.className}</p>
                      <div className="pt-3 border-t border-slate-200"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Diterima</p><p className="text-3xl font-black text-emerald-600 italic tracking-tighter">Rp {confirmingSpp.amount.toLocaleString()}</p></div>
                   </div>
@@ -1055,10 +1112,10 @@ const executePayTeacher = async () => {
 
                 {/* KOLOM KANAN: Bukti (kalau ada) */}
                 {confirmingSpp.receiptData && (
-                   <div className="flex flex-col space-y-2">
+                   <div className="flex flex-col space-y-2 h-56">
                      <p className="text-[9px] font-black text-slate-400 uppercase ml-4 tracking-widest">Bukti Dari Siswa:</p>
-                     <div className="relative group cursor-pointer" onClick={() => setPreviewImg(confirmingSpp.receiptData!)}>
-                        <img src={confirmingSpp.receiptData} className="w-full h-56 object-cover rounded-[2rem] shadow-lg border-4 border-emerald-100" alt="Receipt" />
+                     <div className="relative group cursor-pointer flex-1" onClick={() => setPreviewImg(confirmingSpp.receiptData!)}>
+                        <img src={confirmingSpp.receiptData} className="w-full h-full object-cover rounded-[2rem] shadow-lg border-4 border-emerald-100" alt="Receipt" />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-all rounded-[1.8rem]"><Maximize2 size={24} className="mb-2"/><p className="text-[7px] font-black uppercase">PREVIEW BUKTI</p></div>
                      </div>
                    </div>
