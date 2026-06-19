@@ -44,10 +44,10 @@ const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge, 
       to={to} 
       onClick={onClick}
       title={collapsed ? label : undefined}
-      className={`relative flex items-center font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all ${colors[activeColor]} ${collapsed ? 'justify-center px-0 py-4' : 'justify-between gap-3 px-6 py-4'}`}
+      className={`relative flex items-center font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all ${colors[activeColor]} ${collapsed ? 'justify-center w-12 h-12 mx-auto' : 'justify-between gap-3 px-6 py-4'}`}
     >
       <div className={`flex items-center ${collapsed ? '' : 'gap-3'}`}>
-        <Icon size={18} />
+        <Icon size={collapsed ? 24 : 18} />
         {!collapsed && label}
       </div>
 {badge && badge > 0 ? (
@@ -351,7 +351,7 @@ const pendingReportsCount = Array.isArray(reports) ?
             </div>
             <button onClick={closeSidebar} className="lg:hidden p-2 text-slate-300 hover:text-rose-500"><X size={24} /></button>
           </div>
-          <nav className="flex-1 space-y-1 overflow-y-auto custom-scrollbar pr-2">
+          <nav className={`flex-1 overflow-y-auto custom-scrollbar pr-2 ${isSidebarCollapsed ? 'lg:space-y-3 space-y-1' : 'space-y-1'}`}>
             {user.role === 'ADMIN' && (
               <>
                 <p className={`px-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest ${isSidebarCollapsed ? 'lg:hidden' : ''}`}>Utama</p>
@@ -390,29 +390,30 @@ const pendingReportsCount = Array.isArray(reports) ?
       </aside>
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden bg-[#F8FAFC]">
-        <header className="h-16 bg-white border-b border-slate-100 flex items-center justify-between px-6 md:px-8 sticky top-0 z-[1000] shadow-sm shrink-0">
+        <div className="flex-1 overflow-y-auto custom-scrollbar">
+        <header className="h-24 bg-white border-b border-slate-100 flex items-center justify-between px-8 md:px-12 shadow-sm shrink-0">
           <div className="flex items-center gap-4">
-            <button onClick={() => setIsSidebarOpen(true)} className="p-2 bg-slate-50 text-slate-400 rounded-xl lg:hidden"><Menu size={20}/></button>
+            <button onClick={() => setIsSidebarOpen(true)} className="p-3 bg-slate-50 text-slate-400 rounded-xl lg:hidden"><Menu size={24}/></button>
 <div className="flex flex-col">
-  <h1 className="font-black italic uppercase text-slate-800 tracking-tighter text-sm md:text-base leading-none">
+  <h1 className="font-black italic uppercase text-slate-800 tracking-tighter text-lg md:text-xl leading-none">
     {user?.name || user?.username || 'USER'}
   </h1>
-  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mt-0.5">
+  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
     STATUS: {user?.role === 'ADMIN' ? 'ADMIN' : user?.role === 'TEACHER' ? 'GURU' : 'SISWA'}
   </p>
 </div>
           </div>
-          <div className="flex items-center gap-2">
-<button onClick={() => setShowGuide(true)} className={`p-2.5 ${roleGuideColor} text-white rounded-xl shadow-md hover:opacity-90 active:scale-95 transition-all`}>
-   <HelpCircle size={16} />
+          <div className="flex items-center gap-3">
+<button onClick={() => setShowGuide(true)} className={`p-4 ${roleGuideColor} text-white rounded-2xl shadow-xl hover:opacity-90 active:scale-95 transition-all`}>
+   <HelpCircle size={20} />
 </button>
-<button onClick={executeLogout} className="p-2.5 bg-rose-600 text-white rounded-xl shadow-md hover:bg-rose-700 active:scale-95 transition-all">
-   <Power size={16} />
+<button onClick={executeLogout} className="p-4 bg-rose-600 text-white rounded-2xl shadow-xl hover:bg-rose-700 active:scale-95 transition-all">
+   <Power size={20} />
 </button>
           </div>
         </header>
         
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-12">
+        <div className="p-6 lg:p-12">
           <div className="max-w-7xl mx-auto">
             <Routes>
               <Route path="/admin" element={<AdminDashboard user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} setAttendanceLogs={setAttendanceLogs} teachers={teachers} transactions={transactions} studentProfiles={studentProfiles} />} />
@@ -439,6 +440,7 @@ const pendingReportsCount = Array.isArray(reports) ?
               <Route path="/" element={<Navigate to={user.role === 'ADMIN' ? '/admin' : user.role === 'TEACHER' ? '/teacher' : '/student'} replace />} />
             </Routes>
           </div>
+        </div>
         </div>
       </main>
     </div>
