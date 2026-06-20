@@ -10,6 +10,7 @@ import {
   Zap, ShieldCheck, AlertOctagon
 } from 'lucide-react';
 import * as ReactRouterDOM from 'react-router-dom';
+import * as XLSX from 'xlsx';
 const { useLocation } = ReactRouterDOM as any;
 
 interface AdminFinanceProps {
@@ -525,19 +526,23 @@ const handleDeleteTx = async () => {
 };
 
 const handleExportExcel = () => {
-  const headers = "TANGGAL,DESKRIPSI,KATEGORI,TIPE,NOMINAL\n";
-  const rows = filteredLedger.map(t => {
-    // ✅ Konversi YYYY-MM-DD jadi MM/DD/YYYY
+  const data = filteredLedger.map(t => {
     const [year, month, day] = t.date.split('-');
     const americanDate = `${month}/${day}/${year}`;
-    
-    return `"${americanDate}","${t.description}","${t.category}","${t.type}","${t.amount}"`;
-  }).join("\n");
-    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url; link.download = `LAPORAN_KAS_SANUR_${new Date().toISOString().split('T')[0]}.csv`; link.click();
-  };
+    return {
+      TANGGAL: americanDate,
+      DESKRIPSI: t.description,
+      KATEGORI: t.category,
+      TIPE: t.type,
+      NOMINAL: t.amount
+    };
+  });
+
+  const worksheet = XLSX.utils.json_to_sheet(data);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, 'Laporan Kas');
+  XLSX.writeFile(workbook, `LAPORAN_KAS_SANUR_${new Date().toISOString().split('T')[0]}.xlsx`);
+};
 
   const handleUploadProof = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
