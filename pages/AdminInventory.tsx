@@ -2,6 +2,7 @@ import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { StudentProfile } from '../types';
 import ModalPortal from '../ModalPortal.tsx';
 import { supabase } from '../services/supabase.ts';
+import * as XLSX from 'xlsx';
 import { 
   Search, Trash2, X, UserPlus, BookOpen, Edit3, 
   Cake, Building2, Users, Sparkles, Loader2, AlertTriangle, Check,
@@ -27,7 +28,7 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
   const [searchTerm, setSearchTerm] = useState('');
   const [showModal, setShowModal] = useState<'ADD' | 'EDIT' | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
-  const [importText, setImportText] = useState('');
+  const fileInputImportRef = useRef<HTMLInputElement>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<StudentProfile | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -292,68 +293,81 @@ const canAddSales = useMemo(() => {
       alert("Tidak ada data untuk dieksport Kak! ✨");
       return;
     }
-    const headers = "NAMA,TANGGAL LAHIR,HP SISWA,HP ORTU,INSTANSI,CATATAN,STATUS\n";
-    const rows = studentProfiles.map(p => {
+    const data = studentProfiles.map(p => {
       const isSiswa = p.notes?.includes('[SISWA SANUR]');
       const cleanNotes = p.notes?.replace(/\[.*?\]/g, '').trim() || '-';
-      return `"${p.name}","${p.dob}","${p.personalPhone}","${p.parentPhone}","${p.institution}","${cleanNotes}","${isSiswa ? 'SISWA' : 'PROSPEK'}"`;
-    }).join("\n");
-    const blob = new Blob([headers + rows], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
+      return {
+        NAMA: p.name,
+        'TGL LAHIR': p.dob,
+        'HP SISWA': p.personalPhone,
+        'HP ORTU': p.parentPhone,
+        INSTANSI: p.institution,
+        CATATAN: cleanNotes,
+        STATUS: isSiswa ? 'SISWA' : 'PROSPEK'
+      };
+    });
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Data Siswa');
     const dateStamp = new Date().toISOString().split('T')[0];
-    link.download = `DB_SISWA_SANUR_${dateStamp}.csv`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    XLSX.writeFile(workbook, `DB_SISWA_SANUR_${dateStamp}.xlsx`);
   };
 
-  const handleProcessImportBox = async () => {
-    if (!importText.trim()) return;
-    setIsLoading(true);
-    try {
-      const lines = importText.trim().split(/\r?\n/);
-      const payload = lines.map((line, index) => {
-        if (!line.trim()) return null;
-        let delimiter = ',';
-        if (line.includes('\t')) delimiter = '\t';
-        else if (line.includes(';')) delimiter = ';';
-        const parts = line.split(delimiter).map(p => p.trim().replace(/^["']|["']$/g, '') || '-');
-        if (parts.length < 1 || parts[0] === '-') return null;
-        const name = parts[0] || '-';
-        const dob = parts[1] || '-';
-        const hpS = parts[2] || '-';
-        const hpO = parts[3] || '-';
-        const inst = parts[4] || '-';
-        const nts = parts[5] || '';
-        const stat = parts[6] || 'SISWA';
-        const isSiswa = (stat || '').toUpperCase().includes('SISWA');
-        const finalNotes = `${isSiswa ? '[SISWA SANUR]' : '[PROSPEK MARKETING]'} ${nts === '-' ? '' : nts}`.toUpperCase();
-        return {
-          id: `p-imp-${Date.now()}-${index}`,
-          name: name.toUpperCase(),
-          dob: dob.toUpperCase(),
-          institution: inst.toUpperCase(),
-          personalphone: hpS,
-          parentphone: hpO,
-          enrolledclass: '-',
-          notes: finalNotes
-        };
-      }).filter(x => x !== null);
-      if (payload.length === 0) throw new Error("Format teks tidak terbaca. Pastikan data tidak kosong.");
-      const { error } = await supabase.from('student_profiles').upsert(payload);
-      if (error) throw error;
-      if (refreshAllData) await refreshAllData();
-      setShowImportModal(false);
-      setImportText('');
-      alert(`Berhasil mengimpor ${payload.length} data siswa! ✨`);
-    } catch (e: any) {
-      alert("Gagal Impor: " + e.message);
-    } finally {
-      setIsLoading(false);
-    }
+  const EXPECTED_HEADERS_SISWA = ['NAMA', 'TGL LAHIR', 'HP SISWA', 'HP ORTU', 'INSTANSI', 'CATATAN', 'STATUS'];
+
+  const handleImportExcelFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = async (evt) => {
+      try {
+        const data = evt.target?.result;
+        const workbook = XLSX.read(data, { type: 'binary' });
+        const sheet = workbook.Sheets[workbook.SheetNames[0]];
+        const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+        if (rows.length < 2) throw new Error("File kosong atau tidak ada data.");
+
+        const headerRow = rows[0].map((h: any) => String(h).trim().toUpperCase());
+        const isHeaderValid = EXPECTED_HEADERS_SISWA.every((h, i) => headerRow[i] === h);
+        if (!isHeaderValid) {
+          alert(`Maaf, urutan kolom di dalam file nya nggak sesuai. Coba lagi yaa ✨\n\nUrutan yang benar: ${EXPECTED_HEADERS_SISWA.join(', ')}`);
+          e.target.value = '';
+          return;
+        }
+
+        setIsLoading(true);
+        const dataRows = rows.slice(1).filter(r => r.length >= 1 && r[0]);
+        const payload = dataRows.map((r, index) => {
+          const [name, dob, hpS, hpO, inst, notes, status] = r;
+          const isSiswa = String(status || 'SISWA').toUpperCase().includes('SISWA');
+          const cleanNotes = String(notes || '').trim();
+          const finalNotes = `${isSiswa ? '[SISWA SANUR]' : '[PROSPEK MARKETING]'} ${cleanNotes === '-' ? '' : cleanNotes}`.toUpperCase();
+          return {
+            id: `p-imp-${Date.now()}-${index}`,
+            name: String(name || '-').toUpperCase(),
+            dob: String(dob || '-').toUpperCase(),
+            institution: String(inst || '-').toUpperCase(),
+            personalphone: String(hpS || '-'),
+            parentphone: String(hpO || '-'),
+            enrolledclass: '-',
+            notes: finalNotes
+          };
+        });
+
+        if (payload.length === 0) throw new Error("Tidak ada data valid di file.");
+        const { error } = await supabase.from('student_profiles').upsert(payload);
+        if (error) throw error;
+        if (refreshAllData) await refreshAllData();
+        setShowImportModal(false);
+        alert(`Berhasil mengimpor ${payload.length} data siswa! ✨`);
+      } catch (err: any) {
+        alert("Gagal: " + err.message);
+      } finally {
+        setIsLoading(false);
+        e.target.value = '';
+      }
+    };
+    reader.readAsBinaryString(file);
   };
 
   const formatDateToDMY = (dateStr: string) => {
@@ -474,7 +488,7 @@ const canAddSales = useMemo(() => {
                   onClick={() => setShowImportModal(true)}
                   className="flex-1 lg:flex-none h-[56px] px-6 bg-[#0F172A] text-white rounded-[1.8rem] text-[9px] font-black uppercase shadow-lg hover:opacity-90 flex items-center justify-center gap-3 transition-all active:scale-95 shrink-0"
                 >
-                  <Upload size={16} /> IMPORT BOX
+                  <Upload size={16} /> IMPORT EXCEL
                 </button>
                 <button 
                   onClick={handleExportExcel}
@@ -629,13 +643,14 @@ const canAddSales = useMemo(() => {
       {showImportModal && (
         <ModalPortal>
    <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-   <div className="bg-white w-full max-w-lg rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+   <div className="bg-white w-full max-w-lg rounded-[4rem] shadow-2xl relative opacity-0 max-h-[90vh] overflow-hidden" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+   <div className="max-h-[90vh] overflow-y-auto seamless-scroll p-10 md:p-12 relative">
                <button onClick={() => setShowImportModal(false)} className="absolute top-10 right-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
-               <div className="flex flex-col items-center text-center gap-4 mb-8">
+               <div className="flex flex-col items-center text-center gap-4 mb-8 pr-6">
                   <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl"><ClipboardList size={24}/></div>
                   <div>
-                    <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Import Box (v2.2)</h4>
-                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2 italic">Format: NAMA, LAHIR, HP SISWA, HP ORTU, INSTANSI, CATATAN, STATUS ✨</p>
+                    <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Import Data Siswa</h4>
+                    <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2 italic">Upload file Excel (.xlsx) untuk import massal ✨</p>
                   </div>
                </div>
                <div className="space-y-6">
@@ -645,21 +660,32 @@ const canAddSales = useMemo(() => {
                       NAMA, TGL LAHIR, HP SISWA, HP ORTU, INSTANSI, CATATAN, STATUS
                     </code>
                   </div>
-                  <textarea 
-                    value={importText}
-                    onChange={e => setImportText(e.target.value)}
-                    placeholder="TEMPEL DATA DARI EXCEL DI SINI..."
-                    rows={8}
-                    className="w-full p-8 bg-slate-50 rounded-[2rem] font-mono text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all shadow-inner"
-                  />
+
+                  <input type="file" ref={fileInputImportRef} accept=".xlsx,.xls" onChange={handleImportExcelFile} className="hidden" />
+                  <button
+                    onClick={() => fileInputImportRef.current?.click()}
+                    disabled={isLoading}
+                    className="w-full py-12 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2.5rem] flex flex-col items-center justify-center gap-4 hover:border-blue-400 hover:bg-blue-50/50 transition-all group"
+                  >
+                    {isLoading ? (
+                      <Loader2 size={36} className="animate-spin text-blue-600" />
+                    ) : (
+                      <>
+                        <div className="w-16 h-16 bg-white text-blue-600 rounded-2xl flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform"><Upload size={28} /></div>
+                        <div className="text-center">
+                          <p className="text-[11px] font-black text-slate-700 uppercase tracking-widest">Klik untuk pilih file Excel</p>
+                          <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">.XLSX atau .XLS</p>
+                        </div>
+                      </>
+                    )}
+                  </button>
+
                   <div className="flex items-center gap-3 bg-orange-50 p-4 rounded-2xl border border-orange-100">
                     <Zap size={16} className="text-orange-500 shrink-0" />
                     <p className="text-[8px] font-bold text-orange-800 uppercase italic">Tips: Format file Export sama dengan format Import ini! ✨</p>
                   </div>
-                  <button onClick={handleProcessImportBox} disabled={isLoading || !importText.trim()} className="w-full py-7 bg-blue-600 text-white rounded-[2.5rem] font-black text-[10px] uppercase shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">
-                     {isLoading ? <Loader2 size={24} className="animate-spin"/> : <><Check size={20}/> PROSES IMPORT MASSAL ✨</>}
-                  </button>
                </div>
+            </div>
             </div>
          </div>
         </ModalPortal>
