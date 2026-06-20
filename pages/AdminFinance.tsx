@@ -566,23 +566,115 @@ const handleDeleteTx = async () => {
   }
 };
 
-const handleExportExcel = () => {
-  const data = filteredLedger.map(t => {
-    const [year, month, day] = t.date.split('-');
-    const americanDate = `${month}/${day}/${year}`;
-    return {
-      TANGGAL: americanDate,
-      DESKRIPSI: t.description,
-      KATEGORI: t.category,
-      TIPE: t.type,
-      NOMINAL: t.amount
-    };
-  });
+const handleExportExcel = async () => {
+  try {
+    setIsLoading(true);
 
-  const worksheet = XLSX.utils.json_to_sheet(data);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, 'Laporan Kas');
-  XLSX.writeFile(workbook, `LAPORAN_KAS_SANUR_${new Date().toISOString().split('T')[0]}.xlsx`);
+    let query = supabase
+      .from('transactions')
+      .select('*')
+      .order('date', { ascending: false })
+      .order('id', { ascending: false });
+
+    if (ledgerSearch.trim()) {
+      const searchTerm = `%${ledgerSearch.trim()}%`;
+      query = query.or(`description.ilike.${searchTerm},category.ilike.${searchTerm}`);
+    }
+
+    if (ledgerFilters.period !== 'ALL') {
+      const today = new Date();
+      const todayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(today);
+
+      if (ledgerFilters.period === 'THIS_WEEK') {
+        const weekAgo = new Date();
+        weekAgo.setDate(today.getDate() - 7);
+        const weekAgoStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(weekAgo);
+        query = query.gte('date', weekAgoStr).lte('date', todayStr);
+      }
+
+      if (ledgerFilters.period === 'THIS_MONTH') {
+        const year = today.getFullYear();
+        const month = today.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const firstDayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(firstDay);
+        query = query.gte('date', firstDayStr).lte('date', todayStr);
+      }
+
+      if (ledgerFilters.period === 'THIS_YEAR') {
+        const firstDay = new Date(today.getFullYear(), 0, 1);
+        const firstDayStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(firstDay);
+        query = query.gte('date', firstDayStr).lte('date', todayStr);
+      }
+
+      if (ledgerFilters.period === 'CUSTOM') {
+        if (ledgerFilters.customYear !== null) {
+          const year = ledgerFilters.customYear;
+          const yearStart = new Date(year, 0, 1);
+          const yearEnd = new Date(year, 11, 31);
+          const startStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(yearStart);
+          const endStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(yearEnd);
+          query = query.gte('date', startStr).lte('date', endStr);
+
+          if (ledgerFilters.customMonth !== null) {
+            const monthNum = parseInt(ledgerFilters.customMonth);
+            const monthStart = new Date(year, monthNum, 1);
+            const monthEnd = new Date(year, monthNum + 1, 0);
+            const startStr2 = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(monthStart);
+            const endStr2 = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(monthEnd);
+            query = query.gte('date', startStr2).lte('date', endStr2);
+          }
+        } else if (ledgerFilters.customMonth !== null) {
+          const monthNum = parseInt(ledgerFilters.customMonth);
+          const orConditions: string[] = [];
+          for (let year = 2020; year <= 2035; year++) {
+            const monthStart = new Date(year, monthNum, 1);
+            const monthEnd = new Date(year, monthNum + 1, 0);
+            const startStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(monthStart);
+            const endStr = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(monthEnd);
+            orConditions.push(`and(date.gte.${startStr},date.lte.${endStr})`);
+          }
+          query = query.or(orConditions.join(','));
+        }
+      }
+    }
+
+    if (ledgerFilters.category !== 'ALL') {
+      query = query.eq('category', ledgerFilters.category.toUpperCase());
+    }
+
+    if (ledgerFilters.type !== 'ALL') {
+      query = query.eq('type', ledgerFilters.type.toUpperCase());
+    }
+
+    const { data: allRows, error } = await query;
+    if (error) throw error;
+
+    if (!allRows || allRows.length === 0) {
+      alert("Tidak ada data untuk di-export dengan filter ini.");
+      return;
+    }
+
+    const data = allRows.map(t => {
+      const [year, month, day] = t.date.split('-');
+      const americanDate = `${month}/${day}/${year}`;
+      return {
+        TANGGAL: americanDate,
+        DESKRIPSI: t.description,
+        KATEGORI: t.category,
+        TIPE: t.type,
+        NOMINAL: t.amount
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Laporan Kas');
+    XLSX.writeFile(workbook, `LAPORAN_KAS_SANUR_${new Date().toISOString().split('T')[0]}.xlsx`);
+  } catch (err: any) {
+    alert("Gagal export: " + err.message);
+  } finally {
+    setIsLoading(false);
+  }
 };
 
   const handleUploadProof = async (e: React.ChangeEvent<HTMLInputElement>) => {
