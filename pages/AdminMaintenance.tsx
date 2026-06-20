@@ -1,6 +1,7 @@
-import React, { useMemo, useState, useRef, useEffect } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Attendance, StudentPayment } from '../types';
 import { supabase } from '../services/supabase.ts';
+import ModalPortal from '../ModalPortal.tsx';
 import { 
   Trash2, 
   Loader2, 
@@ -56,12 +57,6 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
   
   const [mediaStats, setMediaStats] = useState({ count: 0, limit: 150 });
 
-  // REF UNTUK AUTO SCROLL MODAL ✨
-  const purgeModalRef = useRef<HTMLDivElement>(null);
-  const deleteMediaModalRef = useRef<HTMLDivElement>(null);
-  const previewImgRef = useRef<HTMLDivElement>(null);
-  const loadingOverlayRef = useRef<HTMLDivElement>(null);
-
   const fetchMediaCount = async () => {
     try {
       const { count: attCount } = await supabase.from('attendance').select('*', { count: 'exact', head: true }).not('receiptdata', 'is', null);
@@ -81,41 +76,12 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
   init();
 }, []);
 
-// AUTO SCROLL KE MODAL PURGE ✨
+// ✅ Lock body scroll selagi modal/overlay manapun terbuka
 useEffect(() => {
-  if (confirmPurge && purgeModalRef.current) {
-    setTimeout(() => {
-      purgeModalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
-  }
-}, [confirmPurge]);
-
-// AUTO SCROLL KE MODAL DELETE MEDIA ✨
-useEffect(() => {
-  if (confirmDeleteMedia && deleteMediaModalRef.current) {
-    setTimeout(() => {
-      deleteMediaModalRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
-  }
-}, [confirmDeleteMedia]);
-
-// AUTO SCROLL KE MODAL PREVIEW IMAGE ✨
-useEffect(() => {
-  if (previewImg && previewImgRef.current) {
-    setTimeout(() => {
-      previewImgRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
-  }
-}, [previewImg]);
-
-// AUTO SCROLL KE LOADING OVERLAY ✨
-useEffect(() => {
-  if (processingStatus !== 'IDLE' && loadingOverlayRef.current) {
-    setTimeout(() => {
-      loadingOverlayRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }, 100);
-  }
-}, [processingStatus]);
+  const hasModal = confirmPurge || !!confirmDeleteMedia || !!previewImg || processingStatus !== 'IDLE';
+  document.body.style.overflow = hasModal ? 'hidden' : '';
+  return () => { document.body.style.overflow = ''; };
+}, [confirmPurge, confirmDeleteMedia, previewImg, processingStatus]);
 
   const handleVerifyGate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -273,9 +239,9 @@ useEffect(() => {
   return (
     <div className="max-w-7xl mx-auto space-y-12 pb-40 px-4 animate-in">
       {processingStatus !== 'IDLE' && (
-  <div className="fixed inset-0 z-[200000] bg-slate-900/80 backdrop-blur-xl flex flex-col items-center justify-center p-6 overflow-y-auto">
+  <ModalPortal>
+  <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[200000] bg-slate-900/80 backdrop-blur-xl flex items-center justify-center p-6">
      {processingStatus === 'LOADING' ? (
-       <div className="my-auto" ref={loadingOverlayRef}>
           <div className="bg-white p-12 rounded-[4rem] shadow-2xl flex flex-col items-center gap-8 w-full max-w-sm">
               <div className="w-24 h-24 bg-blue-600 rounded-[2.5rem] flex items-center justify-center shadow-xl animate-bounce">
                   <Loader2 className="animate-spin text-white" size={48} />
@@ -288,9 +254,7 @@ useEffect(() => {
                   <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{importProgress}% PROGRESS</p>
               </div>
            </div>
-        </div>
      ) : (
-       <div className="my-auto" ref={loadingOverlayRef}>
           <div className="bg-white p-12 rounded-[4rem] shadow-2xl flex flex-col items-center gap-8 w-full max-w-sm border-b-8 border-emerald-500">
               <div className="w-24 h-24 bg-emerald-50 text-emerald-600 rounded-[2.5rem] flex items-center justify-center shadow-inner">
                   <CheckCircle2 size={72} className="fill-emerald-500 text-white" />
@@ -300,9 +264,9 @@ useEffect(() => {
                   <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-[0.2em]">{successText}</p>
               </div>
            </div>
-        </div>
      )}
   </div>
+  </ModalPortal>
 )}
 
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 px-2">
@@ -382,8 +346,8 @@ useEffect(() => {
       )}
 
       {confirmPurge && (
-  <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 overflow-y-auto">
-     <div className="my-auto" ref={purgeModalRef}>
+  <ModalPortal>
+  <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6">
         <div className="bg-white w-full max-w-[340px] rounded-[3rem] p-10 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600">
               <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner animate-pulse"><Eraser size={40} /></div>
               <div className="space-y-2">
@@ -399,32 +363,32 @@ useEffect(() => {
                  </button>
               </div>
            </div>
-        </div>
     </div>
+  </ModalPortal>
       )}
 
       {confirmDeleteMedia && (
-  <div className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 overflow-y-auto">
-     <div className="my-auto" ref={deleteMediaModalRef}>
+  <ModalPortal>
+  <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6">
         <div className="bg-white w-full max-w-[340px] rounded-[2.5rem] p-8 text-center space-y-6 shadow-2xl relative border-t-8 border-rose-500">
               <button onClick={() => setConfirmDeleteMedia(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
               <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mx-auto shadow-sm"><Trash2 size={32} /></div>
               <div className="space-y-1"><h4 className="text-xl font-black text-slate-800 uppercase italic leading-none text-rose-600">HAPUS FOTO?</h4><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4">Bukti milik <span className="text-slate-800 font-black">{confirmDeleteMedia.name}</span> akan dihapus from memory cloud. ✨</p></div>
-              <div className="flex gap-3"><button onClick={() => setConfirmDeleteMedia(null)} className="flex-1 py-4 bg-slate-400 text-white rounded-xl font-black text-[9px] uppercase">BATAL</button><button onClick={executeDeleteMedia} className="flex-[1.5] py-4 bg-rose-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg flex items-center justify-center gap-2"><Check size={16}/> IYA, HAPUS</button></div>
+              <div className="flex gap-3"><button onClick={() => setConfirmDeleteMedia(null)} className="flex-1 py-4 bg-slate-50 text-slate-400 rounded-xl font-black text-[9px] uppercase">BATAL</button><button onClick={executeDeleteMedia} className="flex-[1.5] py-4 bg-rose-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg flex items-center justify-center gap-2"><Check size={16}/> IYA, HAPUS</button></div>
            </div>
-        </div>
     </div>
+  </ModalPortal>
       )}
 
       {previewImg && (
-  <div className="fixed inset-0 z-[300000] bg-slate-900/95 flex items-center justify-center p-6 overflow-y-auto" onClick={() => setPreviewImg(null)}>
-     <div className="my-auto" ref={previewImgRef}>
+  <ModalPortal>
+  <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[300000] bg-slate-900/95 flex items-center justify-center p-6" onClick={() => setPreviewImg(null)}>
         <div className="relative max-w-4xl w-full flex flex-col items-center">
               <button className="absolute -top-14 right-0 p-4 text-white hover:text-rose-500 transition-colors" onClick={() => setPreviewImg(null)}><X size={40}/></button>
-              <img src={previewImg} className="max-w-full max-h-[75vh] rounded-[3rem] shadow-2xl border-4 border-white/10 object-contain animate-in zoom-in" alt="Preview" />
+              <img src={previewImg} className="max-w-full max-h-[75vh] rounded-[3rem] shadow-2xl border-4 border-white/10 object-contain animate-in zoom-in" alt="Preview" onClick={e => e.stopPropagation()} />
            </div>
-        </div>
     </div>
+  </ModalPortal>
       )}
 
       <MaintenanceNotes />
