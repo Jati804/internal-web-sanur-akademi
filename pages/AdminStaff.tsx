@@ -2,6 +2,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, Attendance, StudentPayment } from '../types';
 import { supabase } from '../services/supabase.ts';
+import ModalPortal from '../ModalPortal.tsx';
 import { 
   UserPlus, Trash2, Search, X, GraduationCap, 
   Edit3, CheckCircle2, Lock, Loader2, UserCircle,
@@ -28,24 +29,30 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
   const [formData, setFormData] = useState({ name: '', username: '', pin: '224488' });
   const [isLocalSyncing, setIsLocalSyncing] = useState(false);
 
-  // ✅ Auto scroll modal ke tengah viewport (body bebas scroll)
-useEffect(() => {
-  const hasModal = !!(
-    showModal || 
-    showDeleteConfirm
-  );
-  
-  if (hasModal) {
-    const timer = setTimeout(() => {
-      const modalElement = document.querySelector('[data-modal-container]');
-      if (modalElement) {
-        modalElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }
-    }, 150);
-    
-    return () => clearTimeout(timer);
-  }
-}, [showModal, showDeleteConfirm]);
+  // ✨ STATE & HANDLER UNTUK CUSTOM SCROLLBAR MODAL
+  const [staffScrollThumb, setStaffScrollThumb] = useState({ top: 0, height: 100, visible: false });
+  const handleModalScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    const el = e.currentTarget;
+    const scrollableHeight = el.scrollHeight - el.clientHeight;
+    if (scrollableHeight <= 0) {
+      setStaffScrollThumb({ top: 0, height: 100, visible: false });
+      return;
+    }
+    const thumbHeightPct = Math.max((el.clientHeight / el.scrollHeight) * 100, 8);
+    const topPct = (el.scrollTop / scrollableHeight) * (100 - thumbHeightPct);
+    setStaffScrollThumb({ top: topPct, height: thumbHeightPct, visible: true });
+  };
+
+  // ✅ Lock body scroll selagi modal terbuka (modal sendiri yang scroll kalau perlu)
+  useEffect(() => {
+    const hasModal = !!(showModal || showDeleteConfirm);
+    if (hasModal) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => { document.body.style.overflow = ''; };
+  }, [showModal, showDeleteConfirm]);
 
   const roleTheme = {
     ADMINS: { text: "text-blue-600", bg: "bg-blue-600", light: "bg-blue-50", border: "border-blue-100", label: "PENGURUS" },
@@ -370,6 +377,34 @@ console.log('\n✅ BACKUP MILESTONE SELESAI');
           transform: scale(1);
         }
       }
+
+      .seamless-scroll {
+        scrollbar-width: none;
+        -ms-overflow-style: none;
+      }
+      .seamless-scroll::-webkit-scrollbar {
+        width: 0px;
+        height: 0px;
+        display: none;
+      }
+      .custom-scroll-track {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        right: 0;
+        width: 7px;
+        background: transparent;
+        pointer-events: none;
+        z-index: 10;
+      }
+      .custom-scroll-thumb {
+        position: absolute;
+        left: 0;
+        right: 0;
+        border-radius: 4px;
+        background: #2563eb;
+        transition: top 0.05s linear;
+      }
     `}</style>
 
     <div className="max-w-6xl mx-auto space-y-12 pb-40 px-4 animate-in">
@@ -469,23 +504,27 @@ console.log('\n✅ BACKUP MILESTONE SELESAI');
       </div>
 
     {showModal && (
-      <div data-modal-container className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-   <div className="bg-white w-full max-w-sm rounded-[4rem] p-12 shadow-2xl relative border border-white/20 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-              <button onClick={() => setShowModal(null)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all"><X size={20}/></button>
-              <h4 className={`text-3xl font-black italic mb-10 tracking-tighter leading-none ${roleTheme.text}`}>USER & <span className="text-slate-800">ACCESS</span></h4>
+      <ModalPortal>
+      <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+   <div className="bg-white w-full max-w-2xl rounded-[4rem] shadow-2xl relative border border-white/20 opacity-0 max-h-[90vh] overflow-hidden" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+   <div className="max-h-[90vh] overflow-y-auto seamless-scroll p-10 md:p-12 relative" onScroll={handleModalScroll}>
+              <button onClick={() => setShowModal(null)} className="absolute top-10 right-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
+              <h4 className={`text-3xl font-black italic mb-10 tracking-tighter leading-none text-center pr-10 ${roleTheme.text}`}>USER & <span className="text-slate-800">ACCESS</span></h4>
               
               <div className="space-y-6">
-                 <div className="space-y-2 text-left">
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Nama Lengkap</label>
-                    <input type="text" placeholder="MISAL: BUDI SANTOSO" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
-                 </div>
-                 <div className="space-y-2 text-left">
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Username Login</label>
-                    <input type="text" placeholder="MISAL: BUDI_SANUR" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+                 <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2 text-left">
+                       <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Nama Lengkap</label>
+                       <input type="text" placeholder="MISAL: BUDI SANTOSO" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value.toUpperCase()})} className="w-full h-[66px] px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+                    </div>
+                    <div className="space-y-2 text-left">
+                       <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Username Login</label>
+                       <input type="text" placeholder="MISAL: BUDI_SANUR" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value.toUpperCase()})} className="w-full h-[66px] px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+                    </div>
                  </div>
                  <div className="space-y-2 text-left">
                     <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">PIN 6 DIGIT KEAMANAN</label>
-                    <input type="text" placeholder="MISAL: 051020" value={formData.pin} onChange={e => setFormData({...formData, pin: e.target.value.replace(/\D/g, '')})} maxLength={6} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+                    <input type="text" placeholder="MISAL: 051020" value={formData.pin} onChange={e => setFormData({...formData, pin: e.target.value.replace(/\D/g, '')})} maxLength={6} className="w-full h-[66px] px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
                  </div>
 <button onClick={handleSave} disabled={isLocalSyncing} className={`w-full py-6 ${roleTheme.bg} text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3`}>
    {isLocalSyncing ? (
@@ -500,11 +539,19 @@ console.log('\n✅ BACKUP MILESTONE SELESAI');
 </button>
               </div>
            </div>
+           {staffScrollThumb.visible && (
+             <div className="custom-scroll-track">
+               <div className="custom-scroll-thumb" style={{ top: `${staffScrollThumb.top}%`, height: `${staffScrollThumb.height}%` }} />
+             </div>
+           )}
+           </div>
         </div>
+      </ModalPortal>
       )}
 
       {showDeleteConfirm && (
-       <div data-modal-container className="fixed inset-0 z-[110000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+       <ModalPortal>
+       <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[110000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
    <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setShowDeleteConfirm(null)} className="absolute top-8 right-8 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={24}/></button>
               <div className="w-24 h-24 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm animate-pulse"><AlertTriangle size={48} /></div>
@@ -530,6 +577,7 @@ console.log('\n✅ BACKUP MILESTONE SELESAI');
               </div>
            </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   </>
