@@ -572,7 +572,7 @@ const handleDownloadPDF = async (req: any) => {
    </div>
 </div>
                    <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-2 Kalimat leading-tight">{req.studentsAttended?.[0]}</h4>
-<p className="text-[11px] font-bold text-blue-600 uppercase Kalimat leading-relaxed">{req.className}</p>
+<p className="text-[11px] font-bold text-blue-600 uppercase mb-6 Kalimat leading-relaxed">{req.className}</p>
 </div>
 <div className="space-y-4">
    <button onClick={() => setShowMilestoneFor(req)} className="w-full py-5 bg-slate-50 text-slate-500 rounded-3xl font-black text-[10px] uppercase flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all border border-transparent shadow-sm"><History size={18}/> LIHAT MILESTONE</button>
