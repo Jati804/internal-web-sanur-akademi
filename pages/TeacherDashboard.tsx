@@ -583,7 +583,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
                       </div>
                       <div className="flex items-start gap-2">
                         <Check size={14} className="text-emerald-500 shrink-0 mt-0.5"/>
-                        <p className="text-[10px] font-bold text-slate-600 leading-relaxed">Beliau <span className="font-black text-slate-800">mendelegasikan</span> sesi kepada Kakak</p>
+                        <p className="text-[10px] font-bold text-slate-600 leading-relaxed">Beliau <span className="font-black text-slate-800">mendelegasikan</span> kelas kepada Kakak</p>
                       </div>
                       <div className="flex items-start gap-2">
                         <Check size={14} className="text-emerald-500 shrink-0 mt-0.5"/>
