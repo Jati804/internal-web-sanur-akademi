@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useRef, useEffect } from 'react';
 import { StudentProfile } from '../types';
+import ModalPortal from '../ModalPortal.tsx';
 import { supabase } from '../services/supabase.ts';
 import { 
   Search, Trash2, X, UserPlus, BookOpen, Edit3, 
@@ -73,7 +74,6 @@ const canAddSales = useMemo(() => {
     requestAnimationFrame(() => {
       const modalElement = document.querySelector('[data-modal-container]');
       if (modalElement) {
-        modalElement.scrollIntoView({ behavior: 'instant', block: 'center' });
         // ✨ PAKSA FOCUS KE MODAL BIAR KELIATAN
         (modalElement as HTMLElement).focus();
       }
@@ -370,12 +370,14 @@ const canAddSales = useMemo(() => {
       }
     `}</style>
 
-    <div className="space-y-12 animate-in pb-40 px-2">
+    <div className="space-y-12 pb-40 px-2">
       {isLoading && (
+        <ModalPortal>
         <div data-modal-container className="fixed inset-0 z-[200000] bg-slate-900/60 backdrop-blur-md flex flex-col items-center justify-center text-white opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
           <Loader2 size={48} className="animate-spin mb-4" />
           <p className="text-[10px] font-black uppercase tracking-[0.4em]">Sedang Memproses Data...</p>
         </div>
+        </ModalPortal>
       )}
 
       <div className="mx-4 space-y-8">
@@ -563,10 +565,11 @@ const canAddSales = useMemo(() => {
       </div>
 
       {showImportModal && (
+        <ModalPortal>
    <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
    <div className="bg-white w-full max-w-lg rounded-[4rem] p-10 md:p-12 shadow-2xl relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-               <button onClick={() => setShowImportModal(false)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all"><X size={20}/></button>
-               <div className="flex items-center gap-4 mb-8">
+               <button onClick={() => setShowImportModal(false)} className="absolute top-10 right-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
+               <div className="flex flex-col items-center text-center gap-4 mb-8">
                   <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl"><ClipboardList size={24}/></div>
                   <div>
                     <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Import Box (v2.2)</h4>
@@ -597,57 +600,72 @@ const canAddSales = useMemo(() => {
                </div>
             </div>
          </div>
+        </ModalPortal>
       )}
 
       {showModal && (
+        <ModalPortal>
   <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-  <div className="bg-white w-full max-w-md rounded-[4rem] p-12 shadow-2xl relative border border-white/20 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-              <button onClick={() => setShowModal(null)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all"><X size={20}/></button>
+  <div className="bg-white w-full max-w-2xl rounded-[4rem] p-10 md:p-12 shadow-2xl relative border border-white/20 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+              <button onClick={() => setShowModal(null)} className="absolute top-10 right-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
               <h4 className="text-3xl font-black text-slate-800 uppercase italic mb-10 tracking-tighter leading-none text-center">DATA <span className="text-blue-600">SISWA</span></h4>
               <div className="space-y-6">
                  <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl">
                     <button onClick={() => setFormData({...formData, status: 'SISWA_SANUR'})} className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase transition-all ${formData.status === 'SISWA_SANUR' ? 'bg-white text-emerald-600 shadow-md' : 'text-slate-400'}`}>Siswa Aktif</button>
                     <button onClick={() => setFormData({...formData, status: 'PROSPEK'})} className={`flex-1 py-4 rounded-xl text-[10px] font-black uppercase transition-all ${formData.status === 'PROSPEK' ? 'bg-white text-blue-600 shadow-xl' : 'text-slate-400'}`}>Prospek</button>
                  </div>
-                 <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Nama Lengkap Siswa</label>
-                    <input type="text" placeholder="MISAL: BUDI SANTOSO" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+
+                 <div className="grid md:grid-cols-2 gap-6">
+                   {/* KOLOM KIRI */}
+                   <div className="space-y-6">
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Nama Lengkap Siswa</label>
+                        <input type="text" placeholder="MISAL: BUDI SANTOSO" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+                     </div>
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Tgl Lahir</label>
+                        <input type="text" placeholder="12 JANUARI 2012" value={formData.dob} onChange={e => setFormData({...formData, dob: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+                     </div>
+                   </div>
+
+                   {/* KOLOM KANAN */}
+                   <div className="space-y-6">
+                     <div className="space-y-2">
+                        <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Sekolah / Instansi</label>
+                        <input type="text" placeholder="MISAL: SD NEGERI 01" value={formData.institution} onChange={e => setFormData({...formData, institution: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+                     </div>
+                     <div className="space-y-2">
+                       <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Catatan Khusus</label>
+                       <textarea placeholder="MISAL: MINAT KELAS PRIVATE..." value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value.toUpperCase()})} rows={2} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-bold text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+                     </div>
+                   </div>
                  </div>
-                 <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Tgl Lahir (Contoh: 12 Januari 2012)</label>
-                    <input type="text" placeholder="12 JANUARI 2012" value={formData.dob} onChange={e => setFormData({...formData, dob: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+
+                 <div className="grid grid-cols-2 gap-4">
+                   <div className="space-y-2">
+                     <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Hp Siswa</label>
+                     <input type="text" placeholder="08..." value={formData.personalPhone} onChange={e => setFormData({...formData, personalPhone: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+                   </div>
+                   <div className="space-y-2">
+                     <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Hp Ortu</label>
+                     <input type="text" placeholder="08..." value={formData.parentPhone} onChange={e => setFormData({...formData, parentPhone: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+                   </div>
                  </div>
-                 <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Sekolah / Instansi</label>
-                    <input type="text" placeholder="MISAL: SD NEGERI 01" value={formData.institution} onChange={e => setFormData({...formData, institution: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+
+                 <button onClick={handleSave} disabled={isLoading} className="w-full py-6 bg-blue-600 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl transition-all active:scale-95 flex items-center justify-center">
+                   {isLoading ? <Loader2 size={18} className="animate-spin" /> : 'SIMPAN DATA INDUK ✨'}
+                 </button>
               </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Catatan Khusus</label>
-                <textarea placeholder="MISAL: MINAT KELAS PRIVATE..." value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value.toUpperCase()})} rows={3} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-bold text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Hp Siswa</label>
-                  <input type="text" placeholder="08..." value={formData.personalPhone} onChange={e => setFormData({...formData, personalPhone: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
-                </div>
-                <div className="space-y-2">
-                  <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Hp Ortu</label>
-                  <input type="text" placeholder="08..." value={formData.parentPhone} onChange={e => setFormData({...formData, parentPhone: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
-                </div>
-              </div>
-              <button onClick={handleSave} disabled={isLoading} className="w-full py-6 bg-blue-600 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl transition-all active:scale-95 flex items-center justify-center">
-                {isLoading ? <Loader2 size={18} className="animate-spin" /> : 'SIMPAN DATA INDUK ✨'}
-              </button>
             </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
 
       {/* MODAL DELETE SISWA */}
       {showDeleteConfirm && (
+        <ModalPortal>
   <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[110000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
           <div className="bg-white w-full max-w-[320px] rounded-[2.5rem] p-8 text-center space-y-6 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-            <button onClick={() => setShowDeleteConfirm(null)} className="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
             <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mx-auto shadow-sm animate-pulse">
               <AlertTriangle size={32} />
             </div>
@@ -665,6 +683,7 @@ const canAddSales = useMemo(() => {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
         
         </>  
@@ -831,32 +850,43 @@ const canAddSales = useMemo(() => {
       )}
        {/* MODAL ADD/EDIT SALES B2B */}
       {showModalSales && (
+        <ModalPortal>
   <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-          <div className="bg-white w-full max-w-md rounded-[4rem] p-12 shadow-2xl relative border border-white/20 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-            <button onClick={() => setShowModalSales(null)} className="absolute top-10 right-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all"><X size={20}/></button>
+          <div className="bg-white w-full max-w-2xl rounded-[4rem] p-10 md:p-12 shadow-2xl relative border border-white/20 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+            <button onClick={() => setShowModalSales(null)} className="absolute top-10 right-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
             <h4 className="text-3xl font-black text-slate-800 uppercase italic mb-10 tracking-tighter leading-none text-center">DATA <span className="text-orange-600">SALES B2B</span></h4>
             <div className="space-y-6">
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Nama Instansi *</label>
-                <input type="text" placeholder="MISAL: SD NEGERI 01 DENPASAR" value={salesFormData.institutionName} onChange={e => setSalesFormData({...salesFormData, institutionName: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Nama Narahubung *</label>
-                <input type="text" placeholder="MISAL: PAK BUDI SANTOSO" value={salesFormData.contactPerson} onChange={e => setSalesFormData({...salesFormData, contactPerson: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
-              </div>
-              <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Jabatan *</label>
-<input type="text" placeholder="MISAL: KEPALA SEKOLAH" value={salesFormData.jobTitle} onChange={e => setSalesFormData({...salesFormData, jobTitle: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
-              </div>
-              
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Nomor HP *</label>
-                  <input type="text" placeholder="08..." value={salesFormData.phone} onChange={e => setSalesFormData({...salesFormData, phone: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Nama Instansi *</label>
+                  <input type="text" placeholder="MISAL: SD NEGERI 01 DENPASAR" value={salesFormData.institutionName} onChange={e => setSalesFormData({...salesFormData, institutionName: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
                 </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Nama Narahubung *</label>
+                  <input type="text" placeholder="MISAL: PAK BUDI SANTOSO" value={salesFormData.contactPerson} onChange={e => setSalesFormData({...salesFormData, contactPerson: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Jabatan *</label>
+                  <input type="text" placeholder="MISAL: KEPALA SEKOLAH" value={salesFormData.jobTitle} onChange={e => setSalesFormData({...salesFormData, jobTitle: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Nomor HP *</label>
+                  <input type="text" placeholder="08..." value={salesFormData.phone} onChange={e => setSalesFormData({...salesFormData, phone: e.target.value})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Email (Opsional)</label>
                   <input type="email" placeholder="email@..." value={salesFormData.email} onChange={e => setSalesFormData({...salesFormData, email: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-[9px] font-black text-slate-400 uppercase ml-2 tracking-widest">Status Deal</label>
+                  <select value={salesFormData.dealStatus} onChange={e => setSalesFormData({...salesFormData, dealStatus: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs uppercase outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner">
+                    <option value="HOT">🔥 HOT</option>
+                    <option value="WARM">🌤️ WARM</option>
+                    <option value="COLD">❄️ COLD</option>
+                  </select>
                 </div>
               </div>
 
@@ -872,17 +902,8 @@ const canAddSales = useMemo(() => {
               </div>
 
               <div className="space-y-2">
-                <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Status Deal</label>
-                <select value={salesFormData.dealStatus} onChange={e => setSalesFormData({...salesFormData, dealStatus: e.target.value})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner">
-                  <option value="HOT">🔥 HOT (PANAS)</option>
-                  <option value="WARM">🌤️ WARM (HANGAT)</option>
-                  <option value="COLD">❄️ COLD (DINGIN)</option>
-                </select>
-              </div>
-
-              <div className="space-y-2">
                 <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Meeting Notes</label>
-                <textarea placeholder="MISAL: MEETING PERTAMA, MINAT PAKET 20 SISWA..." value={salesFormData.meetingNotes} onChange={e => setSalesFormData({...salesFormData, meetingNotes: e.target.value.toUpperCase()})} rows={4} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-bold text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
+                <textarea placeholder="MISAL: MEETING PERTAMA, MINAT PAKET 20 SISWA..." value={salesFormData.meetingNotes} onChange={e => setSalesFormData({...salesFormData, meetingNotes: e.target.value.toUpperCase()})} rows={2} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-bold text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 shadow-inner" />
               </div>
 
               <button onClick={handleSaveSales} disabled={isLoading} className="w-full py-6 bg-orange-600 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl transition-all active:scale-95 flex items-center justify-center">
@@ -891,13 +912,14 @@ const canAddSales = useMemo(() => {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* MODAL DELETE SALES B2B */}
       {showDeleteConfirmSales && (
+        <ModalPortal>
         <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[110000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
           <div className="bg-white w-full max-w-[320px] rounded-[2.5rem] p-8 text-center space-y-6 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-            <button onClick={() => setShowDeleteConfirmSales(null)} className="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
             <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mx-auto shadow-sm animate-pulse">
               <AlertTriangle size={32} />
             </div>
@@ -915,6 +937,7 @@ const canAddSales = useMemo(() => {
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   </>
