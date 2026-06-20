@@ -110,8 +110,6 @@ const isFormValid = () => {
 
     setGeneratedReceipt(receipt);
     setSavedTransactionId(null); // Reset status saved
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 3000);
 
     setTimeout(() => {
       const previewElement = document.getElementById('receipt-preview');
@@ -254,19 +252,6 @@ const isFormValid = () => {
           </div>
         </div>
       </div>
-
-      {/* Success Alert */}
-      {showSuccess && (
-        <div className="fixed top-8 right-8 z-[100000] bg-emerald-600 text-white px-8 py-6 rounded-[2rem] shadow-2xl flex items-center gap-4 animate-bounce">
-          <CheckCircle2 size={28} strokeWidth={3} />
-          <div>
-            <p className="font-black text-sm uppercase">
-              {activeTab === 'income' ? 'Kuitansi' : 'Bon'} Berhasil Dibuat! ✨
-            </p>
-            <p className="text-[10px] font-bold opacity-90 mt-1">Scroll ke bawah untuk lihat & download</p>
-          </div>
-        </div>
-      )}
 
       <div className="max-w-6xl mx-auto space-y-12">
         {/* Tab Switcher */}
