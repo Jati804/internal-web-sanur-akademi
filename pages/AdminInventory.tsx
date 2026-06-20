@@ -368,6 +368,25 @@ const canAddSales = useMemo(() => {
         from { opacity: 0; transform: scale(0.95); }
         to { opacity: 1; transform: scale(1); }
       }
+      .seamless-scroll {
+        scrollbar-width: thin;
+        scrollbar-color: rgba(148, 163, 184, 0.35) transparent;
+      }
+      .seamless-scroll::-webkit-scrollbar {
+        width: 6px;
+      }
+      .seamless-scroll::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      .seamless-scroll::-webkit-scrollbar-thumb {
+        background-color: rgba(148, 163, 184, 0.35);
+        border-radius: 999px;
+        border: 2px solid transparent;
+        background-clip: padding-box;
+      }
+      .seamless-scroll::-webkit-scrollbar-thumb:hover {
+        background-color: rgba(148, 163, 184, 0.6);
+      }
     `}</style>
 
     <div className="space-y-12 pb-40 px-2">
@@ -606,7 +625,7 @@ const canAddSales = useMemo(() => {
       {showModal && (
         <ModalPortal>
   <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-  <div className="bg-white w-full max-w-2xl rounded-[4rem] p-10 md:p-12 shadow-2xl relative border border-white/20 opacity-0 max-h-[90vh] overflow-y-auto custom-scrollbar" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+  <div className="bg-white w-full max-w-2xl rounded-[4rem] p-10 md:p-12 shadow-2xl relative border border-white/20 opacity-0 max-h-[90vh] overflow-y-auto seamless-scroll" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setShowModal(null)} className="absolute top-10 right-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
               <h4 className="text-3xl font-black text-slate-800 uppercase italic mb-10 tracking-tighter leading-none text-center pr-10">DATA <span className="text-blue-600">SISWA</span></h4>
               <div className="space-y-6">
@@ -620,11 +639,11 @@ const canAddSales = useMemo(() => {
                    <div className="space-y-6">
                      <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Nama Lengkap Siswa</label>
-                        <input type="text" placeholder="MISAL: BUDI SANTOSO" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+                        <input type="text" placeholder="MISAL: BUDI SANTOSO" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value.toUpperCase()})} className="w-full h-[66px] px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
                      </div>
                      <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Tgl Lahir</label>
-                        <input type="text" placeholder="12 JANUARI 2012" value={formData.dob} onChange={e => setFormData({...formData, dob: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+                        <input type="text" placeholder="12 JANUARI 2012" value={formData.dob} onChange={e => setFormData({...formData, dob: e.target.value.toUpperCase()})} className="w-full h-[66px] px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
                      </div>
                    </div>
 
@@ -632,11 +651,11 @@ const canAddSales = useMemo(() => {
                    <div className="space-y-6">
                      <div className="space-y-2">
                         <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Sekolah / Instansi</label>
-                        <input type="text" placeholder="MISAL: SD NEGERI 01" value={formData.institution} onChange={e => setFormData({...formData, institution: e.target.value.toUpperCase()})} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+                        <input type="text" placeholder="MISAL: SD NEGERI 01" value={formData.institution} onChange={e => setFormData({...formData, institution: e.target.value.toUpperCase()})} className="w-full h-[66px] px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
                      </div>
                      <div className="space-y-2">
                        <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Catatan Khusus</label>
-                       <textarea placeholder="MISAL: MINAT KELAS PRIVATE..." value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value.toUpperCase()})} rows={2} className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-bold text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+                       <textarea placeholder="MISAL: MINAT KELAS PRIVATE..." value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value.toUpperCase()})} rows={1} className="w-full h-[66px] px-8 py-5 bg-slate-50 rounded-[1.8rem] font-bold text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner resize-none overflow-y-auto seamless-scroll" />
                      </div>
                    </div>
                  </div>
@@ -852,7 +871,7 @@ const canAddSales = useMemo(() => {
       {showModalSales && (
         <ModalPortal>
   <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-          <div className="bg-white w-full max-w-2xl rounded-[4rem] p-10 md:p-12 shadow-2xl relative border border-white/20 opacity-0 max-h-[90vh] overflow-y-auto custom-scrollbar" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+          <div className="bg-white w-full max-w-2xl rounded-[4rem] p-10 md:p-12 shadow-2xl relative border border-white/20 opacity-0 max-h-[90vh] overflow-y-auto seamless-scroll" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
             <button onClick={() => setShowModalSales(null)} className="absolute top-10 right-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
             <h4 className="text-3xl font-black text-slate-800 uppercase italic mb-10 tracking-tighter leading-none text-center pr-10">DATA <span className="text-orange-600">SALES B2B</span></h4>
             <div className="space-y-6">
