@@ -395,12 +395,11 @@ const canAddSales = useMemo(() => {
       }
       .custom-scroll-track {
         position: absolute;
-        top: 28px;
-        bottom: 28px;
-        right: 10px;
-        width: 5px;
-        border-radius: 999px;
-        background: rgba(148, 163, 184, 0.12);
+        top: 0;
+        bottom: 0;
+        right: 0;
+        width: 7px;
+        background: transparent;
         pointer-events: none;
         z-index: 10;
       }
@@ -408,9 +407,9 @@ const canAddSales = useMemo(() => {
         position: absolute;
         left: 0;
         right: 0;
-        border-radius: 999px;
+        border-radius: 4px;
         background: #2563eb;
-        transition: background 0.2s ease;
+        transition: top 0.05s linear;
       }
     `}</style>
 
