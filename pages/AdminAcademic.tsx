@@ -475,7 +475,7 @@ const handleDragEnd = () => {
       {editingCell && (
         <ModalPortal>
         <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] bg-slate-900/95 backdrop-blur-2xl flex items-center justify-center p-6 animate-in zoom-in duration-300" onClick={() => setEditingCell(null)}>
-           <div className="bg-white w-full max-w-md rounded-[3.5rem] p-12 md:p-14 shadow-2xl relative border border-slate-50" onClick={e => e.stopPropagation()}>
+           <div className="bg-white w-full max-w-xl rounded-[3.5rem] p-12 md:p-14 shadow-2xl relative border border-slate-50" onClick={e => e.stopPropagation()}>
               <button onClick={() => setEditingCell(null)} className="absolute top-10 right-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
               <div className="mb-10 text-center pr-6">
                  <div className="w-16 h-16 bg-blue-600 text-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-blue-100 rotate-3"><Layout size={28} /></div>
