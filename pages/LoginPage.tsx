@@ -150,7 +150,7 @@ useEffect(() => {
 const pinEmpty = !pin.trim();
 if (usernameEmpty || pinEmpty) {
   setFieldErrors({ username: usernameEmpty, pin: pinEmpty });
-  setError('Username & PIN wajib diisi.');
+  setError('Username & PIN wajib diisi');
   return;
 }
 setFieldErrors({ username: false, pin: false });
@@ -170,9 +170,9 @@ setFieldErrors({ username: false, pin: false });
       if (foundUser) {
         const userPin = foundUser.pin || (role === 'STUDENT' ? '051020' : '224488');
         if (pin === userPin) onLogin(foundUser);
-        else setError('PIN Salah.');
+        else setError('PIN Salah');
       } else {
-        setError('Username tidak terdaftar.');
+        setError('Username tidak terdaftar');
       }
       setLoading(false);
     }, 600);
