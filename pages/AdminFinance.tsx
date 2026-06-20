@@ -481,32 +481,73 @@ setEditingTransaction(null);
   };
 
 
-  const handleImportCSV = async () => {
-    if (!importText.trim()) return;
-    setIsLoading(true);
+const EXPECTED_HEADERS = ['TANGGAL', 'DESKRIPSI', 'KATEGORI', 'TIPE', 'NOMINAL'];
+
+const handleImportExcelFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = async (evt) => {
     try {
-      const lines = importText.trim().split(/\r?\n/);
-      const payload = lines.map(line => {
-        if (!line.trim()) return null;
-        let delimiter = ',';
-        if (line.includes('\t')) delimiter = '\t'; else if (line.includes(';')) delimiter = ';';
-        const parts = line.split(delimiter).map(p => p.trim().replace(/^["']|["']$/g, ''));
-        if (parts.length < 5) return null;
-        const [date, desc, cat, type, amt] = parts;
-const cleanAmount = parseInt(amt.replace(/[^\d]/g, '')) || 0;
-return { 
-  id: `TX-IMP-${Date.now()}-${Math.random().toString(36).substring(7)}`, 
-  date: normalizeDate(date.trim()),
-description: desc.trim().toUpperCase(), category: (cat.trim() || 'UMUM').toUpperCase(), type: (type.trim().toUpperCase().includes('INCOME') || type.trim().toUpperCase().includes('MASUK')) ? 'INCOME' : 'EXPENSE', amount: cleanAmount };
-      }).filter(x => x !== null);
-      if (payload.length === 0) throw new Error("Format data tidak terbaca.");
+      const data = evt.target?.result;
+      const workbook = XLSX.read(data, { type: 'binary' });
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows: any[][] = XLSX.utils.sheet_to_json(sheet, { header: 1 });
+
+      if (rows.length < 2) throw new Error("File kosong atau tidak ada data.");
+
+      const headerRow = rows[0].map((h: any) => String(h).trim().toUpperCase());
+      const isHeaderValid = EXPECTED_HEADERS.every((h, i) => headerRow[i] === h);
+
+      if (!isHeaderValid) {
+        alert(`Maaf, urutan kolom di dalam file nya nggak sesuai. Coba lagi yaa ✨\n\nUrutan yang benar: ${EXPECTED_HEADERS.join(', ')}`);
+        e.target.value = '';
+        return;
+      }
+
+      setIsLoading(true);
+
+      const formatDateCell = (val: any): string => {
+        if (val instanceof Date) {
+          const y = val.getFullYear();
+          const m = String(val.getMonth() + 1).padStart(2, '0');
+          const d = String(val.getDate()).padStart(2, '0');
+          return `${y}-${m}-${d}`;
+        }
+        return normalizeDate(String(val).trim());
+      };
+
+      const dataRows = rows.slice(1).filter(r => r.length >= 5 && r[0]);
+      const payload = dataRows.map(r => {
+        const [date, desc, cat, type, amt] = r;
+        const cleanAmount = parseInt(String(amt).replace(/[^\d]/g, '')) || 0;
+        return {
+          id: `TX-IMP-${Date.now()}-${Math.random().toString(36).substring(7)}`,
+          date: formatDateCell(date),
+          description: String(desc).trim().toUpperCase(),
+          category: (String(cat).trim() || 'UMUM').toUpperCase(),
+          type: (String(type).trim().toUpperCase().includes('INCOME') || String(type).trim().toUpperCase().includes('MASUK')) ? 'INCOME' : 'EXPENSE',
+          amount: cleanAmount
+        };
+      });
+
+      if (payload.length === 0) throw new Error("Tidak ada data valid di file.");
+
       const { error } = await supabase.from('transactions').insert(payload);
       if (error) throw error;
       if (refreshAllData) await refreshAllData();
       await fetchLedgerData();
-      setShowImportModal(false); setImportText(''); alert(`Berhasil impor ${payload.length} transaksi! ✨`);
-    } catch (e: any) { alert("Gagal: " + e.message); } finally { setIsLoading(false); }
+      setShowImportModal(false);
+      alert(`Berhasil impor ${payload.length} transaksi! ✨`);
+    } catch (err: any) {
+      alert("Gagal: " + err.message);
+    } finally {
+      setIsLoading(false);
+      e.target.value = '';
+    }
   };
+  reader.readAsBinaryString(file);
+};
 
 const handleDeleteTx = async () => {
   if (!confirmDeleteTx) return;
@@ -1301,7 +1342,22 @@ const executePayTeacher = async () => {
                <div className="flex-1 overflow-y-auto custom-scrollbar p-10 md:p-12">
                <button onClick={() => setShowImportModal(false)} className="absolute top-10 right-10 z-10 p-3 bg-slate-50 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
                <div className="flex items-center gap-4 mb-8"><div className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl"><ClipboardList size={24}/></div><div><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Smart Import Box</h4><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2 italic">Format: TGL, DESKRIPSI, KATEGORI, TIPE, NOMINAL ✨</p></div></div>
-               <div className="space-y-6"><div className="p-6 bg-blue-50 rounded-[2rem] border border-blue-100"><p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-3 text-center">Urutan Kolom Harus Sesuai:</p><code className="text-[9px] font-mono font-bold text-slate-500 block bg-white p-4 rounded-xl border border-blue-50 leading-relaxed text-center uppercase">TANGGAL, DESKRIPSI, KATEGORI, TIPE, NOMINAL</code></div><textarea value={importText} onChange={e => setImportText(e.target.value)} placeholder="TEMPEL DATA DARI EXCEL DI SINI (COPY SELURUH TABEL)..." rows={8} className="w-full p-8 bg-slate-50 rounded-[2rem] font-mono text-xs border-2 border-transparent focus:border-blue-500 outline-none transition-all shadow-inner" /><div className="flex items-center gap-3 bg-orange-50 p-4 rounded-2xl border border-orange-100"><Zap size={16} className="text-orange-500 shrink-0" /><p className="text-[8px] font-bold text-orange-800 uppercase italic">Tips: Tipe bisa berisi "INCOME" atau "EXPENSE" ✨</p></div><button onClick={handleImportCSV} disabled={isLoading || !importText.trim()} className="w-full py-7 bg-blue-600 text-white rounded-[2.5rem] font-black text-[10px] uppercase shadow-2xl flex items-center justify-center gap-3 active:scale-95 transition-all">{isLoading ? <Loader2 size={24} className="animate-spin"/> : <><Check size={20}/> PROSES IMPORT MASSAL ✨</>}</button></div>
+<div className="space-y-6">
+  <div className="p-6 bg-blue-50 rounded-[2rem] border border-blue-100">
+    <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-3 text-center">Urutan Kolom Harus Sesuai:</p>
+    <code className="text-[9px] font-mono font-bold text-slate-500 block bg-white p-4 rounded-xl border border-blue-50 leading-relaxed text-center uppercase">TANGGAL, DESKRIPSI, KATEGORI, TIPE, NOMINAL</code>
+  </div>
+  <div className="relative">
+    <input type="file" id="excelFileInput" accept=".xlsx,.xls" onChange={handleImportExcelFile} className="hidden" />
+    <label htmlFor="excelFileInput" className="w-full py-16 bg-slate-50 rounded-[2.5rem] border-2 border-dashed border-blue-200 text-blue-600 font-black text-[10px] uppercase hover:bg-white transition-all flex flex-col items-center gap-3 cursor-pointer">
+      {isLoading ? <Loader2 className="animate-spin" size={24} /> : <><ClipboardList size={32}/><p>KLIK UNTUK UPLOAD FILE EXCEL (.XLSX)</p></>}
+    </label>
+  </div>
+  <div className="flex items-center gap-3 bg-orange-50 p-4 rounded-2xl border border-orange-100">
+    <Zap size={16} className="text-orange-500 shrink-0" />
+    <p className="text-[8px] font-bold text-orange-800 uppercase italic">Tips: Header baris pertama wajib sesuai urutan di atas ✨</p>
+  </div>
+</div>
                </div>
             </div>
          </div>
