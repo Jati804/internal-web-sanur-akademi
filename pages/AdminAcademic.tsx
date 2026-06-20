@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, 
   Settings, 
@@ -22,6 +22,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { supabase } from '../services/supabase.ts';
+import ModalPortal from '../ModalPortal.tsx';
 
 interface AdminAcademicProps {
   subjects: string[];
@@ -54,6 +55,12 @@ const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [editingCell, setEditingCell] = useState<{ day: string, room: string } | null>(null);
   const [editMatpel, setEditMatpel] = useState('');
   const [editJam, setEditJam] = useState('');
+
+  // ✅ Lock body scroll selagi modal terbuka
+  useEffect(() => {
+    document.body.style.overflow = editingCell ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [editingCell]);
 
   const days = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
 
@@ -466,10 +473,11 @@ const handleDragEnd = () => {
 
       {/* MODAL EDIT PER SEL (CELL) */}
       {editingCell && (
-        <div className="fixed inset-0 z-[6000] bg-slate-900/95 backdrop-blur-2xl flex items-center justify-center p-6 animate-in zoom-in duration-300" onClick={() => setEditingCell(null)}>
+        <ModalPortal>
+        <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] bg-slate-900/95 backdrop-blur-2xl flex items-center justify-center p-6 animate-in zoom-in duration-300" onClick={() => setEditingCell(null)}>
            <div className="bg-white w-full max-w-md rounded-[3.5rem] p-12 md:p-14 shadow-2xl relative border border-slate-50" onClick={e => e.stopPropagation()}>
-              <button onClick={() => setEditingCell(null)} className="absolute top-10 right-10 p-3 bg-slate-50 text-slate-400 rounded-full hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>
-              <div className="mb-10 text-center">
+              <button onClick={() => setEditingCell(null)} className="absolute top-10 right-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
+              <div className="mb-10 text-center pr-6">
                  <div className="w-16 h-16 bg-blue-600 text-white rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl shadow-blue-100 rotate-3"><Layout size={28} /></div>
                  <h4 className="text-2xl font-black text-slate-800 uppercase italic tracking-tight">Update Jadwal</h4>
                  <div className="flex items-center justify-center gap-3 mt-3 text-slate-400 font-black text-[10px] uppercase tracking-widest">
@@ -496,6 +504,7 @@ const handleDragEnd = () => {
               </div>
            </div>
         </div>
+        </ModalPortal>
       )}
     </div>
   );
