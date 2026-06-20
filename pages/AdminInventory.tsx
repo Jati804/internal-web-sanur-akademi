@@ -32,22 +32,6 @@ const AdminMarketing: React.FC<AdminMarketingProps> = ({ studentProfiles, setStu
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<StudentProfile | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
-
-  // ✨ STATE & HANDLER UNTUK CUSTOM SCROLLBAR MODAL (biar nyatu sama lengkungan)
-  const [siswaScrollThumb, setSiswaScrollThumb] = useState({ top: 0, height: 100, visible: false });
-  const [salesScrollThumb, setSalesScrollThumb] = useState({ top: 0, height: 100, visible: false });
-
-  const handleModalScroll = (e: React.UIEvent<HTMLDivElement>, setter: React.Dispatch<React.SetStateAction<{ top: number; height: number; visible: boolean }>>) => {
-    const el = e.currentTarget;
-    const scrollableHeight = el.scrollHeight - el.clientHeight;
-    if (scrollableHeight <= 0) {
-      setter({ top: 0, height: 100, visible: false });
-      return;
-    }
-    const thumbHeightPct = Math.max((el.clientHeight / el.scrollHeight) * 100, 8);
-    const topPct = (el.scrollTop / scrollableHeight) * (100 - thumbHeightPct);
-    setter({ top: topPct, height: thumbHeightPct, visible: true });
-  };
   // ✅ TARUH CHECKER DI SINI (SEBELUM formData)
 const canAddStudent = useMemo(() => {
   return studentProfiles.length < 500;
@@ -417,33 +401,6 @@ const canAddSales = useMemo(() => {
       .custom-scrollbar::-webkit-scrollbar-thumb:hover {
         background: #2563eb;
       }
-      .seamless-scroll {
-        scrollbar-width: none;
-        -ms-overflow-style: none;
-      }
-      .seamless-scroll::-webkit-scrollbar {
-        width: 0px;
-        height: 0px;
-        display: none;
-      }
-      .custom-scroll-track {
-        position: absolute;
-        top: 0;
-        bottom: 0;
-        right: 0;
-        width: 7px;
-        background: transparent;
-        pointer-events: none;
-        z-index: 10;
-      }
-      .custom-scroll-thumb {
-        position: absolute;
-        left: 0;
-        right: 0;
-        border-radius: 4px;
-        background: #2563eb;
-        transition: top 0.05s linear;
-      }
     `}</style>
 
     <div className="space-y-12 pb-40 px-2">
@@ -644,7 +601,7 @@ const canAddSales = useMemo(() => {
         <ModalPortal>
    <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
    <div className="bg-white w-full max-w-lg rounded-[4rem] shadow-2xl relative opacity-0 max-h-[90vh] overflow-hidden" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-   <div className="max-h-[90vh] overflow-y-auto seamless-scroll p-10 md:p-12 relative">
+   <div className="max-h-[90vh] overflow-y-auto custom-scrollbar p-10 md:p-12 relative">
                <button onClick={() => setShowImportModal(false)} className="absolute top-10 right-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
                <div className="flex flex-col items-center text-center gap-4 mb-8 pr-6">
                   <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl"><ClipboardList size={24}/></div>
@@ -695,7 +652,7 @@ const canAddSales = useMemo(() => {
         <ModalPortal>
   <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
   <div className="bg-white w-full max-w-2xl rounded-[4rem] shadow-2xl relative border border-white/20 opacity-0 max-h-[90vh] overflow-hidden" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-  <div className="max-h-[90vh] overflow-y-auto seamless-scroll p-10 md:p-12 relative" onScroll={e => handleModalScroll(e, setSiswaScrollThumb)}>
+  <div className="max-h-[90vh] overflow-y-auto custom-scrollbar p-10 md:p-12 relative">
               <button onClick={() => setShowModal(null)} className="absolute top-10 right-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
               <h4 className="text-3xl font-black text-slate-800 uppercase italic mb-10 tracking-tighter leading-none text-center pr-10">DATA <span className="text-blue-600">SISWA</span></h4>
               <div className="space-y-6">
@@ -725,7 +682,7 @@ const canAddSales = useMemo(() => {
                      </div>
                      <div className="space-y-2">
                        <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Catatan Khusus</label>
-                       <textarea placeholder="MISAL: MINAT KELAS PRIVATE..." value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value.toUpperCase()})} rows={1} className="w-full h-[66px] px-8 py-5 bg-slate-50 rounded-[1.8rem] font-bold text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner resize-none overflow-y-auto seamless-scroll" />
+                       <textarea placeholder="MISAL: MINAT KELAS PRIVATE..." value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value.toUpperCase()})} rows={1} className="w-full h-[66px] px-8 py-5 bg-slate-50 rounded-[1.8rem] font-bold text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner resize-none overflow-y-auto custom-scrollbar" />
                      </div>
                    </div>
                  </div>
@@ -746,11 +703,6 @@ const canAddSales = useMemo(() => {
                  </button>
               </div>
             </div>
-            {siswaScrollThumb.visible && (
-              <div className="custom-scroll-track">
-                <div className="custom-scroll-thumb" style={{ top: `${siswaScrollThumb.top}%`, height: `${siswaScrollThumb.height}%` }} />
-              </div>
-            )}
             </div>
           </div>
         </ModalPortal>
@@ -948,7 +900,7 @@ const canAddSales = useMemo(() => {
         <ModalPortal>
   <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
           <div className="bg-white w-full max-w-2xl rounded-[4rem] shadow-2xl relative border border-white/20 opacity-0 max-h-[90vh] overflow-hidden" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-          <div className="max-h-[90vh] overflow-y-auto seamless-scroll p-10 md:p-12 relative" onScroll={e => handleModalScroll(e, setSalesScrollThumb)}>
+          <div className="max-h-[90vh] overflow-y-auto custom-scrollbar p-10 md:p-12 relative">
             <button onClick={() => setShowModalSales(null)} className="absolute top-10 right-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
             <h4 className="text-3xl font-black text-slate-800 uppercase italic mb-10 tracking-tighter leading-none text-center pr-10">DATA <span className="text-orange-600">SALES B2B</span></h4>
             <div className="space-y-6">
@@ -1007,11 +959,6 @@ const canAddSales = useMemo(() => {
               </button>
             </div>
             </div>
-            {salesScrollThumb.visible && (
-              <div className="custom-scroll-track">
-                <div className="custom-scroll-thumb" style={{ top: `${salesScrollThumb.top}%`, height: `${salesScrollThumb.height}%`, background: '#ea580c' }} />
-              </div>
-            )}
           </div>
         </div>
         </ModalPortal>
