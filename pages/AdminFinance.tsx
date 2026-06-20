@@ -1449,7 +1449,6 @@ const executePayTeacher = async () => {
   </div>
   <div className="flex items-center gap-3 bg-orange-50 p-4 rounded-2xl border border-orange-100">
     <Zap size={16} className="text-orange-500 shrink-0" />
-    <p className="text-[8px] font-bold text-orange-800 uppercase italic">Tips: Header baris pertama wajib sesuai urutan di atas ✨</p>
   </div>
 </div>
                </div>
