@@ -550,17 +550,19 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
 
                 {/* KOLOM KIRI: warning + info guru */}
                 <div className="bg-rose-50 rounded-[1.5rem] p-5 flex flex-col gap-4">
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 bg-rose-200 rounded-xl flex items-center justify-center shrink-0">
-                      <AlertTriangle size={18} className="text-rose-800"/>
-                    </div>
-                    <p className="text-[11px] font-black text-rose-700 uppercase tracking-wider leading-tight">Slot Sedang Digunakan!</p>
-                  </div>
+  <div className="flex flex-col items-center gap-3 text-center">
+    <div className="w-9 h-9 bg-rose-200 rounded-xl flex items-center justify-center shrink-0">
+      <AlertTriangle size={18} className="text-rose-800" />
+    </div>
+    <p className="text-[11px] font-black text-rose-700 uppercase tracking-wider leading-tight">
+      Kelas Sedang Digunakan!
+    </p>
+  </div>
 
-                  <div className="border-t border-rose-200 pt-4 space-y-3">
-                    <p className="text-[10px] font-bold text-rose-700 uppercase leading-relaxed">
-                      Kelas ini sedang berjalan oleh:
-                    </p>
+  <div className="border-t border-rose-200 pt-4 space-y-3">
+    <p className="text-[10px] font-bold text-rose-700 uppercase leading-relaxed text-center">
+      Kelas ini sedang berjalan oleh:
+    </p>
                     <div className="bg-white rounded-xl px-4 py-2">
                       <p className="text-[10px] font-black text-slate-800 uppercase tracking-wide leading-relaxed">{blockModal.className}</p>
                     </div>
