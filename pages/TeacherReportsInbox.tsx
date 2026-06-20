@@ -572,12 +572,12 @@ const handleDownloadPDF = async (req: any) => {
    </div>
 </div>
                    <h4 className="text-2xl font-black text-slate-800 uppercase italic mb-2 Kalimat leading-tight">{req.studentsAttended?.[0]}</h4>
-                   <p className="text-[11px] font-bold text-blue-600 uppercase mb-10 Kalimat leading-relaxed">{req.className}</p>
-                   <button onClick={() => setShowMilestoneFor(req)} className="w-full py-5 mb-5 bg-slate-50 text-slate-500 rounded-3xl font-black text-[10px] uppercase flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all border border-transparent shadow-sm"><History size={18}/> LIHAT MILESTONE</button>
-                 </div>
-                 <div className="space-y-4">
-                    <button 
-                      onClick={() => handleAcceptRequest(req)} 
+<p className="text-[11px] font-bold text-blue-600 uppercase Kalimat leading-relaxed">{req.className}</p>
+</div>
+<div className="space-y-4">
+   <button onClick={() => setShowMilestoneFor(req)} className="w-full py-5 bg-slate-50 text-slate-500 rounded-3xl font-black text-[10px] uppercase flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all border border-transparent shadow-sm"><History size={18}/> LIHAT MILESTONE</button>
+   <button 
+     onClick={() => handleAcceptRequest(req)} 
                       disabled={!!actionLoadingId}
                       className="w-full py-6 bg-slate-900 text-white rounded-[2rem] font-black text-[12px] uppercase tracking-widest shadow-xl active:scale-95 transition-all hover:bg-black flex items-center justify-center gap-3"
                     >
