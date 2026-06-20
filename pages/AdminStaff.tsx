@@ -512,19 +512,19 @@ console.log('\n✅ BACKUP MILESTONE SELESAI');
               <h4 className={`text-3xl font-black italic mb-10 tracking-tighter leading-none text-center pr-10 ${roleTheme.text}`}>USER & <span className="text-slate-800">ACCESS</span></h4>
               
               <div className="space-y-6">
+                 <div className="space-y-2 text-left">
+                    <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Nama Lengkap</label>
+                    <input type="text" placeholder="MISAL: BUDI SANTOSO" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value.toUpperCase()})} className="w-full h-[66px] px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+                 </div>
                  <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-2 text-left">
-                       <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Nama Lengkap</label>
-                       <input type="text" placeholder="MISAL: BUDI SANTOSO" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value.toUpperCase()})} className="w-full h-[66px] px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
-                    </div>
                     <div className="space-y-2 text-left">
                        <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Username Login</label>
                        <input type="text" placeholder="MISAL: BUDI_SANUR" value={formData.username} onChange={e => setFormData({...formData, username: e.target.value.toUpperCase()})} className="w-full h-[66px] px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
                     </div>
-                 </div>
-                 <div className="space-y-2 text-left">
-                    <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">PIN 6 DIGIT KEAMANAN</label>
-                    <input type="text" placeholder="MISAL: 051020" value={formData.pin} onChange={e => setFormData({...formData, pin: e.target.value.replace(/\D/g, '')})} maxLength={6} className="w-full h-[66px] px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+                    <div className="space-y-2 text-left">
+                       <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">PIN 6 DIGIT KEAMANAN</label>
+                       <input type="text" placeholder="MISAL: 051020" value={formData.pin} onChange={e => setFormData({...formData, pin: e.target.value.replace(/\D/g, '')})} maxLength={6} className="w-full h-[66px] px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+                    </div>
                  </div>
 <button onClick={handleSave} disabled={isLocalSyncing} className={`w-full py-6 ${roleTheme.bg} text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl transition-all active:scale-95 flex items-center justify-center gap-3`}>
    {isLocalSyncing ? (
