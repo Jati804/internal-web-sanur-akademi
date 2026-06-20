@@ -565,9 +565,9 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
                       <p className="text-[9px] font-bold text-rose-400 uppercase tracking-wide leading-relaxed">{blockModal.className}</p>
                     </div>
                     <div className="bg-white rounded-xl px-4 py-3 space-y-1">
-                      <p className="text-[9px] font-bold text-rose-400 uppercase tracking-wide">Guru:</p>
+                      <p className="text-[9px] font-bold text-rose-600 uppercase tracking-wide">Guru:</p>
                       <p className="text-[12px] font-black text-slate-800 uppercase">{blockModal.ownerName}</p>
-                      <p className="text-[10px] font-bold text-rose-500">Sesi {blockModal.currentSession} / 6</p>
+                      <p className="text-[10px] font-bold text-rose-600">Sesi {blockModal.currentSession} / 6</p>
                     </div>
                   </div>
                 </div>
