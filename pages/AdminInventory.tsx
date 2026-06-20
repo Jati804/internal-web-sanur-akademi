@@ -382,23 +382,19 @@ const canAddSales = useMemo(() => {
         from { opacity: 0; transform: scale(0.95); }
         to { opacity: 1; transform: scale(1); }
       }
-      /* ✨ Scrollbar cantik untuk list/tabel (SISWA & SALES) */
-      .custom-scrollbar {
-        scrollbar-width: thin;
-        scrollbar-color: #3b82f6 #f1f5f9;
-      }
-      .custom-scrollbar::-webkit-scrollbar {
+      /* ✨ Scroll bar cantik (sama persis seperti AdminFinance) */
+      .overflow-y-auto::-webkit-scrollbar {
         width: 8px;
       }
-      .custom-scrollbar::-webkit-scrollbar-track {
+      .overflow-y-auto::-webkit-scrollbar-track {
         background: #f1f5f9;
         border-radius: 10px;
       }
-      .custom-scrollbar::-webkit-scrollbar-thumb {
+      .overflow-y-auto::-webkit-scrollbar-thumb {
         background: #3b82f6;
         border-radius: 10px;
       }
-      .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+      .overflow-y-auto::-webkit-scrollbar-thumb:hover {
         background: #2563eb;
       }
     `}</style>
@@ -600,9 +596,9 @@ const canAddSales = useMemo(() => {
       {showImportModal && (
         <ModalPortal>
    <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-   <div className="bg-white w-full max-w-lg rounded-[4rem] shadow-2xl relative opacity-0 max-h-[90vh] overflow-hidden" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-   <div className="max-h-[90vh] overflow-y-auto custom-scrollbar p-10 md:p-12 relative">
-               <button onClick={() => setShowImportModal(false)} className="absolute top-10 right-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
+   <div className="bg-white w-full max-w-lg max-h-[85vh] rounded-[4rem] shadow-2xl relative overflow-hidden flex flex-col opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+   <div className="flex-1 overflow-y-auto custom-scrollbar p-10 md:p-12 relative">
+               <button onClick={() => setShowImportModal(false)} className="absolute top-10 right-10 z-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
                <div className="flex flex-col items-center text-center gap-4 mb-8 pr-6">
                   <div className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl"><ClipboardList size={24}/></div>
                   <div>
@@ -651,9 +647,9 @@ const canAddSales = useMemo(() => {
       {showModal && (
         <ModalPortal>
   <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-  <div className="bg-white w-full max-w-2xl rounded-[4rem] shadow-2xl relative border border-white/20 opacity-0 max-h-[90vh] overflow-hidden" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-  <div className="max-h-[90vh] overflow-y-auto custom-scrollbar p-10 md:p-12 relative">
-              <button onClick={() => setShowModal(null)} className="absolute top-10 right-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
+  <div className="bg-white w-full max-w-2xl max-h-[85vh] rounded-[4rem] shadow-2xl relative border border-white/20 opacity-0 overflow-hidden flex flex-col" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+  <div className="flex-1 overflow-y-auto custom-scrollbar p-10 md:p-12 relative">
+              <button onClick={() => setShowModal(null)} className="absolute top-10 right-10 z-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
               <h4 className="text-3xl font-black text-slate-800 uppercase italic mb-10 tracking-tighter leading-none text-center pr-10">DATA <span className="text-blue-600">SISWA</span></h4>
               <div className="space-y-6">
                  <div className="flex gap-2 p-1.5 bg-slate-100 rounded-2xl">
@@ -899,9 +895,9 @@ const canAddSales = useMemo(() => {
       {showModalSales && (
         <ModalPortal>
   <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-          <div className="bg-white w-full max-w-2xl rounded-[4rem] shadow-2xl relative border border-white/20 opacity-0 max-h-[90vh] overflow-hidden" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-          <div className="max-h-[90vh] overflow-y-auto custom-scrollbar p-10 md:p-12 relative">
-            <button onClick={() => setShowModalSales(null)} className="absolute top-10 right-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
+          <div className="bg-white w-full max-w-2xl max-h-[85vh] rounded-[4rem] shadow-2xl relative border border-white/20 opacity-0 overflow-hidden flex flex-col" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+          <div className="flex-1 overflow-y-auto custom-scrollbar p-10 md:p-12 relative">
+            <button onClick={() => setShowModalSales(null)} className="absolute top-10 right-10 z-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
             <h4 className="text-3xl font-black text-slate-800 uppercase italic mb-10 tracking-tighter leading-none text-center pr-10">DATA <span className="text-orange-600">SALES B2B</span></h4>
             <div className="space-y-6">
               <div className="grid md:grid-cols-2 gap-6">
