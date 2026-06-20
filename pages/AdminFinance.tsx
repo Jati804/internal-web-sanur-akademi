@@ -1435,7 +1435,7 @@ const executePayTeacher = async () => {
                <div className="flex justify-end mb-2">
   <button onClick={() => setShowImportModal(false)} className="p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
 </div>
-<div className="flex items-center gap-4 mb-8"><div className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl"><ClipboardList size={24}/></div><div><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Smart Import Box</h4><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2 italic">Format: TGL, DESKRIPSI, KATEGORI, TIPE, NOMINAL ✨</p></div></div>
+<div className="flex items-center gap-4 mb-8"><div className="p-4 bg-slate-900 text-white rounded-2xl shadow-xl"><ClipboardList size={24}/></div><div><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Import Data Kas</h4><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-2 italic">Upload file Excel (.xlsx) untuk import massal ✨</p></div></div>
 <div className="space-y-6">
   <div className="p-6 bg-blue-50 rounded-[2rem] border border-blue-100">
     <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-3 text-center">Urutan Kolom Harus Sesuai:</p>
