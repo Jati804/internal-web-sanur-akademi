@@ -44,7 +44,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   const slipRef = useRef<HTMLDivElement>(null);
 
   const [confirmingAbsen, setConfirmingAbsen] = useState<{course: any, sessionNum: number} | null>(null);
-  const [activeFilter, setActiveFilter] = useState<string>('SEMUA');
+  const [activeFilter, setActiveFilter] = useState<string>('');
   const [selectedAbsenDate, setSelectedAbsenDate] = useState(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()));
   const [requestingReportFor, setRequestingReportFor] = useState<any | null>(null);
   const [selectedTeacherForReport, setSelectedTeacherForReport] = useState('');
@@ -75,11 +75,7 @@ useEffect(() => {
   return () => clearInterval(interval);
 }, []);
 
-useEffect(() => {
-  if (uniqueSubjects.length > 0 && !uniqueSubjects.includes(activeFilter)) {
-    setActiveFilter(uniqueSubjects[0]);
-  }
-}, [uniqueSubjects]);
+
 
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -991,7 +987,7 @@ const handleDownloadPDFReport = async (course: any) => {
   .filter(course => {
     if (uniqueSubjects.length <= 1) return true;
     const name = (course.className || '').replace(/\s*\(.*?\)\s*-\s*REGULER\s*\d+/i, '').trim();
-    return name === activeFilter;
+    return activeFilter === '' || name === activeFilter;
   })
      .map((course, idx) => {
               // ✅ GANTI PAKAI studentAttendanceLogs
