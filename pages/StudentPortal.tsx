@@ -75,6 +75,12 @@ useEffect(() => {
   return () => clearInterval(interval);
 }, []);
 
+useEffect(() => {
+  if (uniqueSubjects.length > 1 && activeFilter === '') {
+    setActiveFilter(uniqueSubjects[0]);
+  }
+}, [uniqueSubjects.length]);
+
 
 
   const compressImage = (file: File): Promise<string> => {
