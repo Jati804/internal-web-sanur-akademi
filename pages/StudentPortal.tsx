@@ -44,7 +44,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   const slipRef = useRef<HTMLDivElement>(null);
 
   const [confirmingAbsen, setConfirmingAbsen] = useState<{course: any, sessionNum: number} | null>(null);
-
+  const [activeFilter, setActiveFilter] = useState<string>('SEMUA');
   const [selectedAbsenDate, setSelectedAbsenDate] = useState(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()));
   const [requestingReportFor, setRequestingReportFor] = useState<any | null>(null);
   const [selectedTeacherForReport, setSelectedTeacherForReport] = useState('');
@@ -70,14 +70,10 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
     "Tidak ada kata terlambat untuk memulai hal yang hebat. Ayo lanjut! 🎯"
   ];
 
-useEffect(() => {
-  const interval = setInterval(() => setQuoteIndex((p) => (p + 1) % motivationalQuotes.length), 60000); 
-  return () => clearInterval(interval);
-}, []);
-
-
-
-
+  useEffect(() => {
+    const interval = setInterval(() => setQuoteIndex((p) => (p + 1) % motivationalQuotes.length), 60000); 
+    return () => clearInterval(interval);
+  }, []);
 
   const compressImage = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -134,23 +130,12 @@ useEffect(() => {
       });
   }, [studentPayments, normalizedUserName]);
 
-
-
 const uniqueSubjects = useMemo(() => {
   const names = verifiedCourses.map(c =>
     (c.className || '').replace(/\s*\(.*?\)\s*-\s*REGULER\s*\d+/i, '').trim()
   );
-  return Array.from(new Set(names));
+  return ['SEMUA', ...Array.from(new Set(names))];
 }, [verifiedCourses]);
-
-const [activeFilter, setActiveFilter] = useState<string>(() => {
-  const names = Array.from(new Set(
-    (studentPayments || [])
-      .filter(p => (p.studentName || '').toUpperCase().trim() === (user?.name || '').toUpperCase().trim() && p.status === 'VERIFIED')
-      .map(c => (c.className || '').replace(/\s*\(.*?\)\s*-\s*REGULER\s*\d+/i, '').trim())
-  ));
-  return names.length > 1 ? names[0] : '';
-});
 
     const myPayments = useMemo(() => {
     if (!Array.isArray(studentPayments)) return [];
@@ -979,29 +964,29 @@ const handleDownloadPDFReport = async (course: any) => {
         </section>
       ) : (
         <section className="space-y-10">
-{uniqueSubjects.length > 1 && (
-  <div className="flex flex-wrap gap-2 px-2">
-    {uniqueSubjects.map(subject => (
-      <button
-        key={subject}
-        onClick={() => setActiveFilter(subject)}
-        className={`px-5 py-2.5 rounded-full font-black text-[9px] uppercase tracking-widest transition-all ${
-          activeFilter === subject
-            ? 'bg-emerald-600 text-white shadow-lg'
-            : 'bg-white text-slate-400 border-2 border-slate-100 hover:border-emerald-300'
-        }`}
-      >
-        {subject}
-      </button>
-    ))}
-  </div>
-)}
-{verifiedCourses
-  .filter(course => {
-    if (uniqueSubjects.length <= 1) return true;
-    const name = (course.className || '').replace(/\s*\(.*?\)\s*-\s*REGULER\s*\d+/i, '').trim();
-    return activeFilter === '' || name === activeFilter;
-  })
+   {uniqueSubjects.length > 2 && (
+     <div className="flex flex-wrap gap-2 px-2">
+       {uniqueSubjects.map(subject => (
+         <button
+           key={subject}
+           onClick={() => setActiveFilter(subject)}
+           className={`px-5 py-2.5 rounded-full font-black text-[9px] uppercase tracking-widest transition-all ${
+             activeFilter === subject
+               ? 'bg-emerald-600 text-white shadow-lg'
+               : 'bg-white text-slate-400 border-2 border-slate-100 hover:border-emerald-300'
+           }`}
+         >
+           {subject}
+         </button>
+       ))}
+     </div>
+   )}
+   {verifiedCourses
+     .filter(course => {
+       if (activeFilter === 'SEMUA') return true;
+       const name = (course.className || '').replace(/\s*\(.*?\)\s*-\s*REGULER\s*\d+/i, '').trim();
+       return name === activeFilter;
+     })
      .map((course, idx) => {
               // ✅ GANTI PAKAI studentAttendanceLogs
 const pkgIdNorm = (course.id || '').toUpperCase().trim();
