@@ -44,7 +44,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   const slipRef = useRef<HTMLDivElement>(null);
 
   const [confirmingAbsen, setConfirmingAbsen] = useState<{course: any, sessionNum: number} | null>(null);
-  const [activeFilter, setActiveFilter] = useState<string>('');
+
   const [selectedAbsenDate, setSelectedAbsenDate] = useState(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()));
   const [requestingReportFor, setRequestingReportFor] = useState<any | null>(null);
   const [selectedTeacherForReport, setSelectedTeacherForReport] = useState('');
@@ -75,11 +75,7 @@ useEffect(() => {
   return () => clearInterval(interval);
 }, []);
 
-useEffect(() => {
-  if (uniqueSubjects.length > 1 && activeFilter === '') {
-    setActiveFilter(uniqueSubjects[0]);
-  }
-}, [uniqueSubjects.length]);
+
 
 
 
@@ -138,12 +134,23 @@ useEffect(() => {
       });
   }, [studentPayments, normalizedUserName]);
 
+
+
 const uniqueSubjects = useMemo(() => {
   const names = verifiedCourses.map(c =>
     (c.className || '').replace(/\s*\(.*?\)\s*-\s*REGULER\s*\d+/i, '').trim()
   );
   return Array.from(new Set(names));
 }, [verifiedCourses]);
+
+const [activeFilter, setActiveFilter] = useState<string>(() => {
+  const names = Array.from(new Set(
+    (studentPayments || [])
+      .filter(p => (p.studentName || '').toUpperCase().trim() === (user?.name || '').toUpperCase().trim() && p.status === 'VERIFIED')
+      .map(c => (c.className || '').replace(/\s*\(.*?\)\s*-\s*REGULER\s*\d+/i, '').trim())
+  ));
+  return names.length > 1 ? names[0] : '';
+});
 
     const myPayments = useMemo(() => {
     if (!Array.isArray(studentPayments)) return [];
