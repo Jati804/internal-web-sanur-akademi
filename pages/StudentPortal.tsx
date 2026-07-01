@@ -45,6 +45,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
 
   const [confirmingAbsen, setConfirmingAbsen] = useState<{course: any, sessionNum: number} | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>('SEMUA');
+  const [activePaymentFilter, setActivePaymentFilter] = useState<string>('SEMUA');
   const [selectedAbsenDate, setSelectedAbsenDate] = useState(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()));
   const [requestingReportFor, setRequestingReportFor] = useState<any | null>(null);
   const [selectedTeacherForReport, setSelectedTeacherForReport] = useState('');
@@ -148,6 +149,13 @@ const uniqueSubjects = useMemo(() => {
         return b.id.localeCompare(a.id);
       });
   }, [studentPayments, normalizedUserName]);
+
+  const uniquePaymentSubjects = useMemo(() => {
+    const names = myPayments.map(p =>
+      (p.className || '').replace(/\s*\(.*?\)\s*-\s*REGULER\s*\d+/i, '').trim()
+    );
+    return ['SEMUA', ...Array.from(new Set(names))];
+  }, [myPayments]);
 
 // 🆕 myLogs sekarang untuk attendance biasa saja (bukan rapot!)
 const myLogs = useMemo(() => {
@@ -895,8 +903,31 @@ const handleDownloadPDFReport = async (course: any) => {
 
            <div id="riwayat-pembayaran" className="space-y-8">
               <div className="flex items-center gap-4 px-6"><div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl"><History size={24}/></div><h3 className="text-2xl font-black text-slate-800 uppercase italic">Riwayat Pembayaran</h3></div>
+              {uniquePaymentSubjects.length > 2 && (
+                <div className="flex flex-wrap gap-2 px-2">
+                  {uniquePaymentSubjects.map(subject => (
+                    <button
+                      key={subject}
+                      onClick={() => setActivePaymentFilter(subject)}
+                      className={`px-5 py-2.5 rounded-full font-black text-[9px] uppercase tracking-widest transition-all ${
+                        activePaymentFilter === subject
+                          ? 'bg-emerald-600 text-white shadow-lg'
+                          : 'bg-white text-slate-400 border-2 border-slate-100 hover:border-emerald-300'
+                      }`}
+                    >
+                      {subject}
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className="grid grid-cols-1 gap-6">
-                 {myPayments.map((p, i) => (
+                 {myPayments
+                   .filter(p => {
+                     if (activePaymentFilter === 'SEMUA') return true;
+                     const name = (p.className || '').replace(/\s*\(.*?\)\s*-\s*REGULER\s*\d+/i, '').trim();
+                     return name === activePaymentFilter;
+                   })
+                   .map((p, i) => (
                     <div key={p.id || i} className="bg-white p-8 md:p-10 rounded-[3.5rem] border border-slate-100 shadow-xl flex flex-col md:flex-row items-center justify-between group hover:border-emerald-500 transition-all gap-8 relative overflow-hidden">
                        
                        {p.status === 'PENDING' && (
