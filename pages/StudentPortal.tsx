@@ -1133,7 +1133,7 @@ const completedSessions = studentAttendanceLogs
         <div key={sNum} className={`w-full p-2 h-20 md:h-24 rounded-2xl font-black border-2 flex flex-col items-center justify-center gap-1.5 ${doneLog ? (isPass ? 'bg-white border-blue-500 text-blue-600' : 'bg-white border-orange-400 text-orange-500') : 'bg-slate-50 border-transparent text-slate-200 opacity-40'}`}>
           {doneLog ? (
             <>
-              <p className={`text-[7px] font-black mb-1 leading-none ${isPass ? 'text-blue-500' : 'text-orange-400'}`}>{formatDateToDMY(doneLog.date)}</p>
+              <p className={`text-[8px] font-black mb-1 leading-none ${isPass ? 'text-blue-500' : 'text-orange-400'}`}>{formatDateToDMY(doneLog.date)}</p>
               <Check size={16} strokeWidth={4}/>
             </>
           ) : (
