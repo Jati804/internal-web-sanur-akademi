@@ -40,8 +40,9 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
     return dateStr.split('-').reverse().join('/');
   };
 
-  const getFullMonthName = () => {
-    return new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(new Date()).toUpperCase();
+  const getFullMonthName = (dateStr?: string) => {
+    const dateToUse = dateStr ? new Date(dateStr) : new Date();
+    return new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(dateToUse).toUpperCase();
   };
 
   const generateProRef = (id: string) => {
@@ -134,6 +135,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
           lastUpdate: log.date,
           status: fullCycle.some(l => l.teacherId === user.id && l.paymentStatus === 'UNPAID') ? 'ANTREAN' : 'LUNAS',
           receiptData: fullCycle.find(l => l.teacherId === user.id && l.paymentStatus === 'PAID')?.receiptData || null,
+          paidDate: fullCycle.find(l => l.teacherId === user.id && l.paymentStatus === 'PAID')?.paidDate || null,
           fullClassName: log.className,
           paidSessionsDetails: fullCycle.filter(l => l.teacherId === user.id),
           isCycleOwner: isCycleOwner 
@@ -444,7 +446,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
               </div>
               <div className="col-span-3 text-right">
                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Bulan Terbit:</p>
-                <p className="text-[13px] font-black text-blue-600 uppercase leading-tight">{getFullMonthName()}</p>
+                <p className="text-[13px] font-black text-blue-600 uppercase leading-tight">{getFullMonthName(pkg.paidDate || pkg.lastUpdate)}</p>
               </div>
             </div>
             <div className="space-y-4">
