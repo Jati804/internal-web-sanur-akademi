@@ -704,7 +704,8 @@ const executePayTeacher = async () => {
       .from('attendance')
       .update({ 
       paymentstatus: 'PAID',
-      receiptdata: payForm.receiptData
+      receiptdata: payForm.receiptData,
+      paiddate: getWIBDate()
       })
       .eq('packageid', packageId)
       .eq('teacherid', teacherId)
