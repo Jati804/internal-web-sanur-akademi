@@ -138,6 +138,35 @@ const uniqueSubjects = useMemo(() => {
   return ['SEMUA', ...Array.from(new Set(names))];
 }, [verifiedCourses]);
 
+// 🆕 Grouping "Kelas Saya" berdasarkan MATKUL + LEVEL (label REGULER di-strip).
+// Tiap kartu paket (per 6 sesi) tetap independen — progress, status, badge, rapot
+// nggak digabung. Ini murni pengelompokan tampilan biar paket-paket dari
+// matkul+level yang sama (misal Microsoft Word Basic REGULER 1 & 2) kelihatan
+// sebagai satu keluarga, bukan nyebar di list panjang campur matkul lain.
+const groupedFilteredCourses = useMemo(() => {
+  const filtered = verifiedCourses.filter(course => {
+    if (activeFilter === 'SEMUA') return true;
+    const name = (course.className || '').replace(/\s*\(.*?\)\s*-\s*REGULER\s*\d+/i, '').trim();
+    return name === activeFilter;
+  });
+
+  const groupsMap = new Map<string, typeof filtered>();
+  filtered.forEach(course => {
+    const groupName = (course.className || '').replace(/\s*\(.*?\)\s*-\s*REGULER\s*\d+/i, '').trim();
+    if (!groupsMap.has(groupName)) groupsMap.set(groupName, []);
+    groupsMap.get(groupName)!.push(course);
+  });
+
+  // Urutan grup ngikutin urutan kemunculan pertama (verifiedCourses udah sorted
+  // terbaru dulu), jadi matkul yang lagi paling aktif tetap di atas.
+  // Di dalam grup, urutan paket dibikin kronologis (terlama ke terbaru) biar
+  // ngikutin alur cerita belajar siswa dari awal.
+  return Array.from(groupsMap.entries()).map(([name, courses]) => ({
+    name,
+    courses: [...courses].sort((a, b) => new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime())
+  }));
+}, [verifiedCourses, activeFilter]);
+
     const myPayments = useMemo(() => {
     if (!Array.isArray(studentPayments)) return [];
     return [...studentPayments]
@@ -1012,13 +1041,14 @@ const handleDownloadPDFReport = async (course: any) => {
        ))}
      </div>
    )}
-   {verifiedCourses
-     .filter(course => {
-       if (activeFilter === 'SEMUA') return true;
-       const name = (course.className || '').replace(/\s*\(.*?\)\s*-\s*REGULER\s*\d+/i, '').trim();
-       return name === activeFilter;
-     })
-     .map((course, idx) => {
+   {groupedFilteredCourses.map((group) => (
+     <div key={group.name} className="space-y-6">
+       <div className="bg-slate-800 text-white px-8 py-4 rounded-[2rem] shadow-lg flex items-center gap-3">
+         <BookOpen size={18} className="text-white/70 shrink-0" />
+         <h3 className="text-sm font-black uppercase italic tracking-wide">{group.name}</h3>
+       </div>
+       <div className="space-y-10">
+       {group.courses.map((course, idx) => {
               // ✅ GANTI PAKAI studentAttendanceLogs
 const pkgIdNorm = (course.id || '').toUpperCase().trim();
 const completedSessions = studentAttendanceLogs
@@ -1258,6 +1288,9 @@ const completedSessions = studentAttendanceLogs
                 </div>
               );
            })}
+       </div>
+     </div>
+   ))}
            {verifiedCourses.length === 0 && (
              <div className="py-40 text-center bg-white rounded-[4rem] border-2 border-dashed border-slate-100 opacity-20">
                <BookOpen size={64} className="mx-auto mb-6 text-slate-300" />
