@@ -1172,7 +1172,7 @@ const completedSessions = studentAttendanceLogs
         const doneLog = completedSessions.find(s => s.num === sNum);
         return (
           <div key={sNum} className={`w-full p-2 h-20 md:h-24 rounded-2xl font-black border-2 flex flex-col items-center justify-center gap-1.5 ${doneLog ? 'bg-white border-amber-400 text-amber-600' : 'bg-slate-50 border-transparent text-slate-200 opacity-40'}`}>
-            {doneLog ? (<><p className="text-[7px] font-black mb-1 leading-none text-amber-500">{formatDateToDMY(doneLog.date)}</p><Check size={16} strokeWidth={4}/></>) : (<span className="text-xl">{sNum}</span>)}
+            {doneLog ? (<><p className="text-[8px] font-black mb-1 leading-none text-amber-500">{formatDateToDMY(doneLog.date)}</p><Check size={16} strokeWidth={4}/></>) : (<span className="text-xl">{sNum}</span>)}
             <p className="text-[6px] md:text-[7px] font-black uppercase">{doneLog ? 'DONE' : `SESI ${sNum}`}</p>
           </div>
         );
@@ -1190,7 +1190,7 @@ const completedSessions = studentAttendanceLogs
         const doneLog = completedSessions.find(s => s.num === sNum);
         return (
           <div key={sNum} className={`w-full p-2 h-20 md:h-24 rounded-2xl font-black border-2 flex flex-col items-center justify-center gap-1.5 ${doneLog ? 'bg-white border-amber-400 text-amber-600' : 'bg-slate-50 border-transparent text-slate-200 opacity-40'}`}>
-            {doneLog ? (<><p className="text-[7px] font-black mb-1 leading-none text-amber-500">{formatDateToDMY(doneLog.date)}</p><Check size={16} strokeWidth={4}/></>) : (<span className="text-xl">{sNum}</span>)}
+            {doneLog ? (<><p className="text-[8px] font-black mb-1 leading-none text-amber-500">{formatDateToDMY(doneLog.date)}</p><Check size={16} strokeWidth={4}/></>) : (<span className="text-xl">{sNum}</span>)}
             <p className="text-[6px] md:text-[7px] font-black uppercase">{doneLog ? 'DONE' : `SESI ${sNum}`}</p>
           </div>
         );
@@ -1208,7 +1208,7 @@ const completedSessions = studentAttendanceLogs
         const doneLog = completedSessions.find(s => s.num === sNum);
         return (
           <div key={sNum} className={`w-full p-2 h-20 md:h-24 rounded-2xl font-black border-2 flex flex-col items-center justify-center gap-1.5 ${doneLog ? 'bg-white border-orange-400 text-orange-600' : 'bg-slate-50 border-transparent text-slate-200 opacity-40'}`}>
-            {doneLog ? (<><p className="text-[7px] font-black mb-1 leading-none text-orange-500">{formatDateToDMY(doneLog.date)}</p><Check size={16} strokeWidth={4}/></>) : (<span className="text-xl">{sNum}</span>)}
+            {doneLog ? (<><p className="text-[8px] font-black mb-1 leading-none text-orange-500">{formatDateToDMY(doneLog.date)}</p><Check size={16} strokeWidth={4}/></>) : (<span className="text-xl">{sNum}</span>)}
             <p className="text-[6px] md:text-[7px] font-black uppercase">{doneLog ? 'DONE' : `SESI ${sNum}`}</p>
           </div>
         );
@@ -1226,7 +1226,7 @@ const completedSessions = studentAttendanceLogs
         const doneLog = completedSessions.find(s => s.num === sNum);
         return (
           <div key={sNum} className={`w-full p-2 h-20 md:h-24 rounded-2xl font-black border-2 flex flex-col items-center justify-center gap-1.5 ${doneLog ? 'bg-white border-rose-400 text-rose-600' : 'bg-slate-50 border-transparent text-slate-200 opacity-40'}`}>
-            {doneLog ? (<><p className="text-[7px] font-black mb-1 leading-none text-rose-500">{formatDateToDMY(doneLog.date)}</p><Check size={16} strokeWidth={4}/></>) : (<span className="text-xl">{sNum}</span>)}
+            {doneLog ? (<><p className="text-[8px] font-black mb-1 leading-none text-rose-500">{formatDateToDMY(doneLog.date)}</p><Check size={16} strokeWidth={4}/></>) : (<span className="text-xl">{sNum}</span>)}
             <p className="text-[6px] md:text-[7px] font-black uppercase">{doneLog ? 'DONE' : `SESI ${sNum}`}</p>
           </div>
         );
@@ -1255,7 +1255,7 @@ const completedSessions = studentAttendanceLogs
                >
                   {!!doneLog ? (
                      <>
-                        <p className={`text-[7px] font-black mb-1 leading-none ${isNextClass ? 'text-purple-500' : 'text-emerald-500'}`}>{formatDateToDMY(doneLog.date)}</p>
+                        <p className={`text-[8px] font-black mb-1 leading-none ${isNextClass ? 'text-purple-500' : 'text-emerald-500'}`}>{formatDateToDMY(doneLog.date)}</p>
                                                 <Check size={16} strokeWidth={4}/>
                                              </>
                                           ) : (
