@@ -163,7 +163,7 @@ const groupedFilteredCourses = useMemo(() => {
   // ngikutin alur cerita belajar siswa dari awal.
   return Array.from(groupsMap.entries()).map(([name, courses]) => ({
     name,
-    courses: [...courses].sort((a, b) => new Date(a.date || 0).getTime() - new Date(b.date || 0).getTime())
+    courses: [...courses].sort((a, b) => new Date(b.date || 0).getTime() - new Date(a.date || 0).getTime())
   }));
 }, [verifiedCourses, activeFilter]);
 
