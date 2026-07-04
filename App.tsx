@@ -496,6 +496,7 @@ const App = () => {
         studentNarratives: a.studentnarratives,
         paymentStatus: a.paymentstatus,
         receiptData: a.receiptdata,
+        paidDate: a.paiddate,
         reportNarrative: a.reportnarrative,
         substituteFor: a.substitutefor,
         originalTeacherId: a.originalteacherid
