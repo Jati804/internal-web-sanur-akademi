@@ -445,8 +445,8 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                 )}
               </div>
               <div className="col-span-3 text-right">
-                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Bulan Terbit:</p>
-                <p className="text-[13px] font-black text-blue-600 uppercase leading-tight">{getFullMonthName(pkg.paidDate || pkg.lastUpdate)}</p>
+                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Tanggal Terbit:</p>
+                <p className="text-[13px] font-black text-blue-600 uppercase leading-tight">{formatDate(pkg.paidDate || pkg.lastUpdate)}</p>
               </div>
             </div>
             <div className="space-y-4">
