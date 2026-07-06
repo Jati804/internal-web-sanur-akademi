@@ -356,7 +356,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
        
        {/* Dropdown Suggestions */}
        {showStudentSuggestions && studentInputValue.trim() && (
-         <div className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-2xl border-2 border-blue-100 max-h-44 overflow-y-auto">
+         <div className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-2xl border-2 border-blue-100 max-h-25 overflow-y-auto">
            {studentAccounts
              .filter(s => s.name.toUpperCase().includes(studentInputValue.toUpperCase()))
              .slice(0, 8)
@@ -479,7 +479,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
        
        {/* Dropdown Suggestions */}
        {showTeacherSuggestions && teacherInputValue.trim() && (
-         <div className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-2xl border-2 border-rose-100 max-h-44 overflow-y-auto">
+         <div className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-2xl border-2 border-rose-100 max-h-25 overflow-y-auto">
            {teachers
              .filter(t => t.id !== user.id && t.role === 'TEACHER' && t.name.toUpperCase().includes(teacherInputValue.toUpperCase()))
              .slice(0, 8)
