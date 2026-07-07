@@ -418,7 +418,7 @@ const handleDragEnd = () => {
                  </div>
               </div>
               <button onClick={syncSalaryToCloud} disabled={isLoading} className="px-12 py-6 bg-emerald-600 text-white rounded-[2.5rem] font-black text-[10px] uppercase tracking-widest shadow-xl shadow-emerald-100 hover:bg-emerald-700 active:scale-95 transition-all flex items-center gap-3">
-                 {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />} SIMPAN PERUBAHAN TARIF ✨
+                 {isLoading ? <Loader2 size={20} className="animate-spin" /> : <Save size={20} />} SIMPAN PERUBAHAN TARIF
               </button>
            </div>
 
