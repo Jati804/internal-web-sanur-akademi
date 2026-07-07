@@ -381,7 +381,7 @@ const pendingReportsCount = Array.isArray(reports) ?
           <div className="flex items-center gap-4">
             <button onClick={() => setIsSidebarOpen(true)} className="p-3 bg-slate-50 text-slate-400 rounded-xl lg:hidden"><Menu size={24}/></button>
 <div className="flex flex-col">
-  <h1 className="font-black italic uppercase text-slate-800 tracking-tighter text-lg md:text-xl leading-none">
+  <h1 className={`font-black italic text-slate-800 tracking-tighter text-lg md:text-xl leading-none ${user?.role !== 'TEACHER' ? 'uppercase' : ''}`}>
     {user?.name || user?.username || 'USER'}
   </h1>
   <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
