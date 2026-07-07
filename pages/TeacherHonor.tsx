@@ -432,7 +432,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
             <div className="grid grid-cols-12 gap-8">
               <div className="col-span-4 pr-6 border-r border-slate-50">
                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Nama Pengajar:</p>
-                <p className="text-[13px] font-black text-slate-900 uppercase leading-tight">{user.name}</p>
+                <p className="text-[13px] font-black text-slate-900 leading-tight">{user.name}</p>
               </div>
               <div className="col-span-5 pr-6 border-r border-slate-50">
                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Ruangan Kelas:</p>
