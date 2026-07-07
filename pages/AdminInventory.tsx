@@ -674,7 +674,7 @@ const canAddSales = useMemo(() => {
                      </div>
                      <div className="space-y-2">
                        <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Catatan Khusus</label>
-                       <textarea placeholder="MISAL: MINAT KELAS PRIVATE..." value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value.toUpperCase()})} rows={1} className="w-full h-[66px] px-8 py-5 bg-slate-50 rounded-[1.8rem] font-bold text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner resize-none overflow-y-auto custom-scrollbar" />
+                       <textarea placeholder="MISAL: MINAT KELAS PRIVATE..." value={formData.notes} onChange={e => setFormData({...formData, notes: e.target.value.toUpperCase()})} rows={1} className="w-full h-[66px] px-8 py-5 bg-slate-50 rounded-[1.8rem] font-bold text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner resize-none overflow-hidden" />
                      </div>
                    </div>
                  </div>
