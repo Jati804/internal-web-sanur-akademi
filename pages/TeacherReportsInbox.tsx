@@ -400,7 +400,7 @@ const handleDownloadPDF = async (req: any) => {
       <p style="font-size:13px; font-weight:900; color:${accentColor}; text-transform:uppercase; letter-spacing:0.3em; margin:0;">📚 MATERI KURIKULUM</p>
       <div style="display:flex; flex-direction:column; align-items:flex-end; text-align:right;">
         <p style="font-size:9px; font-weight:900; color:#94a3b8; text-transform:uppercase; letter-spacing:0.3em; margin:0 -0.3em 3px 0;">Guru Penilai</p>
-        <p style="font-size:13px; font-weight:900; color:#1e293b; letter-spacing:0.05em; margin:0 -0.05em 0 0; white-space:nowrap;">${req.teacherName || '-'}</p>
+        <p style="font-size:13px; font-weight:900; color:#1e293b; text-transform:uppercase; letter-spacing:0.05em; margin:0 -0.05em 0 0; white-space:nowrap;">${req.teacherName || '-'}</p>
       </div>
     </div>
     <div style="background:white; border-radius:35px; border:3px solid #f1f5f9; overflow:hidden; margin-bottom:30px;">
