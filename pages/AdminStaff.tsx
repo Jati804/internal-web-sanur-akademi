@@ -102,6 +102,8 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
   };
 
   const performCascadingUpdate = async (oldName: string, newName: string, userId: string, isStudent: boolean) => {
+    const oldNameTrim = oldName.trim();
+    const newNameTrim = newName.trim();
     const oldNameNorm = oldName.toUpperCase().trim();
     const newNameNorm = newName.toUpperCase().trim();
     const oldNameSlug = oldNameNorm.replace(/\s+/g, '-');
@@ -110,8 +112,10 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
     if (oldNameNorm === newNameNorm) return;
 
     if (!isStudent) {
-      await supabase.from('attendance').update({ teachername: newNameNorm }).eq('teacherid', userId);
-      await supabase.from('attendance').update({ substitutefor: newNameNorm }).ilike('substitutefor', oldNameNorm);
+      // ✅ Khusus guru: tulis nama asli (bukan dipaksa kapital), matching tetap aman
+      // karena eq(teacherid) pakai ID dan ilike() sudah case-insensitive.
+      await supabase.from('attendance').update({ teachername: newNameTrim }).eq('teacherid', userId);
+      await supabase.from('attendance').update({ substitutefor: newNameTrim }).ilike('substitutefor', oldNameTrim);
     } else {
       await supabase.from('student_payments').update({ studentname: newNameNorm }).ilike('studentname', oldNameNorm);
       const { data: affectedLogs } = await supabase.from('attendance').select('*');
@@ -153,10 +157,12 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
     setIsLocalSyncing(true);
     try {
       const isStudent = activeTab === 'STUDENTS';
+      const isTeacherTab = activeTab === 'TEACHERS';
       const tableName = isStudent ? 'student_accounts' : 'teachers';
       const finalRole = activeTab === 'ADMINS' ? 'ADMIN' : activeTab === 'TEACHERS' ? 'TEACHER' : 'STUDENT';
       const payload: any = { 
-        name: formData.name.toUpperCase().trim(), 
+        // ✅ Khusus guru: simpan nama apa adanya (Title Case + gelar), tab lain tetap kapital semua
+        name: isTeacherTab ? formData.name.trim() : formData.name.toUpperCase().trim(), 
         username: formData.username.toUpperCase().trim(), 
         pin: formData.pin, 
         role: finalRole 
@@ -166,7 +172,7 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
         const { error } = await supabase.from(tableName).insert({ ...payload, id });
         if (error) throw error;
       } else if (editingUser) {
-        if (editingUser.name.toUpperCase().trim() !== payload.name) {
+        if (editingUser.name.trim().toUpperCase() !== payload.name.trim().toUpperCase()) {
           await performCascadingUpdate(editingUser.name, payload.name, editingUser.id, isStudent);
         }
         const { error } = await supabase.from(tableName).update(payload).eq('id', editingUser.id);
@@ -468,7 +474,7 @@ console.log('\n✅ BACKUP MILESTONE SELESAI');
                     </div>
                     <div className="min-w-0">
    <p 
-      className="text-base font-black text-slate-800 uppercase italic leading-none truncate cursor-help" 
+      className={`text-base font-black text-slate-800 italic leading-none truncate cursor-help ${activeTab !== 'TEACHERS' ? 'uppercase' : ''}`} 
       title={u.name}
    >
       {u.name}
@@ -514,7 +520,7 @@ console.log('\n✅ BACKUP MILESTONE SELESAI');
               <div className="space-y-6">
                  <div className="space-y-2 text-left">
                     <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Nama Lengkap</label>
-                    <input type="text" placeholder="MISAL: BUDI SANTOSO" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value.toUpperCase()})} className="w-full h-[66px] px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" />
+                    <input type="text" placeholder="MISAL: BUDI SANTOSO" value={formData.name} onChange={e => setFormData({...formData, name: activeTab === 'TEACHERS' ? e.target.value : e.target.value.toUpperCase()})} className={`w-full h-[66px] px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner ${activeTab !== 'TEACHERS' ? 'uppercase' : ''}`} />
                  </div>
                  <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2 text-left">
