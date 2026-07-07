@@ -338,7 +338,7 @@ const executeFinalRequestReport = async () => {
     const payload = { 
       id: `REQ-${Date.now()}`, 
       teacherid: selectedTeacherForReport, 
-      teacherName: teacher?.name || 'Guru',
+      teachername: (teacher?.name || 'GURU').toUpperCase(), 
       date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), 
       status: 'REQ',  // ✅ GANTI JADI 'REQ'
       classname: requestingReportFor.className.toUpperCase(), 
@@ -618,7 +618,7 @@ const handleDownloadPDFReport = async (course: any) => {
       <p style="font-size:13px; font-weight:900; color:${accentColor}; text-transform:uppercase; letter-spacing:0.3em; margin:0;">📚 MATERI KURIKULUM</p>
       <div style="display:flex; flex-direction:column; align-items:flex-end; text-align:right;">
         <p style="font-size:9px; font-weight:900; color:#94a3b8; text-transform:uppercase; letter-spacing:0.3em; margin:0 -0.3em 3px 0;">Guru Penilai</p>
-        <p style="font-size:13px; font-weight:900; color:#1e293b; letter-spacing:0.05em; margin:0 -0.05em 0 0; white-space:nowrap;">${reportLog.teacherName || '-'}</p>
+        <p style="font-size:13px; font-weight:900; color:#1e293b; text-transform:uppercase; letter-spacing:0.05em; margin:0 -0.05em 0 0; white-space:nowrap;">${reportLog.teacherName || '-'}</p>
       </div>
     </div>
 
@@ -1400,7 +1400,7 @@ const completedSessions = studentAttendanceLogs
            <div className="bg-white w-full max-w-[360px] rounded-[2rem] p-8 shadow-2xl text-center space-y-6 relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setRequestingReportFor(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
               <div className="space-y-3"><div className="w-14 h-14 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto shadow-xl rotate-3"><GraduationCap size={28} /></div><div><h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Klaim Rapot</h4><p className="text-[8px] font-black text-blue-600 uppercase tracking-widest mt-1 truncate">{requestingReportFor.className}</p></div></div>
-              <div className="bg-slate-50 p-5 rounded-2xl text-left space-y-3 border border-slate-100"><p className="text-[9px] font-bold text-slate-600 leading-tight">"Pilih Guru Pembimbing untuk mengirim data ke antrean Rapot & Sertifikat."</p><div className="space-y-1.5"><label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest flex items-center gap-1.5"><UserCog size={10}/> Pilih Guru Pembimbing</label><select value={selectedTeacherForReport} onChange={e => setSelectedTeacherForReport(e.target.value)} className="w-full px-4 py-3 bg-white rounded-xl font-black text-[10px] italic outline-none border-2 border-blue-50 shadow-sm appearance-none"><option value="">-- PILIH GURU --</option>{teachers.filter(t => t.role === 'TEACHER').map(t => <option key={t.id} value={t.id}>{t.name}</option>)}</select></div></div>
+              <div className="bg-slate-50 p-5 rounded-2xl text-left space-y-3 border border-slate-100"><p className="text-[9px] font-bold text-slate-600 leading-tight">"Pilih Guru Pembimbing untuk mengirim data ke antrean Rapot & Sertifikat."</p><div className="space-y-1.5"><label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest flex items-center gap-1.5"><UserCog size={10}/> Pilih Guru Pembimbing</label><select value={selectedTeacherForReport} onChange={e => setSelectedTeacherForReport(e.target.value)} className="w-full px-4 py-3 bg-white rounded-xl font-black text-[10px] uppercase italic outline-none border-2 border-blue-50 shadow-sm appearance-none"><option value="">-- PILIH GURU --</option>{teachers.filter(t => t.role === 'TEACHER').map(t => <option key={t.id} value={t.id}>{t.name.toUpperCase()}</option>)}</select></div></div>
               <button onClick={handleRequestReport} disabled={!selectedTeacherForReport || loading} className="w-full py-4 bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.1em] shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">{loading ? <Loader2 size={14} className="animate-spin" /> : <><Sparkles size={14} /> AJUKAN SEKARANG ✨</>}</button>
            </div>
         </div>
