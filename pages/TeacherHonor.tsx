@@ -72,7 +72,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'px', [700, 1000]);
       pdf.addImage(imgData, 'PNG', 0, 0, 700, 1000);
-      pdf.save(`SLIP_HONOR_${user.name.replace(/\s+/g, '_')}_${pkg.id.slice(-8)}.pdf`);
+      pdf.save(`SLIP_HONOR_${user.name.replace(/[.,]/g, '').replace(/\s+/g, '_')}_${pkg.id.slice(-8)}.pdf`);
     } catch (e) {
       alert("Gagal mengunduh PDF. Coba lagi ya Kak!");
     } finally {
