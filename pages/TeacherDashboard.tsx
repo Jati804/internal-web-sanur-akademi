@@ -198,7 +198,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
       const payload: any = {
         id: editData ? editData.id : `ATT-${Date.now()}`, // ID berisi timestamp untuk sorting
         teacherid: isDelegating ? (targetTeacher?.id || user.id) : user.id,
-        teachername: isDelegating ? (targetTeacher?.name || user.name) : user.name,
+        teachername: isDelegating ? (targetTeacher?.name.toUpperCase() || user.name.toUpperCase()) : user.name.toUpperCase(),
         date: form.date,
         clockin: editData ? editData.clockIn : new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' }).format(new Date()),
         status: isDelegating ? 'SUB_LOG' : 'SESSION_LOG',
@@ -211,7 +211,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
         earnings: estimatedHonor,
         paymentstatus: 'UNPAID',
         duration: form.duration,
-        substitutefor: isDelegating ? user.name : (editData?.substituteFor || null),
+        substitutefor: isDelegating ? user.name.toUpperCase() : (editData?.substituteFor || null),
         originalteacherid: finalOriginalTeacherId 
       };
 
@@ -460,12 +460,12 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
          placeholder="KETIK NAMA TEMAN..."
          value={teacherInputValue}
          onChange={(e) => {
-           const val = e.target.value;
+           const val = e.target.value.toUpperCase();
            setTeacherInputValue(val);
            setShowTeacherSuggestions(true);
            
            // Cek apakah yang diketik ada di database
-           const matchedTeacher = teachers.find(t => t.name.toUpperCase() === val.toUpperCase() && t.id !== user.id && t.role === 'TEACHER');
+           const matchedTeacher = teachers.find(t => t.name.toUpperCase() === val && t.id !== user.id && t.role === 'TEACHER');
            if (matchedTeacher) {
              setForm({...form, targetTeacherId: matchedTeacher.id});
            } else {
@@ -474,7 +474,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
          }}
          onFocus={() => setShowTeacherSuggestions(true)}
          onBlur={() => setTimeout(() => setShowTeacherSuggestions(false), 200)}
-         className="w-full px-8 py-6 bg-white border-2 border-transparent focus:border-rose-500 rounded-[2rem] font-black text-[11px] outline-none shadow-sm transition-all h-[72px]"
+         className="w-full px-8 py-6 bg-white border-2 border-transparent focus:border-rose-500 rounded-[2rem] font-black text-[11px] uppercase outline-none shadow-sm transition-all h-[72px]"
        />
        
        {/* Dropdown Suggestions */}
@@ -489,13 +489,13 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
                  type="button"
                  onMouseDown={(e) => {
                    e.preventDefault();
-                   setTeacherInputValue(teacher.name);
+                   setTeacherInputValue(teacher.name.toUpperCase());
                    setForm({...form, targetTeacherId: teacher.id});
                    setShowTeacherSuggestions(false);
                  }}
-                 className="w-full px-6 py-4 text-left text-[11px] font-black hover:bg-rose-50 transition-all text-slate-700 border-b last:border-0"
+                 className="w-full px-6 py-4 text-left text-[11px] font-black hover:bg-rose-50 transition-all text-slate-700 border-b last:border-0 uppercase"
                >
-                 {teacher.name}
+                 {teacher.name.toUpperCase()}
                </button>
              ))
            }
