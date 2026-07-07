@@ -338,7 +338,7 @@ const executeFinalRequestReport = async () => {
     const payload = { 
       id: `REQ-${Date.now()}`, 
       teacherid: selectedTeacherForReport, 
-      teachername: (teacher?.name || 'GURU').toUpperCase(), 
+      teacherName: teacher?.name || 'Guru',
       date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), 
       status: 'REQ',  // ✅ GANTI JADI 'REQ'
       classname: requestingReportFor.className.toUpperCase(), 
