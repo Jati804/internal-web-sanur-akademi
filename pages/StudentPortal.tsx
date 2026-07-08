@@ -133,7 +133,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
 
 const uniqueSubjects = useMemo(() => {
   const names = verifiedCourses.map(c =>
-    (c.className || '').replace(/\s*\(.*?\)\s*-\s*REGULER\s*\d+/i, '').trim()
+    (c.className || '').replace(/\s*\(.*?\)\s*-\s*(REGULER|PRIVATE)\s*\d+/i, '').trim()
   );
   return ['SEMUA', ...Array.from(new Set(names))];
 }, [verifiedCourses]);
@@ -146,13 +146,13 @@ const uniqueSubjects = useMemo(() => {
 const groupedFilteredCourses = useMemo(() => {
   const filtered = verifiedCourses.filter(course => {
     if (activeFilter === 'SEMUA') return true;
-    const name = (course.className || '').replace(/\s*\(.*?\)\s*-\s*REGULER\s*\d+/i, '').trim();
+    const name = (course.className || '').replace(/\s*\(.*?\)\s*-\s*(REGULER|PRIVATE)\s*\d+/i, '').trim();
     return name === activeFilter;
   });
 
   const groupsMap = new Map<string, typeof filtered>();
   filtered.forEach(course => {
-    const groupName = (course.className || '').replace(/\s*\(.*?\)\s*-\s*REGULER\s*\d+/i, '').trim();
+    const groupName = (course.className || '').replace(/\s*\(.*?\)\s*-\s*(REGULER|PRIVATE)\s*\d+/i, '').trim();
     if (!groupsMap.has(groupName)) groupsMap.set(groupName, []);
     groupsMap.get(groupName)!.push(course);
   });
@@ -181,7 +181,7 @@ const groupedFilteredCourses = useMemo(() => {
 
   const uniquePaymentSubjects = useMemo(() => {
     const names = myPayments.map(p =>
-      (p.className || '').replace(/\s*\(.*?\)\s*-\s*REGULER\s*\d+/i, '').trim()
+      (p.className || '').replace(/\s*\(.*?\)\s*-\s*(REGULER|PRIVATE)\s*\d+/i, '').trim()
     );
     return ['SEMUA', ...Array.from(new Set(names))];
   }, [myPayments]);
@@ -953,7 +953,7 @@ const handleDownloadPDFReport = async (course: any) => {
                  {myPayments
                    .filter(p => {
                      if (activePaymentFilter === 'SEMUA') return true;
-                     const name = (p.className || '').replace(/\s*\(.*?\)\s*-\s*REGULER\s*\d+/i, '').trim();
+                     const name = (p.className || '').replace(/\s*\(.*?\)\s*-\s*(REGULER|PRIVATE)\s*\d+/i, '').trim();
                      return name === activePaymentFilter;
                    })
                    .map((p, i) => (
@@ -1278,7 +1278,7 @@ const completedSessions = studentAttendanceLogs
 {isNextClass && (
   <div className="w-full py-5 bg-purple-600 text-white rounded-[2rem] font-black text-[10px] uppercase shadow-xl flex flex-col items-center justify-center gap-2">
     <div className="flex items-center gap-2"><Star size={16}/> LANJUTKAN BELAJAR! ⭐</div>
-    <p className="text-[10px] font-bold text-white normal-case">Materi {(() => { const name = (course.className || '').replace(/^PELATIHAN\s+/i, '').replace(/\s*-\s*REGULER\s*\d+/i, '').trim(); return name; })()} belum selesai dipelajari 🌟</p>
+    <p className="text-[10px] font-bold text-white normal-case">Materi {(() => { const name = (course.className || '').replace(/^PELATIHAN\s+/i, '').replace(/\s*-\s*(REGULER|PRIVATE)\s*\d+/i, '').trim(); return name; })()} belum selesai dipelajari 🌟</p>
   </div>
 )}
                           </div>
@@ -1425,4 +1425,3 @@ const completedSessions = studentAttendanceLogs
 };
 
 export default StudentPortal;
-
