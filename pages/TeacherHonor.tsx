@@ -364,15 +364,15 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                          } else if (isMeSubstituting) { 
                             bgColor = "bg-orange-600 text-white shadow-lg ring-4 ring-orange-100"; 
                             label = "MENGGANTIKAN"; 
-                            subInfo = `Ganti: ${log.substituteFor?.split(' ')[0] || 'TEMAN'}`; 
+                            subInfo = `GANTI: ${log.substituteFor?.split(' ')[0] || 'TEMAN'}`; 
                          } else if (isMeDelegated) { 
                             bgColor = "bg-slate-300 text-slate-500 shadow-sm border-slate-400"; 
                             label = "DIGANTIKAN"; 
-                            subInfo = `Oleh: ${log.teacherName?.split(' ')[0] || 'TEMAN'}`; 
+                            subInfo = `OLEH: ${log.teacherName?.split(' ')[0] || 'TEMAN'}`; 
                          } else if (log) { 
                             bgColor = "bg-slate-200 text-slate-400 opacity-50"; 
                             label = "GURU LAIN"; 
-                            subInfo = `Oleh: ${log.teacherName?.split(' ')[0] || 'TEMAN'}`;
+                            subInfo = `OLEH: ${log.teacherName?.split(' ')[0] || 'TEMAN'}`;
                          }
 
                          return (
@@ -383,7 +383,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                               <p className="text-[9px] font-black uppercase tracking-widest opacity-60">Sesi {num}</p>
                               {isMeTeaching && !isMeSubstituting ? <UserCheck size={24}/> : isMeSubstituting ? <Repeat size={24}/> : isMeDelegated ? <Heart size={24}/> : <Zap size={24}/>}
                               <p className="text-[7px] font-black uppercase tracking-widest leading-none mt-1">{label}</p>
-                              {subInfo && <p className="text-[6px] font-black uppercase opacity-90 mt-1">{subInfo}</p>}
+                              {subInfo && <p className="text-[6px] font-black opacity-90 mt-1">{subInfo}</p>}
                               {dateText && <div className="mt-2 pt-2 border-t border-white/20 w-full"><p className="text-[8px] font-black tracking-widest opacity-80">{dateText}</p></div>}
                            </div>
                          );
