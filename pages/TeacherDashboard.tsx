@@ -523,7 +523,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
             </div>
             <div className="text-right relative z-10 pr-4">
                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Penerima Honor:</p>
-               <h3 className={`text-xs font-black uppercase italic ${isDelegating ? 'text-orange-400 animate-pulse' : 'text-blue-400'}`}>
+               <h3 className={`text-xs font-black italic ${isDelegating ? 'text-orange-400 animate-pulse' : 'text-blue-400'}`}>
                   {isDelegating ? (teachers.find(t=>t.id===form.targetTeacherId)?.name || 'PILIH TEMAN') : 'SAYA SENDIRI'}
                </h3>
             </div>
