@@ -328,7 +328,7 @@ const uniqueCategories = useMemo(() => {
       if (!items[key]) {
         const packageContextLogs = attendanceLogs.filter(all => all.packageId === log.packageId && (all.status === 'SESSION_LOG' || all.status === 'SUB_LOG'));
         items[key] = {
-          id: key, packageId: log.packageId, teacherId: log.teacherId, teacherName: log.teacherName.toUpperCase(),
+          id: key, packageId: log.packageId, teacherId: log.teacherId, teacherName: log.teacherName,
           className: log.className, amount: 0, sessionCount: 0, packageContextLogs,
           category: log.sessionCategory || 'REGULER',
           studentName: log.sessionCategory === 'REGULER' ? 'GABUNGAN' : (log.studentsAttended?.[0] || 'UMUM'),
@@ -1121,7 +1121,7 @@ const executePayTeacher = async () => {
                     <div className="space-y-2">
                       <h4 className="text-2xl md:text-3xl font-black text-slate-800 uppercase italic leading-none">{it.className}</h4>
                       <div className="flex flex-wrap gap-4 items-center"><span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest shadow-md ${it.category === 'PRIVATE' ? 'bg-orange-500 text-white' : 'bg-blue-600 text-white'}`}>{it.category}</span><div className="flex items-center gap-1.5 text-blue-600 font-black text-[9px] uppercase italic"><Users size={12}/> SISWA: {it.studentName}</div></div>
-                      <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest italic">PENERIMA: {it.teacherName}</p>
+                      <p className="text-[9px] font-bold text-slate-400 tracking-widest italic"><span className="uppercase">PENERIMA:</span> {it.teacherName}</p>
                       <div className="flex items-center gap-2 pt-1"><Calendar size={12} className="text-slate-300"/><p className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Update: {formatDate(it.lastUpdate)}</p></div>
                     </div>
                   </div>
@@ -1141,7 +1141,7 @@ const executePayTeacher = async () => {
                         else { style = "bg-blue-600 text-white shadow-lg ring-4 ring-blue-50"; icon = <UserCheck size={20}/>; label = "SESI ASLI"; }
                         dateStr = formatDate(log.date);
                       } else if (log) { style = "bg-slate-200 text-slate-400 opacity-60"; icon = <Clock size={18} className="text-slate-400"/>; label = `LAIN: ${log.teacherName.split(' ')[0]}`; dateStr = formatDate(log.date); }
-                      return (<div key={num} className={`h-32 md:h-36 rounded-[2rem] flex flex-col items-center justify-center text-center gap-1.5 transition-all duration-700 ${style}`}><p className="text-[8px] font-black uppercase tracking-widest opacity-60">Sesi {num}</p>{icon}<p className="text-[6px] font-black uppercase tracking-tighter leading-none px-1 line-clamp-1">{label}</p>{dateStr && <p className="text-[7px] font-black opacity-80 mt-1">{dateStr}</p>}</div>);
+                      return (<div key={num} className={`h-32 md:h-36 rounded-[2rem] flex flex-col items-center justify-center text-center gap-1.5 transition-all duration-700 ${style}`}><p className="text-[8px] font-black uppercase tracking-widest opacity-60">Sesi {num}</p>{icon}<p className="text-[6px] font-black tracking-tighter leading-none px-1 line-clamp-1">{label}</p>{dateStr && <p className="text-[7px] font-black opacity-80 mt-1">{dateStr}</p>}</div>);
                     })}
                   </div>
                 </div>
@@ -1195,7 +1195,7 @@ const executePayTeacher = async () => {
               <div className="flex flex-col items-center text-center mb-10">
                  <div className={`w-16 h-16 ${selectedPayout.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'} rounded-[1.5rem] flex items-center justify-center shadow-inner rotate-3 mb-4`}><Banknote size={32}/></div>
                  <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Cairkan Honor</h4>
-                 <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mt-2">{selectedPayout.teacherName} - {selectedPayout.className.replace(/PELATIHAN\s*/i, '')}</p>
+                 <p className="text-[10px] font-bold text-blue-600 tracking-widest mt-2">{selectedPayout.teacherName} - <span className="uppercase">{selectedPayout.className.replace(/PELATIHAN\s*/i, '')}</span></p>
               </div>
 
               <div className="grid md:grid-cols-2 gap-6">
