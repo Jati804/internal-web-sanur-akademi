@@ -72,7 +72,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
       const imgData = canvas.toDataURL('image/png');
       const pdf = new jsPDF('p', 'px', [700, 1000]);
       pdf.addImage(imgData, 'PNG', 0, 0, 700, 1000);
-      pdf.save(`SLIP_HONOR_${user.name.toUpperCase().replace(/\s+/g, '_')}_${pkg.id.slice(-8)}.pdf`);
+      pdf.save(`SLIP_HONOR_${user.name.replace(/[.,]/g, '').replace(/\s+/g, '_')}_${pkg.id.slice(-8)}.pdf`);
     } catch (e) {
       alert("Gagal mengunduh PDF. Coba lagi ya Kak!");
     } finally {
@@ -432,7 +432,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
             <div className="grid grid-cols-12 gap-8">
               <div className="col-span-4 pr-6 border-r border-slate-50">
                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Nama Pengajar:</p>
-                <p className="text-[13px] font-black text-slate-900 uppercase leading-tight">{user.name}</p>
+                <p className="text-[13px] font-black text-slate-900 leading-tight">{user.name}</p>
               </div>
               <div className="col-span-5 pr-6 border-r border-slate-50">
                 <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Ruangan Kelas:</p>
