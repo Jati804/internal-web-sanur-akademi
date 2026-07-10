@@ -186,6 +186,29 @@ const groupedFilteredCourses = useMemo(() => {
     return ['SEMUA', ...Array.from(new Set(names))];
   }, [myPayments]);
 
+  // 🆕 Grouping "Riwayat Pembayaran" berdasarkan MATKUL (label REGULER/PRIVATE di-strip),
+  // sama kayak grouping di "Kelas Saya". Status PENDING/VERIFIED tetap campur dalam
+  // satu grup, nggak masalah — yang penting per matkul kekelompok & terbaru tetap di atas
+  // (myPayments udah sorted terbaru dulu, urutan itu dipertahankan di dalam tiap grup).
+  const groupedFilteredPayments = useMemo(() => {
+    const filtered = myPayments.filter(p => {
+      if (activePaymentFilter === 'SEMUA') return true;
+      const name = (p.className || '').replace(/\s*\(.*?\)\s*-\s*(REGULER|PRIVATE)\s*\d+/i, '').trim();
+      return name === activePaymentFilter;
+    });
+
+    const groupsMap = new Map<string, typeof filtered>();
+    filtered.forEach(p => {
+      const groupName = (p.className || '').replace(/\s*\(.*?\)\s*-\s*(REGULER|PRIVATE)\s*\d+/i, '').trim();
+      if (!groupsMap.has(groupName)) groupsMap.set(groupName, []);
+      groupsMap.get(groupName)!.push(p);
+    });
+
+    // Urutan grup ngikutin urutan kemunculan pertama (myPayments udah sorted terbaru
+    // dulu), jadi matkul dengan transaksi paling baru tetap di atas.
+    return Array.from(groupsMap.entries()).map(([name, payments]) => ({ name, payments }));
+  }, [myPayments, activePaymentFilter]);
+
 // 🆕 myLogs sekarang untuk attendance biasa saja (bukan rapot!)
 const myLogs = useMemo(() => {
   if (!Array.isArray(attendanceLogs)) return [];
@@ -949,13 +972,15 @@ const handleDownloadPDFReport = async (course: any) => {
                   ))}
                 </div>
               )}
-              <div className="grid grid-cols-1 gap-6">
-                 {myPayments
-                   .filter(p => {
-                     if (activePaymentFilter === 'SEMUA') return true;
-                     const name = (p.className || '').replace(/\s*\(.*?\)\s*-\s*(REGULER|PRIVATE)\s*\d+/i, '').trim();
-                     return name === activePaymentFilter;
-                   })
+              <div className="space-y-10">
+                 {groupedFilteredPayments.map((group) => (
+                   <div key={group.name} className="space-y-6">
+                     <div className="bg-slate-800 text-white px-8 py-4 rounded-[2rem] shadow-lg flex items-center gap-3">
+                       <Receipt size={18} className="text-white/70 shrink-0" />
+                       <h3 className="text-sm font-black uppercase italic tracking-wide">{group.name}</h3>
+                     </div>
+                     <div className="grid grid-cols-1 gap-6">
+                 {group.payments
                    .map((p, i) => (
                     <div key={p.id || i} className="bg-white p-8 md:p-10 rounded-[3.5rem] border border-slate-100 shadow-xl flex flex-col md:flex-row items-center justify-between group hover:border-emerald-500 transition-all gap-8 relative overflow-hidden">
                        
@@ -1015,6 +1040,9 @@ const handleDownloadPDFReport = async (course: any) => {
                          </div>
                        </div>
                     </div>
+                 ))}
+                     </div>
+                   </div>
                  ))}
                  {myPayments.length === 0 && (
                    <div className="py-20 text-center bg-slate-50 rounded-[3rem] border-2 border-dashed border-slate-200 opacity-20"><History size={48} className="mx-auto mb-4" /><p className="text-[11px] font-black uppercase tracking-[0.3em]">Belum ada riwayat pembayaran.</p></div>
