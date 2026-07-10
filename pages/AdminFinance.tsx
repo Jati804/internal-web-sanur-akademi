@@ -6,7 +6,7 @@ import {
   X, Search, Banknote, Loader2, ArrowUpCircle, ArrowDownCircle, Upload, CheckCircle2, 
   ChevronLeft, ChevronRight, History, Eye, Check, BadgeCheck,
   Trash2, Download, FileSpreadsheet, Edit3, AlertTriangle, 
-  Plus, Info, AlertCircle, Package, UserCheck, Repeat, Heart, Calendar, Clock, ImageIcon, FileText, Users, ClipboardList, ChevronRight, Maximize2,
+  Plus, Info, AlertCircle, Package, UserCheck, Repeat, Heart, Calendar, Clock, ImageIcon, FileText, Users, ClipboardList, Maximize2,
   Zap, ShieldCheck, AlertOctagon
 } from 'lucide-react';
 import * as ReactRouterDOM from 'react-router-dom';
@@ -41,7 +41,7 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
   
   const [selectedPayout, setSelectedPayout] = useState<any | null>(null);
   const [confirmingSpp, setConfirmingSpp] = useState<StudentPayment | null>(null);
-  const [payForm, setPayForm] = useState({ receiptData: '' });
+  const [payForm, setPayForm] = useState({ receiptData: '', date: getWIBDate() });
   
   const [payrollSearch, setPayrollSearch] = useState('');
   const [ledgerSearch, setLedgerSearch] = useState('');
@@ -705,7 +705,7 @@ const executePayTeacher = async () => {
       .update({ 
       paymentstatus: 'PAID',
       receiptdata: payForm.receiptData,
-      paiddate: getWIBDate()
+      paiddate: payForm.date
       })
       .eq('packageid', packageId)
       .eq('teacherid', teacherId)
@@ -725,7 +725,7 @@ const executePayTeacher = async () => {
       type: 'EXPENSE', 
       category: 'HONOR GURU', 
       amount: selectedPayout.amount, 
-      date: getWIBDate(), 
+      date: payForm.date, 
       description: `HONOR CAIR: ${selectedPayout.teacherName} | ${selectedPayout.className}`.toUpperCase() 
     });
     
@@ -733,7 +733,7 @@ const executePayTeacher = async () => {
     await fetchLedgerData();
     
     setSelectedPayout(null); 
-    setPayForm({ receiptData: '' }); 
+    setPayForm({ receiptData: '', date: getWIBDate() }); 
     setHighlightTx({ id: txId, type: 'EXPENSE' }); 
     setActiveTab('LEDGER'); 
   } catch (e: any) { 
@@ -1190,7 +1190,7 @@ const executePayTeacher = async () => {
   <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
      <div className="bg-white w-full max-w-3xl rounded-[4rem] shadow-2xl relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <div className="p-10 md:p-12">
-              <button onClick={() => { setSelectedPayout(null); setPayForm({ receiptData: '' }); }} className="absolute top-10 right-10 z-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
+              <button onClick={() => { setSelectedPayout(null); setPayForm({ receiptData: '', date: getWIBDate() }); }} className="absolute top-10 right-10 z-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
 
               <div className="flex flex-col items-center text-center mb-10">
                  <div className={`w-16 h-16 ${selectedPayout.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'} rounded-[1.5rem] flex items-center justify-center shadow-inner rotate-3 mb-4`}><Banknote size={32}/></div>
@@ -1203,6 +1203,16 @@ const executePayTeacher = async () => {
                 <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 flex flex-col justify-center">
                    <div className="flex justify-between items-center text-[8px] font-black text-slate-400 uppercase tracking-widest"><p>Detail:</p><p className={selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'}>{selectedPayout.sessionCount} SESI</p></div>
                    <div className="text-center border-t border-slate-100 pt-3"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Transfer</p><p className={`text-2xl font-black ${selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'} italic`}>Rp {selectedPayout.amount.toLocaleString()}</p></div>
+                   <div className="text-left border-t border-slate-100 pt-3 space-y-1.5">
+                      <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest ml-1">Tanggal Bayar Aktual</label>
+                      <input
+                        type="date"
+                        value={payForm.date}
+                        onChange={e => setPayForm({ ...payForm, date: e.target.value })}
+                        className={`w-full px-4 py-3 bg-white rounded-2xl font-black text-xs outline-none border-2 shadow-inner ${selectedPayout.category === 'PRIVATE' ? 'border-orange-100 focus:border-orange-500' : 'border-blue-100 focus:border-blue-500'}`}
+                      />
+                      <p className="text-[7px] font-bold text-slate-400 uppercase tracking-widest ml-1 leading-relaxed">Isi tanggal transfer aslinya kalau baru diinput belakangan ya Kak ✨</p>
+                   </div>
                 </div>
 
                 {/* KOLOM KANAN: Upload Bukti (dibuat kompak, sejajar tinggi sama kolom kiri) */}
