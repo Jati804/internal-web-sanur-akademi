@@ -1215,16 +1215,16 @@ const executePayTeacher = async () => {
                    </div>
                 </div>
 
-                {/* KOLOM KANAN: Upload Bukti (dibuat kompak, sejajar tinggi sama kolom kiri) */}
-                <div>
+                {/* KOLOM KANAN: Upload Bukti (h-full biar ngikutin tinggi kolom kiri, bukan tinggi tetap) */}
+                <div className="h-full">
                    {payForm.receiptData ? (
-                      <div className="relative group cursor-pointer h-36" onClick={() => setPreviewImg(payForm.receiptData)}>
-                         <img src={payForm.receiptData} className="w-full h-36 object-cover rounded-3xl shadow-lg border-4 border-emerald-500" alt="Proof" />
+                      <div className="relative group cursor-pointer h-full min-h-[9rem]" onClick={() => setPreviewImg(payForm.receiptData)}>
+                         <img src={payForm.receiptData} className="w-full h-full object-cover rounded-3xl shadow-lg border-4 border-emerald-500" alt="Proof" />
                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-all rounded-[1.3rem]"><Maximize2 size={24} className="mb-1"/><p className="text-[7px] font-black uppercase">KLIK PREVIEW</p></div>
                          <button onClick={(e) => { e.stopPropagation(); setPayForm({ receiptData: '' }); }} className="absolute top-3 right-3 p-2 bg-rose-600 text-white rounded-full shadow-xl hover:bg-rose-700 transition-all"><Trash2 size={14}/></button>
                       </div>
                    ) : (
-                      <div className="relative h-36"><input type="file" ref={fileInputPayoutRef} onChange={handleUploadProof} className="hidden" accept="image/*" /><button onClick={() => fileInputPayoutRef.current?.click()} className={`w-full h-36 bg-slate-50 rounded-3xl border-2 border-dashed ${selectedPayout.category === 'PRIVATE' ? 'border-orange-200 text-orange-600' : 'border-blue-200 text-blue-600'} font-black text-[9px] uppercase hover:bg-white transition-all flex flex-col items-center justify-center gap-2`}>{isLoading ? <Loader2 className="animate-spin" size={20} /> : <><ImageIcon size={24}/><p>UPLOAD BUKTI<br/>TRANSFER</p></>}</button></div>
+                      <div className="relative h-full min-h-[9rem]"><input type="file" ref={fileInputPayoutRef} onChange={handleUploadProof} className="hidden" accept="image/*" /><button onClick={() => fileInputPayoutRef.current?.click()} className={`w-full h-full bg-slate-50 rounded-3xl border-2 border-dashed ${selectedPayout.category === 'PRIVATE' ? 'border-orange-200 text-orange-600' : 'border-blue-200 text-blue-600'} font-black text-[9px] uppercase hover:bg-white transition-all flex flex-col items-center justify-center gap-2`}>{isLoading ? <Loader2 className="animate-spin" size={20} /> : <p>UPLOAD BUKTI<br/>TRANSFER</p>}</button></div>
                    )}
                 </div>
               </div>
