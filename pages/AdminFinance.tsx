@@ -1197,15 +1197,14 @@ const executePayTeacher = async () => {
                  <p className="text-[10px] font-bold text-blue-600 tracking-widest mt-2">{selectedPayout.teacherName} - <span className="uppercase">{selectedPayout.className.replace(/PELATIHAN\s*/i, '')}</span></p>
               </div>
 
-              <div className="flex items-center justify-center gap-3 mb-6">
-                 <label className="text-[8px] font-black text-slate-400 uppercase tracking-widest whitespace-nowrap">Tanggal Bayar Aktual</label>
-                 <input
-                   type="date"
-                   value={payForm.date}
-                   onChange={e => setPayForm({ ...payForm, date: e.target.value })}
-                   className={`px-3 py-2 bg-slate-50 rounded-xl font-black text-[11px] outline-none border-2 shadow-inner ${selectedPayout.category === 'PRIVATE' ? 'border-orange-100 focus:border-orange-500' : 'border-blue-100 focus:border-blue-500'}`}
-                 />
-              </div>
+<div className="flex justify-center mb-6">
+   <input
+     type="date"
+     value={payForm.date}
+     onChange={e => setPayForm({ ...payForm, date: e.target.value })}
+     className={`px-3 py-2 bg-slate-50 rounded-xl font-black text-[11px] outline-none border-2 shadow-inner text-center ${selectedPayout.category === 'PRIVATE' ? 'border-orange-100 focus:border-orange-500' : 'border-blue-100 focus:border-blue-500'}`}
+   />
+</div>
 
               <div className="grid md:grid-cols-2 gap-6">
                 {/* KOLOM KIRI: Info */}
