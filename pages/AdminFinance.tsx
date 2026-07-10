@@ -1193,7 +1193,6 @@ const executePayTeacher = async () => {
               <button onClick={() => { setSelectedPayout(null); setPayForm({ receiptData: '', date: getWIBDate() }); }} className="absolute top-10 right-10 z-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
 
               <div className="flex flex-col items-center text-center mb-10">
-                 <div className={`w-16 h-16 ${selectedPayout.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'} rounded-[1.5rem] flex items-center justify-center shadow-inner rotate-3 mb-4`}><Banknote size={32}/></div>
                  <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Cairkan Honor</h4>
                  <p className="text-[10px] font-bold text-blue-600 tracking-widest mt-2">{selectedPayout.teacherName} - <span className="uppercase">{selectedPayout.className.replace(/PELATIHAN\s*/i, '')}</span></p>
               </div>
@@ -1211,20 +1210,19 @@ const executePayTeacher = async () => {
                         onChange={e => setPayForm({ ...payForm, date: e.target.value })}
                         className={`w-full px-4 py-3 bg-white rounded-2xl font-black text-xs outline-none border-2 shadow-inner ${selectedPayout.category === 'PRIVATE' ? 'border-orange-100 focus:border-orange-500' : 'border-blue-100 focus:border-blue-500'}`}
                       />
-                      <p className="text-[7px] font-bold text-slate-400 uppercase tracking-widest ml-1 leading-relaxed">Isi tanggal transfer aslinya kalau baru diinput belakangan ya Kak ✨</p>
                    </div>
                 </div>
 
-                {/* KOLOM KANAN: Upload Bukti (h-full biar ngikutin tinggi kolom kiri, bukan tinggi tetap) */}
-                <div className="h-full">
+                {/* KOLOM KANAN: Upload Bukti (ngikutin tinggi kolom kiri, tapi dibatasi max-h biar modal nggak makin memanjang) */}
+                <div className="h-full max-h-40">
                    {payForm.receiptData ? (
-                      <div className="relative group cursor-pointer h-full min-h-[9rem]" onClick={() => setPreviewImg(payForm.receiptData)}>
+                      <div className="relative group cursor-pointer h-full max-h-40 min-h-[9rem]" onClick={() => setPreviewImg(payForm.receiptData)}>
                          <img src={payForm.receiptData} className="w-full h-full object-cover rounded-3xl shadow-lg border-4 border-emerald-500" alt="Proof" />
                          <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-all rounded-[1.3rem]"><Maximize2 size={24} className="mb-1"/><p className="text-[7px] font-black uppercase">KLIK PREVIEW</p></div>
                          <button onClick={(e) => { e.stopPropagation(); setPayForm({ receiptData: '' }); }} className="absolute top-3 right-3 p-2 bg-rose-600 text-white rounded-full shadow-xl hover:bg-rose-700 transition-all"><Trash2 size={14}/></button>
                       </div>
                    ) : (
-                      <div className="relative h-full min-h-[9rem]"><input type="file" ref={fileInputPayoutRef} onChange={handleUploadProof} className="hidden" accept="image/*" /><button onClick={() => fileInputPayoutRef.current?.click()} className={`w-full h-full bg-slate-50 rounded-3xl border-2 border-dashed ${selectedPayout.category === 'PRIVATE' ? 'border-orange-200 text-orange-600' : 'border-blue-200 text-blue-600'} font-black text-[9px] uppercase hover:bg-white transition-all flex flex-col items-center justify-center gap-2`}>{isLoading ? <Loader2 className="animate-spin" size={20} /> : <p>UPLOAD BUKTI<br/>TRANSFER</p>}</button></div>
+                      <div className="relative h-full max-h-40 min-h-[9rem]"><input type="file" ref={fileInputPayoutRef} onChange={handleUploadProof} className="hidden" accept="image/*" /><button onClick={() => fileInputPayoutRef.current?.click()} className={`w-full h-full bg-slate-50 rounded-3xl border-2 border-dashed ${selectedPayout.category === 'PRIVATE' ? 'border-orange-200 text-orange-600' : 'border-blue-200 text-blue-600'} font-black text-[9px] uppercase hover:bg-white transition-all flex flex-col items-center justify-center gap-2`}>{isLoading ? <Loader2 className="animate-spin" size={20} /> : <p>UPLOAD BUKTI<br/>TRANSFER</p>}</button></div>
                    )}
                 </div>
               </div>
