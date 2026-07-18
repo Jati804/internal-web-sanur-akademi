@@ -57,36 +57,19 @@ const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [editingCell, setEditingCell] = useState<{ day: string, room: string } | null>(null);
   const [editSessions, setEditSessions] = useState<{ matpel: string, jam: string, guru: string }[]>([]);
 
-  // ✨ Scrollbar sticky di bawah viewport, biar nggak perlu scroll ke bawah tabel dulu buat geser Senin↔Minggu
+  // ✨ Tombol "lompat ke hari" — klik hari, tabel otomatis scroll ke kolom itu
   const tableScrollRef = useRef<HTMLDivElement>(null);
-  const fakeScrollRef = useRef<HTMLDivElement>(null);
-  const [tableScrollWidth, setTableScrollWidth] = useState(0);
-  const isSyncingScroll = useRef(false);
+  const dayColRefs = useRef<Record<string, HTMLTableCellElement | null>>({});
 
-  useEffect(() => {
-    const measure = () => {
-      if (tableScrollRef.current) {
-        setTableScrollWidth(tableScrollRef.current.scrollWidth);
-      }
-    };
-    measure();
-    window.addEventListener('resize', measure);
-    return () => window.removeEventListener('resize', measure);
-  }, [activeTab, scheduleData, classes]);
-
-  const handleRealScroll = () => {
-    if (isSyncingScroll.current) { isSyncingScroll.current = false; return; }
-    if (tableScrollRef.current && fakeScrollRef.current) {
-      isSyncingScroll.current = true;
-      fakeScrollRef.current.scrollLeft = tableScrollRef.current.scrollLeft;
-    }
-  };
-
-  const handleFakeScroll = () => {
-    if (isSyncingScroll.current) { isSyncingScroll.current = false; return; }
-    if (tableScrollRef.current && fakeScrollRef.current) {
-      isSyncingScroll.current = true;
-      tableScrollRef.current.scrollLeft = fakeScrollRef.current.scrollLeft;
+  const scrollToDay = (day: string) => {
+    const el = dayColRefs.current[day];
+    const container = tableScrollRef.current;
+    if (el && container) {
+      const containerRect = container.getBoundingClientRect();
+      const elRect = el.getBoundingClientRect();
+      const stickyColWidth = 192; // lebar kolom "Ruangan" yang sticky di kiri
+      const targetScroll = container.scrollLeft + (elRect.left - containerRect.left) - stickyColWidth;
+      container.scrollTo({ left: Math.max(targetScroll, 0), behavior: 'smooth' });
     }
   };
 
@@ -426,7 +409,6 @@ const handleDragEnd = () => {
       )}
 
       {activeTab === 'SCHEDULE' && (
-        <>
         <div className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl overflow-hidden animate-in slide-in-from-right-4 duration-700">
            <div className="p-12 bg-slate-900 text-white flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600 rounded-full blur-[100px] opacity-20 -mr-20 -mt-20"></div>
@@ -444,9 +426,16 @@ const handleDragEnd = () => {
               <p className="text-[10px] font-black text-blue-800 uppercase tracking-tight">Klik pada kotak ruangan untuk menambah atau mengubah jadwal harian. Perubahan langsung tersimpan di Cloud.</p>
            </div>
 
-           <div ref={tableScrollRef} onScroll={handleRealScroll} className="overflow-x-auto custom-scrollbar">
+           <div className="p-6 border-b border-slate-100 flex items-center gap-3 overflow-x-auto custom-scrollbar">
+              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest shrink-0 pl-2">Lompat ke:</span>
+              {days.map(d => (
+                <button key={d} onClick={() => scrollToDay(d)} className="px-6 py-3 bg-slate-50 hover:bg-blue-600 hover:text-white text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shrink-0 active:scale-95">{d}</button>
+              ))}
+           </div>
+
+           <div ref={tableScrollRef} className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-collapse table-fixed min-w-[1400px]">
-                 <thead><tr className="bg-slate-50 border-b"><th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-widest border-r w-48 bg-slate-100 sticky left-0 z-20 shadow-sm italic">Ruangan \ Hari</th>{days.map(d => (<th key={d} className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-widest text-center border-r bg-slate-50">{d}</th>))}</tr></thead>
+                 <thead><tr className="bg-slate-50 border-b"><th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-widest border-r w-48 bg-slate-100 sticky left-0 z-20 shadow-sm italic">Ruangan \ Hari</th>{days.map(d => (<th key={d} ref={el => { dayColRefs.current[d] = el; }} className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-widest text-center border-r bg-slate-50">{d}</th>))}</tr></thead>
                  <tbody className="divide-y divide-slate-100">
                     {classes.map(room => (
                        <tr key={room} className="group/row">
@@ -485,16 +474,6 @@ const handleDragEnd = () => {
               </table>
            </div>
         </div>
-
-        <div
-          ref={fakeScrollRef}
-          onScroll={handleFakeScroll}
-          className="sticky bottom-4 z-30 overflow-x-auto custom-scrollbar bg-white/90 backdrop-blur-md rounded-full shadow-xl border border-slate-100 mx-auto"
-          style={{ height: '18px', maxWidth: '100%' }}
-        >
-           <div style={{ width: tableScrollWidth || '100%', height: '1px' }} />
-        </div>
-        </>
       )}
 
       {activeTab === 'SALARY' && (
