@@ -398,11 +398,16 @@ const handleDragEnd = () => {
                              return (
                                <td key={day} className="p-3 border-r h-[140px] relative">
                                   {matpel ? (
-                                     <div className="w-full h-full p-6 bg-blue-600 text-white rounded-[2rem] shadow-xl flex flex-col justify-center items-center group/card relative overflow-hidden text-center border-2 border-transparent hover:border-white transition-all scale-[0.98] hover:scale-100">
+                                     <div className="w-full h-full p-5 bg-blue-600 text-white rounded-[2rem] shadow-xl flex flex-col justify-center items-center group/card relative overflow-hidden text-center border-2 border-transparent hover:border-white transition-all scale-[0.98] hover:scale-100">
                                         <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl -mr-8 -mt-8"></div>
-                                        {jam && <div className="flex items-center gap-1.5 mb-2 opacity-80"><Clock size={12} /><span className="text-[10px] font-black uppercase">{jam}</span></div>}
-                                        <p className="text-[11px] font-black uppercase italic tracking-tight leading-tight px-2">{matpel}</p>
-                                        {guru && <p className="text-[9px] font-bold uppercase italic tracking-wide leading-tight px-2 mt-1 opacity-80">{guru}</p>}
+                                        {jam && <div className="flex items-center gap-1.5 mb-1.5 opacity-75"><Clock size={11} /><span className="text-[9px] font-black uppercase tracking-wide">{jam}</span></div>}
+                                        <p className="text-[11px] font-black uppercase italic tracking-tight leading-snug px-2 line-clamp-2">{matpel}</p>
+                                        {guru && (
+                                          <div className="flex items-center gap-1.5 mt-2 pt-2 border-t border-white/20 w-full justify-center px-2">
+                                             <UserRound size={10} className="opacity-60 shrink-0" />
+                                             <span className="text-[9px] font-bold uppercase tracking-wide leading-tight opacity-80 truncate">{guru}</span>
+                                          </div>
+                                        )}
                                         <button onClick={() => handleOpenEdit(day, room)} className="absolute inset-0 bg-black/60 opacity-0 group-hover/card:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-sm"><Edit3 size={28} className="text-white mb-2" /><span className="text-[9px] font-black uppercase text-white tracking-widest">UBAH JADWAL</span></button>
                                      </div>
                                   ) : (
