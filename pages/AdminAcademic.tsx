@@ -577,7 +577,7 @@ const handleDragEnd = () => {
                    <span>{editingCell.day}</span>
                  </div>
               </div>
-              <div className="space-y-5 max-h-[42vh] overflow-y-auto custom-scrollbar pr-1">
+              <div className="space-y-5 max-h-[50vh] overflow-y-auto custom-scrollbar pr-1">
                  {editSessions.map((session, idx) => (
                    <div key={idx} className="p-6 bg-slate-50 rounded-[1.8rem] space-y-4 relative border-2 border-transparent">
                       <button onClick={() => removeSessionRow(idx)} className="absolute top-4 right-4 p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all" title="Hapus sesi ini"><Trash2 size={16}/></button>
