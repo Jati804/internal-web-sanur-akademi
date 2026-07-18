@@ -60,8 +60,10 @@ const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   // ✨ Tombol "lompat ke hari" — klik hari, tabel otomatis scroll ke kolom itu
   const tableScrollRef = useRef<HTMLDivElement>(null);
   const dayColRefs = useRef<Record<string, HTMLTableCellElement | null>>({});
+  const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
   const scrollToDay = (day: string) => {
+    setSelectedDay(day);
     const el = dayColRefs.current[day];
     const container = tableScrollRef.current;
     if (el && container) {
@@ -450,7 +452,7 @@ const handleDragEnd = () => {
            <div className="p-8 bg-blue-50/50 border-b border-blue-100 flex items-center gap-3 overflow-x-auto custom-scrollbar">
               <span className="text-[10px] font-black text-blue-800 uppercase tracking-widest shrink-0">Lompat ke:</span>
               {days.map(d => (
-                <button key={d} onClick={() => scrollToDay(d)} className="px-6 py-3 bg-white hover:bg-blue-600 hover:text-white text-blue-700 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shrink-0 active:scale-95 shadow-sm border border-blue-100">{d}</button>
+                <button key={d} onClick={() => scrollToDay(d)} className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shrink-0 active:scale-95 shadow-sm border ${selectedDay === d ? 'bg-blue-600 text-white border-blue-600' : 'bg-white hover:bg-blue-600 hover:text-white text-blue-700 border-blue-100'}`}>{d}</button>
               ))}
            </div>
 
@@ -565,9 +567,9 @@ const handleDragEnd = () => {
       {editingCell && (
         <ModalPortal>
         <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] bg-slate-900/95 backdrop-blur-2xl flex items-center justify-center p-6 animate-in zoom-in duration-300" onClick={() => setEditingCell(null)}>
-           <div className="bg-white w-full max-w-xl rounded-[3.5rem] p-12 md:p-14 shadow-2xl relative border border-slate-50" onClick={e => e.stopPropagation()}>
-              <button onClick={() => setEditingCell(null)} className="absolute top-10 right-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
-              <div className="mb-8 text-center pr-6">
+           <div className="bg-white w-full max-w-3xl rounded-[3.5rem] p-8 md:p-10 shadow-2xl relative border border-slate-50" onClick={e => e.stopPropagation()}>
+              <button onClick={() => setEditingCell(null)} className="absolute top-8 right-8 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
+              <div className="mb-6 text-center pr-6">
                  <h4 className="text-2xl font-black text-slate-800 uppercase italic tracking-tight">Update Jadwal</h4>
                  <div className="flex items-center justify-center gap-3 mt-3 text-slate-400 font-black text-[10px] uppercase tracking-widest">
                    <span>{editingCell.room}</span>
@@ -575,18 +577,18 @@ const handleDragEnd = () => {
                    <span>{editingCell.day}</span>
                  </div>
               </div>
-              <div className="space-y-5 max-h-[55vh] overflow-y-auto custom-scrollbar pr-1">
+              <div className="space-y-5 max-h-[42vh] overflow-y-auto custom-scrollbar pr-1">
                  {editSessions.map((session, idx) => (
                    <div key={idx} className="p-6 bg-slate-50 rounded-[1.8rem] space-y-4 relative border-2 border-transparent">
                       <button onClick={() => removeSessionRow(idx)} className="absolute top-4 right-4 p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all" title="Hapus sesi ini"><Trash2 size={16}/></button>
                       <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">Sesi {idx + 1}</span>
-                      <div className="grid md:grid-cols-2 gap-4">
+                      <div className="grid md:grid-cols-[1.15fr_1fr] gap-4">
                          <div className="space-y-2">
                             <label className="text-[10px] font-black text-slate-500 uppercase ml-4 flex items-center gap-2"><Clock size={14} className="text-blue-500" /> Jam Belajar</label>
                             <div className="flex items-center gap-2">
-                               <input type="time" className="w-full px-4 py-4 bg-white rounded-[1.4rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner" value={parseJamRange(session.jam).start} onChange={e => updateJamPart(idx, 'start', e.target.value)} />
+                               <input type="time" className="w-full min-w-0 px-4 py-4 bg-white rounded-[1.4rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner" value={parseJamRange(session.jam).start} onChange={e => updateJamPart(idx, 'start', e.target.value)} />
                                <span className="text-slate-300 font-black shrink-0">–</span>
-                               <input type="time" className="w-full px-4 py-4 bg-white rounded-[1.4rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner" value={parseJamRange(session.jam).end} onChange={e => updateJamPart(idx, 'end', e.target.value)} />
+                               <input type="time" className="w-full min-w-0 px-4 py-4 bg-white rounded-[1.4rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner" value={parseJamRange(session.jam).end} onChange={e => updateJamPart(idx, 'end', e.target.value)} />
                             </div>
                          </div>
                          <div className="space-y-2">
