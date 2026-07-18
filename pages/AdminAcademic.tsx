@@ -79,18 +79,27 @@ const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
     scrollTableToDay(day);
   };
 
-  // ✅ Kalau tab browser sempat di-background lalu balik aktif, posisi scroll tabel
-  // kadang nggak nyambung lagi sama tombol hari yang masih ke-highlight. Ini nge-sync
-  // ulang scroll-nya ke selectedDay tanpa reset pilihan hari yang sudah ditentukan user.
+  // ✅ Kalau tab browser sempat di-background lalu balik aktif, reset aja pilihan
+  // hari yang lagi aktif — konsisten sama perilaku pas pindah tab di dalam halaman.
   useEffect(() => {
     const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible' && selectedDay) {
-        scrollTableToDay(selectedDay);
+      if (document.visibilityState === 'visible') {
+        setSelectedDay(null);
       }
     };
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [selectedDay]);
+  }, []);
+
+  // ✅ Tabel jadwal cuma dirender pas activeTab === 'SCHEDULE', jadi begitu pindah ke tab
+  // lain (Data Master / Gaji Guru) tabelnya kebongkar dan posisi scroll-nya nggak bisa
+  // dipertahankan. Daripada tombol hari tetap ke-highlight tapi nggak nyambung sama
+  // tampilannya, mending reset aja biar user pilih ulang saat balik ke tab ini.
+  useEffect(() => {
+    if (activeTab !== 'SCHEDULE') {
+      setSelectedDay(null);
+    }
+  }, [activeTab]);
 
   const teacherNames = React.useMemo(() => {
     return teachers
