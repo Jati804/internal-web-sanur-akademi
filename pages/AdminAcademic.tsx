@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
   BookOpen, 
   Settings, 
@@ -56,6 +56,39 @@ const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const [editingCell, setEditingCell] = useState<{ day: string, room: string } | null>(null);
   const [editSessions, setEditSessions] = useState<{ matpel: string, jam: string, guru: string }[]>([]);
+
+  // ✨ Scrollbar sticky di bawah viewport, biar nggak perlu scroll ke bawah tabel dulu buat geser Senin↔Minggu
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const fakeScrollRef = useRef<HTMLDivElement>(null);
+  const [tableScrollWidth, setTableScrollWidth] = useState(0);
+  const isSyncingScroll = useRef(false);
+
+  useEffect(() => {
+    const measure = () => {
+      if (tableScrollRef.current) {
+        setTableScrollWidth(tableScrollRef.current.scrollWidth);
+      }
+    };
+    measure();
+    window.addEventListener('resize', measure);
+    return () => window.removeEventListener('resize', measure);
+  }, [activeTab, scheduleData, classes]);
+
+  const handleRealScroll = () => {
+    if (isSyncingScroll.current) { isSyncingScroll.current = false; return; }
+    if (tableScrollRef.current && fakeScrollRef.current) {
+      isSyncingScroll.current = true;
+      fakeScrollRef.current.scrollLeft = tableScrollRef.current.scrollLeft;
+    }
+  };
+
+  const handleFakeScroll = () => {
+    if (isSyncingScroll.current) { isSyncingScroll.current = false; return; }
+    if (tableScrollRef.current && fakeScrollRef.current) {
+      isSyncingScroll.current = true;
+      tableScrollRef.current.scrollLeft = fakeScrollRef.current.scrollLeft;
+    }
+  };
 
   const teacherNames = React.useMemo(() => {
     return teachers
@@ -393,6 +426,7 @@ const handleDragEnd = () => {
       )}
 
       {activeTab === 'SCHEDULE' && (
+        <>
         <div className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl overflow-hidden animate-in slide-in-from-right-4 duration-700">
            <div className="p-12 bg-slate-900 text-white flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600 rounded-full blur-[100px] opacity-20 -mr-20 -mt-20"></div>
@@ -410,7 +444,7 @@ const handleDragEnd = () => {
               <p className="text-[10px] font-black text-blue-800 uppercase tracking-tight">Klik pada kotak ruangan untuk menambah atau mengubah jadwal harian. Perubahan langsung tersimpan di Cloud.</p>
            </div>
 
-           <div className="overflow-x-auto custom-scrollbar">
+           <div ref={tableScrollRef} onScroll={handleRealScroll} className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-collapse table-fixed min-w-[1400px]">
                  <thead><tr className="bg-slate-50 border-b"><th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-widest border-r w-48 bg-slate-100 sticky left-0 z-20 shadow-sm italic">Ruangan \ Hari</th>{days.map(d => (<th key={d} className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-widest text-center border-r bg-slate-50">{d}</th>))}</tr></thead>
                  <tbody className="divide-y divide-slate-100">
@@ -423,7 +457,7 @@ const handleDragEnd = () => {
                              return (
                                <td key={day} className="p-3 border-r align-top">
                                   {sessions.length > 0 ? (
-                                     <div className="w-full min-h-[140px] bg-blue-600 rounded-[2rem] shadow-xl relative overflow-hidden group/card border-2 border-transparent hover:border-white transition-all">
+                                     <div className="w-full h-full min-h-[140px] bg-blue-600 rounded-[2rem] shadow-xl relative overflow-hidden group/card border-2 border-transparent hover:border-white transition-all flex flex-col justify-center">
                                         <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl -mr-8 -mt-8"></div>
                                         <div className="relative divide-y divide-white/20">
                                            {sessions.map((s, i) => {
@@ -440,7 +474,7 @@ const handleDragEnd = () => {
                                         <button onClick={() => handleOpenEdit(day, room)} className="absolute inset-0 bg-black/60 opacity-0 group-hover/card:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-sm"><Edit3 size={28} className="text-white mb-2" /><span className="text-[9px] font-black uppercase text-white tracking-widest">UBAH JADWAL</span></button>
                                      </div>
                                   ) : (
-                                     <button onClick={() => handleOpenEdit(day, room)} className="w-full min-h-[140px] flex flex-col items-center justify-center border-2 border-dashed border-slate-100 rounded-[2rem] hover:border-blue-300 hover:bg-blue-50/50 transition-all group/btn"><Plus size={24} className="text-slate-200 group-hover/btn:text-blue-500 mb-2 transition-all group-hover/btn:scale-125" /><span className="text-[9px] font-black text-slate-200 group-hover/btn:text-blue-400 uppercase tracking-widest">ISI JADWAL</span></button>
+                                     <button onClick={() => handleOpenEdit(day, room)} className="w-full h-full min-h-[140px] flex flex-col items-center justify-center border-2 border-dashed border-slate-100 rounded-[2rem] hover:border-blue-300 hover:bg-blue-50/50 transition-all group/btn"><Plus size={24} className="text-slate-200 group-hover/btn:text-blue-500 mb-2 transition-all group-hover/btn:scale-125" /><span className="text-[9px] font-black text-slate-200 group-hover/btn:text-blue-400 uppercase tracking-widest">ISI JADWAL</span></button>
                                   )}
                                </td>
                              );
@@ -451,6 +485,16 @@ const handleDragEnd = () => {
               </table>
            </div>
         </div>
+
+        <div
+          ref={fakeScrollRef}
+          onScroll={handleFakeScroll}
+          className="sticky bottom-4 z-30 overflow-x-auto custom-scrollbar bg-white/90 backdrop-blur-md rounded-full shadow-xl border border-slate-100 mx-auto"
+          style={{ height: '18px', maxWidth: '100%' }}
+        >
+           <div style={{ width: tableScrollWidth || '100%', height: '1px' }} />
+        </div>
+        </>
       )}
 
       {activeTab === 'SALARY' && (
