@@ -420,36 +420,27 @@ const handleDragEnd = () => {
                           {days.map(day => {
                              const rawValue = scheduleData[`${day}-${room}`] || '';
                              const sessions = parseSessions(rawValue);
-                             const displayMatpel = sessions.length > 0 ? sessions[0].matpel.replace(/^PELATIHAN\s+/i, '') : '';
                              return (
-                               <td key={day} className="p-3 border-r h-[140px] relative">
-                                  {sessions.length === 1 ? (
-                                     <div className="w-full h-full p-5 bg-blue-600 text-white rounded-[2rem] shadow-xl flex flex-col justify-center items-center group/card relative overflow-hidden text-center border-2 border-transparent hover:border-white transition-all scale-[0.98] hover:scale-100">
+                               <td key={day} className="p-3 border-r align-top">
+                                  {sessions.length > 0 ? (
+                                     <div className="w-full min-h-[140px] bg-blue-600 rounded-[2rem] shadow-xl relative overflow-hidden group/card border-2 border-transparent hover:border-white transition-all">
                                         <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl -mr-8 -mt-8"></div>
-                                        {sessions[0].jam && <div className="flex items-center gap-1.5 mb-1.5 opacity-75"><Clock size={11} /><span className="text-[9px] font-black uppercase tracking-wide">{sessions[0].jam}</span></div>}
-                                        <p className="text-[11px] font-black uppercase italic tracking-tight leading-snug px-2 line-clamp-2">{displayMatpel}</p>
-                                        {sessions[0].guru && (
-                                          <div className="mt-2 pt-2 border-t border-white/20 w-full px-2">
-                                             <span className="text-[9px] font-bold uppercase tracking-wide leading-tight opacity-80 truncate block">{sessions[0].guru}</span>
-                                          </div>
-                                        )}
-                                        <button onClick={() => handleOpenEdit(day, room)} className="absolute inset-0 bg-black/60 opacity-0 group-hover/card:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-sm"><Edit3 size={28} className="text-white mb-2" /><span className="text-[9px] font-black uppercase text-white tracking-widest">UBAH JADWAL</span></button>
-                                     </div>
-                                  ) : sessions.length > 1 ? (
-                                     <div className="w-full h-full p-5 bg-blue-600 text-white rounded-[2rem] shadow-xl flex flex-col justify-center items-center group/card relative overflow-hidden text-center border-2 border-transparent hover:border-white transition-all scale-[0.98] hover:scale-100">
-                                        <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl -mr-8 -mt-8"></div>
-                                        <div className="absolute top-3 right-3 bg-white text-blue-600 rounded-full w-6 h-6 flex items-center justify-center text-[10px] font-black shadow-sm">{sessions.length}</div>
-                                        <Layers size={18} className="opacity-70 mb-2" />
-                                        <p className="text-[9px] font-black uppercase tracking-widest opacity-90">{sessions.length} Sesi</p>
-                                        <div className="mt-2 space-y-0.5">
-                                           {sessions.slice(0, 3).map((s, i) => (
-                                             <p key={i} className="text-[9px] font-bold opacity-70 leading-tight">{s.jam || '-'}</p>
-                                           ))}
+                                        <div className="relative divide-y divide-white/20">
+                                           {sessions.map((s, i) => {
+                                             const displayMatpel = s.matpel.replace(/^PELATIHAN\s+/i, '');
+                                             return (
+                                               <div key={i} className="p-4 text-center text-white">
+                                                  {s.jam && <div className="flex items-center justify-center gap-1.5 mb-1.5 opacity-75"><Clock size={11} /><span className="text-[9px] font-black uppercase tracking-wide">{s.jam}</span></div>}
+                                                  <p className="text-[11px] font-black uppercase italic tracking-tight leading-snug px-1">{displayMatpel}</p>
+                                                  {s.guru && <p className="text-[9px] font-bold tracking-wide leading-tight opacity-80 mt-1 px-1">{s.guru}</p>}
+                                               </div>
+                                             );
+                                           })}
                                         </div>
                                         <button onClick={() => handleOpenEdit(day, room)} className="absolute inset-0 bg-black/60 opacity-0 group-hover/card:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-sm"><Edit3 size={28} className="text-white mb-2" /><span className="text-[9px] font-black uppercase text-white tracking-widest">UBAH JADWAL</span></button>
                                      </div>
                                   ) : (
-                                     <button onClick={() => handleOpenEdit(day, room)} className="w-full h-full flex flex-col items-center justify-center border-2 border-dashed border-slate-100 rounded-[2rem] hover:border-blue-300 hover:bg-blue-50/50 transition-all group/btn"><Plus size={24} className="text-slate-200 group-hover/btn:text-blue-500 mb-2 transition-all group-hover/btn:scale-125" /><span className="text-[9px] font-black text-slate-200 group-hover/btn:text-blue-400 uppercase tracking-widest">ISI JADWAL</span></button>
+                                     <button onClick={() => handleOpenEdit(day, room)} className="w-full min-h-[140px] flex flex-col items-center justify-center border-2 border-dashed border-slate-100 rounded-[2rem] hover:border-blue-300 hover:bg-blue-50/50 transition-all group/btn"><Plus size={24} className="text-slate-200 group-hover/btn:text-blue-500 mb-2 transition-all group-hover/btn:scale-125" /><span className="text-[9px] font-black text-slate-200 group-hover/btn:text-blue-400 uppercase tracking-widest">ISI JADWAL</span></button>
                                   )}
                                </td>
                              );
@@ -569,10 +560,10 @@ const handleDragEnd = () => {
                       </div>
                       <div className="space-y-2">
                          <label className="text-[10px] font-black text-slate-500 uppercase ml-4 flex items-center gap-2"><UserRound size={14} className="text-blue-500" /> Guru Pengajar</label>
-                         <select className="w-full px-6 py-4 bg-white rounded-[1.4rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner appearance-none" value={session.guru} onChange={e => updateSessionField(idx, 'guru', e.target.value)}>
-                            <option value="">— BELUM DITENTUKAN —</option>
+                         <select className="w-full px-6 py-4 bg-white rounded-[1.4rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner appearance-none" value={session.guru} onChange={e => updateSessionField(idx, 'guru', e.target.value)}>
+                            <option value="">— Belum Ditentukan —</option>
                             {teacherNames.map(name => (
-                              <option key={name} value={name}>{name.toUpperCase()}</option>
+                              <option key={name} value={name}>{name}</option>
                             ))}
                          </select>
                       </div>
