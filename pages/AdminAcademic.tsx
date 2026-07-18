@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   BookOpen, 
@@ -504,7 +505,15 @@ const handleDragEnd = () => {
                     </div>
                     <div className="space-y-2">
                        <label className="text-[10px] font-black text-slate-500 uppercase ml-4 flex items-center gap-2"><BookOpen size={14} className="text-blue-500" /> Mata Pelajaran</label>
-                       <input type="text" placeholder="MISAL: WORD BASIC" className="w-full px-6 py-4 bg-slate-50 rounded-[1.4rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner" value={editMatpel} onChange={e => setEditMatpel(e.target.value)} />
+                       <select className="w-full px-6 py-4 bg-slate-50 rounded-[1.4rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner appearance-none" value={editMatpel} onChange={e => setEditMatpel(e.target.value)}>
+                          <option value="">— PILIH MATPEL —</option>
+                          {editMatpel && !subjects.includes(editMatpel) && (
+                            <option value={editMatpel}>{editMatpel} (LAMA)</option>
+                          )}
+                          {subjects.map(s => (
+                            <option key={s} value={s}>{s}</option>
+                          ))}
+                       </select>
                     </div>
                  </div>
                  <div className="space-y-2">
