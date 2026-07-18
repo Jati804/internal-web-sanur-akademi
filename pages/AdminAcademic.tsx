@@ -410,7 +410,7 @@ const handleDragEnd = () => {
 
       {activeTab === 'SCHEDULE' && (
         <div className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl overflow-hidden animate-in slide-in-from-right-4 duration-700">
-           <div className="p-12 bg-slate-900 text-white flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden">
+           <div className="p-12 bg-slate-900 text-white flex flex-col md:flex-row justify-between items-center gap-4 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600 rounded-full blur-[100px] opacity-20 -mr-20 -mt-20"></div>
               <div className="relative z-10">
                 <h3 className="text-3xl font-black uppercase italic tracking-tighter leading-none">Peta Ruangan Cloud</h3>
@@ -418,19 +418,24 @@ const handleDragEnd = () => {
                   <Cloud size={14} className="text-blue-400" /> Sinkronisasi Real-time Aktif
                 </p>
               </div>
-              <button onClick={() => { if(window.confirm("Kosongkan semua peta ruangan?")) syncScheduleToCloud({}); }} className="px-10 py-5 bg-white/10 text-white rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest hover:bg-rose-600 transition-all flex items-center gap-3 backdrop-blur-md border border-white/10 shadow-xl active:scale-95"><Trash size={18}/> Reset Semua Jadwal</button>
+              <div className="relative z-10 flex items-center gap-3 flex-wrap justify-center">
+                 <select
+                   value=""
+                   onChange={e => { if (e.target.value) scrollToDay(e.target.value); }}
+                   className="px-6 py-5 bg-white/10 text-white rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest hover:bg-white/20 transition-all backdrop-blur-md border border-white/10 shadow-xl outline-none cursor-pointer appearance-none text-center"
+                 >
+                    <option value="" className="text-slate-800">Lompat ke Hari</option>
+                    {days.map(d => (
+                      <option key={d} value={d} className="text-slate-800">{d}</option>
+                    ))}
+                 </select>
+                 <button onClick={() => { if(window.confirm("Kosongkan semua peta ruangan?")) syncScheduleToCloud({}); }} className="px-10 py-5 bg-white/10 text-white rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest hover:bg-rose-600 transition-all flex items-center gap-3 backdrop-blur-md border border-white/10 shadow-xl active:scale-95"><Trash size={18}/> Reset Semua Jadwal</button>
+              </div>
            </div>
            
            <div className="p-8 bg-blue-50/50 border-b border-blue-100 flex items-center gap-4">
               <div className="p-2 bg-blue-600 text-white rounded-lg shadow-lg"><Info size={16} /></div>
               <p className="text-[10px] font-black text-blue-800 uppercase tracking-tight">Klik pada kotak ruangan untuk menambah atau mengubah jadwal harian. Perubahan langsung tersimpan di Cloud.</p>
-           </div>
-
-           <div className="p-6 border-b border-slate-100 flex items-center gap-3 overflow-x-auto custom-scrollbar">
-              <span className="text-[9px] font-black text-slate-400 uppercase tracking-widest shrink-0 pl-2">Lompat ke:</span>
-              {days.map(d => (
-                <button key={d} onClick={() => scrollToDay(d)} className="px-6 py-3 bg-slate-50 hover:bg-blue-600 hover:text-white text-slate-500 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shrink-0 active:scale-95">{d}</button>
-              ))}
            </div>
 
            <div ref={tableScrollRef} className="overflow-x-auto custom-scrollbar">
