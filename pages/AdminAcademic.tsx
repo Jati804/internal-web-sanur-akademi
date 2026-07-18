@@ -497,27 +497,27 @@ const handleDragEnd = () => {
                    <span>{editingCell.day}</span>
                  </div>
               </div>
-              <div className="space-y-6">
-                 <div className="grid md:grid-cols-2 gap-6">
-                    <div className="space-y-3">
+              <div className="space-y-5">
+                 <div className="grid md:grid-cols-2 gap-5">
+                    <div className="space-y-2">
                        <label className="text-[10px] font-black text-slate-500 uppercase ml-4 flex items-center gap-2"><Clock size={14} className="text-blue-500" /> Jam Belajar</label>
-                       <input type="text" placeholder="MISAL: 08:00 - 10:00" className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner" value={editJam} onChange={e => setEditJam(e.target.value)} />
+                       <input type="text" placeholder="MISAL: 08:00 - 10:00" className="w-full px-6 py-4 bg-slate-50 rounded-[1.4rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner" value={editJam} onChange={e => setEditJam(e.target.value)} />
                     </div>
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                        <label className="text-[10px] font-black text-slate-500 uppercase ml-4 flex items-center gap-2"><BookOpen size={14} className="text-blue-500" /> Mata Pelajaran</label>
-                       <input type="text" placeholder="MISAL: WORD BASIC" className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner" value={editMatpel} onChange={e => setEditMatpel(e.target.value)} />
+                       <input type="text" placeholder="MISAL: WORD BASIC" className="w-full px-6 py-4 bg-slate-50 rounded-[1.4rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner" value={editMatpel} onChange={e => setEditMatpel(e.target.value)} />
                     </div>
                  </div>
-                 <div className="space-y-3">
+                 <div className="space-y-2">
                     <label className="text-[10px] font-black text-slate-500 uppercase ml-4 flex items-center gap-2"><UserRound size={14} className="text-blue-500" /> Guru Pengajar</label>
-                    <select className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner appearance-none" value={editGuru} onChange={e => setEditGuru(e.target.value)}>
+                    <select className="w-full px-6 py-4 bg-slate-50 rounded-[1.4rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner appearance-none" value={editGuru} onChange={e => setEditGuru(e.target.value)}>
                        <option value="">— BELUM DITENTUKAN —</option>
                        {teacherNames.map(name => (
                          <option key={name} value={name}>{name.toUpperCase()}</option>
                        ))}
                     </select>
                  </div>
-                 <div className="pt-6">
+                 <div className="pt-4">
                     <button onClick={handleSaveEdit} className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2">
                        {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} SIMPAN PERUBAHAN
                     </button>
