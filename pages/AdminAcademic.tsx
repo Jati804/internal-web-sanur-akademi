@@ -62,8 +62,7 @@ const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const dayColRefs = useRef<Record<string, HTMLTableCellElement | null>>({});
   const [selectedDay, setSelectedDay] = useState<string | null>(null);
 
-  const scrollToDay = (day: string) => {
-    setSelectedDay(day);
+  const scrollTableToDay = (day: string) => {
     const el = dayColRefs.current[day];
     const container = tableScrollRef.current;
     if (el && container) {
@@ -74,6 +73,24 @@ const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
       container.scrollTo({ left: Math.max(targetScroll, 0), behavior: 'smooth' });
     }
   };
+
+  const scrollToDay = (day: string) => {
+    setSelectedDay(day);
+    scrollTableToDay(day);
+  };
+
+  // ✅ Kalau tab browser sempat di-background lalu balik aktif, posisi scroll tabel
+  // kadang nggak nyambung lagi sama tombol hari yang masih ke-highlight. Ini nge-sync
+  // ulang scroll-nya ke selectedDay tanpa reset pilihan hari yang sudah ditentukan user.
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && selectedDay) {
+        scrollTableToDay(selectedDay);
+      }
+    };
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [selectedDay]);
 
   const teacherNames = React.useMemo(() => {
     return teachers
@@ -458,7 +475,7 @@ const handleDragEnd = () => {
 
            <div ref={tableScrollRef} className="overflow-x-auto custom-scrollbar">
               <table className="w-full text-left border-collapse table-fixed min-w-[1400px]">
-                 <thead><tr className="bg-slate-50 border-b"><th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-widest border-r w-48 bg-slate-100 sticky left-0 z-20 shadow-sm italic">Ruangan \ Hari</th>{days.map(d => (<th key={d} ref={el => { dayColRefs.current[d] = el; }} className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-widest text-center border-r bg-slate-50">{d}</th>))}</tr></thead>
+                 <thead><tr className="bg-slate-50 border-b"><th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-widest border-r w-48 bg-slate-100 sticky left-0 z-20 shadow-sm italic">Ruangan \ Hari</th>{days.map(d => (<th key={d} ref={el => { dayColRefs.current[d] = el; }} className={`p-8 text-[11px] font-black uppercase tracking-widest text-center border-r bg-slate-50 transition-colors ${selectedDay === d ? 'text-blue-600' : 'text-slate-500'}`}>{d}</th>))}</tr></thead>
                  <tbody className="divide-y divide-slate-100">
                     {classes.map(room => (
                        <tr key={room} className="group/row">
