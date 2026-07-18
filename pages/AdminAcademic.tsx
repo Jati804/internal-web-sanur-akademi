@@ -19,10 +19,12 @@ import {
   Banknote,
   DollarSign,
   Check,
-  Loader2
+  Loader2,
+  UserRound
 } from 'lucide-react';
 import { supabase } from '../services/supabase.ts';
 import ModalPortal from '../ModalPortal.tsx';
+import { User } from '../types';
 
 interface AdminAcademicProps {
   subjects: string[];
@@ -35,10 +37,11 @@ interface AdminAcademicProps {
   setScheduleData: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   salaryConfig: { regulerRate: number, privateRate: number };
   setSalaryConfig: React.Dispatch<React.SetStateAction<{ regulerRate: number, privateRate: number }>>;
+  teachers: User[];
 }
 
 const AdminAcademic: React.FC<AdminAcademicProps> = ({ 
-  subjects, setSubjects, classes, setClasses, levels, setLevels, scheduleData, setScheduleData, salaryConfig, setSalaryConfig
+  subjects, setSubjects, classes, setClasses, levels, setLevels, scheduleData, setScheduleData, salaryConfig, setSalaryConfig, teachers
 }) => {
   const [activeTab, setActiveTab] = useState<'CONFIG' | 'SCHEDULE' | 'SALARY'>('CONFIG');
   const [newSubject, setNewSubject] = useState('');
@@ -55,6 +58,14 @@ const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [editingCell, setEditingCell] = useState<{ day: string, room: string } | null>(null);
   const [editMatpel, setEditMatpel] = useState('');
   const [editJam, setEditJam] = useState('');
+  const [editGuru, setEditGuru] = useState('');
+
+  const teacherNames = React.useMemo(() => {
+    return teachers
+      .filter(t => t.role === 'TEACHER')
+      .map(t => t.name)
+      .sort((a, b) => a.localeCompare(b));
+  }, [teachers]);
 
   // ✅ Lock body scroll selagi modal terbuka
   useEffect(() => {
@@ -110,17 +121,18 @@ const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   };
 
   const handleOpenEdit = (day: string, room: string) => {
-    const rawValue = scheduleData[`${day}-${room}`] || '|';
-    const [matpel, jam] = rawValue.split('|');
+    const rawValue = scheduleData[`${day}-${room}`] || '||';
+    const [matpel, jam, guru] = rawValue.split('|');
     setEditingCell({ day, room });
     setEditMatpel(matpel || '');
     setEditJam(jam || '');
+    setEditGuru(guru || '');
   };
 
   const handleSaveEdit = () => {
     if (editingCell) {
       const key = `${editingCell.day}-${editingCell.room}`;
-      const valueToSave = `${editMatpel.toUpperCase()}|${editJam}`;
+      const valueToSave = `${editMatpel.toUpperCase()}|${editJam}|${editGuru}`;
       const nextData = { ...scheduleData, [key]: valueToSave };
       syncScheduleToCloud(nextData);
       setEditingCell(null);
@@ -383,7 +395,7 @@ const handleDragEnd = () => {
                           <td className="p-8 font-black text-slate-800 text-[12px] uppercase italic bg-slate-50 border-r sticky left-0 z-10 shadow-sm group-hover/row:bg-blue-50 transition-colors">{room}</td>
                           {days.map(day => {
                              const rawValue = scheduleData[`${day}-${room}`] || '';
-                             const [matpel, jam] = rawValue.split('|');
+                             const [matpel, jam, guru] = rawValue.split('|');
                              return (
                                <td key={day} className="p-3 border-r h-[140px] relative">
                                   {matpel ? (
@@ -391,6 +403,7 @@ const handleDragEnd = () => {
                                         <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl -mr-8 -mt-8"></div>
                                         {jam && <div className="flex items-center gap-1.5 mb-2 opacity-80"><Clock size={12} /><span className="text-[10px] font-black uppercase">{jam}</span></div>}
                                         <p className="text-[11px] font-black uppercase italic tracking-tight leading-tight px-2">{matpel}</p>
+                                        {guru && <p className="text-[9px] font-bold uppercase italic tracking-wide leading-tight px-2 mt-1 opacity-80">{guru}</p>}
                                         <button onClick={() => handleOpenEdit(day, room)} className="absolute inset-0 bg-black/60 opacity-0 group-hover/card:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-sm"><Edit3 size={28} className="text-white mb-2" /><span className="text-[9px] font-black uppercase text-white tracking-widest">UBAH JADWAL</span></button>
                                      </div>
                                   ) : (
@@ -496,6 +509,15 @@ const handleDragEnd = () => {
                        <label className="text-[10px] font-black text-slate-500 uppercase ml-4 flex items-center gap-2"><BookOpen size={14} className="text-blue-500" /> Mata Pelajaran</label>
                        <input type="text" placeholder="MISAL: WORD BASIC" className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner" value={editMatpel} onChange={e => setEditMatpel(e.target.value)} />
                     </div>
+                 </div>
+                 <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-500 uppercase ml-4 flex items-center gap-2"><UserRound size={14} className="text-blue-500" /> Guru Pengajar</label>
+                    <select className="w-full px-8 py-5 bg-slate-50 rounded-[1.8rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner appearance-none" value={editGuru} onChange={e => setEditGuru(e.target.value)}>
+                       <option value="">— BELUM DITENTUKAN —</option>
+                       {teacherNames.map(name => (
+                         <option key={name} value={name}>{name.toUpperCase()}</option>
+                       ))}
+                    </select>
                  </div>
                  <div className="pt-6">
                     <button onClick={handleSaveEdit} className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2">
