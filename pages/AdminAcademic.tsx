@@ -55,9 +55,7 @@ const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const [tempSalary, setTempSalary] = useState(salaryConfig);
 
   const [editingCell, setEditingCell] = useState<{ day: string, room: string } | null>(null);
-  const [editMatpel, setEditMatpel] = useState('');
-  const [editJam, setEditJam] = useState('');
-  const [editGuru, setEditGuru] = useState('');
+  const [editSessions, setEditSessions] = useState<{ matpel: string, jam: string, guru: string }[]>([]);
 
   const teacherNames = React.useMemo(() => {
     return teachers
@@ -65,6 +63,23 @@ const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
       .map(t => t.name)
       .sort((a, b) => a.localeCompare(b));
   }, [teachers]);
+
+  // ✨ Satu kotak (ruangan+hari) bisa berisi lebih dari 1 sesi, dipisah "@@@".
+  // Data lama (format lama tanpa "@@@") otomatis kebaca sebagai 1 sesi, jadi aman & backward compatible.
+  const parseSessions = (raw: string): { matpel: string, jam: string, guru: string }[] => {
+    if (!raw) return [];
+    return raw.split('@@@').map(part => {
+      const [matpel, jam, guru] = part.split('|');
+      return { matpel: matpel || '', jam: jam || '', guru: guru || '' };
+    }).filter(s => s.matpel.trim() !== '');
+  };
+
+  const serializeSessions = (sessions: { matpel: string, jam: string, guru: string }[]): string => {
+    return sessions
+      .filter(s => s.matpel.trim() !== '')
+      .map(s => `${s.matpel.toUpperCase()}|${s.jam}|${s.guru}`)
+      .join('@@@');
+  };
 
   // ✅ Lock body scroll selagi modal terbuka
   useEffect(() => {
@@ -120,22 +135,32 @@ const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   };
 
   const handleOpenEdit = (day: string, room: string) => {
-    const rawValue = scheduleData[`${day}-${room}`] || '||';
-    const [matpel, jam, guru] = rawValue.split('|');
+    const rawValue = scheduleData[`${day}-${room}`] || '';
+    const sessions = parseSessions(rawValue);
     setEditingCell({ day, room });
-    setEditMatpel(matpel || '');
-    setEditJam(jam || '');
-    setEditGuru(guru || '');
+    setEditSessions(sessions.length > 0 ? sessions : [{ matpel: '', jam: '', guru: '' }]);
   };
 
   const handleSaveEdit = () => {
     if (editingCell) {
       const key = `${editingCell.day}-${editingCell.room}`;
-      const valueToSave = `${editMatpel.toUpperCase()}|${editJam}|${editGuru}`;
+      const valueToSave = serializeSessions(editSessions);
       const nextData = { ...scheduleData, [key]: valueToSave };
       syncScheduleToCloud(nextData);
       setEditingCell(null);
     }
+  };
+
+  const updateSessionField = (idx: number, field: 'matpel' | 'jam' | 'guru', value: string) => {
+    setEditSessions(prev => prev.map((s, i) => i === idx ? { ...s, [field]: value } : s));
+  };
+
+  const addSessionRow = () => {
+    setEditSessions(prev => [...prev, { matpel: '', jam: '', guru: '' }]);
+  };
+
+  const removeSessionRow = (idx: number) => {
+    setEditSessions(prev => prev.filter((_, i) => i !== idx));
   };
 
   const handleAddSubject = () => {
@@ -394,20 +419,33 @@ const handleDragEnd = () => {
                           <td className="p-8 font-black text-slate-800 text-[12px] uppercase italic bg-slate-50 border-r sticky left-0 z-10 shadow-sm group-hover/row:bg-blue-50 transition-colors">{room}</td>
                           {days.map(day => {
                              const rawValue = scheduleData[`${day}-${room}`] || '';
-                             const [matpel, jam, guru] = rawValue.split('|');
-                             const displayMatpel = (matpel || '').replace(/^PELATIHAN\s+/i, '');
+                             const sessions = parseSessions(rawValue);
+                             const displayMatpel = sessions.length > 0 ? sessions[0].matpel.replace(/^PELATIHAN\s+/i, '') : '';
                              return (
                                <td key={day} className="p-3 border-r h-[140px] relative">
-                                  {matpel ? (
+                                  {sessions.length === 1 ? (
                                      <div className="w-full h-full p-5 bg-blue-600 text-white rounded-[2rem] shadow-xl flex flex-col justify-center items-center group/card relative overflow-hidden text-center border-2 border-transparent hover:border-white transition-all scale-[0.98] hover:scale-100">
                                         <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl -mr-8 -mt-8"></div>
-                                        {jam && <div className="flex items-center gap-1.5 mb-1.5 opacity-75"><Clock size={11} /><span className="text-[9px] font-black uppercase tracking-wide">{jam}</span></div>}
+                                        {sessions[0].jam && <div className="flex items-center gap-1.5 mb-1.5 opacity-75"><Clock size={11} /><span className="text-[9px] font-black uppercase tracking-wide">{sessions[0].jam}</span></div>}
                                         <p className="text-[11px] font-black uppercase italic tracking-tight leading-snug px-2 line-clamp-2">{displayMatpel}</p>
-                                        {guru && (
+                                        {sessions[0].guru && (
                                           <div className="mt-2 pt-2 border-t border-white/20 w-full px-2">
-                                             <span className="text-[9px] font-bold uppercase tracking-wide leading-tight opacity-80 truncate block">{guru}</span>
+                                             <span className="text-[9px] font-bold uppercase tracking-wide leading-tight opacity-80 truncate block">{sessions[0].guru}</span>
                                           </div>
                                         )}
+                                        <button onClick={() => handleOpenEdit(day, room)} className="absolute inset-0 bg-black/60 opacity-0 group-hover/card:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-sm"><Edit3 size={28} className="text-white mb-2" /><span className="text-[9px] font-black uppercase text-white tracking-widest">UBAH JADWAL</span></button>
+                                     </div>
+                                  ) : sessions.length > 1 ? (
+                                     <div className="w-full h-full p-5 bg-blue-600 text-white rounded-[2rem] shadow-xl flex flex-col justify-center items-center group/card relative overflow-hidden text-center border-2 border-transparent hover:border-white transition-all scale-[0.98] hover:scale-100">
+                                        <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl -mr-8 -mt-8"></div>
+                                        <div className="absolute top-3 right-3 bg-white text-blue-600 rounded-full w-6 h-6 flex items-center justify-center text-[10px] font-black shadow-sm">{sessions.length}</div>
+                                        <Layers size={18} className="opacity-70 mb-2" />
+                                        <p className="text-[9px] font-black uppercase tracking-widest opacity-90">{sessions.length} Sesi</p>
+                                        <div className="mt-2 space-y-0.5">
+                                           {sessions.slice(0, 3).map((s, i) => (
+                                             <p key={i} className="text-[9px] font-bold opacity-70 leading-tight">{s.jam || '-'}</p>
+                                           ))}
+                                        </div>
                                         <button onClick={() => handleOpenEdit(day, room)} className="absolute inset-0 bg-black/60 opacity-0 group-hover/card:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-sm"><Edit3 size={28} className="text-white mb-2" /><span className="text-[9px] font-black uppercase text-white tracking-widest">UBAH JADWAL</span></button>
                                      </div>
                                   ) : (
@@ -502,34 +540,47 @@ const handleDragEnd = () => {
                    <span>{editingCell.day}</span>
                  </div>
               </div>
-              <div className="space-y-5">
-                 <div className="grid md:grid-cols-2 gap-5">
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-black text-slate-500 uppercase ml-4 flex items-center gap-2"><Clock size={14} className="text-blue-500" /> Jam Belajar</label>
-                       <input type="text" placeholder="MISAL: 08:00 - 10:00" className="w-full px-6 py-4 bg-slate-50 rounded-[1.4rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner" value={editJam} onChange={e => setEditJam(e.target.value)} />
-                    </div>
-                    <div className="space-y-2">
-                       <label className="text-[10px] font-black text-slate-500 uppercase ml-4 flex items-center gap-2"><BookOpen size={14} className="text-blue-500" /> Mata Pelajaran</label>
-                       <select className="w-full px-6 py-4 bg-slate-50 rounded-[1.4rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner appearance-none" value={editMatpel} onChange={e => setEditMatpel(e.target.value)}>
-                          <option value="">— PILIH MATPEL —</option>
-                          {editMatpel && !subjects.includes(editMatpel) && (
-                            <option value={editMatpel}>{editMatpel} (LAMA)</option>
-                          )}
-                          {subjects.map(s => (
-                            <option key={s} value={s}>{s}</option>
-                          ))}
-                       </select>
-                    </div>
-                 </div>
-                 <div className="space-y-2">
-                    <label className="text-[10px] font-black text-slate-500 uppercase ml-4 flex items-center gap-2"><UserRound size={14} className="text-blue-500" /> Guru Pengajar</label>
-                    <select className="w-full px-6 py-4 bg-slate-50 rounded-[1.4rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner appearance-none" value={editGuru} onChange={e => setEditGuru(e.target.value)}>
-                       <option value="">— BELUM DITENTUKAN —</option>
-                       {teacherNames.map(name => (
-                         <option key={name} value={name}>{name.toUpperCase()}</option>
-                       ))}
-                    </select>
-                 </div>
+              <div className="space-y-5 max-h-[55vh] overflow-y-auto custom-scrollbar pr-1">
+                 {editSessions.map((session, idx) => (
+                   <div key={idx} className="p-6 bg-slate-50 rounded-[1.8rem] space-y-4 relative border-2 border-transparent">
+                      {editSessions.length > 1 && (
+                        <button onClick={() => removeSessionRow(idx)} className="absolute top-4 right-4 p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16}/></button>
+                      )}
+                      {editSessions.length > 1 && (
+                        <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">Sesi {idx + 1}</span>
+                      )}
+                      <div className="grid md:grid-cols-2 gap-4">
+                         <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-500 uppercase ml-4 flex items-center gap-2"><Clock size={14} className="text-blue-500" /> Jam Belajar</label>
+                            <input type="text" placeholder="MISAL: 08:00 - 10:00" className="w-full px-6 py-4 bg-white rounded-[1.4rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner" value={session.jam} onChange={e => updateSessionField(idx, 'jam', e.target.value)} />
+                         </div>
+                         <div className="space-y-2">
+                            <label className="text-[10px] font-black text-slate-500 uppercase ml-4 flex items-center gap-2"><BookOpen size={14} className="text-blue-500" /> Mata Pelajaran</label>
+                            <select className="w-full px-6 py-4 bg-white rounded-[1.4rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner appearance-none" value={session.matpel} onChange={e => updateSessionField(idx, 'matpel', e.target.value)}>
+                               <option value="">— PILIH MATPEL —</option>
+                               {session.matpel && !subjects.includes(session.matpel) && (
+                                 <option value={session.matpel}>{session.matpel} (LAMA)</option>
+                               )}
+                               {subjects.map(s => (
+                                 <option key={s} value={s}>{s}</option>
+                               ))}
+                            </select>
+                         </div>
+                      </div>
+                      <div className="space-y-2">
+                         <label className="text-[10px] font-black text-slate-500 uppercase ml-4 flex items-center gap-2"><UserRound size={14} className="text-blue-500" /> Guru Pengajar</label>
+                         <select className="w-full px-6 py-4 bg-white rounded-[1.4rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner appearance-none" value={session.guru} onChange={e => updateSessionField(idx, 'guru', e.target.value)}>
+                            <option value="">— BELUM DITENTUKAN —</option>
+                            {teacherNames.map(name => (
+                              <option key={name} value={name}>{name.toUpperCase()}</option>
+                            ))}
+                         </select>
+                      </div>
+                   </div>
+                 ))}
+                 <button onClick={addSessionRow} className="w-full py-4 border-2 border-dashed border-slate-200 rounded-[1.4rem] text-slate-400 hover:border-blue-300 hover:text-blue-500 hover:bg-blue-50/50 transition-all flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest">
+                    <Plus size={16}/> Tambah Sesi Lain
+                 </button>
                  <div className="pt-4">
                     <button onClick={handleSaveEdit} className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2">
                        {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} SIMPAN PERUBAHAN
