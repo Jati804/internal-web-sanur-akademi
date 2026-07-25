@@ -105,13 +105,12 @@ const GuideModal = ({ role, onClose }: {
     <div className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
       <div className="bg-white w-full max-w-sm rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
         {/* Header */}
-        <div className={`p-8 ${content.color} text-white flex justify-between items-center shrink-0`}>
-          <div className="flex items-center gap-3">
-            <HelpCircle size={24} />
-            <h3 className="text-lg font-black uppercase italic tracking-tighter">Panduan Sistem</h3>
-          </div>
-          <button onClick={onClose} className="p-2 bg-white/20 rounded-full hover:bg-white/40 transition-all"><X size={18}/></button>
-        </div>
+        <div className={`p-8 ${content.color} text-white flex items-center shrink-0`}>
+  <div className="flex items-center gap-3">
+    <HelpCircle size={24} />
+    <h3 className="text-lg font-black uppercase italic tracking-tighter">Panduan Sistem</h3>
+  </div>
+</div>
 
         {/* Content Area - selalu berupa panduan teks, seragam untuk semua role */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
