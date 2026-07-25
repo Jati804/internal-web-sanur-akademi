@@ -19,7 +19,8 @@ import {
   DollarSign,
   Check,
   Loader2,
-  UserRound
+  UserRound,
+  AlertTriangle
 } from 'lucide-react';
 import { supabase } from '../services/supabase.ts';
 import ModalPortal from '../ModalPortal.tsx';
@@ -56,6 +57,7 @@ const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
 
   const [editingCell, setEditingCell] = useState<{ day: string, room: string } | null>(null);
   const [editSessions, setEditSessions] = useState<{ matpel: string, jam: string, guru: string }[]>([]);
+  const [confirmDeleteItem, setConfirmDeleteItem] = useState<{ type: 'SUBJECT' | 'LEVEL' | 'CLASS', value: string } | null>(null);
 
   // ✨ Tombol "lompat ke hari" — klik hari, tabel otomatis scroll ke kolom itu
   const tableScrollRef = useRef<HTMLDivElement>(null);
@@ -280,6 +282,15 @@ const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
     setLevels(next);
     syncConfigToCloud(subjects, next, classes);
   };
+
+  const executeConfirmedDelete = () => {
+    if (!confirmDeleteItem) return;
+    const { type, value } = confirmDeleteItem;
+    if (type === 'SUBJECT') handleRemoveSubject(value);
+    else if (type === 'LEVEL') handleRemoveLevel(value);
+    else if (type === 'CLASS') handleRemoveClass(value);
+    setConfirmDeleteItem(null);
+  };
   const handleDragStart = (index: number, type: 'SUBJECT' | 'CLASS' | 'LEVEL') => {
   setDraggedIndex(index);
   setDraggedType(type);
@@ -382,7 +393,7 @@ const handleDragEnd = () => {
   }`}
 >
       <span className="text-[11px] font-black uppercase italic text-slate-700">{s}</span>
-      <button onClick={() => handleRemoveSubject(s)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
+      <button onClick={() => setConfirmDeleteItem({ type: 'SUBJECT', value: s })} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
     </div>
   ))}
 </div>
@@ -418,7 +429,7 @@ const handleDragEnd = () => {
   }`}
 >
       <span className="text-[11px] font-black uppercase italic text-slate-700">{l}</span>
-      <button onClick={() => handleRemoveLevel(l)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
+      <button onClick={() => setConfirmDeleteItem({ type: 'LEVEL', value: l })} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
     </div>
   ))}
 </div>
@@ -454,7 +465,7 @@ const handleDragEnd = () => {
   }`}
 >
       <span className="text-[11px] font-black uppercase italic text-slate-700">{c}</span>
-      <button onClick={() => handleRemoveClass(c)} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
+      <button onClick={() => setConfirmDeleteItem({ type: 'CLASS', value: c })} className="p-2 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all"><Trash2 size={16} /></button>
     </div>
   ))}
 </div>
@@ -651,6 +662,37 @@ const handleDragEnd = () => {
                  </div>
               </div>
            </div>
+        </div>
+        </ModalPortal>
+      )}
+
+      {/* MODAL KONFIRMASI HAPUS DATA MASTER (MATPEL / LEVEL / RUANG) */}
+      {confirmDeleteItem && (
+        <ModalPortal>
+        <div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl" onClick={() => setConfirmDeleteItem(null)}>
+          <div className="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl text-center space-y-6" onClick={e => e.stopPropagation()}>
+            <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto"><AlertTriangle size={28} /></div>
+            <div className="space-y-2">
+              <h4 className="text-lg font-black text-slate-800 uppercase italic">Yakin Mau Hapus?</h4>
+              <p className="text-sm font-black text-rose-600 uppercase italic">
+                {confirmDeleteItem.type === 'SUBJECT' && 'Mata Pelajaran'}
+                {confirmDeleteItem.type === 'LEVEL' && 'Level'}
+                {confirmDeleteItem.type === 'CLASS' && 'Ruang Kelas'}
+                : {confirmDeleteItem.value}
+              </p>
+            </div>
+            <div className="bg-amber-50 border border-amber-100 rounded-2xl p-5 text-left">
+              <p className="text-[10px] font-bold text-amber-800 uppercase leading-relaxed">
+                {confirmDeleteItem.type === 'SUBJECT' && 'Data lama (materi, jadwal, riwayat siswa) yang sudah pakai matkul ini TIDAK ikut terhapus. Tapi matkul ini nggak akan muncul lagi sebagai pilihan baru di form Materi, Peta Ruangan, atau pendaftaran kelas.'}
+                {confirmDeleteItem.type === 'LEVEL' && 'Data lama (rapot, materi, jadwal) yang sudah pakai level ini TIDAK ikut terhapus. Tapi level ini nggak akan muncul lagi sebagai pilihan baru di form Materi, Peta Ruangan, atau pendaftaran kelas.'}
+                {confirmDeleteItem.type === 'CLASS' && 'Jadwal yang sudah terlanjur diatur di ruangan ini TIDAK ikut terhapus dari database, tapi ruangan ini akan hilang dari Peta Ruangan sehingga jadwal lamanya jadi susah dikelola lewat tampilan ini.'}
+              </p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setConfirmDeleteItem(null)} className="flex-1 py-4 bg-slate-50 text-slate-600 rounded-xl font-black text-[10px] uppercase">Batal</button>
+              <button onClick={executeConfirmedDelete} className="flex-1 py-4 bg-rose-600 text-white rounded-xl font-black text-[10px] uppercase">Ya, Hapus</button>
+            </div>
+          </div>
         </div>
         </ModalPortal>
       )}
