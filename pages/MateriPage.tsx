@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { User, StudentPayment } from '../types';
+import { User, StudentPayment, Attendance } from '../types';
 import { supabase } from '../services/supabase.ts';
 import ModalPortal from '../ModalPortal.tsx';
 import {
@@ -20,10 +20,10 @@ interface Material {
 
 interface MateriPageProps {
   user: User;
-  teachers: User[];
   subjects: string[];
   levels: string[];
   studentPayments?: StudentPayment[];
+  attendanceLogs?: Attendance[];
 }
 
 const stripLabel = (className: string) =>
@@ -38,7 +38,7 @@ const getLevelRank = (level: string) => {
   return idx === -1 ? 999 : idx; // level custom yang nggak dikenal, taruh di paling belakang
 };
 
-const MateriPage: React.FC<MateriPageProps> = ({ user, teachers, subjects, levels, studentPayments }) => {
+const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, studentPayments, attendanceLogs }) => {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
@@ -70,9 +70,27 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, teachers, subjects, level
     if (user.role === 'ADMIN') return materials;
 
     if (user.role === 'TEACHER') {
-      const myTeacherRecord = teachers.find(t => t.id === user.id);
-      const mySubjects: string[] = (myTeacherRecord as any)?.subjects || [];
-      return materials.filter(m => mySubjects.includes(m.subject));
+      // Akses ditentukan dari histori presensi guru: selama box "Honor Saya" untuk kelas itu
+      // masih ada (belum dihapus), berarti guru itu pernah/masih pegang matkul+level itu.
+      // Sama seperti logic di TeacherHonor.tsx: guru dianggap "pegang" kelas itu kalau dia
+      // yang beneran ngajar (teacherId) ATAU itu kelas miliknya sendiri yang lagi digantiin
+      // guru lain (originalTeacherId) — dan cuma log sesi yang valid (SESSION_LOG/SUB_LOG).
+      const accessPairs = (attendanceLogs || [])
+        .filter(l =>
+          (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG') &&
+          (l.teacherId === user.id || l.originalTeacherId === user.id)
+        )
+        .map(l => {
+          const match = (l.className || '').match(/(.*)\s\((.*)\)\s-\s.*/);
+          const subject = (match ? match[1] : '').trim().toUpperCase();
+          const level = (l.level || (match ? match[2] : '')).trim().toUpperCase();
+          return { subject, level };
+        })
+        .filter(p => p.subject && p.level);
+
+      return materials.filter(m =>
+        accessPairs.some(a => a.subject === m.subject && a.level === m.level)
+      );
     }
 
     if (user.role === 'STUDENT') {
@@ -90,7 +108,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, teachers, subjects, level
     }
 
     return [];
-  }, [materials, user, teachers, studentPayments]);
+  }, [materials, user, attendanceLogs, studentPayments]);
 
   // Kelompokkan flat per kombinasi Subject + Level (misal "MICROSOFT WORD - BASIC")
   const grouped = useMemo(() => {
