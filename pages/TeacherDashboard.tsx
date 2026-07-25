@@ -420,10 +420,9 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
 
             <div className="space-y-6">
                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 flex items-center gap-2"><Timer size={14} className="text-blue-500"/> Durasi Mengajar (Jam)</label>
-               <div className="grid grid-cols-3 gap-4 h-[72px]">
-                  {[1, 2, 3].map(h => (
-                    <button key={h} onClick={() => setForm({...form, duration: h})} className={`rounded-[2rem] font-black text-sm transition-all border-2 ${form.duration === h ? 'bg-orange-600 text-white border-orange-600 shadow-xl scale-105' : 'bg-white text-slate-600 border-slate-200 hover:border-orange-400 shadow-sm'}`}>{h} JAM</button>
-                  ))}
+               <div className="h-[72px] rounded-[2rem] bg-orange-600 border-2 border-orange-600 shadow-xl flex items-center justify-center gap-2 text-white cursor-default">
+                  <span className="font-black text-sm">2 JAM</span>
+                  <span className="text-[8px] font-black uppercase tracking-widest text-orange-100">/ Pertemuan</span>
                </div>
             </div>
 
