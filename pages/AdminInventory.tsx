@@ -382,21 +382,6 @@ const canAddSales = useMemo(() => {
         from { opacity: 0; transform: scale(0.95); }
         to { opacity: 1; transform: scale(1); }
       }
-      /* ✨ Scroll bar cantik (sama persis seperti AdminFinance) */
-      .overflow-y-auto::-webkit-scrollbar {
-        width: 8px;
-      }
-      .overflow-y-auto::-webkit-scrollbar-track {
-        background: #f1f5f9;
-        border-radius: 10px;
-      }
-      .overflow-y-auto::-webkit-scrollbar-thumb {
-        background: #3b82f6;
-        border-radius: 10px;
-      }
-      .overflow-y-auto::-webkit-scrollbar-thumb:hover {
-        background: #2563eb;
-      }
     `}</style>
 
     <div className="space-y-12 pb-40 px-2">
