@@ -4,7 +4,7 @@ import { supabase } from '../services/supabase.ts';
 import ModalPortal from '../ModalPortal.tsx';
 import {
   Library, Upload, FileText, Download, Trash2, Loader2,
-  X, Plus, FolderOpen, CheckCircle2, AlertCircle
+  X, Plus, FolderOpen, CheckCircle2, AlertCircle, ArrowUp, ArrowDown, ArrowUpDown
 } from 'lucide-react';
 
 interface Material {
@@ -29,6 +29,15 @@ interface MateriPageProps {
 const stripLabel = (className: string) =>
   (className || '').replace(/\s*\(.*?\)\s*-\s*(REGULER|PRIVATE)\s*\d+/i, '').trim();
 
+// Urutan level dari ATAS ke BAWAH tampilan (BUKAN alfabetis, BUKAN urutan di Pengaturan,
+// karena urutan penambahan di Pengaturan bisa aja kebalik-balik / nggak berurutan)
+// BASIC ditaruh PALING BAWAH (kayak pondasi), makin ke atas makin tinggi levelnya.
+const LEVEL_DIFFICULTY_ORDER = ['ADVANCED', 'INTERMEDIATE', 'BASIC'];
+const getLevelRank = (level: string) => {
+  const idx = LEVEL_DIFFICULTY_ORDER.indexOf((level || '').toUpperCase());
+  return idx === -1 ? 999 : idx; // level custom yang nggak dikenal, taruh di paling belakang
+};
+
 const MateriPage: React.FC<MateriPageProps> = ({ user, teachers, subjects, levels, studentPayments }) => {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,6 +45,8 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, teachers, subjects, level
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<Material | null>(null);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [reorderMode, setReorderMode] = useState(false);
+  const [reordering, setReordering] = useState(false);
 
   const [form, setForm] = useState({ subject: subjects[0] || '', level: levels[0] || '', title: '', file: null as File | null });
 
@@ -81,17 +92,26 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, teachers, subjects, level
     return [];
   }, [materials, user, teachers, studentPayments]);
 
-  // Kelompokkan per subject -> level
+  // Kelompokkan flat per kombinasi Subject + Level (misal "MICROSOFT WORD - BASIC")
   const grouped = useMemo(() => {
-    const map = new Map<string, Map<string, Material[]>>();
+    const map = new Map<string, { subject: string; level: string; items: Material[]; isOrphaned: boolean }>();
     visibleMaterials.forEach(m => {
-      if (!map.has(m.subject)) map.set(m.subject, new Map());
-      const levelMap = map.get(m.subject)!;
-      if (!levelMap.has(m.level)) levelMap.set(m.level, []);
-      levelMap.get(m.level)!.push(m);
+      const key = `${m.subject}|||${m.level}`;
+      if (!map.has(key)) map.set(key, { subject: m.subject, level: m.level, items: [], isOrphaned: !subjects.includes(m.subject) });
+      map.get(key)!.items.push(m);
     });
-    return map;
-  }, [visibleMaterials]);
+    return Array.from(map.values()).sort((a, b) => {
+      if (a.subject !== b.subject) {
+        // Subject yang udah dihapus dari Pengaturan (indexOf = -1) ditaruh PALING BAWAH,
+        // bukan malah loncat ke atas (indexOf -1 secara default lebih kecil dari index manapun)
+        const rankA = a.isOrphaned ? 9999 : subjects.indexOf(a.subject);
+        const rankB = b.isOrphaned ? 9999 : subjects.indexOf(b.subject);
+        return rankA - rankB;
+      }
+      // Urutkan level dari atas ke bawah (ADVANCED -> INTERMEDIATE -> BASIC)
+      return getLevelRank(a.level) - getLevelRank(b.level);
+    });
+  }, [visibleMaterials, subjects, levels]);
 
   const resetForm = () => {
     setForm({ subject: subjects[0] || '', level: levels[0] || '', title: '', file: null });
@@ -136,6 +156,26 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, teachers, subjects, level
     }
   };
 
+  const moveItem = async (items: Material[], index: number, direction: 'up' | 'down') => {
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= items.length) return;
+
+    const reordered = [...items];
+    [reordered[index], reordered[targetIndex]] = [reordered[targetIndex], reordered[index]];
+
+    setReordering(true);
+    try {
+      // Tulis ulang sort_order semua item di grup ini secara berurutan (0,1,2,...)
+      // biar konsisten walau sort_order lama-nya berantakan/sama semua
+      await Promise.all(reordered.map((m, i) => supabase.from('materials').update({ sort_order: i }).eq('id', m.id)));
+      await fetchMaterials();
+    } catch (e: any) {
+      alert('Gagal mengatur urutan: ' + e.message);
+    } finally {
+      setReordering(false);
+    }
+  };
+
   const executeDelete = async () => {
     if (!confirmDelete) return;
     setLoading(true);
@@ -155,35 +195,50 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, teachers, subjects, level
 
   const isAdmin = user.role === 'ADMIN';
 
+  // 🎨 Tema warna per role: Admin biru, Guru oranye, Siswa hijau
+  const theme = user.role === 'TEACHER'
+    ? { blur: 'bg-orange-600', badge: 'bg-orange-500', label: 'text-orange-400', title: 'text-orange-500', tag: 'text-orange-600', iconBg: 'bg-orange-50 text-orange-600', btn: 'bg-orange-600 hover:bg-orange-700' }
+    : user.role === 'STUDENT'
+    ? { blur: 'bg-emerald-600', badge: 'bg-emerald-500', label: 'text-emerald-400', title: 'text-emerald-500', tag: 'text-emerald-600', iconBg: 'bg-emerald-50 text-emerald-600', btn: 'bg-emerald-600 hover:bg-emerald-700' }
+    : { blur: 'bg-blue-600', badge: 'bg-blue-500', label: 'text-blue-400', title: 'text-blue-500', tag: 'text-blue-600', iconBg: 'bg-blue-50 text-blue-600', btn: 'bg-blue-600 hover:bg-blue-700' };
+
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-40 px-4 animate-in fade-in duration-500">
       {/* HEADER */}
       <div className="bg-slate-900 p-10 md:p-14 rounded-[4rem] text-white shadow-2xl relative overflow-hidden flex flex-col md:flex-row justify-between items-center gap-8">
-        <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600 rounded-full blur-[120px] opacity-20"></div>
+        <div className={`absolute top-0 right-0 w-80 h-80 ${theme.blur} rounded-full blur-[120px] opacity-20`}></div>
         <div className="relative z-10 space-y-3">
           <div className="flex items-center gap-3 mb-2">
-            <div className="p-2 bg-blue-500 rounded-lg shadow-lg shadow-blue-500/20"><Library size={14} className="text-white" /></div>
-            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-400 italic">Perpustakaan Digital</span>
+            <div className={`p-2 ${theme.badge} rounded-lg shadow-lg shadow-black/10`}><Library size={14} className="text-white" /></div>
+            <span className={`text-[10px] font-black uppercase tracking-[0.4em] ${theme.label} italic`}>Perpustakaan Digital</span>
           </div>
-          <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">Materi <span className="text-blue-500">Belajar</span></h2>
+          <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">Materi <span className={theme.title}>Belajar</span></h2>
           <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">
             {isAdmin ? 'Kelola semua modul & contoh soal' : 'Modul & contoh soal sesuai kelasmu'}
           </p>
         </div>
         {isAdmin && (
-          <button
-            onClick={() => setShowUploadForm(true)}
-            className="relative z-10 flex items-center gap-3 bg-blue-600 hover:bg-blue-700 px-8 py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all"
-          >
-            <Plus size={18} /> Upload Materi
-          </button>
+          <div className="relative z-10 flex items-center gap-3">
+            <button
+              onClick={() => setReorderMode(v => !v)}
+              className={`flex items-center gap-2 px-6 py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all ${reorderMode ? 'bg-amber-500 hover:bg-amber-600' : 'bg-white/10 hover:bg-white/20'}`}
+            >
+              <ArrowUpDown size={16} /> {reorderMode ? 'Selesai Atur Urutan' : 'Atur Urutan'}
+            </button>
+            <button
+              onClick={() => setShowUploadForm(true)}
+              className={`flex items-center gap-3 ${theme.btn} px-8 py-5 rounded-[2rem] font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all`}
+            >
+              <Plus size={18} /> Upload Materi
+            </button>
+          </div>
         )}
       </div>
 
       {/* LIST MATERI */}
       {loading ? (
-        <div className="py-24 flex justify-center"><Loader2 size={32} className="animate-spin text-blue-600" /></div>
-      ) : grouped.size === 0 ? (
+        <div className="py-24 flex justify-center"><Loader2 size={32} className={`animate-spin ${theme.tag}`} /></div>
+      ) : grouped.length === 0 ? (
         <div className="bg-white p-14 rounded-[4rem] border border-slate-100 shadow-xl flex flex-col items-center text-center gap-4 opacity-60">
           <FolderOpen size={56} className="text-slate-300" />
           <p className="font-black text-[12px] uppercase tracking-[0.4em] text-slate-400">Belum Ada Materi</p>
@@ -192,34 +247,47 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, teachers, subjects, level
           </p>
         </div>
       ) : (
-        Array.from(grouped.entries()).map(([subject, levelMap]) => (
-          <div key={subject} className="bg-white p-10 md:p-14 rounded-[4rem] border border-slate-100 shadow-xl space-y-8">
-            <h3 className="font-black text-slate-800 uppercase italic text-2xl">{subject}</h3>
-            {Array.from(levelMap.entries()).map(([level, items]) => (
-              <div key={level} className="space-y-4">
-                <p className="text-[10px] font-black text-blue-600 uppercase tracking-[0.3em]">Level {level}</p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {items.map(m => (
-                    <div key={m.id} className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-4 min-w-0">
-                        <div className="w-12 h-12 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center shrink-0"><FileText size={22} /></div>
-                        <p className="font-black text-slate-700 text-sm truncate uppercase italic">{m.title}</p>
+        grouped.map(({ subject, level, items, isOrphaned }) => (
+          <div key={`${subject}|||${level}`} className="bg-white p-10 md:p-14 rounded-[4rem] border border-slate-100 shadow-xl space-y-6">
+            <div className="flex flex-wrap items-center gap-3">
+              <h3 className="font-black text-slate-800 uppercase italic text-2xl">{subject}</h3>
+              <span className={`font-black uppercase italic text-2xl ${theme.tag}`}>- {level}</span>
+              {isOrphaned && isAdmin && (
+                <span className="bg-amber-50 text-amber-700 border border-amber-200 px-4 py-1.5 rounded-full text-[9px] font-black uppercase tracking-widest">
+                  ⚠️ Matkul ini sudah dihapus dari Pengaturan
+                </span>
+              )}
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {items.map((m, idx) => (
+                <div key={m.id} className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-4 min-w-0">
+                    {reorderMode && isAdmin && (
+                      <div className="flex flex-col gap-1 shrink-0">
+                        <button onClick={() => moveItem(items, idx, 'up')} disabled={idx === 0 || reordering} className="p-1.5 bg-white border border-slate-200 rounded-lg text-slate-500 hover:text-amber-600 hover:border-amber-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all" title="Naik">
+                          <ArrowUp size={12} />
+                        </button>
+                        <button onClick={() => moveItem(items, idx, 'down')} disabled={idx === items.length - 1 || reordering} className="p-1.5 bg-white border border-slate-200 rounded-lg text-slate-500 hover:text-amber-600 hover:border-amber-300 disabled:opacity-30 disabled:cursor-not-allowed transition-all" title="Turun">
+                          <ArrowDown size={12} />
+                        </button>
                       </div>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <a href={m.file_url} target="_blank" rel="noopener noreferrer" className="p-3 bg-blue-600 text-white rounded-xl hover:bg-blue-700 transition-all shadow-md" title="Lihat/Download">
-                          <Download size={16} />
-                        </a>
-                        {isAdmin && (
-                          <button onClick={() => setConfirmDelete(m)} className="p-3 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white transition-all" title="Hapus">
-                            <Trash2 size={16} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
+                    )}
+                    <div className={`w-12 h-12 ${theme.iconBg} rounded-2xl flex items-center justify-center shrink-0`}><FileText size={22} /></div>
+                    <p className="font-black text-slate-700 text-xs uppercase italic leading-snug">{m.title}</p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <a href={m.file_url} target="_blank" rel="noopener noreferrer" className={`p-3 ${theme.btn} text-white rounded-xl transition-all shadow-md`} title="Lihat/Download">
+                      <Download size={16} />
+                    </a>
+                    {isAdmin && !reorderMode && (
+                      <button onClick={() => setConfirmDelete(m)} className="p-3 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white transition-all" title="Hapus">
+                        <Trash2 size={16} />
+                      </button>
+                    )}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         ))
       )}
@@ -228,7 +296,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, teachers, subjects, level
       {showUploadForm && (
         <ModalPortal>
         <div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl">
-          <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl space-y-6 relative">
+          <div className="bg-white w-full max-w-2xl rounded-[2.5rem] p-8 shadow-2xl space-y-6 relative">
             <button onClick={resetForm} className="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500"><X size={20} /></button>
             <div className="space-y-1">
               <h4 className="text-xl font-black text-slate-800 uppercase italic">Upload Materi Baru</h4>
@@ -254,7 +322,12 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, teachers, subjects, level
               </div>
               <div>
                 <label className="text-[9px] font-black text-slate-400 uppercase ml-2">File PDF</label>
-                <input type="file" accept="application/pdf" onChange={e => setForm({ ...form, file: e.target.files?.[0] || null })} className="w-full mt-1 text-[10px] font-bold" />
+                <input
+                  type="file"
+                  accept="application/pdf"
+                  onChange={e => setForm({ ...form, file: e.target.files?.[0] || null })}
+                  className="w-full mt-1 px-3 py-2.5 bg-slate-50 rounded-xl border-2 border-slate-100 text-[10px] font-bold text-slate-500 cursor-pointer file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white file:text-[9px] file:font-black file:uppercase file:cursor-pointer hover:file:bg-blue-700 file:transition-all"
+                />
               </div>
             </div>
 
