@@ -124,7 +124,8 @@ useEffect(() => {
         setView('MAINTENANCE');
       } else {
         setSystemMaintenance(false);
-        // Hanya balik ke SELECTION kalau sebelumnya memang lagi di MAINTENANCE
+        // Hanya balik ke SELECTION kalau sebelumnya memang lagi di MAINTENANCE.
+        // Kalau user lagi di LOGIN/SELECTION, jangan diganggu polling ini.
         setView(v => v === 'MAINTENANCE' ? 'SELECTION' : v);
       }
     } catch (e) {
@@ -132,7 +133,7 @@ useEffect(() => {
     }
   };
   checkMaintenance();
-  const interval = setInterval(checkMaintenance, 30000);
+  const interval = setInterval(checkMaintenance, 30000); // cek tiap 30 detik
   return () => clearInterval(interval);
 }, []);
 
