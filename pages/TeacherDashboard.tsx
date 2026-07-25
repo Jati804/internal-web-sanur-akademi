@@ -420,9 +420,9 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
 
             <div className="space-y-4">
                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 flex items-center gap-2"><Timer size={14} className="text-blue-500"/> Durasi Mengajar (Jam)</label>
-               <div className="h-[72px] rounded-[2rem] bg-orange-600 border-b-4 border-orange-800 shadow-lg flex items-center justify-center gap-2 text-white cursor-default">
+               <div className="h-[72px] rounded-2xl bg-orange-600 border-2 border-orange-600 shadow-lg flex items-center justify-center gap-2 text-white cursor-default">
                   <span className="font-black text-sm">2 JAM</span>
-                  <span className="text-[8px] font-black uppercase tracking-widest text-orange-100">/ Pertemuan</span>
+                  <span className="font-black text-sm">/ PERTEMUAN</span>
                </div>
             </div>
 
