@@ -287,7 +287,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
             </div>
             <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">Materi <span className={theme.title}>Belajar</span></h2>
             <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">
-              {isAdmin ? 'Kelola semua modul & contoh soal' : 'Materi & soal sesuai kelasmu'}
+              {isAdmin ? 'Kelola semua modul materi & soal' : 'Materi & soal sesuai kelasmu'}
             </p>
           </div>
           {isAdmin && (
