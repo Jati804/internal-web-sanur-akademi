@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { User, StudentPayment } from '../types';
 import { supabase } from '../services/supabase.ts';
+import ModalPortal from '../ModalPortal.tsx';
 import {
   Library, Upload, FileText, Download, Trash2, Loader2,
   X, Plus, FolderOpen, CheckCircle2, AlertCircle
@@ -225,19 +226,20 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, teachers, subjects, level
 
       {/* MODAL UPLOAD (ADMIN ONLY) */}
       {showUploadForm && (
+        <ModalPortal>
         <div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl">
-          <div className="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl space-y-6 relative">
+          <div className="bg-white w-full max-w-lg rounded-[2.5rem] p-8 shadow-2xl space-y-6 relative">
             <button onClick={resetForm} className="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500"><X size={20} /></button>
             <div className="space-y-1">
               <h4 className="text-xl font-black text-slate-800 uppercase italic">Upload Materi Baru</h4>
               <p className="text-[10px] font-bold text-slate-400 uppercase">File harus format PDF</p>
             </div>
 
-            <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Mata Pelajaran</label>
-                <select value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} className="w-full mt-1 px-4 py-3 bg-slate-50 rounded-xl font-black text-xs outline-none border-2 border-slate-100">
-                  {subjects.map(s => <option key={s} value={s}>{s}</option>)}
+                <select value={form.subject} onChange={e => setForm({ ...form, subject: e.target.value })} className="w-full mt-1 px-4 py-3 bg-slate-50 rounded-xl font-black text-xs uppercase outline-none border-2 border-slate-100">
+                  {subjects.map(s => <option key={s} value={s} className="uppercase">{s}</option>)}
                 </select>
               </div>
               <div>
@@ -252,7 +254,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, teachers, subjects, level
               </div>
               <div>
                 <label className="text-[9px] font-black text-slate-400 uppercase ml-2">File PDF</label>
-                <input type="file" accept="application/pdf" onChange={e => setForm({ ...form, file: e.target.files?.[0] || null })} className="w-full mt-1 text-xs font-bold" />
+                <input type="file" accept="application/pdf" onChange={e => setForm({ ...form, file: e.target.files?.[0] || null })} className="w-full mt-1 text-[10px] font-bold" />
               </div>
             </div>
 
@@ -261,10 +263,12 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, teachers, subjects, level
             </button>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {/* MODAL KONFIRMASI HAPUS */}
       {confirmDelete && (
+        <ModalPortal>
         <div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl">
           <div className="bg-white w-full max-w-sm rounded-[2rem] p-8 shadow-2xl text-center space-y-6">
             <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto"><AlertCircle size={28} /></div>
@@ -278,6 +282,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, teachers, subjects, level
             </div>
           </div>
         </div>
+        </ModalPortal>
       )}
 
       {showSuccess && (
