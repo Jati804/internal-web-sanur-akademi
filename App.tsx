@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Receipt, Menu, CreditCard, BookOpen, Book, UserCog, 
   ClipboardCheck, Wallet, GraduationCap, Power, 
   Settings as SettingsIcon, Database, X,
-  Sparkles, HelpCircle, Info, RotateCw
+  Sparkles, HelpCircle, Info, RotateCw, Library
 } from 'lucide-react';
 
 import { supabase } from './services/supabase.ts';
@@ -27,6 +27,7 @@ import TeacherHonor from './pages/TeacherHonor.tsx';
 import TeacherReportsInbox from './pages/TeacherReportsInbox.tsx';
 import StudentPortal from './pages/StudentPortal.tsx';
 import VerifyCertificate from './pages/VerifyCertificate.tsx';
+import MateriPage from './pages/MateriPage.tsx';
 
 import { User, Attendance, Transaction, StudentProfile, StudentPayment } from './types.ts';
 import { INITIAL_SUBJECTS, CLASS_ROOM_OPTIONS } from './constants.tsx';
@@ -357,6 +358,7 @@ const pendingReportsCount = Array.isArray(reports) ?
                 <NavItem to="/admin/staff" icon={UserCog} label="Akses User" onClick={closeSidebar} />
                 <NavItem to="/admin/academic" icon={SettingsIcon} label="Pengaturan" onClick={closeSidebar} />
                 <NavItem to="/admin/maintenance" icon={Database} label="Sistem" onClick={closeSidebar} />
+                <NavItem to="/admin/materi" icon={Library} label="Materi" onClick={closeSidebar} />
               </>
             )}
             {user.role === 'TEACHER' && (
@@ -364,12 +366,14 @@ const pendingReportsCount = Array.isArray(reports) ?
                 <NavItem to="/teacher" icon={ClipboardCheck} label="Lapor Presensi" onClick={closeSidebar} />
                 <NavItem to="/teacher/honor" icon={Wallet} label="Honor Saya" activeColor="blue" onClick={closeSidebar} />
                 <NavItem to="/teacher/reports" icon={GraduationCap} label="Rapot Siswa" activeColor="blue" onClick={closeSidebar} badge={pendingReportsCount} />
+                <NavItem to="/teacher/materi" icon={Library} label="Materi" activeColor="blue" onClick={closeSidebar} />
               </>
             )}
             {user.role === 'STUDENT' && (
               <>
                 <NavItem to="/student" icon={GraduationCap} label="Kelas Saya" activeColor="blue" onClick={closeSidebar} />
                 <NavItem to="/student/payments" icon={CreditCard} label="Pembayaran" activeColor="blue" onClick={closeSidebar} />
+                <NavItem to="/student/materi" icon={Library} label="Materi" activeColor="blue" onClick={closeSidebar} />
               </>
             )}
           </nav>
@@ -409,6 +413,7 @@ const pendingReportsCount = Array.isArray(reports) ?
               <Route path="/admin/staff" element={<AdminStaff user={user} teachers={teachers} setTeachers={setTeachers} studentAccounts={studentAccounts} setStudentAccounts={setStudentAccounts} refreshAllData={refreshAllData} />} />
               <Route path="/admin/academic" element={<AdminAcademic subjects={subjects} setSubjects={setSubjects} classes={classes} setClasses={setClasses} levels={levels} setLevels={setLevels} scheduleData={masterSchedule} setScheduleData={setMasterSchedule} salaryConfig={salaryConfig} setSalaryConfig={setSalaryConfig} teachers={teachers} />} />
               <Route path="/admin/maintenance" element={<AdminMaintenance attendanceLogs={attendanceLogs} setAttendanceLogs={setAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} refreshAllData={refreshAllData} />} />
+              <Route path="/admin/materi" element={<MateriPage user={user} teachers={teachers} subjects={subjects} levels={levels} />} />
               <Route path="/teacher" element={<TeacherDashboard user={user} logs={attendanceLogs} studentAccounts={studentAccounts} subjects={subjects} classes={classes} levels={levels} salaryConfig={salaryConfig} teachers={teachers} refreshAllData={refreshAllData} />} />
               <Route path="/teacher/honor" element={<TeacherHonor user={user} logs={attendanceLogs} refreshAllData={refreshAllData} />} />
               <Route path="/teacher/reports" element={
@@ -423,6 +428,8 @@ const pendingReportsCount = Array.isArray(reports) ?
 } />
               <Route path="/student" element={<StudentPortal user={user} attendanceLogs={attendanceLogs} reports={reports} studentAttendanceLogs={studentAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} subjects={subjects} levels={levels} classes={classes} teachers={teachers} initialView="PROGRESS" refreshAllData={refreshAllData} />} />
               <Route path="/student/payments" element={<StudentPortal user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} subjects={subjects} levels={levels} classes={classes} teachers={teachers} initialView="PAYMENTS" refreshAllData={refreshAllData} />} />
+              <Route path="/teacher/materi" element={<MateriPage user={user} teachers={teachers} subjects={subjects} levels={levels} />} />
+              <Route path="/student/materi" element={<MateriPage user={user} teachers={teachers} subjects={subjects} levels={levels} studentPayments={studentPayments} />} />
               <Route path="/" element={<Navigate to={user.role === 'ADMIN' ? '/admin' : user.role === 'TEACHER' ? '/teacher' : '/student'} replace />} />
             </Routes>
           </div>
