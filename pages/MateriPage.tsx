@@ -4,7 +4,7 @@ import { supabase } from '../services/supabase.ts';
 import ModalPortal from '../ModalPortal.tsx';
 import {
   Library, Upload, FileText, Download, Trash2, Loader2,
-  X, Plus, FolderOpen, AlertCircle, ArrowUp, ArrowDown, ArrowUpDown, Edit3
+  X, Plus, FolderOpen, AlertCircle, ArrowUp, ArrowDown, ArrowUpDown
 } from 'lucide-react';
 
 interface Material {
@@ -48,7 +48,6 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
   const [uploading, setUploading] = useState(false);
   const [showUploadForm, setShowUploadForm] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState<Material | null>(null);
-  const [editingMaterial, setEditingMaterial] = useState<Material | null>(null);
   const [reorderMode, setReorderMode] = useState(false);
   const [reordering, setReordering] = useState(false);
 
@@ -137,60 +136,38 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
 
   const resetForm = () => {
     setForm({ subject: subjects[0] || '', level: levels[0] || '', title: '', file: null });
-    setEditingMaterial(null);
     setShowUploadForm(false);
   };
 
   const handleUpload = async () => {
-    if (!form.subject || !form.level || !form.title) {
-      return alert('Lengkapi semua kolom dulu ya! ✨');
+    if (!form.subject || !form.level || !form.title || !form.file) {
+      return alert('Lengkapi semua kolom dulu ya, termasuk file PDF-nya! ✨');
     }
-    if (!editingMaterial && !form.file) {
-      return alert('Pilih file PDF-nya dulu ya! ✨');
-    }
-    if (form.file && form.file.type !== 'application/pdf') {
+    if (form.file.type !== 'application/pdf') {
       return alert('File harus berformat PDF ya!');
     }
     setUploading(true);
     try {
-      let fileUrl = editingMaterial?.file_url;
-      let fileSize = editingMaterial?.file_size;
+      const id = `MAT-${Date.now()}`;
+      const filePath = `${form.subject}/${form.level}/${id}_${form.file.name}`.replace(/\s+/g, '_');
 
-      // Cuma upload file baru ke Storage kalau memang ada file baru dipilih
-      // (pas edit, file boleh dikosongin kalau cuma mau ganti subject/level/judul)
-      if (form.file) {
-        const id = editingMaterial?.id || `MAT-${Date.now()}`;
-        const filePath = `${form.subject}/${form.level}/${id}_${form.file.name}`.replace(/\s+/g, '_');
-        const { error: uploadError } = await supabase.storage.from('materials').upload(filePath, form.file, { upsert: true });
-        if (uploadError) throw uploadError;
-        const { data: publicUrlData } = supabase.storage.from('materials').getPublicUrl(filePath);
-        fileUrl = publicUrlData.publicUrl;
-        fileSize = form.file.size;
-      }
+      const { error: uploadError } = await supabase.storage.from('materials').upload(filePath, form.file);
+      if (uploadError) throw uploadError;
+
+      const { data: publicUrlData } = supabase.storage.from('materials').getPublicUrl(filePath);
 
       const targetSubject = form.subject.toUpperCase();
       const targetLevel = form.level.toUpperCase();
 
-      if (editingMaterial) {
-        const { error: updateError } = await supabase.from('materials').update({
-          subject: targetSubject,
-          level: targetLevel,
-          title: form.title,
-          file_url: fileUrl,
-          file_size: fileSize,
-        }).eq('id', editingMaterial.id);
-        if (updateError) throw updateError;
-      } else {
-        const { error: insertError } = await supabase.from('materials').insert([{
-          id: `MAT-${Date.now()}`,
-          subject: targetSubject,
-          level: targetLevel,
-          title: form.title,
-          file_url: fileUrl,
-          file_size: fileSize,
-        }]);
-        if (insertError) throw insertError;
-      }
+      const { error: insertError } = await supabase.from('materials').insert([{
+        id,
+        subject: targetSubject,
+        level: targetLevel,
+        title: form.title,
+        file_url: publicUrlData.publicUrl,
+        file_size: form.file.size,
+      }]);
+      if (insertError) throw insertError;
 
       await fetchMaterials();
       resetForm();
@@ -200,16 +177,10 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
         document.getElementById(groupDomId(targetSubject, targetLevel))?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 300);
     } catch (e: any) {
-      alert('Gagal menyimpan: ' + e.message);
+      alert('Gagal upload: ' + e.message);
     } finally {
       setUploading(false);
     }
-  };
-
-  const handleOpenEdit = (m: Material) => {
-    setEditingMaterial(m);
-    setForm({ subject: m.subject, level: m.level, title: m.title, file: null });
-    setShowUploadForm(true);
   };
 
   const moveItem = async (items: Material[], index: number, direction: 'up' | 'down') => {
@@ -274,7 +245,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
               <span className="text-[10px] font-black uppercase tracking-[0.2em]">Perpustakaan Digital</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">Materi <span className="text-yellow-300">Belajar</span></h2>
-            <p className="text-emerald-50 font-bold text-[10px] uppercase tracking-widest italic">Materi & soal sesuai kelasmu</p>
+            <p className="text-emerald-50 font-bold text-[10px] uppercase tracking-widest italic">Modul & contoh soal sesuai kelasmu</p>
           </div>
         </header>
       ) : (
@@ -287,7 +258,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
             </div>
             <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">Materi <span className={theme.title}>Belajar</span></h2>
             <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">
-              {isAdmin ? 'Kelola semua modul materi & soal' : 'Materi & soal sesuai kelasmu'}
+              {isAdmin ? 'Kelola semua modul & contoh soal' : 'Modul & contoh soal sesuai kelasmu'}
             </p>
           </div>
           {isAdmin && (
@@ -354,11 +325,6 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                       <Download size={16} />
                     </a>
                     {isAdmin && !reorderMode && (
-                      <button onClick={() => handleOpenEdit(m)} className="p-3 bg-slate-100 text-slate-500 rounded-xl hover:bg-slate-700 hover:text-white transition-all" title="Edit">
-                        <Edit3 size={16} />
-                      </button>
-                    )}
-                    {isAdmin && !reorderMode && (
                       <button onClick={() => setConfirmDelete(m)} className="p-3 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white transition-all" title="Hapus">
                         <Trash2 size={16} />
                       </button>
@@ -378,10 +344,8 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
           <div className="bg-white w-full max-w-2xl rounded-[2.5rem] p-8 shadow-2xl space-y-6 relative">
             <button onClick={resetForm} className="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500"><X size={20} /></button>
             <div className="space-y-1">
-              <h4 className="text-xl font-black text-slate-800 uppercase italic">{editingMaterial ? 'Edit Materi' : 'Upload Materi Baru'}</h4>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">
-                {editingMaterial ? 'Kosongkan file kalau nggak mau ganti PDF-nya' : 'File harus format PDF'}
-              </p>
+              <h4 className="text-xl font-black text-slate-800 uppercase italic">Upload Materi Baru</h4>
+              <p className="text-[10px] font-bold text-slate-400 uppercase">File harus format PDF</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -402,7 +366,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                 <input type="text" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Contoh: Contoh Soal Bab 1" className="w-full mt-1 px-4 py-3 bg-slate-50 rounded-xl font-black text-xs outline-none border-2 border-slate-100" />
               </div>
               <div>
-                <label className="text-[9px] font-black text-slate-400 uppercase ml-2">File PDF {editingMaterial && <span className="normal-case font-bold text-slate-300">(opsional)</span>}</label>
+                <label className="text-[9px] font-black text-slate-400 uppercase ml-2">File PDF</label>
                 <input
                   type="file"
                   accept="application/pdf"
@@ -413,7 +377,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
             </div>
 
             <button onClick={handleUpload} disabled={uploading} className="w-full py-4 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
-              {uploading ? <Loader2 size={16} className="animate-spin" /> : <><Upload size={16} /> {editingMaterial ? 'Simpan Perubahan' : 'Upload Sekarang'}</>}
+              {uploading ? <Loader2 size={16} className="animate-spin" /> : <><Upload size={16} /> Upload Sekarang</>}
             </button>
           </div>
         </div>
