@@ -274,7 +274,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
               <span className="text-[10px] font-black uppercase tracking-[0.2em]">Perpustakaan Digital</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">Materi <span className="text-yellow-300">Belajar</span></h2>
-            <p className="text-emerald-50 font-bold text-[10px] uppercase tracking-widest italic">Modul & contoh soal sesuai kelasmu</p>
+            <p className="text-emerald-50 font-bold text-[10px] uppercase tracking-widest italic">Materi & soal sesuai kelasmu</p>
           </div>
         </header>
       ) : (
