@@ -69,12 +69,12 @@ const GuideModal = ({ role, onClose }: {
         { title: 'Dashboard', desc: 'Lihat ringkasan data sekolah: statistik siswa, guru, dan keuangan dalam satu tampilan di menu "Dashboard".' },
         { title: 'Verifikasi SPP', desc: 'Cek bukti bayar siswa di tab "Keuangan" -> "Verif SPP". Klik konfirmasi agar paket aktif.' },
         { title: 'Bayar Honor', desc: 'Cairkan gaji guru di tab "Keuangan" -> "Gaji Guru" & upload bukti transfer untuk mengurangi saldo kas.' },
-        { title: 'Kuitansi', desc: 'Buat & cetak kuitansi pembayaran resmi untuk siswa di menu "Kuitansi".' },
+        { title: 'Kuitansi', desc: 'Buat & cetak kuitansi pemasukan dan pembayaran di menu "Kuitansi".' },
         { title: 'Buku Induk', desc: 'Daftarkan siswa baru atau update data kontak orang tua di menu "Buku Induk".' },
         { title: 'Akses User', desc: 'Kelola akun login guru & siswa — buat, edit, atau reset password di menu "Akses User".' },
         { title: 'Pengaturan', desc: 'Atur mata pelajaran, kelas, level, jadwal master, dan tarif honor guru di menu "Pengaturan".' },
         { title: 'Materi', desc: 'Upload & kelola bahan ajar yang bisa diakses guru maupun siswa di menu "Materi".' },
-        { title: 'Maintenance', desc: 'Lakukan "Export Database" di menu "Sistem" minimal sebulan sekali untuk cadangan data.' }
+        { title: 'Maintenance', desc: 'Hapus gambar bukti pembayaran dan aktifkan mode maintenance saat sedang perbaikan.' }
       ]
     },
     TEACHER: {
@@ -84,8 +84,8 @@ const GuideModal = ({ role, onClose }: {
         { title: 'Lapor Presensi', desc: 'Lapor setiap selesai mengajar. Sistem otomatis mendeteksi sesi 1-6 dalam satu paket.' },
         { title: 'Guru Pengganti', desc: 'Jika digantikan teman, gunakan tombol "Berhalangan". Honor akan otomatis beralih ke temanmu.' },
         { title: 'Pantau Honor', desc: 'Lihat status honor cair & unduh slip gaji digital resmi di menu "Honor Saya".' },
-        { title: 'Materi', desc: 'Akses & unduh bahan ajar terbaru dari Admin di menu "Materi".' },
-        { title: 'Proses Rapot', desc: 'Permintaan rapot muncul di menu "Rapot Siswa" hanya setelah siswa menekan tombol Klaim.' }
+        { title: 'Materi', desc: 'Pantau & akses bahan ajar di menu "Materi".' },
+        { title: 'Proses Rapot', desc: 'Terima pengajuan rapot dan isi data rapot siswa.' }
       ]
     },
     STUDENT: {
@@ -94,7 +94,7 @@ const GuideModal = ({ role, onClose }: {
       steps: [
         { title: 'Lapor Bayar', desc: 'Upload bukti transfer di menu "Pembayaran" agar Admin bisa mengaktifkan paket belajarmu.' },
         { title: 'Presensi Mandiri', desc: 'Presensi dilakukan secara mandiri, kamu bisa klik nomor sesi di "Kelas Saya" untuk lapor progres.' },
-        { title: 'Materi', desc: 'Akses bahan belajar tambahan dari guru & admin di menu "Materi".' },
+        { title: 'Materi', desc: 'Akses bahan ajar dari guru di menu "Materi".' },
         { title: 'Klaim Rapot', desc: 'Tombol Klaim muncul saat progres 6/6. Pilih guru pembimbingmu untuk meminta penilaian.' },
         { title: 'Unduh Rapot', desc: 'Sertifikat & Rapot PDF bisa diunduh di tab "Kelas Saya" setelah guru selesai menilai.' }
       ]
