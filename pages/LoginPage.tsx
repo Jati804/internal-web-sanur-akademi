@@ -124,14 +124,15 @@ useEffect(() => {
         setView('MAINTENANCE');
       } else {
         setSystemMaintenance(false);
-        setView('SELECTION');
+        // Hanya balik ke SELECTION kalau sebelumnya memang lagi di MAINTENANCE
+        setView(v => v === 'MAINTENANCE' ? 'SELECTION' : v);
       }
     } catch (e) {
       console.warn("Maintenance check bypassed.");
     }
   };
   checkMaintenance();
-  const interval = setInterval(checkMaintenance, 30000); // cek tiap 30 detik
+  const interval = setInterval(checkMaintenance, 30000);
   return () => clearInterval(interval);
 }, []);
 
