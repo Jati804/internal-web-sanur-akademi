@@ -749,21 +749,6 @@ const executePayTeacher = async () => {
   return (
     <>
       <style>{`
-      /* Scroll bar cantik */
-.overflow-y-auto::-webkit-scrollbar {
-  width: 8px;
-}
-.overflow-y-auto::-webkit-scrollbar-track {
-  background: #f1f5f9;
-  border-radius: 10px;
-}
-.overflow-y-auto::-webkit-scrollbar-thumb {
-  background: #3b82f6;
-  border-radius: 10px;
-}
-.overflow-y-auto::-webkit-scrollbar-thumb:hover {
-  background: #2563eb;
-}
         @keyframes modalFadeIn {
           from {
             opacity: 0;
@@ -1040,7 +1025,7 @@ const executePayTeacher = async () => {
 )}
 
             {!isLoadingLedger && (
-              <div className="overflow-x-auto max-h-[800px] overflow-y-auto">
+              <div className="overflow-x-auto max-h-[800px] overflow-y-auto custom-scrollbar">
                   <table className="w-full text-left">
                      <thead className="bg-white sticky top-0 z-10 shadow-sm"><tr><th className="px-12 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest">Transaksi</th><th className="px-12 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest text-right">Nominal</th><th className="px-12 py-6 text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">Aksi</th></tr></thead>
                      <tbody className="divide-y divide-slate-50">
@@ -1302,7 +1287,7 @@ const executePayTeacher = async () => {
                         />
                         
                         {showCategorySuggestions && addForm.category.trim() && (
-                          <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-200 max-h-48 overflow-y-auto">
+                          <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-200 max-h-48 overflow-y-auto custom-scrollbar">
                             {uniqueCategories
                               .filter(cat => cat.includes(addForm.category.toUpperCase()))
                               .slice(0, 5)
@@ -1375,7 +1360,7 @@ const executePayTeacher = async () => {
                         />
                         
                         {showCategorySuggestions && editingTransaction.category.trim() && (
-                          <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-200 max-h-48 overflow-y-auto">
+                          <div className="absolute z-50 w-full mt-1 bg-white rounded-xl shadow-lg border border-slate-200 max-h-48 overflow-y-auto custom-scrollbar">
                             {uniqueCategories
                               .filter(cat => cat.includes(editingTransaction.category.toUpperCase()))
                               .slice(0, 5)
