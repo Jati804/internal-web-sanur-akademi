@@ -334,7 +334,7 @@ const pendingReportsCount = Array.isArray(reports) ?
       {isSidebarOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80000] lg:hidden animate-in fade-in" onClick={closeSidebar} />
       )}
-      <aside className={`fixed lg:static inset-y-0 left-0 w-72 bg-white border-r border-slate-100 z-[81000] transform transition-transform duration-500 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
+      <aside className={`fixed lg:static lg:sticky lg:top-0 inset-y-0 left-0 w-72 h-screen bg-white border-r border-slate-100 z-[81000] transform transition-transform duration-500 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="p-8 h-full flex flex-col">
           <div className="flex items-center justify-between mb-12 px-2">
             <div className="flex items-center gap-3">
@@ -357,23 +357,23 @@ const pendingReportsCount = Array.isArray(reports) ?
                 <NavItem to="/admin/buku-induk" icon={Book} label="Buku Induk" onClick={closeSidebar} />
                 <NavItem to="/admin/staff" icon={UserCog} label="Akses User" onClick={closeSidebar} />
                 <NavItem to="/admin/academic" icon={SettingsIcon} label="Pengaturan" onClick={closeSidebar} />
-                <NavItem to="/admin/maintenance" icon={Database} label="Sistem" onClick={closeSidebar} />
                 <NavItem to="/admin/materi" icon={Library} label="Materi" onClick={closeSidebar} />
+                <NavItem to="/admin/maintenance" icon={Database} label="Sistem" onClick={closeSidebar} />
               </>
             )}
             {user.role === 'TEACHER' && (
               <>
                 <NavItem to="/teacher" icon={ClipboardCheck} label="Lapor Presensi" onClick={closeSidebar} />
                 <NavItem to="/teacher/honor" icon={Wallet} label="Honor Saya" activeColor="blue" onClick={closeSidebar} />
-                <NavItem to="/teacher/reports" icon={GraduationCap} label="Rapot Siswa" activeColor="blue" onClick={closeSidebar} badge={pendingReportsCount} />
                 <NavItem to="/teacher/materi" icon={Library} label="Materi" activeColor="blue" onClick={closeSidebar} />
+                <NavItem to="/teacher/reports" icon={GraduationCap} label="Rapot Siswa" activeColor="blue" onClick={closeSidebar} badge={pendingReportsCount} />
               </>
             )}
             {user.role === 'STUDENT' && (
               <>
                 <NavItem to="/student" icon={GraduationCap} label="Kelas Saya" activeColor="blue" onClick={closeSidebar} />
-                <NavItem to="/student/payments" icon={CreditCard} label="Pembayaran" activeColor="blue" onClick={closeSidebar} />
                 <NavItem to="/student/materi" icon={Library} label="Materi" activeColor="blue" onClick={closeSidebar} />
+                <NavItem to="/student/payments" icon={CreditCard} label="Pembayaran" activeColor="blue" onClick={closeSidebar} />
               </>
             )}
           </nav>
