@@ -501,7 +501,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
            <div className="relative max-w-2xl w-full flex flex-col items-center opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button className="absolute -top-12 right-0 p-4 text-white hover:text-rose-500 transition-colors" onClick={() => setShowProofModal(null)}><X size={32}/></button>
               <img src={showProofModal} className="max-w-full max-h-[75vh] rounded-[3rem] shadow-2xl border-4 border-white/10 object-contain" alt="Bukti Transfer" />
-              <div className="mt-8 text-center"><p className="text-[10px] font-black text-white/50 uppercase tracking-[0.5em] italic">Bukti Transfer Sah dari Pengurus Sanur</p></div>
+              <div className="mt-8 text-center"><p className="text-[10px] font-black text-white/50 uppercase tracking-[0.5em] italic">Sanur Transfer Receipt ✨</p></div>
            </div>
         </div>
         </ModalPortal>
