@@ -4,7 +4,8 @@ import { supabase } from '../services/supabase.ts';
 import ModalPortal from '../ModalPortal.tsx';
 import {
   Library, Upload, FileText, Download, Trash2, Loader2,
-  X, Plus, FolderOpen, AlertCircle, ArrowUp, ArrowDown, ArrowUpDown
+  X, Plus, FolderOpen, AlertCircle, ArrowUp, ArrowDown, ArrowUpDown,
+  FileSpreadsheet, FileImage, Presentation
 } from 'lucide-react';
 
 interface Material {
@@ -51,6 +52,19 @@ const getFileExt = (url: string) => {
   const clean = (url || '').split('?')[0];
   const match = clean.match(/\.([a-zA-Z0-9]+)$/);
   return match ? match[1].toUpperCase() : 'FILE';
+};
+
+// Ikon & warna berbeda per tipe file, biar keliatan jelas dari bentuknya
+// tanpa perlu baca teks badge
+const getFileIconMeta = (extUpper: string) => {
+  switch (extUpper) {
+    case 'PDF': return { Icon: FileText, box: 'bg-red-50 text-red-600' };
+    case 'DOC': case 'DOCX': return { Icon: FileText, box: 'bg-blue-50 text-blue-600' };
+    case 'XLS': case 'XLSX': return { Icon: FileSpreadsheet, box: 'bg-emerald-50 text-emerald-600' };
+    case 'PPT': case 'PPTX': return { Icon: Presentation, box: 'bg-orange-50 text-orange-600' };
+    case 'JPG': case 'JPEG': case 'PNG': return { Icon: FileImage, box: 'bg-purple-50 text-purple-600' };
+    default: return { Icon: FileText, box: 'bg-slate-100 text-slate-500' };
+  }
 };
 
 const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, studentPayments, attendanceLogs }) => {
@@ -345,11 +359,12 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                         </button>
                       </div>
                     )}
-                    <div className={`w-12 h-12 ${theme.iconBg} rounded-2xl flex items-center justify-center shrink-0`}><FileText size={22} /></div>
-                    <div className="min-w-0">
-                      <p className="font-black text-slate-700 text-xs italic leading-snug">{m.title}</p>
-                      <span className="inline-block mt-1 px-2 py-0.5 bg-slate-200 text-slate-500 rounded-md text-[8px] font-black tracking-wider">{getFileExt(m.file_url)}</span>
-                    </div>
+                    {(() => {
+                      const ext = getFileExt(m.file_url);
+                      const { Icon, box } = getFileIconMeta(ext);
+                      return <div className={`w-12 h-12 ${box} rounded-2xl flex items-center justify-center shrink-0`}><Icon size={22} /></div>;
+                    })()}
+                    <p className="font-black text-slate-700 text-xs italic leading-snug">{m.title}</p>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <a href={m.file_url} target="_blank" rel="noopener noreferrer" className={`p-3 ${theme.btn} text-white rounded-xl transition-all shadow-md`} title="Lihat/Download">
