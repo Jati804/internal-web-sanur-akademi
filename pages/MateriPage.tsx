@@ -254,10 +254,14 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
         // header "Portal Rapot" (TeacherReports.tsx) biar konsisten sama
         // halaman guru yang lain yang juga nggak pakai kotak background.
         <div>
-          <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">
-            <span className="text-slate-800">Materi</span> <span className="text-orange-500">Belajar</span>
+          <div className="flex items-center gap-3 mb-2">
+            <div className="p-2 bg-orange-50 rounded-lg"><Library size={14} className="text-orange-600" /></div>
+            <span className="text-[10px] font-black uppercase tracking-[0.4em] text-orange-500 italic">Perpustakaan Digital</span>
+          </div>
+          <h2 className="text-4xl font-black text-slate-800 tracking-tight leading-none uppercase italic">
+            Materi <span className="text-orange-600">Belajar</span>
           </h2>
-          <p className="text-slate-400 font-black text-[10px] md:text-xs uppercase tracking-widest italic mt-3">
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic mt-4">
             Materi & soal sesuai kelasmu ✨
           </p>
         </div>
