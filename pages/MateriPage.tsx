@@ -3,9 +3,8 @@ import { User, StudentPayment, Attendance } from '../types';
 import { supabase } from '../services/supabase.ts';
 import ModalPortal from '../ModalPortal.tsx';
 import {
-  Library, Upload, FileText, Download, Trash2, Loader2,
-  X, Plus, FolderOpen, AlertCircle, ArrowUp, ArrowDown, ArrowUpDown,
-  FileSpreadsheet, FileImage, Presentation
+  Library, Upload, Download, Trash2, Loader2,
+  X, Plus, FolderOpen, AlertCircle, ArrowUp, ArrowDown, ArrowUpDown
 } from 'lucide-react';
 
 interface Material {
@@ -54,16 +53,16 @@ const getFileExt = (url: string) => {
   return match ? match[1].toUpperCase() : 'FILE';
 };
 
-// Ikon & warna berbeda per tipe file, biar keliatan jelas dari bentuknya
-// tanpa perlu baca teks badge
+// Label teks singkat + warna berbeda per tipe file, niru gaya ikon asli
+// Microsoft (W biru buat Word, X hijau buat Excel, dst)
 const getFileIconMeta = (extUpper: string) => {
   switch (extUpper) {
-    case 'PDF': return { Icon: FileText, box: 'bg-red-50 text-red-600' };
-    case 'DOC': case 'DOCX': return { Icon: FileText, box: 'bg-blue-50 text-blue-600' };
-    case 'XLS': case 'XLSX': return { Icon: FileSpreadsheet, box: 'bg-emerald-50 text-emerald-600' };
-    case 'PPT': case 'PPTX': return { Icon: Presentation, box: 'bg-orange-50 text-orange-600' };
-    case 'JPG': case 'JPEG': case 'PNG': return { Icon: FileImage, box: 'bg-purple-50 text-purple-600' };
-    default: return { Icon: FileText, box: 'bg-slate-100 text-slate-500' };
+    case 'PDF': return { label: 'PDF', box: 'bg-red-50', text: 'text-red-600' };
+    case 'DOC': case 'DOCX': return { label: 'W', box: 'bg-blue-50', text: 'text-blue-600' };
+    case 'XLS': case 'XLSX': return { label: 'X', box: 'bg-emerald-50', text: 'text-emerald-600' };
+    case 'PPT': case 'PPTX': return { label: 'PPT', box: 'bg-orange-50', text: 'text-orange-600' };
+    case 'JPG': case 'JPEG': case 'PNG': return { label: 'IMG', box: 'bg-purple-50', text: 'text-purple-600' };
+    default: return { label: 'FILE', box: 'bg-slate-100', text: 'text-slate-500' };
   }
 };
 
@@ -361,8 +360,12 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                     )}
                     {(() => {
                       const ext = getFileExt(m.file_url);
-                      const { Icon, box } = getFileIconMeta(ext);
-                      return <div className={`w-12 h-12 ${box} rounded-2xl flex items-center justify-center shrink-0`}><Icon size={22} /></div>;
+                      const { label, box, text } = getFileIconMeta(ext);
+                      return (
+                        <div className={`w-12 h-12 ${box} rounded-2xl flex items-center justify-center shrink-0`}>
+                          <span className={`font-black italic ${text} ${label.length > 1 ? 'text-[9px]' : 'text-lg'}`}>{label}</span>
+                        </div>
+                      );
                     })()}
                     <p className="font-black text-slate-700 text-xs italic leading-snug">{m.title}</p>
                   </div>
