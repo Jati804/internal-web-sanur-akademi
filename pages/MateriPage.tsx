@@ -222,6 +222,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
 
   const isAdmin = user.role === 'ADMIN';
   const isStudent = user.role === 'STUDENT';
+  const isTeacher = user.role === 'TEACHER';
 
   // 🎨 Tema warna per role: Admin biru, Guru oranye, Siswa hijau
   const theme = user.role === 'TEACHER'
@@ -245,9 +246,21 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
               <span className="text-[10px] font-black uppercase tracking-[0.2em]">Perpustakaan Digital</span>
             </div>
             <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">Materi <span className="text-yellow-300">Belajar</span></h2>
-            <p className="text-emerald-50 font-bold text-[10px] uppercase tracking-widest italic">Materi & soal sesuai kelasmu</p>
+            <p className="text-emerald-50 font-bold text-[10px] uppercase tracking-widest italic">Modul & contoh soal sesuai kelasmu</p>
           </div>
         </header>
+      ) : isTeacher ? (
+        // Varian khusus guru: polos tanpa background sama sekali, niru gaya
+        // header "Portal Rapot" (TeacherReports.tsx) biar konsisten sama
+        // halaman guru yang lain yang juga nggak pakai kotak background.
+        <div>
+          <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">
+            <span className="text-slate-800">Materi</span> <span className="text-orange-500">Belajar</span>
+          </h2>
+          <p className="text-slate-400 font-black text-[10px] md:text-xs uppercase tracking-widest italic mt-3">
+            Materi & soal sesuai kelasmu ✨
+          </p>
+        </div>
       ) : (
         <div className="bg-slate-900 p-10 md:p-14 rounded-[4rem] text-white shadow-2xl relative overflow-hidden flex flex-col md:flex-row justify-between items-center gap-8">
           <div className={`absolute top-0 right-0 w-80 h-80 ${theme.blur} rounded-full blur-[120px] opacity-20`}></div>
@@ -258,7 +271,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
             </div>
             <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">Materi <span className={theme.title}>Belajar</span></h2>
             <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest">
-              {isAdmin ? 'Kelola semua modul materi & soal' : 'Materi & soal sesuai kelasmu'}
+              {isAdmin ? 'Kelola semua modul & contoh soal' : 'Modul & contoh soal sesuai kelasmu'}
             </p>
           </div>
           {isAdmin && (
