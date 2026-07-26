@@ -42,6 +42,17 @@ const getLevelRank = (level: string) => {
 const groupDomId = (subject: string, level: string) =>
   `materi-group-${subject}-${level}`.replace(/[^a-zA-Z0-9-]/g, '_');
 
+// Format file yang diizinkan buat materi (PDF, Word, Excel, PowerPoint, Gambar)
+const ALLOWED_EXTENSIONS = ['.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx', '.jpg', '.jpeg', '.png'];
+const isAllowedFile = (file: File) => ALLOWED_EXTENSIONS.some(ext => file.name.toLowerCase().endsWith(ext));
+
+// Ambil ekstensi dari URL file, buat ditampilkan sebagai badge (PDF/DOCX/XLSX/dst)
+const getFileExt = (url: string) => {
+  const clean = (url || '').split('?')[0];
+  const match = clean.match(/\.([a-zA-Z0-9]+)$/);
+  return match ? match[1].toUpperCase() : 'FILE';
+};
+
 const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, studentPayments, attendanceLogs }) => {
   const [materials, setMaterials] = useState<Material[]>([]);
   const [loading, setLoading] = useState(true);
@@ -141,10 +152,10 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
 
   const handleUpload = async () => {
     if (!form.subject || !form.level || !form.title || !form.file) {
-      return alert('Lengkapi semua kolom dulu ya, termasuk file PDF-nya! ✨');
+      return alert('Lengkapi semua kolom dulu ya, termasuk filenya! ✨');
     }
-    if (form.file.type !== 'application/pdf') {
-      return alert('File harus berformat PDF ya!');
+    if (form.file && !isAllowedFile(form.file)) {
+      return alert('File harus format PDF, Word, Excel, PowerPoint, atau Gambar (JPG/PNG) ya!');
     }
     setUploading(true);
     try {
@@ -335,7 +346,10 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                       </div>
                     )}
                     <div className={`w-12 h-12 ${theme.iconBg} rounded-2xl flex items-center justify-center shrink-0`}><FileText size={22} /></div>
-                    <p className="font-black text-slate-700 text-xs italic leading-snug">{m.title}</p>
+                    <div className="min-w-0">
+                      <p className="font-black text-slate-700 text-xs italic leading-snug">{m.title}</p>
+                      <span className="inline-block mt-1 px-2 py-0.5 bg-slate-200 text-slate-500 rounded-md text-[8px] font-black tracking-wider">{getFileExt(m.file_url)}</span>
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
                     <a href={m.file_url} target="_blank" rel="noopener noreferrer" className={`p-3 ${theme.btn} text-white rounded-xl transition-all shadow-md`} title="Lihat/Download">
@@ -362,7 +376,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
             <button onClick={resetForm} className="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500"><X size={20} /></button>
             <div className="space-y-1">
               <h4 className="text-xl font-black text-slate-800 uppercase italic">Upload Materi Baru</h4>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">File harus format PDF</p>
+              <p className="text-[10px] font-bold text-slate-400 uppercase">PDF, Word, Excel, PPT, atau Gambar</p>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -383,10 +397,10 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                 <input type="text" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Contoh: Contoh Soal Bab 1" className="w-full mt-1 px-4 py-3 bg-slate-50 rounded-xl font-black text-xs outline-none border-2 border-slate-100" />
               </div>
               <div>
-                <label className="text-[9px] font-black text-slate-400 uppercase ml-2">File PDF</label>
+                <label className="text-[9px] font-black text-slate-400 uppercase ml-2">File Materi</label>
                 <input
                   type="file"
-                  accept="application/pdf"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png"
                   onChange={e => setForm({ ...form, file: e.target.files?.[0] || null })}
                   className="w-full mt-1 px-3 py-2.5 bg-slate-50 rounded-xl border-2 border-slate-100 text-[10px] font-bold text-slate-500 cursor-pointer file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white file:text-[9px] file:font-black file:uppercase file:cursor-pointer hover:file:bg-blue-700 file:transition-all"
                 />
