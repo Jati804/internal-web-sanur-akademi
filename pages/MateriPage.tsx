@@ -363,7 +363,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                       const { label, box, text } = getFileIconMeta(ext);
                       return (
                         <div className={`w-12 h-12 ${box} rounded-2xl flex items-center justify-center shrink-0`}>
-                          <span className={`font-black italic ${text} ${label.length > 1 ? 'text-[9px]' : 'text-lg'}`}>{label}</span>
+                          <span className={`font-black italic ${text} text-[10px]`}>{label}</span>
                         </div>
                       );
                     })()}
