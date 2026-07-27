@@ -224,6 +224,7 @@ const AppContent = ({
   const closeSidebar = () => setIsSidebarOpen(false);
 
   const executeLogout = () => {
+    supabase.auth.signOut();
     localStorage.removeItem('sanur_user');
     setUser(null);
     navigate('/', { replace: true });
