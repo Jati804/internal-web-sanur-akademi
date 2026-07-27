@@ -146,7 +146,7 @@ useEffect(() => {
     setError('');
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const usernameEmpty = !username.trim();
 const pinEmpty = !pin.trim();
@@ -158,26 +158,52 @@ if (usernameEmpty || pinEmpty) {
 setFieldErrors({ username: false, pin: false });
     setLoading(true);
     setError('');
-    setTimeout(() => {
-      const lowerInput = username.trim().toLowerCase();
-      let foundUser: User | undefined;
-      if (role === 'ADMIN') {
-        foundUser = teachers.find(t => t.role === 'ADMIN' && t.username.toLowerCase() === lowerInput);
-        if (!foundUser && lowerInput === MOCK_ADMIN.username.toLowerCase()) foundUser = MOCK_ADMIN;
-      } else if (role === 'TEACHER') {
-        foundUser = teachers.find(t => t.role === 'TEACHER' && t.username.toLowerCase() === lowerInput);
-      } else if (role === 'STUDENT') {
-        foundUser = studentAccounts.find(s => s.username.toLowerCase() === lowerInput);
-      }
-      if (foundUser) {
-        const userPin = foundUser.pin || (role === 'STUDENT' ? '051020' : '224488');
-        if (pin === userPin) onLogin(foundUser);
-        else setError('PIN Salah');
-      } else {
-        setError('Username tidak terdaftar');
-      }
+
+    const lowerInput = username.trim().toLowerCase();
+    let foundUser: User | undefined;
+    if (role === 'ADMIN') {
+      foundUser = teachers.find(t => t.role === 'ADMIN' && t.username.toLowerCase() === lowerInput);
+      if (!foundUser && lowerInput === MOCK_ADMIN.username.toLowerCase()) foundUser = MOCK_ADMIN;
+    } else if (role === 'TEACHER') {
+      foundUser = teachers.find(t => t.role === 'TEACHER' && t.username.toLowerCase() === lowerInput);
+    } else if (role === 'STUDENT') {
+      foundUser = studentAccounts.find(s => s.username.toLowerCase() === lowerInput);
+    }
+
+    if (!foundUser) {
+      setError('Username tidak terdaftar');
       setLoading(false);
-    }, 600);
+      return;
+    }
+
+    // 🔑 MOCK_ADMIN: jalur darurat, BUKAN akun asli di database, jadi nggak
+    // punya row buat disinkron ke Supabase Auth. Tetap pakai cara lama
+    // (cek PIN langsung), berlaku cuma buat akun ini doang.
+    if (foundUser.id === MOCK_ADMIN.id) {
+      const userPin = foundUser.pin || '224488';
+      if (pin === userPin) onLogin(foundUser);
+      else setError('PIN Salah');
+      setLoading(false);
+      return;
+    }
+
+    // 🔐 Akun asli (dari database) -> verifikasi PIN lewat Supabase Auth,
+    // BUKAN dibandingkan manual lagi. Email sintetis ini nggak pernah
+    // dikirim beneran, cuma identifier unik internal.
+    const syntheticEmail = `${lowerInput}.${role.toLowerCase()}@sanur.internal`;
+    const { error: authError } = await supabase.auth.signInWithPassword({
+      email: syntheticEmail,
+      password: pin,
+    });
+
+    if (authError) {
+      setError('Username atau PIN salah');
+      setLoading(false);
+      return;
+    }
+
+    onLogin(foundUser);
+    setLoading(false);
   };
 
   const theme = {
