@@ -171,12 +171,25 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
         const id = `${activeTab.substring(0,3)}-${Date.now()}`;
         const { error } = await supabase.from(tableName).insert({ ...payload, id });
         if (error) throw error;
+
+        // 🔐 Titipkan akun ini ke Supabase Auth, biar nanti pas login
+        // auth.uid() beneran keisi dan RLS bisa jalan bener.
+        const { error: syncError } = await supabase.functions.invoke('sync-user-auth', {
+          body: { username: payload.username, pin: payload.pin, role: finalRole, appId: id }
+        });
+        if (syncError) throw new Error('Akun tersimpan, tapi gagal sinkron ke sistem keamanan: ' + syncError.message);
       } else if (editingUser) {
         if (editingUser.name.trim().toUpperCase() !== payload.name.trim().toUpperCase()) {
           await performCascadingUpdate(editingUser.name, payload.name, editingUser.id, isStudent);
         }
         const { error } = await supabase.from(tableName).update(payload).eq('id', editingUser.id);
         if (error) throw error;
+
+        // 🔐 Sinkron ulang ke Supabase Auth (PIN atau username mungkin berubah)
+        const { error: syncError } = await supabase.functions.invoke('sync-user-auth', {
+          body: { username: payload.username, pin: payload.pin, role: finalRole, appId: editingUser.id }
+        });
+        if (syncError) throw new Error('Akun tersimpan, tapi gagal sinkron ke sistem keamanan: ' + syncError.message);
       }
       if (refreshAllData) await refreshAllData();
       setShowModal(null);
@@ -336,6 +349,27 @@ console.log('\n✅ BACKUP MILESTONE SELESAI');
     }
     
     console.log('✅ Akun siswa berhasil dihapus');
+    
+    // ========================================
+    // STEP 4.5: Hapus akun Auth-nya juga
+    // ========================================
+    console.log('\n🔐 STEP 4.5: HAPUS AKUN AUTH');
+    console.log('-'.repeat(60));
+    
+    if ((showDeleteConfirm as any).auth_user_id) {
+      const { error: authDeleteError } = await supabase.functions.invoke('sync-user-auth', {
+        body: { action: 'delete', authUserId: (showDeleteConfirm as any).auth_user_id }
+      });
+      if (authDeleteError) {
+        // Nggak throw - data intinya udah kehapus, ini cuma cleanup tambahan.
+        // Kalau gagal, cukup dicatat aja, nggak perlu gagalin keseluruhan proses.
+        console.warn('⚠️ Gagal hapus akun Auth (data utama tetap kehapus):', authDeleteError);
+      } else {
+        console.log('✅ Akun Auth berhasil dihapus');
+      }
+    } else {
+      console.log('ℹ️ Akun ini belum pernah disinkron ke Auth, skip');
+    }
     
     // ========================================
     // STEP 5: Refresh & cleanup
