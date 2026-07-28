@@ -355,7 +355,7 @@ const pendingReportsCount = Array.isArray(reports) ?
               <Route path="/admin/staff" element={<AdminStaff user={user} teachers={teachers} setTeachers={setTeachers} studentAccounts={studentAccounts} setStudentAccounts={setStudentAccounts} refreshAllData={refreshAllData} />} />
               <Route path="/admin/academic" element={<AdminAcademic subjects={subjects} setSubjects={setSubjects} classes={classes} setClasses={setClasses} levels={levels} setLevels={setLevels} scheduleData={masterSchedule} setScheduleData={setMasterSchedule} salaryConfig={salaryConfig} setSalaryConfig={setSalaryConfig} teachers={teachers} />} />
               <Route path="/admin/maintenance" element={<AdminMaintenance attendanceLogs={attendanceLogs} setAttendanceLogs={setAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} refreshAllData={refreshAllData} />} />
-              <Route path="/admin/materi" element={<MateriPage user={user} subjects={subjects} levels={levels} attendanceLogs={attendanceLogs} studentPayments={studentPayments} />} />
+              <Route path="/admin/materi" element={<MateriPage user={user} subjects={subjects} levels={levels} />} />
               <Route path="/teacher" element={<TeacherDashboard user={user} logs={attendanceLogs} studentAccounts={studentAccounts} subjects={subjects} classes={classes} levels={levels} salaryConfig={salaryConfig} teachers={teachers} refreshAllData={refreshAllData} />} />
               <Route path="/teacher/honor" element={<TeacherHonor user={user} logs={attendanceLogs} refreshAllData={refreshAllData} />} />
               <Route path="/teacher/reports" element={
@@ -532,8 +532,18 @@ if (reps) setReports(reps.map((r: any) => ({
   useEffect(() => {
     const savedUser = localStorage.getItem('sanur_user');
     if (savedUser) setUser(JSON.parse(savedUser));
-    refreshAllData();
-  }, [refreshAllData]);
+  }, []);
+
+  // 🔧 FIX KEAMANAN: sebelumnya refreshAllData() jalan TANPA SYARAT di sini,
+  // artinya SELURUH isi 10 tabel (termasuk teachers/student_accounts dengan
+  // kolom PIN, data keuangan, kontak sales) ke-fetch ke browser SIAPA PUN
+  // yang buka halaman ini, bahkan sebelum login. Sekarang cuma jalan
+  // begitu `user` beneran ada (abis login, atau sesi lama ke-restore dari
+  // localStorage) — dan ini juga jadi prasyarat biar RLS bisa dikunci ke
+  // "authenticated-only" tanpa mematahkan halaman Login.
+  useEffect(() => {
+    if (user) refreshAllData();
+  }, [user, refreshAllData]);
 
   return (
     <Router>
