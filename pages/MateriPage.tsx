@@ -92,21 +92,75 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
 
   useEffect(() => { fetchMaterials(); }, []);
 
+  // 🎯 Pasangan Subject+Level yang "seharusnya" bisa diakses guru ini,
+  // diambil dari histori presensi (bukan dari materials) — dipakai juga
+  // buat ngedeteksi kelas yang UDAH diajar tapi materinya BELUM diupload.
+  const teacherAccessPairs = useMemo(() => {
+    if (user.role !== 'TEACHER') return [];
+    // Sama seperti logic di TeacherHonor.tsx: guru dianggap "pegang" kelas itu kalau dia
+    // yang beneran ngajar (teacherId) ATAU itu kelas miliknya sendiri yang lagi digantiin
+    // guru lain (originalTeacherId) — dan cuma log sesi yang valid (SESSION_LOG/SUB_LOG).
+    return (attendanceLogs || [])
+      .filter(l =>
+        (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG') &&
+        (l.teacherId === user.id || l.originalTeacherId === user.id)
+      )
+      .map(l => {
+        const match = (l.className || '').match(/(.*)\s\((.*)\)\s-\s.*/);
+        const subject = (match ? match[1] : '').trim().toUpperCase();
+        const level = (l.level || (match ? match[2] : '')).trim().toUpperCase();
+        return { subject, level };
+      })
+      .filter(p => p.subject && p.level);
+  }, [user, attendanceLogs]);
+
+  // 🎯 Pasangan Subject+Level yang siswa ini udah bayar & VERIFIED,
+  // dipakai juga buat ngedeteksi kelas yang udah dibayar tapi materinya belum ada.
+  const studentAccessPairs = useMemo(() => {
+    if (user.role !== 'STUDENT') return [];
+    const normalizedName = (user.name || '').toUpperCase().trim();
+    return (studentPayments || [])
+      .filter(p => (p.studentName || '').toUpperCase().trim() === normalizedName && p.status === 'VERIFIED')
+      .map(p => {
+        const name = stripLabel(p.className);
+        const match = p.className.match(/\((.*?)\)/);
+        return { subject: name, level: (match ? match[1] : '').toUpperCase() };
+      });
+  }, [user, studentPayments]);
+
   // 🎯 Filter akses berdasarkan role
   const visibleMaterials = useMemo(() => {
     if (user.role === 'ADMIN') return materials;
 
     if (user.role === 'TEACHER') {
-      // Akses ditentukan dari histori presensi guru: selama box "Honor Saya" untuk kelas itu
-      // masih ada (belum dihapus), berarti guru itu pernah/masih pegang matkul+level itu.
-      // Sama seperti logic di TeacherHonor.tsx: guru dianggap "pegang" kelas itu kalau dia
-      // yang beneran ngajar (teacherId) ATAU itu kelas miliknya sendiri yang lagi digantiin
-      // guru lain (originalTeacherId) — dan cuma log sesi yang valid (SESSION_LOG/SUB_LOG).
-      const accessPairs = (attendanceLogs || [])
-        .filter(l =>
-          (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG') &&
-          (l.teacherId === user.id || l.originalTeacherId === user.id)
-        )
+      return materials.filter(m =>
+        teacherAccessPairs.some(a => a.subject === m.subject && a.level === m.level)
+      );
+    }
+
+    if (user.role === 'STUDENT') {
+      return materials.filter(m =>
+        studentAccessPairs.some(a => a.subject === m.subject && a.level === m.level)
+      );
+    }
+
+    return [];
+  }, [materials, user, teacherAccessPairs, studentAccessPairs]);
+
+  // 🚨 Deteksi kelas yang "seharusnya" ada materinya tapi kosong:
+  // - Guru: kelas yang pernah/masih dia ajar tapi belum ada materi
+  // - Siswa: kelas yang udah dia bayar (VERIFIED) tapi belum ada materi
+  // - Admin: gabungan SEMUA guru & SEMUA siswa, biar admin tau apa aja yang perlu ditagih
+  const missingGroups = useMemo(() => {
+    let expectedPairs: { subject: string; level: string }[] = [];
+
+    if (user.role === 'TEACHER') {
+      expectedPairs = teacherAccessPairs;
+    } else if (user.role === 'STUDENT') {
+      expectedPairs = studentAccessPairs;
+    } else if (user.role === 'ADMIN') {
+      const fromAttendance = (attendanceLogs || [])
+        .filter(l => l.status === 'SESSION_LOG' || l.status === 'SUB_LOG')
         .map(l => {
           const match = (l.className || '').match(/(.*)\s\((.*)\)\s-\s.*/);
           const subject = (match ? match[1] : '').trim().toUpperCase();
@@ -115,35 +169,42 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
         })
         .filter(p => p.subject && p.level);
 
-      return materials.filter(m =>
-        accessPairs.some(a => a.subject === m.subject && a.level === m.level)
-      );
-    }
-
-    if (user.role === 'STUDENT') {
-      const normalizedName = (user.name || '').toUpperCase().trim();
-      const accessPairs = (studentPayments || [])
-        .filter(p => (p.studentName || '').toUpperCase().trim() === normalizedName && p.status === 'VERIFIED')
+      const fromPayments = (studentPayments || [])
+        .filter(p => p.status === 'VERIFIED')
         .map(p => {
           const name = stripLabel(p.className);
           const match = p.className.match(/\((.*?)\)/);
-          return { subject: name, level: (match ? match[1] : '').toUpperCase() };
-        });
-      return materials.filter(m =>
-        accessPairs.some(a => a.subject === m.subject && a.level === m.level)
-      );
+          return { subject: name.toUpperCase(), level: (match ? match[1] : '').toUpperCase() };
+        })
+        .filter(p => p.subject && p.level);
+
+      expectedPairs = [...fromAttendance, ...fromPayments];
     }
 
-    return [];
-  }, [materials, user, attendanceLogs, studentPayments]);
+    const uniquePairs = new Map<string, { subject: string; level: string }>();
+    expectedPairs.forEach(p => uniquePairs.set(`${p.subject}|||${p.level}`, p));
+
+    // Buat admin, cek terhadap SEMUA materials (toh admin emang liat semua).
+    // Buat guru/siswa, cek terhadap materi yang keliatan buat dia.
+    const materialsPool = user.role === 'ADMIN' ? materials : visibleMaterials;
+    const existingKeys = new Set(materialsPool.map(m => `${m.subject}|||${m.level}`));
+
+    return Array.from(uniquePairs.values()).filter(p => !existingKeys.has(`${p.subject}|||${p.level}`));
+  }, [user, attendanceLogs, studentPayments, materials, visibleMaterials, teacherAccessPairs, studentAccessPairs]);
 
   // Kelompokkan flat per kombinasi Subject + Level (misal "MICROSOFT WORD - BASIC")
+  // Termasuk grup yang materinya masih kosong (dari missingGroups), biar
+  // "lubang" materi yang belum diisi tetap keliatan garisnya.
   const grouped = useMemo(() => {
     const map = new Map<string, { subject: string; level: string; items: Material[]; isOrphaned: boolean }>();
     visibleMaterials.forEach(m => {
       const key = `${m.subject}|||${m.level}`;
       if (!map.has(key)) map.set(key, { subject: m.subject, level: m.level, items: [], isOrphaned: !subjects.includes(m.subject) });
       map.get(key)!.items.push(m);
+    });
+    missingGroups.forEach(p => {
+      const key = `${p.subject}|||${p.level}`;
+      if (!map.has(key)) map.set(key, { subject: p.subject, level: p.level, items: [], isOrphaned: !subjects.includes(p.subject) });
     });
     return Array.from(map.values()).sort((a, b) => {
       if (a.subject !== b.subject) {
@@ -156,7 +217,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
       // Urutkan level dari atas ke bawah (ADVANCED -> INTERMEDIATE -> BASIC)
       return getLevelRank(a.level) - getLevelRank(b.level);
     });
-  }, [visibleMaterials, subjects, levels]);
+  }, [visibleMaterials, missingGroups, subjects, levels]);
 
   const resetForm = () => {
     setForm({ subject: subjects[0] || '', level: levels[0] || '', title: '', file: null });
@@ -344,6 +405,32 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                 </span>
               )}
             </div>
+            {items.length === 0 ? (
+              // 🚨 Kelas ini udah ada histori mengajar/pembayaran, tapi materinya belum diupload.
+              // Tampilan "pressure" biar kelihatan jelas ini lubang yang perlu dilengkapi,
+              // bukan cuma sekadar kosong tanpa keterangan.
+              <div className="bg-amber-50 border-2 border-dashed border-amber-200 rounded-[2rem] p-8 flex flex-col items-center text-center gap-3">
+                <AlertCircle size={32} className="text-amber-500" />
+                <p className="font-black text-amber-700 text-xs uppercase tracking-widest italic">
+                  {isAdmin ? 'Materi Belum Diupload' : isTeacher ? 'Kamu Belum Upload Materi' : 'Materi Belum Tersedia'}
+                </p>
+                <p className="text-[10px] font-bold text-amber-600 uppercase tracking-wide max-w-md leading-relaxed">
+                  {isAdmin
+                    ? 'Ada histori mengajar/pembayaran untuk kelas ini, tapi materinya belum diupload. Yuk tagih ke gurunya!'
+                    : isTeacher
+                    ? 'Serahkan materimu ke admin ya, biar siswa bisa segera belajar! ✨'
+                    : 'Materi untuk kelas ini belum diupload gurumu. Coba minta gurumu untuk melengkapi ya! 🙏'}
+                </p>
+                {isAdmin && (
+                  <button
+                    onClick={() => { setForm({ subject, level, title: '', file: null }); setShowUploadForm(true); }}
+                    className={`mt-2 flex items-center gap-2 ${theme.btn} text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md active:scale-95 transition-all`}
+                  >
+                    <Plus size={14} /> Upload Sekarang
+                  </button>
+                )}
+              </div>
+            ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {items.map((m, idx) => (
                 <div key={m.id} className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 flex items-center justify-between gap-4">
@@ -382,6 +469,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                 </div>
               ))}
             </div>
+            )}
           </div>
         ))
       )}
