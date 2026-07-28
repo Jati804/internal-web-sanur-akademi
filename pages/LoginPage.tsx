@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { User, Role } from '../types';
-import { MOCK_ADMIN } from '../constants';
 import { supabase } from '../services/supabase.ts';
 import { 
   UserCog, 
@@ -160,16 +159,14 @@ setFieldErrors({ username: false, pin: false });
 
     const lowerInput = username.trim().toLowerCase();
 
-    // 🔑 MOCK_ADMIN: jalur darurat, BUKAN akun asli di database, jadi nggak
-    // punya row buat disinkron ke Supabase Auth. Berdiri sendiri, nggak
-    // butuh data dari tabel teachers/student_accounts sama sekali.
-    if (role === 'ADMIN' && lowerInput === MOCK_ADMIN.username.toLowerCase()) {
-      const userPin = MOCK_ADMIN.pin || '224488';
-      if (pin === userPin) onLogin(MOCK_ADMIN);
-      else setError('PIN Salah');
-      setLoading(false);
-      return;
-    }
+    // 🗑️ MOCK_ADMIN DIHAPUS: dulu jalur darurat client-side (skip Auth sama
+    // sekali), tapi username-nya ('pengurus_sanur2024') PERSIS SAMA kayak
+    // akun Admin asli di database, jadi selalu ke-intercept duluan sebelum
+    // sempet coba Supabase Auth beneran. Sekarang akun Admin real udah
+    // tersinkron penuh ke Auth (lewat sync-user-auth), jadi jalur darurat
+    // ini udah nggak perlu lagi - dan mempertahankannya cuma bikin akun
+    // asli permanen nggak bisa login pas RLS aktif (nggak pernah dapet
+    // sesi Auth yang sah -> keblok RLS sebagai anon).
 
     // 🔐 Akun asli -> LANGSUNG coba Supabase Auth, TANPA pre-fetch tabel
     // teachers/student_accounts pakai anon key. Sebelumnya proses ini
