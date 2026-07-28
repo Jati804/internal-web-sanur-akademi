@@ -22,7 +22,6 @@ import {
   Database,
   Eye,
   EyeOff,
-  Construction,
   Wrench,
   AlertTriangle
 } from 'lucide-react';
@@ -243,12 +242,16 @@ setFieldErrors({ username: false, pin: false });
           {/* BENAR-BENAR KOSONG */}
         </button>
 
-        <div className="my-auto max-w-md w-full space-y-10 animate-in fade-in zoom-in duration-700 relative z-10">
-           <div className="w-32 h-32 bg-orange-500 text-white rounded-[3rem] flex items-center justify-center mx-auto shadow-2xl animate-bounce border-8 border-slate-900">
-              <Construction size={64} />
+        <div className="my-auto max-w-md w-full space-y-8 animate-in fade-in zoom-in duration-700 relative z-10">
+           <div className="inline-flex items-center gap-2.5 px-5 py-2.5 bg-orange-500/10 border border-orange-500/20 rounded-full">
+              <span className="relative flex h-2.5 w-2.5">
+                 <span className="ping-slow absolute inline-flex h-full w-full rounded-full bg-orange-400"></span>
+                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-orange-500"></span>
+              </span>
+              <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest">Sedang Maintenance</span>
            </div>
            <div className="space-y-4">
-              <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">SYSTEM <span className="text-orange-500">PAUSED</span></h1>
+              <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">SYSTEM <span className="text-orange-500 animate-pulse">PAUSED</span></h1>
               <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] leading-relaxed">
                  Halo! Mohon maaf, kami sedang melakukan perbaikan sistem berkala agar aplikasi makin kencang. ✨
               </p>
