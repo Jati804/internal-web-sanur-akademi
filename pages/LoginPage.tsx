@@ -229,7 +229,7 @@ setFieldErrors({ username: false, pin: false });
   // ── MAINTENANCE ─────────────────────────────────────────────────────────
   if (view === 'MAINTENANCE') {
     return (
-      <div className="min-h-screen w-full max-w-[100vw] bg-slate-900 flex flex-col items-center p-8 py-16 text-center relative overflow-x-hidden overflow-y-auto">
+      <div className="min-h-screen w-full max-w-[100vw] bg-slate-900 flex flex-col items-center p-8 py-10 text-center relative overflow-x-hidden overflow-y-auto">
         <BlobStyles />
         <div className="blob-dark-1 absolute top-0 right-0 w-[500px] h-[500px] max-w-[80vw] bg-orange-600/10 rounded-full blur-[120px] -mr-24 -mt-24 pointer-events-none"></div>
         <div className="blob-dark-2 absolute bottom-0 left-0 w-[500px] h-[500px] max-w-[80vw] bg-blue-600/10 rounded-full blur-[120px] -ml-24 -mb-24 pointer-events-none"></div>
@@ -242,21 +242,14 @@ setFieldErrors({ username: false, pin: false });
           {/* BENAR-BENAR KOSONG */}
         </button>
 
-        <div className="my-auto max-w-md w-full space-y-8 animate-in fade-in zoom-in duration-700 relative z-10">
-           <div className="inline-flex items-center gap-2.5 px-5 py-2.5 bg-orange-500/10 border border-orange-500/20 rounded-full">
-              <span className="relative flex h-2.5 w-2.5">
-                 <span className="ping-slow absolute inline-flex h-full w-full rounded-full bg-orange-400"></span>
-                 <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-orange-500"></span>
-              </span>
-              <span className="text-[9px] font-black text-orange-400 uppercase tracking-widest">Sedang Maintenance</span>
-           </div>
-           <div className="space-y-4">
+        <div className="my-auto max-w-md w-full space-y-6 animate-in fade-in zoom-in duration-700 relative z-10">
+           <div className="space-y-3">
               <h1 className="text-4xl font-black text-white uppercase italic tracking-tighter leading-none">SYSTEM <span className="text-orange-500 animate-pulse">PAUSED</span></h1>
               <p className="text-[11px] font-black text-slate-400 uppercase tracking-[0.3em] leading-relaxed">
                  Halo! Mohon maaf, kami sedang melakukan perbaikan sistem berkala agar aplikasi makin kencang. ✨
               </p>
            </div>
-           <div className="bg-slate-800/50 backdrop-blur-xl p-8 rounded-[3rem] border border-white/5 space-y-4">
+           <div className="bg-slate-800/50 backdrop-blur-xl p-6 rounded-[3rem] border border-white/5 space-y-3">
               <div className="flex items-center gap-4 text-left">
                  <div className="w-10 h-10 bg-blue-600/20 text-blue-400 rounded-xl flex items-center justify-center shrink-0"><Wrench size={20}/></div>
                  <div>
