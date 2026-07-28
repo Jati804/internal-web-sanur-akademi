@@ -421,14 +421,6 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                     ? 'Serahkan materimu ke admin ya, biar siswa bisa segera belajar! ✨'
                     : 'Materi untuk kelas ini belum diupload gurumu. Coba minta gurumu untuk melengkapi ya! 🙏'}
                 </p>
-                {isAdmin && (
-                  <button
-                    onClick={() => { setForm({ subject, level, title: '', file: null }); setShowUploadForm(true); }}
-                    className={`mt-2 flex items-center gap-2 ${theme.btn} text-white px-6 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest shadow-md active:scale-95 transition-all`}
-                  >
-                    <Plus size={14} /> Upload Sekarang
-                  </button>
-                )}
               </div>
             ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
