@@ -59,8 +59,8 @@ const getFileExt = (url: string) => {
 const getFileIconMeta = (extUpper: string) => {
   switch (extUpper) {
     case 'PDF': return { label: 'PDF', box: 'bg-red-50', text: 'text-red-600' };
-    case 'DOC': case 'DOCX': return { label: 'W', box: 'bg-blue-50', text: 'text-blue-600' };
-    case 'XLS': case 'XLSX': return { label: 'X', box: 'bg-emerald-50', text: 'text-emerald-600' };
+    case 'DOC': case 'DOCX': return { label: 'WORD', box: 'bg-blue-50', text: 'text-blue-600' };
+    case 'XLS': case 'XLSX': return { label: 'EXCEL', box: 'bg-emerald-50', text: 'text-emerald-600' };
     case 'PPT': case 'PPTX': return { label: 'PPT', box: 'bg-orange-50', text: 'text-orange-600' };
     case 'JPG': case 'JPEG': case 'PNG': return { label: 'IMG', box: 'bg-purple-50', text: 'text-purple-600' };
     default: return { label: 'FILE', box: 'bg-slate-100', text: 'text-slate-500' };
@@ -70,21 +70,45 @@ const getFileIconMeta = (extUpper: string) => {
 // Deteksi apakah url yang disimpan itu link Google Drive (bukan file yang diupload ke storage)
 const isGDriveLink = (url: string) => /drive\.google\.com|docs\.google\.com/i.test(url || '');
 
-// Badge + warna khusus buat item yang sumbernya link G-Drive
-const getMaterialMeta = (url: string) => {
-  if (isGDriveLink(url)) return { label: 'DRIVE', box: 'bg-amber-50', text: 'text-amber-600' };
-  return getFileIconMeta(getFileExt(url));
-};
+// Logo segitiga ala Google Drive, digambar sendiri pake SVG (bukan replika persis,
+// cuma niru bentuk & 3 warna khasnya: hijau kiri, kuning kanan, biru bawah)
+const DriveLogo: React.FC<{ size?: number }> = ({ size = 26 }) => (
+  <svg width={size} height={size} viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+    <polygon points="50,8 10,88 50,61.3" fill="#34A853" />
+    <polygon points="50,8 90,88 50,61.3" fill="#FBBC04" />
+    <polygon points="10,88 90,88 50,61.3" fill="#4285F4" />
+  </svg>
+);
 
-// Buat file yang diupload ke Supabase Storage: nempelin query param ?download
-// biar server Supabase ngirim header Content-Disposition: attachment.
-// PENTING: atribut HTML `download` doang nggak cukup karena file_url beda domain
-// (cross-origin) dari web-nya, browser bakal abaikan attribute itu dan malah
-// preview PDF/gambar di tab baru. Query param ini yang beneran maksa download.
-const getDownloadHref = (url: string) => {
-  if (!url || isGDriveLink(url)) return url;
-  const separator = url.includes('?') ? '&' : '?';
-  return `${url}${separator}download`;
+
+// Paksa download beneran (bukan preview/tab baru) buat file yang di-upload ke storage kita
+// sendiri — termasuk PDF & gambar yang biasanya kebuka preview di browser kalau cuma pake
+// atribut HTML `download` (nggak jalan karena file_url beda domain / cross-origin).
+// Caranya: fetch file-nya jadi blob dulu, baru trigger <a download> ke blob url lokal itu.
+// Link Google Drive TIDAK lewat sini (biar tetep kebuka dokumennya di Drive).
+const downloadFileAsBlob = async (m: Material, setDownloadingId: (id: string | null) => void) => {
+  setDownloadingId(m.id);
+  try {
+    const res = await fetch(m.file_url);
+    if (!res.ok) throw new Error('Gagal mengambil file');
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    const ext = getFileExt(m.file_url).toLowerCase();
+    const safeTitle = (m.title || 'materi').replace(/[\\/:*?"<>|]/g, '_');
+
+    const a = document.createElement('a');
+    a.href = blobUrl;
+    a.download = `${safeTitle}.${ext}`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(blobUrl);
+  } catch (e) {
+    // Fallback: kalau fetch gagal (misal CORS), buka aja di tab baru
+    window.open(m.file_url, '_blank');
+  } finally {
+    setDownloadingId(null);
+  }
 };
 
 const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, studentPayments, attendanceLogs }) => {
@@ -95,6 +119,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
   const [confirmDelete, setConfirmDelete] = useState<Material | null>(null);
   const [reorderMode, setReorderMode] = useState(false);
   const [reordering, setReordering] = useState(false);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const [form, setForm] = useState({
     subject: subjects[0] || '',
@@ -319,6 +344,8 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
     }
   };
 
+  const handleDownloadFile = (m: Material) => downloadFileAsBlob(m, setDownloadingId);
+
   const moveItem = async (items: Material[], index: number, direction: 'up' | 'down') => {
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
     if (targetIndex < 0 || targetIndex >= items.length) return;
@@ -489,10 +516,17 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                       </div>
                     )}
                     {(() => {
-                      const { label, box, text } = getMaterialMeta(m.file_url);
+                      if (isGDriveLink(m.file_url)) {
+                        return (
+                          <div className="w-12 h-12 bg-slate-50 rounded-2xl flex items-center justify-center shrink-0">
+                            <DriveLogo size={24} />
+                          </div>
+                        );
+                      }
+                      const { label, box, text } = getFileIconMeta(getFileExt(m.file_url));
                       return (
                         <div className={`w-12 h-12 ${box} rounded-2xl flex items-center justify-center shrink-0`}>
-                          <span className={`font-black italic ${text} text-[10px]`}>{label}</span>
+                          <span className={`font-black italic ${text} text-[8px]`}>{label}</span>
                         </div>
                       );
                     })()}
@@ -504,9 +538,9 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                         <ExternalLink size={16} />
                       </a>
                     ) : (
-                      <a href={getDownloadHref(m.file_url)} target="_blank" rel="noopener noreferrer" className={`p-3 ${theme.btn} text-white rounded-xl transition-all shadow-md`} title="Download">
-                        <Download size={16} />
-                      </a>
+                      <button onClick={() => handleDownloadFile(m)} disabled={downloadingId === m.id} className={`p-3 ${theme.btn} text-white rounded-xl transition-all shadow-md disabled:opacity-50`} title="Download">
+                        {downloadingId === m.id ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
+                      </button>
                     )}
                     {isAdmin && !reorderMode && (
                       <button onClick={() => setConfirmDelete(m)} className="p-3 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white transition-all" title="Hapus">
@@ -551,43 +585,52 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                 <input type="text" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Contoh: Contoh Soal Bab 1" className="w-full mt-1 px-4 py-3 bg-slate-50 rounded-xl font-black text-xs outline-none border-2 border-slate-100" />
               </div>
               <div>
-                <div className="flex items-center justify-between ml-2 mb-1">
-                  <label className="text-[9px] font-black text-slate-400 uppercase">File / Link Materi</label>
-                </div>
-                <div className="flex gap-1 mb-1.5 bg-slate-100 p-1 rounded-lg w-fit">
-                  <button
-                    type="button"
-                    onClick={() => setForm({ ...form, uploadMode: 'file' })}
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[9px] font-black uppercase transition-all ${form.uploadMode === 'file' ? 'bg-white text-blue-600 shadow' : 'text-slate-400'}`}
-                  >
-                    <Upload size={10} /> File
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setForm({ ...form, uploadMode: 'link' })}
-                    className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[9px] font-black uppercase transition-all ${form.uploadMode === 'link' ? 'bg-white text-blue-600 shadow' : 'text-slate-400'}`}
-                  >
-                    <LinkIcon size={10} /> Link G-Drive
-                  </button>
+                <div className="flex items-center justify-between ml-2">
+                  <label className="text-[9px] font-black text-slate-400 uppercase">File Materi</label>
+                  <div className="flex gap-0.5 bg-slate-100 p-0.5 rounded-md">
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, uploadMode: 'file' })}
+                      className={`px-2 py-0.5 rounded text-[8px] font-black uppercase transition-all ${form.uploadMode === 'file' ? 'bg-white text-blue-600 shadow' : 'text-slate-400'}`}
+                    >
+                      File
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setForm({ ...form, uploadMode: 'link' })}
+                      className={`px-2 py-0.5 rounded text-[8px] font-black uppercase transition-all ${form.uploadMode === 'link' ? 'bg-white text-blue-600 shadow' : 'text-slate-400'}`}
+                    >
+                      Drive
+                    </button>
+                  </div>
                 </div>
                 {form.uploadMode === 'file' ? (
                   <input
                     type="file"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png"
                     onChange={e => setForm({ ...form, file: e.target.files?.[0] || null })}
-                    className="w-full px-3 py-2.5 bg-slate-50 rounded-xl border-2 border-slate-100 text-[10px] font-bold text-slate-500 cursor-pointer file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white file:text-[9px] file:font-black file:uppercase file:cursor-pointer hover:file:bg-blue-700 file:transition-all"
+                    className="w-full mt-1 px-3 py-3 bg-slate-50 rounded-xl border-2 border-slate-100 text-[10px] font-bold text-slate-500 cursor-pointer file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white file:text-[9px] file:font-black file:uppercase file:cursor-pointer hover:file:bg-blue-700 file:transition-all"
                   />
                 ) : (
-                  <input
-                    type="text"
-                    value={form.linkUrl}
-                    onChange={e => setForm({ ...form, linkUrl: e.target.value })}
-                    placeholder="https://drive.google.com/..."
-                    className="w-full px-4 py-3 bg-slate-50 rounded-xl font-bold text-xs outline-none border-2 border-slate-100"
-                  />
+                  <div className="w-full mt-1 px-4 py-3 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 text-[9px] font-bold text-slate-300 uppercase text-center">
+                    Isi link di bawah ↓
+                  </div>
                 )}
               </div>
             </div>
+
+            {form.uploadMode === 'link' && (
+              <div>
+                <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Link Google Drive</label>
+                <input
+                  type="text"
+                  value={form.linkUrl}
+                  onChange={e => setForm({ ...form, linkUrl: e.target.value })}
+                  placeholder="https://drive.google.com/..."
+                  className="w-full mt-1 px-4 py-3 bg-slate-50 rounded-xl font-bold text-xs outline-none border-2 border-slate-100"
+                />
+              </div>
+            )}
 
             <button onClick={handleUpload} disabled={uploading} className="w-full py-4 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
               {uploading ? <Loader2 size={16} className="animate-spin" /> : <><Upload size={16} /> Upload Sekarang</>}
