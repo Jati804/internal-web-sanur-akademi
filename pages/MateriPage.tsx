@@ -4,7 +4,8 @@ import { supabase } from '../services/supabase.ts';
 import ModalPortal from '../ModalPortal.tsx';
 import {
   Library, Upload, Download, Trash2, Loader2,
-  X, Plus, FolderOpen, AlertCircle, ArrowUp, ArrowDown, ArrowUpDown
+  X, Plus, FolderOpen, AlertCircle, ArrowUp, ArrowDown, ArrowUpDown,
+  ExternalLink, Link as LinkIcon
 } from 'lucide-react';
 
 interface Material {
@@ -66,15 +67,24 @@ const getFileIconMeta = (extUpper: string) => {
   }
 };
 
-// Materi berupa link Google Drive (bukan file yang di-upload ke storage)
+// Deteksi apakah url yang disimpan itu link Google Drive (bukan file yang diupload ke storage)
 const isGDriveLink = (url: string) => /drive\.google\.com|docs\.google\.com/i.test(url || '');
 
-// Icon meta final: kalau materinya link GDrive, tampilin badge "DRIVE" beda sendiri
-const getMaterialIconMeta = (m: Material) => {
-  if (isGDriveLink(m.file_url)) {
-    return { label: 'DRIVE', box: 'bg-blue-50', text: 'text-blue-500' };
-  }
-  return getFileIconMeta(getFileExt(m.file_url));
+// Badge + warna khusus buat item yang sumbernya link G-Drive
+const getMaterialMeta = (url: string) => {
+  if (isGDriveLink(url)) return { label: 'DRIVE', box: 'bg-amber-50', text: 'text-amber-600' };
+  return getFileIconMeta(getFileExt(url));
+};
+
+// Buat file yang diupload ke Supabase Storage: nempelin query param ?download
+// biar server Supabase ngirim header Content-Disposition: attachment.
+// PENTING: atribut HTML `download` doang nggak cukup karena file_url beda domain
+// (cross-origin) dari web-nya, browser bakal abaikan attribute itu dan malah
+// preview PDF/gambar di tab baru. Query param ini yang beneran maksa download.
+const getDownloadHref = (url: string) => {
+  if (!url || isGDriveLink(url)) return url;
+  const separator = url.includes('?') ? '&' : '?';
+  return `${url}${separator}download`;
 };
 
 const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, studentPayments, attendanceLogs }) => {
@@ -91,10 +101,9 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
     level: levels[0] || '',
     title: '',
     file: null as File | null,
-    driveLink: '',
-    inputMode: 'upload' as 'upload' | 'link',
+    linkUrl: '',
+    uploadMode: 'file' as 'file' | 'link',
   });
-  const [downloadingId, setDownloadingId] = useState<string | null>(null);
 
   const fetchMaterials = async () => {
     setLoading(true);
@@ -239,30 +248,30 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
   }, [visibleMaterials, missingGroups, subjects, levels]);
 
   const resetForm = () => {
-    setForm({ subject: subjects[0] || '', level: levels[0] || '', title: '', file: null, driveLink: '', inputMode: 'upload' });
+    setForm({ subject: subjects[0] || '', level: levels[0] || '', title: '', file: null, linkUrl: '', uploadMode: 'file' });
     setShowUploadForm(false);
   };
 
-  // Ganti mode Upload File <-> Link GDrive, sekalian bersihin field mode sebelumnya
-  // biar nggak ada data "nyangkut" yang gak sengaja ke-submit.
-  const switchInputMode = (mode: 'upload' | 'link') => {
-    setForm(f => ({ ...f, inputMode: mode, file: mode === 'link' ? null : f.file, driveLink: mode === 'upload' ? '' : f.driveLink }));
-  };
-
   const handleUpload = async () => {
-    const trimmedLink = form.driveLink.trim();
-
     if (!form.subject || !form.level || !form.title) {
-      return alert('Lengkapi semua kolom dulu ya! ✨');
+      return alert('Lengkapi mata pelajaran, level, dan judul materi dulu ya! ✨');
     }
-    if (!form.file && !trimmedLink) {
-      return alert('Pilih salah satu ya: upload file ATAU isi link Google Drive-nya! ✨');
+
+    const trimmedLink = form.linkUrl.trim();
+
+    // Cuma wajibin field yang sesuai sama mode yang lagi dipilih.
+    // Nggak boleh dua-duanya kosong, tapi salah satu (sesuai mode) udah cukup.
+    if (form.uploadMode === 'file' && !form.file) {
+      return alert('Pilih file materinya dulu ya, atau ganti ke mode Link G-Drive! ✨');
     }
-    if (form.file && !isAllowedFile(form.file)) {
+    if (form.uploadMode === 'link' && !trimmedLink) {
+      return alert('Isi link Google Drive-nya dulu ya, atau ganti ke mode Upload File! ✨');
+    }
+    if (form.uploadMode === 'file' && form.file && !isAllowedFile(form.file)) {
       return alert('File harus format PDF, Word, Excel, PowerPoint, atau Gambar (JPG/PNG) ya!');
     }
-    if (form.inputMode === 'link' && trimmedLink && !isGDriveLink(trimmedLink)) {
-      return alert('Link-nya harus link Google Drive (drive.google.com / docs.google.com) ya!');
+    if (form.uploadMode === 'link' && !isGDriveLink(trimmedLink)) {
+      return alert('Link-nya harus link Google Drive ya (drive.google.com / docs.google.com)!');
     }
 
     setUploading(true);
@@ -271,20 +280,19 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
       const targetSubject = form.subject.toUpperCase();
       const targetLevel = form.level.toUpperCase();
 
-      let fileUrl: string;
-      let fileSize: number | undefined;
+      let finalUrl = '';
+      let fileSize: number | undefined = undefined;
 
-      if (form.inputMode === 'link') {
-        // Materi berupa link Google Drive, gak perlu upload apa-apa ke storage
-        fileUrl = trimmedLink;
-        fileSize = undefined;
-      } else {
-        const filePath = `${form.subject}/${form.level}/${id}_${form.file!.name}`.replace(/\s+/g, '_');
-        const { error: uploadError } = await supabase.storage.from('materials').upload(filePath, form.file!);
+      if (form.uploadMode === 'file' && form.file) {
+        const filePath = `${form.subject}/${form.level}/${id}_${form.file.name}`.replace(/\s+/g, '_');
+        const { error: uploadError } = await supabase.storage.from('materials').upload(filePath, form.file);
         if (uploadError) throw uploadError;
+
         const { data: publicUrlData } = supabase.storage.from('materials').getPublicUrl(filePath);
-        fileUrl = publicUrlData.publicUrl;
-        fileSize = form.file!.size;
+        finalUrl = publicUrlData.publicUrl;
+        fileSize = form.file.size;
+      } else {
+        finalUrl = trimmedLink;
       }
 
       const { error: insertError } = await supabase.from('materials').insert([{
@@ -292,7 +300,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
         subject: targetSubject,
         level: targetLevel,
         title: form.title,
-        file_url: fileUrl,
+        file_url: finalUrl,
         file_size: fileSize,
       }]);
       if (insertError) throw insertError;
@@ -308,35 +316,6 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
       alert('Gagal upload: ' + e.message);
     } finally {
       setUploading(false);
-    }
-  };
-
-  // Paksa download beneran (bukan preview di tab baru) buat file yang di-upload
-  // ke storage kita sendiri — termasuk PDF & gambar yang biasanya kebuka preview
-  // di browser. Caranya fetch jadi blob dulu, baru trigger <a download>.
-  // Link Google Drive TIDAK lewat sini (biar tetep kebuka dokumennya di Drive).
-  const handleDownloadFile = async (m: Material) => {
-    setDownloadingId(m.id);
-    try {
-      const res = await fetch(m.file_url);
-      if (!res.ok) throw new Error('Gagal mengambil file');
-      const blob = await res.blob();
-      const blobUrl = URL.createObjectURL(blob);
-      const ext = getFileExt(m.file_url).toLowerCase();
-      const safeTitle = (m.title || 'materi').replace(/[\\/:*?"<>|]/g, '_');
-
-      const a = document.createElement('a');
-      a.href = blobUrl;
-      a.download = `${safeTitle}.${ext}`;
-      document.body.appendChild(a);
-      a.click();
-      a.remove();
-      URL.revokeObjectURL(blobUrl);
-    } catch (e) {
-      // Fallback: kalau fetch gagal (misal CORS), buka aja di tab baru
-      window.open(m.file_url, '_blank');
-    } finally {
-      setDownloadingId(null);
     }
   };
 
@@ -510,7 +489,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                       </div>
                     )}
                     {(() => {
-                      const { label, box, text } = getMaterialIconMeta(m);
+                      const { label, box, text } = getMaterialMeta(m.file_url);
                       return (
                         <div className={`w-12 h-12 ${box} rounded-2xl flex items-center justify-center shrink-0`}>
                           <span className={`font-black italic ${text} text-[10px]`}>{label}</span>
@@ -522,12 +501,12 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                   <div className="flex items-center gap-2 shrink-0">
                     {isGDriveLink(m.file_url) ? (
                       <a href={m.file_url} target="_blank" rel="noopener noreferrer" className={`p-3 ${theme.btn} text-white rounded-xl transition-all shadow-md`} title="Buka di Google Drive">
-                        <Download size={16} />
+                        <ExternalLink size={16} />
                       </a>
                     ) : (
-                      <button onClick={() => handleDownloadFile(m)} disabled={downloadingId === m.id} className={`p-3 ${theme.btn} text-white rounded-xl transition-all shadow-md disabled:opacity-50`} title="Unduh">
-                        {downloadingId === m.id ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />}
-                      </button>
+                      <a href={getDownloadHref(m.file_url)} target="_blank" rel="noopener noreferrer" className={`p-3 ${theme.btn} text-white rounded-xl transition-all shadow-md`} title="Download">
+                        <Download size={16} />
+                      </a>
                     )}
                     {isAdmin && !reorderMode && (
                       <button onClick={() => setConfirmDelete(m)} className="p-3 bg-rose-50 text-rose-600 rounded-xl hover:bg-rose-600 hover:text-white transition-all" title="Hapus">
@@ -549,9 +528,9 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
         <div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl">
           <div className="bg-white w-full max-w-2xl rounded-[2.5rem] p-8 shadow-2xl space-y-6 relative">
             <button onClick={resetForm} className="absolute top-6 right-6 p-2 text-slate-300 hover:text-rose-500"><X size={20} /></button>
-            <div className="space-y-1">
-              <h4 className="text-xl font-black text-slate-800 uppercase italic">Upload Materi Baru</h4>
-              <p className="text-[10px] font-bold text-slate-400 uppercase">PDF, Word, Excel, PPT, atau Gambar</p>
+            <div className="flex items-baseline gap-2 flex-wrap">
+              <h4 className="text-lg font-black text-slate-800 uppercase italic">Upload Materi Baru</h4>
+              <span className="text-[9px] font-bold text-slate-400 uppercase">— PDF, Word, Excel, PPT, Gambar, atau Link G-Drive</span>
             </div>
 
             <div className="grid grid-cols-2 gap-4">
@@ -571,26 +550,27 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                 <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Judul Materi</label>
                 <input type="text" value={form.title} onChange={e => setForm({ ...form, title: e.target.value })} placeholder="Contoh: Contoh Soal Bab 1" className="w-full mt-1 px-4 py-3 bg-slate-50 rounded-xl font-black text-xs outline-none border-2 border-slate-100" />
               </div>
-              <div className="col-span-2">
-                <label className="text-[9px] font-black text-slate-400 uppercase ml-2">File Materi</label>
-                <div className="flex gap-2 mt-1 mb-2">
+              <div>
+                <div className="flex items-center justify-between ml-2 mb-1">
+                  <label className="text-[9px] font-black text-slate-400 uppercase">File / Link Materi</label>
+                </div>
+                <div className="flex gap-1 mb-1.5 bg-slate-100 p-1 rounded-lg w-fit">
                   <button
                     type="button"
-                    onClick={() => switchInputMode('upload')}
-                    className={`flex-1 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${form.inputMode === 'upload' ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-50 text-slate-400 border-2 border-slate-100'}`}
+                    onClick={() => setForm({ ...form, uploadMode: 'file' })}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[9px] font-black uppercase transition-all ${form.uploadMode === 'file' ? 'bg-white text-blue-600 shadow' : 'text-slate-400'}`}
                   >
-                    Upload File
+                    <Upload size={10} /> File
                   </button>
                   <button
                     type="button"
-                    onClick={() => switchInputMode('link')}
-                    className={`flex-1 py-2.5 rounded-xl font-black text-[9px] uppercase tracking-widest transition-all ${form.inputMode === 'link' ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-50 text-slate-400 border-2 border-slate-100'}`}
+                    onClick={() => setForm({ ...form, uploadMode: 'link' })}
+                    className={`flex items-center gap-1 px-2.5 py-1 rounded-md text-[9px] font-black uppercase transition-all ${form.uploadMode === 'link' ? 'bg-white text-blue-600 shadow' : 'text-slate-400'}`}
                   >
-                    Link Google Drive
+                    <LinkIcon size={10} /> Link G-Drive
                   </button>
                 </div>
-
-                {form.inputMode === 'upload' ? (
+                {form.uploadMode === 'file' ? (
                   <input
                     type="file"
                     accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png"
@@ -599,14 +579,13 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                   />
                 ) : (
                   <input
-                    type="url"
-                    value={form.driveLink}
-                    onChange={e => setForm({ ...form, driveLink: e.target.value })}
-                    placeholder="https://drive.google.com/file/d/..."
+                    type="text"
+                    value={form.linkUrl}
+                    onChange={e => setForm({ ...form, linkUrl: e.target.value })}
+                    placeholder="https://drive.google.com/..."
                     className="w-full px-4 py-3 bg-slate-50 rounded-xl font-bold text-xs outline-none border-2 border-slate-100"
                   />
                 )}
-                <p className="text-[9px] font-bold text-slate-300 uppercase mt-1.5 ml-2">Isi salah satu aja: upload file atau link Google Drive</p>
               </div>
             </div>
 
