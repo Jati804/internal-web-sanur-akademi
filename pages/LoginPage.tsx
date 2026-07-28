@@ -160,40 +160,26 @@ setFieldErrors({ username: false, pin: false });
     setError('');
 
     const lowerInput = username.trim().toLowerCase();
-    let foundUser: User | undefined;
-    if (role === 'ADMIN') {
-      foundUser = teachers.find(t => t.role === 'ADMIN' && t.username.toLowerCase() === lowerInput);
-      if (!foundUser && lowerInput === MOCK_ADMIN.username.toLowerCase()) foundUser = MOCK_ADMIN;
-    } else if (role === 'TEACHER') {
-      foundUser = teachers.find(t => t.role === 'TEACHER' && t.username.toLowerCase() === lowerInput);
-    } else if (role === 'STUDENT') {
-      foundUser = studentAccounts.find(s => s.username.toLowerCase() === lowerInput);
-    }
-
-    if (!foundUser) {
-      setError('Username tidak terdaftar');
-      setLoading(false);
-      return;
-    }
 
     // 🔑 MOCK_ADMIN: jalur darurat, BUKAN akun asli di database, jadi nggak
-    // punya row buat disinkron ke Supabase Auth. Tetap pakai cara lama
-    // (cek PIN langsung), berlaku cuma buat akun ini doang.
-    // 🐛 FIX: dulu dibandingin pakai foundUser.id === MOCK_ADMIN.id, tapi
-    // ternyata akun Admin ASLI di database kebetulan id-nya sama persis
-    // ('admin-1'), jadi selalu ke-anggep MOCK_ADMIN padahal bukan. Sekarang
-    // dibandingin dari identitas objeknya langsung, bukan cuma nilai id-nya.
-    if (foundUser === MOCK_ADMIN) {
-      const userPin = foundUser.pin || '224488';
-      if (pin === userPin) onLogin(foundUser);
+    // punya row buat disinkron ke Supabase Auth. Berdiri sendiri, nggak
+    // butuh data dari tabel teachers/student_accounts sama sekali.
+    if (role === 'ADMIN' && lowerInput === MOCK_ADMIN.username.toLowerCase()) {
+      const userPin = MOCK_ADMIN.pin || '224488';
+      if (pin === userPin) onLogin(MOCK_ADMIN);
       else setError('PIN Salah');
       setLoading(false);
       return;
     }
 
-    // 🔐 Akun asli (dari database) -> verifikasi PIN lewat Supabase Auth,
-    // BUKAN dibandingkan manual lagi. Email sintetis ini nggak pernah
-    // dikirim beneran, cuma identifier unik internal.
+    // 🔐 Akun asli -> LANGSUNG coba Supabase Auth, TANPA pre-fetch tabel
+    // teachers/student_accounts pakai anon key. Sebelumnya proses ini
+    // butuh `teachers`/`studentAccounts` di-fetch penuh (termasuk kolom
+    // PIN) SEBELUM user login, yang berarti anon key harus boleh baca
+    // tabel itu -> data sensitif ke-expose ke siapa aja yang belum login.
+    // Sekarang: coba Auth dulu, baru fetch profil SETELAH sukses (di
+    // titik itu request-nya udah "authenticated", jadi aman dikunci RLS
+    // ke authenticated-only tanpa perlu buka akses anon ke tabel ini).
     const syntheticEmail = `${lowerInput}.${role.toLowerCase()}@sanur.internal`;
     const { error: authError } = await supabase.auth.signInWithPassword({
       email: syntheticEmail,
@@ -201,12 +187,29 @@ setFieldErrors({ username: false, pin: false });
     });
 
     if (authError) {
+      // Sengaja generik, nggak dibedain "username nggak ada" vs "PIN salah",
+      // biar nggak bisa dipakai buat nebak-nebak username mana yang valid.
       setError('Username atau PIN salah');
       setLoading(false);
       return;
     }
 
-    onLogin(foundUser);
+    const tableName = role === 'STUDENT' ? 'student_accounts' : 'teachers';
+    const { data: profile, error: profileError } = await supabase
+      .from(tableName)
+      .select('*')
+      .ilike('username', lowerInput)
+      .eq('role', role)
+      .single();
+
+    if (profileError || !profile) {
+      setError('Akun ditemukan tapi profil gagal dimuat. Coba lagi / hubungi Admin.');
+      await supabase.auth.signOut();
+      setLoading(false);
+      return;
+    }
+
+    onLogin(profile);
     setLoading(false);
   };
 
@@ -227,10 +230,10 @@ setFieldErrors({ username: false, pin: false });
   // ── MAINTENANCE ─────────────────────────────────────────────────────────
   if (view === 'MAINTENANCE') {
     return (
-      <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-8 text-center relative overflow-hidden">
+      <div className="min-h-screen w-full max-w-[100vw] bg-slate-900 flex flex-col items-center p-8 py-16 text-center relative overflow-x-hidden overflow-y-auto">
         <BlobStyles />
-        <div className="blob-dark-1 absolute top-0 right-0 w-[500px] h-[500px] bg-orange-600/10 rounded-full blur-[120px] -mr-48 -mt-48 pointer-events-none"></div>
-        <div className="blob-dark-2 absolute bottom-0 left-0 w-[500px] h-[500px] bg-blue-600/10 rounded-full blur-[120px] -ml-48 -mb-48 pointer-events-none"></div>
+        <div className="blob-dark-1 absolute top-0 right-0 w-[500px] h-[500px] max-w-[80vw] bg-orange-600/10 rounded-full blur-[120px] -mr-24 -mt-24 pointer-events-none"></div>
+        <div className="blob-dark-2 absolute bottom-0 left-0 w-[500px] h-[500px] max-w-[80vw] bg-blue-600/10 rounded-full blur-[120px] -ml-24 -mb-24 pointer-events-none"></div>
 
         <button
           onClick={() => { setRole('ADMIN'); setView('LOGIN'); }}
@@ -240,7 +243,7 @@ setFieldErrors({ username: false, pin: false });
           {/* BENAR-BENAR KOSONG */}
         </button>
 
-        <div className="max-w-md w-full space-y-10 animate-in fade-in zoom-in duration-700 relative z-10">
+        <div className="my-auto max-w-md w-full space-y-10 animate-in fade-in zoom-in duration-700 relative z-10">
            <div className="w-32 h-32 bg-orange-500 text-white rounded-[3rem] flex items-center justify-center mx-auto shadow-2xl animate-bounce border-8 border-slate-900">
               <Construction size={64} />
            </div>
