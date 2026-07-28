@@ -5,7 +5,7 @@ import ModalPortal from '../ModalPortal.tsx';
 import {
   Library, Upload, Download, Trash2, Loader2,
   X, Plus, FolderOpen, AlertCircle, ArrowUp, ArrowDown, ArrowUpDown,
-  ExternalLink, Link as LinkIcon
+  ExternalLink, Link as LinkIcon, Lock, Unlock
 } from 'lucide-react';
 
 interface Material {
@@ -17,6 +17,7 @@ interface Material {
   file_size?: number;
   sort_order?: number;
   created_at?: string;
+  is_locked?: boolean;
 }
 
 interface MateriPageProps {
@@ -128,6 +129,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
     file: null as File | null,
     linkUrl: '',
     uploadMode: 'file' as 'file' | 'link',
+    locked: false,
   });
 
   const fetchMaterials = async () => {
@@ -273,7 +275,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
   }, [visibleMaterials, missingGroups, subjects, levels]);
 
   const resetForm = () => {
-    setForm({ subject: subjects[0] || '', level: levels[0] || '', title: '', file: null, linkUrl: '', uploadMode: 'file' });
+    setForm({ subject: subjects[0] || '', level: levels[0] || '', title: '', file: null, linkUrl: '', uploadMode: 'file', locked: false });
     setShowUploadForm(false);
   };
 
@@ -327,6 +329,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
         title: form.title,
         file_url: finalUrl,
         file_size: fileSize,
+        is_locked: form.locked,
       }]);
       if (insertError) throw insertError;
 
@@ -345,6 +348,19 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
   };
 
   const handleDownloadFile = (m: Material) => downloadFileAsBlob(m, setDownloadingId);
+
+  // Kunci/buka materi (khusus admin). Materi terkunci tetap keliatan judulnya buat
+  // guru/siswa (biar nggak ke-detect sebagai "materi belum diupload"), tapi nggak
+  // bisa didownload sampai admin buka manual.
+  const toggleLock = async (m: Material) => {
+    try {
+      const { error } = await supabase.from('materials').update({ is_locked: !m.is_locked }).eq('id', m.id);
+      if (error) throw error;
+      await fetchMaterials();
+    } catch (e: any) {
+      alert('Gagal mengubah status kunci: ' + e.message);
+    }
+  };
 
   const moveItem = async (items: Material[], index: number, direction: 'up' | 'down') => {
     const targetIndex = direction === 'up' ? index - 1 : index + 1;
@@ -502,7 +518,30 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
               </div>
             ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {items.map((m, idx) => (
+              {items.map((m, idx) => {
+                // 🔒 Guru/siswa yang ketemu materi terkunci: tampilin card versi "digembok"
+                // (judul tetep keliatan, tapi nggak ada tombol download) — bukan disembunyiin
+                // total, biar nggak ke-detect sebagai "materi belum diupload".
+                if (m.is_locked && !isAdmin) {
+                  return (
+                    <div key={m.id} className="bg-slate-100 p-6 rounded-[2rem] border border-slate-200 flex items-center justify-between gap-4">
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className="w-12 h-12 bg-slate-200 rounded-2xl flex items-center justify-center shrink-0">
+                          <Lock size={18} className="text-slate-400" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-black text-slate-500 text-xs italic leading-snug">{m.title}</p>
+                          <p className="text-[8px] font-black text-slate-400 uppercase mt-1 tracking-widest">Terkunci — Menunggu Dibuka Admin</p>
+                        </div>
+                      </div>
+                      <div className="w-12 h-12 flex items-center justify-center shrink-0">
+                        <Lock size={16} className="text-slate-300" />
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
                 <div key={m.id} className="bg-slate-50 p-6 rounded-[2rem] border border-slate-100 flex items-center justify-between gap-4">
                   <div className="flex items-center gap-4 min-w-0">
                     {reorderMode && isAdmin && (
@@ -530,9 +569,25 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                         </div>
                       );
                     })()}
-                    <p className="font-black text-slate-700 text-xs italic leading-snug">{m.title}</p>
+                    <div className="min-w-0">
+                      <p className="font-black text-slate-700 text-xs italic leading-snug">{m.title}</p>
+                      {isAdmin && m.is_locked && (
+                        <p className="text-[8px] font-black text-amber-500 uppercase mt-1 tracking-widest flex items-center gap-1">
+                          <Lock size={9} /> Terkunci
+                        </p>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
+                    {isAdmin && !reorderMode && (
+                      <button
+                        onClick={() => toggleLock(m)}
+                        className={`p-3 rounded-xl transition-all shadow-md ${m.is_locked ? 'bg-amber-500 text-white hover:bg-amber-600' : 'bg-slate-100 text-slate-400 hover:bg-slate-200'}`}
+                        title={m.is_locked ? 'Terkunci — klik buat buka' : 'Kunci materi ini'}
+                      >
+                        {m.is_locked ? <Lock size={16} /> : <Unlock size={16} />}
+                      </button>
+                    )}
                     {isGDriveLink(m.file_url) ? (
                       <a href={m.file_url} target="_blank" rel="noopener noreferrer" className={`p-3 ${theme.btn} text-white rounded-xl transition-all shadow-md`} title="Buka di Google Drive">
                         <ExternalLink size={16} />
@@ -549,7 +604,8 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                     )}
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
             )}
           </div>
@@ -631,6 +687,20 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                 />
               </div>
             )}
+
+            <button
+              type="button"
+              onClick={() => setForm({ ...form, locked: !form.locked })}
+              className={`w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${form.locked ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-100'}`}
+            >
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${form.locked ? 'bg-amber-500 text-white' : 'bg-white text-slate-300 border border-slate-200'}`}>
+                {form.locked ? <Lock size={16} /> : <Unlock size={16} />}
+              </div>
+              <div>
+                <p className={`text-[10px] font-black uppercase ${form.locked ? 'text-amber-600' : 'text-slate-500'}`}>Kunci materi ini</p>
+                <p className="text-[9px] font-bold text-slate-400 uppercase leading-snug mt-0.5">Cocok buat soal ujian — baru bisa dibuka kalau kamu unlock manual nanti</p>
+              </div>
+            </button>
 
             <button onClick={handleUpload} disabled={uploading} className="w-full py-4 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
               {uploading ? <Loader2 size={16} className="animate-spin" /> : <><Upload size={16} /> Upload Sekarang</>}
