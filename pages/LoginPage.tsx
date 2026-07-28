@@ -179,7 +179,11 @@ setFieldErrors({ username: false, pin: false });
     // 🔑 MOCK_ADMIN: jalur darurat, BUKAN akun asli di database, jadi nggak
     // punya row buat disinkron ke Supabase Auth. Tetap pakai cara lama
     // (cek PIN langsung), berlaku cuma buat akun ini doang.
-    if (foundUser.id === MOCK_ADMIN.id) {
+    // 🐛 FIX: dulu dibandingin pakai foundUser.id === MOCK_ADMIN.id, tapi
+    // ternyata akun Admin ASLI di database kebetulan id-nya sama persis
+    // ('admin-1'), jadi selalu ke-anggep MOCK_ADMIN padahal bukan. Sekarang
+    // dibandingin dari identitas objeknya langsung, bukan cuma nilai id-nya.
+    if (foundUser === MOCK_ADMIN) {
       const userPin = foundUser.pin || '224488';
       if (pin === userPin) onLogin(foundUser);
       else setError('PIN Salah');
