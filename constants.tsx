@@ -1,13 +1,11 @@
 
 import { Transaction, Attendance, StudentProfile, User, StudentPayment } from './types';
 
-export const MOCK_ADMIN: User = {
-  id: 'admin-1',
-  name: 'Pengurus Sanur',
-  role: 'ADMIN',
-  username: 'pengurus_sanur2024',
-  pin: '4488'
-};
+// 🗑️ MOCK_ADMIN dihapus: dulu jalur darurat login yang skip Supabase Auth,
+// tapi username-nya collision sama akun Admin asli ('pengurus_sanur2024'),
+// jadi malah nge-block login akun asli begitu RLS aktif. Sekarang akun
+// Admin udah tersinkron penuh ke Supabase Auth, jalur ini udah nggak
+// dipakai/diperlukan lagi (sudah dihapus juga dari LoginPage.tsx).
 
 export const MOCK_TEACHERS: User[] = [
   { id: 'guru-1', name: 'SRI ISTI UNTARI', role: 'TEACHER', username: 'guru_sri', pin: '4488' },
