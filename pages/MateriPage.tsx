@@ -519,23 +519,18 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
             ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               {items.map((m, idx) => {
-                // 🔒 Guru/siswa yang ketemu materi terkunci: tampilin card versi "digembok"
-                // (judul tetep keliatan, tapi nggak ada tombol download) — bukan disembunyiin
-                // total, biar nggak ke-detect sebagai "materi belum diupload".
-                if (m.is_locked && !isAdmin) {
+                // 🔒 Materi terkunci: cuma dibatesin buat SISWA (nggak bisa download, judul tetep
+                // keliatan biar nggak ke-detect sebagai "materi belum diupload"). Guru & admin
+                // tetap full akses — guru toh emang pengajarnya, jadi nggak perlu ikut dikunci.
+                if (m.is_locked && !isAdmin && !isTeacher) {
                   return (
-                    <div key={m.id} className="bg-slate-100 p-6 rounded-[2rem] border border-slate-200 flex items-center justify-between gap-4">
-                      <div className="flex items-center gap-4 min-w-0">
-                        <div className="w-12 h-12 bg-slate-200 rounded-2xl flex items-center justify-center shrink-0">
-                          <Lock size={18} className="text-slate-400" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="font-black text-slate-500 text-xs italic leading-snug">{m.title}</p>
-                          <p className="text-[8px] font-black text-slate-400 uppercase mt-1 tracking-widest">Terkunci — Menunggu Dibuka Admin</p>
-                        </div>
+                    <div key={m.id} className="bg-slate-100 p-6 rounded-[2rem] border border-slate-200 flex items-center gap-4">
+                      <div className="w-12 h-12 bg-slate-200 rounded-2xl flex items-center justify-center shrink-0">
+                        <Lock size={18} className="text-slate-400" />
                       </div>
-                      <div className="w-12 h-12 flex items-center justify-center shrink-0">
-                        <Lock size={16} className="text-slate-300" />
+                      <div className="min-w-0">
+                        <p className="font-black text-slate-500 text-xs italic leading-snug">{m.title}</p>
+                        <p className="text-[8px] font-black text-slate-400 uppercase mt-1 tracking-widest">Terkunci — Menunggu Dibuka Admin</p>
                       </div>
                     </div>
                   );
@@ -574,6 +569,11 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                       {isAdmin && m.is_locked && (
                         <p className="text-[8px] font-black text-amber-500 uppercase mt-1 tracking-widest flex items-center gap-1">
                           <Lock size={9} /> Terkunci
+                        </p>
+                      )}
+                      {isTeacher && m.is_locked && (
+                        <p className="text-[8px] font-black text-amber-500 uppercase mt-1 tracking-widest flex items-center gap-1">
+                          <Lock size={9} /> Terkunci buat Siswa
                         </p>
                       )}
                     </div>
@@ -675,32 +675,32 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
               </div>
             </div>
 
-            {form.uploadMode === 'link' && (
-              <div>
-                <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Link Google Drive</label>
-                <input
-                  type="text"
-                  value={form.linkUrl}
-                  onChange={e => setForm({ ...form, linkUrl: e.target.value })}
-                  placeholder="https://drive.google.com/..."
-                  className="w-full mt-1 px-4 py-3 bg-slate-50 rounded-xl font-bold text-xs outline-none border-2 border-slate-100"
-                />
+            <div className="grid grid-cols-2 gap-4">
+              <div className={form.uploadMode === 'file' ? 'col-span-2' : ''}>
+                <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Kunci Materi (Opsional)</label>
+                <button
+                  type="button"
+                  onClick={() => setForm({ ...form, locked: !form.locked })}
+                  title="Cocok buat soal ujian — baru bisa dibuka kalau kamu unlock manual nanti"
+                  className={`w-full mt-1 flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 transition-all ${form.locked ? 'bg-amber-50 border-amber-200 text-amber-600' : 'bg-slate-50 border-slate-100 text-slate-400'}`}
+                >
+                  {form.locked ? <Lock size={14} /> : <Unlock size={14} />}
+                  <span className="text-[10px] font-black uppercase">{form.locked ? 'Terkunci' : 'Kunci Materi Ini'}</span>
+                </button>
               </div>
-            )}
-
-            <button
-              type="button"
-              onClick={() => setForm({ ...form, locked: !form.locked })}
-              className={`w-full flex items-center gap-3 p-4 rounded-xl border-2 transition-all text-left ${form.locked ? 'bg-amber-50 border-amber-200' : 'bg-slate-50 border-slate-100'}`}
-            >
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 ${form.locked ? 'bg-amber-500 text-white' : 'bg-white text-slate-300 border border-slate-200'}`}>
-                {form.locked ? <Lock size={16} /> : <Unlock size={16} />}
-              </div>
-              <div>
-                <p className={`text-[10px] font-black uppercase ${form.locked ? 'text-amber-600' : 'text-slate-500'}`}>Kunci materi ini</p>
-                <p className="text-[9px] font-bold text-slate-400 uppercase leading-snug mt-0.5">Cocok buat soal ujian — baru bisa dibuka kalau kamu unlock manual nanti</p>
-              </div>
-            </button>
+              {form.uploadMode === 'link' && (
+                <div>
+                  <label className="text-[9px] font-black text-slate-400 uppercase ml-2">Link Google Drive</label>
+                  <input
+                    type="text"
+                    value={form.linkUrl}
+                    onChange={e => setForm({ ...form, linkUrl: e.target.value })}
+                    placeholder="https://drive.google.com/..."
+                    className="w-full mt-1 px-4 py-3 bg-slate-50 rounded-xl font-bold text-xs outline-none border-2 border-slate-100"
+                  />
+                </div>
+              )}
+            </div>
 
             <button onClick={handleUpload} disabled={uploading} className="w-full py-4 bg-blue-600 text-white rounded-xl font-black text-[10px] uppercase tracking-widest shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-50">
               {uploading ? <Loader2 size={16} className="animate-spin" /> : <><Upload size={16} /> Upload Sekarang</>}
