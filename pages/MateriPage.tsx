@@ -530,7 +530,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                       </div>
                       <div className="min-w-0">
                         <p className="font-black text-slate-500 text-xs italic leading-snug">{m.title}</p>
-                        <p className="text-[8px] font-black text-slate-400 uppercase mt-1 tracking-widest">Terkunci — Menunggu Dibuka Admin</p>
+                        <p className="text-[8px] font-black text-slate-400 uppercase mt-1 tracking-widest">Terkunci — Dibuka Saat Ujian</p>
                       </div>
                     </div>
                   );
