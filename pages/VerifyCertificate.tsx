@@ -20,7 +20,7 @@ const VerifyCertificate: React.FC = () => {
       try {
         const { data, error: sbError } = await supabase
           .from('reports')
-          .select('*')
+          .select('id, date, classname, sessioncategory, studentsattended, studentscores')
           .eq('id', reportId)
           .single();
 
@@ -28,14 +28,10 @@ const VerifyCertificate: React.FC = () => {
 
         setReportData({
             ...data,
-            teacherId: data.teacherid,
-            teacherName: data.teachername,
-            clockIn: data.clockin,
             className: data.classname,
             sessionCategory: data.sessioncategory,
             studentsAttended: data.studentsattended,
             studentScores: data.studentscores,
-            paymentStatus: data.paymentstatus
         });
       } catch (err: any) {
         setError(err.message);
