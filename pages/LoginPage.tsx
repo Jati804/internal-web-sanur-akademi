@@ -273,7 +273,7 @@ setFieldErrors({ username: false, pin: false });
 
   // ── SELECTION + LOGIN ──────────────────────────────────────────────────
   return (
-    <div className="min-h-screen flex flex-col font-sans" style={view === 'LOGIN' ? { backgroundColor: '#f8fafc' } : {}}>
+    <div className="h-screen flex flex-col font-sans" style={view === 'LOGIN' ? { backgroundColor: '#f8fafc' } : {}}>
       <BlobStyles />
 
 
