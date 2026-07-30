@@ -298,6 +298,7 @@ const pendingReportsCount = Array.isArray(reports) ?
                 <NavItem to="/admin/staff" icon={UserCog} label="Akses User" onClick={closeSidebar} />
                 <NavItem to="/admin/academic" icon={SettingsIcon} label="Pengaturan" onClick={closeSidebar} />
                 <NavItem to="/admin/materi" icon={Library} label="Materi" onClick={closeSidebar} />
+                <p className="px-6 mt-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest">Pemeliharaan</p>
                 <NavItem to="/admin/maintenance" icon={Database} label="Sistem" onClick={closeSidebar} />
               </>
             )}
