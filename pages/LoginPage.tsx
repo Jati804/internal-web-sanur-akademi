@@ -290,10 +290,10 @@ setFieldErrors({ username: false, pin: false });
       )}
 
 
-      <div className="w-full max-w-6xl flex flex-col items-center gap-6 animate-in fade-in duration-700">
+      <div className="w-full max-w-6xl flex flex-col items-center gap-10 animate-in fade-in duration-700">
         <div className="text-center space-y-6">
            {view === 'SELECTION' && (
-           <div className="fade-up inline-flex items-center gap-4 px-8 py-4 bg-white border border-slate-100 rounded-3xl shadow-xl">
+           <div className="fade-up inline-flex items-center gap-4 px-8 py-4 bg-white/70 border border-slate-200 rounded-3xl">
               <img
                 src="https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png"
                 alt="SANUR Logo"
@@ -318,7 +318,7 @@ setFieldErrors({ username: false, pin: false });
 
         <div className="w-full max-w-4xl">
           {view === 'SELECTION' ? (
-            <div className="flex flex-col items-center gap-6">
+            <div className="flex flex-col items-center gap-8">
               <p className="fade-up-d1 text-[11px] font-bold text-slate-500 tracking-wide leading-relaxed text-center">
                 Halo! Selamat datang di Portal Internal SANUR Akademi Inspirasi. Silakan pilih peran di bawah untuk melanjutkan.
               </p>
