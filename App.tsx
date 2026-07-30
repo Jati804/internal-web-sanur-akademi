@@ -1,5 +1,5 @@
 // FORCE REBUILD - CLEAR CACHE v3.1 - ANTI PORTRAIT MODE
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import React, { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
 const { BrowserRouter, Routes, Route, Navigate, Link, useLocation, useNavigate } = ReactRouterDOM as any;
 const Router = BrowserRouter;
@@ -182,8 +182,8 @@ const AppContent = ({
   // pas ganti menu (React Router cuma nge-swap konten <Routes> di dalamnya),
   // jadi posisi scroll lama kebawa ke halaman baru. Reset ke atas tiap pindah route.
   const contentRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    contentRef.current?.scrollTo(0, 0);
+  useLayoutEffect(() => {
+    contentRef.current?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
   }, [location.pathname]);
 
   // 🎯 DETEKSI DOMAIN - FUTURE PROOF!
