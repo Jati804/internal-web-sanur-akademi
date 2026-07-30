@@ -1,6 +1,6 @@
 
 import React, { useMemo } from 'react';
-import { User, Attendance, Transaction, StudentProfile } from '../types';
+import { User, Attendance, Transaction } from '../types';
 import { 
   PhoneForwarded, 
   Zap, 
@@ -22,7 +22,6 @@ interface AdminDashboardProps {
   setAttendanceLogs: React.Dispatch<React.SetStateAction<Attendance[]>>;
   teachers: User[];
   transactions: Transaction[];
-  studentProfiles: StudentProfile[];
 }
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, studentAttendanceLogs }) => {
