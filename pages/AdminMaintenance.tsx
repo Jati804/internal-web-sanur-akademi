@@ -200,8 +200,8 @@ useEffect(() => {
                 <AlertTriangle size={56} />
               </div>
               <div>
-                 <h2 className="text-3xl font-black text-slate-800 uppercase italic leading-none tracking-tighter">AREA <span className="text-rose-600">BERBAHAYA</span></h2>
-                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-3">Sistem Engine Hanya Untuk Pembuat Website</p>
+                 <h2 className="text-3xl font-black text-slate-800 uppercase italic leading-none tracking-tighter">AREA <span className="text-rose-600">PEMELIHARAAN</span></h2>
+                 <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-3">Sistem Engine Hanya Digunakan Untuk Keperluan Maintenance</p>
               </div>
            </div>
 
@@ -229,7 +229,7 @@ useEffect(() => {
            </form>
 
            <div className="pt-6 border-t border-slate-100">
-              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest italic">"Akses ini dibatasi untuk melindungi integritas data Sanur."</p>
+              <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest italic">"Akses ini dibatasi"</p>
            </div>
         </div>
       </div>
