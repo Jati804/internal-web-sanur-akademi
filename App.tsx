@@ -1,5 +1,5 @@
 // FORCE REBUILD - CLEAR CACHE v3.1 - ANTI PORTRAIT MODE
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
 const { BrowserRouter, Routes, Route, Navigate, Link, useLocation, useNavigate } = ReactRouterDOM as any;
 const Router = BrowserRouter;
@@ -177,7 +177,15 @@ const AppContent = ({
   const navigate = useNavigate();
   const location = useLocation();
   const [showGuide, setShowGuide] = useState(false);
-  
+
+  // 🔧 FIX SCROLL NEMPEL: div "flex-1 overflow-y-auto" di bawah nggak ke-remount
+  // pas ganti menu (React Router cuma nge-swap konten <Routes> di dalamnya),
+  // jadi posisi scroll lama kebawa ke halaman baru. Reset ke atas tiap pindah route.
+  const contentRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    contentRef.current?.scrollTo(0, 0);
+  }, [location.pathname]);
+
   // 🎯 DETEKSI DOMAIN - FUTURE PROOF!
   // Vercel domain (.vercel.app) = verify only
   // Domain lain apapun = full feature
@@ -344,7 +352,7 @@ const pendingReportsCount = Array.isArray(reports) ?
           </div>
         </header>
         
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-12">
+        <div ref={contentRef} className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-12">
           <div className="max-w-7xl mx-auto">
             <Routes>
               <Route path="/admin" element={<AdminDashboard user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} setAttendanceLogs={setAttendanceLogs} teachers={teachers} transactions={transactions} />} />
