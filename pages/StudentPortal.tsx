@@ -1027,12 +1027,12 @@ const handleDownloadPDFReport = async (course: any) => {
     onClick={() => handleDownloadSlipDirect(p)} 
     disabled={downloadingPaymentId === p.id} 
     className="px-6 py-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-emerald-600 hover:text-white transition-all disabled:opacity-50 min-w-[120px] flex items-center justify-center"
-    title={downloadingPaymentId === p.id ? "Memproses PDF..." : "Cetak Kuitansi"}
+    title={downloadingPaymentId === p.id ? "Memproses PDF..." : "Unduh Kuitansi"}
   >
     {downloadingPaymentId === p.id ? (
       <Loader2 size={24} className="animate-spin" />
     ) : (
-      <Printer size={24} />
+      <FileDown size={24} />
     )}
   </button>
 </div>
