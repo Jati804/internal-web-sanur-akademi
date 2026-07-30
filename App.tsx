@@ -5,7 +5,7 @@ const { BrowserRouter, Routes, Route, Navigate, Link, useLocation, useNavigate }
 const Router = BrowserRouter;
 
 import { 
-  LayoutDashboard, Receipt, Menu, CreditCard, BookOpen, Book, UserCog, 
+  LayoutDashboard, Receipt, Menu, CreditCard, BookOpen, UserCog, 
   ClipboardCheck, Wallet, GraduationCap, Power, 
   Settings as SettingsIcon, Database, X,
   Sparkles, HelpCircle, Info, RotateCw, Library
@@ -18,7 +18,6 @@ import AdminDashboard from './pages/AdminDashboard.tsx';
 import AdminFinance from './pages/AdminFinance.tsx';
 import AdminReceipts from './pages/AdminReceipts.tsx';
 import AdminStaff from './pages/AdminStaff.tsx';
-import AdminInventory from './pages/AdminInventory.tsx';
 import AdminAcademic from './pages/AdminAcademic.tsx';
 import AdminMaintenance from './pages/AdminMaintenance.tsx';
 import TeacherDashboard from './pages/TeacherDashboard.tsx';
@@ -29,7 +28,7 @@ import StudentPortal from './pages/StudentPortal.tsx';
 import VerifyCertificate from './pages/VerifyCertificate.tsx';
 import MateriPage from './pages/MateriPage.tsx';
 
-import { User, Attendance, Transaction, StudentProfile, StudentPayment } from './types.ts';
+import { User, Attendance, Transaction, StudentPayment } from './types.ts';
 import { INITIAL_SUBJECTS, CLASS_ROOM_OPTIONS } from './constants.tsx';
 
 const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }: { to: string, icon: any, label: string, activeColor?: string, onClick?: () => void, badge?: number }) => {
@@ -173,7 +172,7 @@ const PortraitBlocker = () => {
 };
 
 const AppContent = ({ 
-  user, setUser, attendanceLogs, setAttendanceLogs, studentAttendanceLogs, setStudentAttendanceLogs, teachers, setTeachers, studentAccounts, setStudentAccounts, transactions, setTransactions, studentPayments, setStudentPayments, studentProfiles, setStudentProfiles, salesContacts, setSalesContacts, reports, setReports, subjects, setSubjects, classes, setClasses, levels, setLevels, masterSchedule, setMasterSchedule, salaryConfig, setSalaryConfig, isSidebarOpen, setIsSidebarOpen, isSyncing, connectionError, refreshAllData
+  user, setUser, attendanceLogs, setAttendanceLogs, studentAttendanceLogs, setStudentAttendanceLogs, teachers, setTeachers, studentAccounts, setStudentAccounts, transactions, setTransactions, studentPayments, setStudentPayments, reports, setReports, subjects, setSubjects, classes, setClasses, levels, setLevels, masterSchedule, setMasterSchedule, salaryConfig, setSalaryConfig, isSidebarOpen, setIsSidebarOpen, isSyncing, connectionError, refreshAllData
 }: any) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -296,7 +295,6 @@ const pendingReportsCount = Array.isArray(reports) ?
                 <NavItem to="/admin/finance" icon={Wallet} label="Keuangan" onClick={closeSidebar} />
                 <NavItem to="/admin/receipts" icon={Receipt} label="Kuitansi" onClick={closeSidebar} />
                 <p className="px-6 mt-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest">Manajemen</p>
-                <NavItem to="/admin/buku-induk" icon={Book} label="Buku Induk" onClick={closeSidebar} />
                 <NavItem to="/admin/staff" icon={UserCog} label="Akses User" onClick={closeSidebar} />
                 <NavItem to="/admin/academic" icon={SettingsIcon} label="Pengaturan" onClick={closeSidebar} />
                 <NavItem to="/admin/materi" icon={Library} label="Materi" onClick={closeSidebar} />
@@ -348,10 +346,9 @@ const pendingReportsCount = Array.isArray(reports) ?
         <div className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-12">
           <div className="max-w-7xl mx-auto">
             <Routes>
-              <Route path="/admin" element={<AdminDashboard user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} setAttendanceLogs={setAttendanceLogs} teachers={teachers} transactions={transactions} studentProfiles={studentProfiles} />} />
+              <Route path="/admin" element={<AdminDashboard user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} setAttendanceLogs={setAttendanceLogs} teachers={teachers} transactions={transactions} />} />
               <Route path="/admin/finance" element={<AdminFinance attendanceLogs={attendanceLogs} transactions={transactions} studentPayments={studentPayments} refreshAllData={refreshAllData} />} />
               <Route path="/admin/receipts" element={<AdminReceipts />} />
-              <Route path="/admin/buku-induk" element={<AdminInventory studentProfiles={studentProfiles} setStudentProfiles={setStudentProfiles} salesContacts={salesContacts} setSalesContacts={setSalesContacts} refreshAllData={refreshAllData} />} />
               <Route path="/admin/staff" element={<AdminStaff user={user} teachers={teachers} setTeachers={setTeachers} studentAccounts={studentAccounts} setStudentAccounts={setStudentAccounts} refreshAllData={refreshAllData} />} />
               <Route path="/admin/academic" element={<AdminAcademic subjects={subjects} setSubjects={setSubjects} classes={classes} setClasses={setClasses} levels={levels} setLevels={setLevels} scheduleData={masterSchedule} setScheduleData={setMasterSchedule} salaryConfig={salaryConfig} setSalaryConfig={setSalaryConfig} teachers={teachers} />} />
               <Route path="/admin/maintenance" element={<AdminMaintenance attendanceLogs={attendanceLogs} setAttendanceLogs={setAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} refreshAllData={refreshAllData} />} />
@@ -389,8 +386,6 @@ const App = () => {
   const [studentAttendanceLogs, setStudentAttendanceLogs] = useState<any[]>([]);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [studentPayments, setStudentPayments] = useState<StudentPayment[]>([]);
-  const [studentProfiles, setStudentProfiles] = useState<StudentProfile[]>([]);
-  const [salesContacts, setSalesContacts] = useState<any[]>([]);
   const [reports, setReports] = useState<any[]>([]);
   const [subjects, setSubjects] = useState<string[]>(INITIAL_SUBJECTS);
   const [classes, setClasses] = useState<string[]>(CLASS_ROOM_OPTIONS);
@@ -411,8 +406,6 @@ const App = () => {
   { data: stuAcc },
   { data: trans },
   { data: stuPay },
-  { data: stuProf },
-  { data: salesCon },
   { data: reps },
   { data: settings }
 ] = await Promise.all([
@@ -422,8 +415,6 @@ const App = () => {
   supabase.from('student_accounts').select('*'),
   supabase.from('transactions').select('*'),
   supabase.from('student_payments').select('*'),
-  supabase.from('student_profiles').select('*'),
-  supabase.from('sales_contacts').select('*'),
   supabase.from('reports').select('*'),
   supabase.from('settings').select('*')
 ]);
@@ -474,24 +465,6 @@ if (stuAtt) setStudentAttendanceLogs(stuAtt.map((s: any) => ({
         className: p.classname,
         receiptData: p.receiptdata
       })));
-      if (stuProf) setStudentProfiles(stuProf.map((p: any) => ({
-  ...p,
-  personalPhone: p.personalphone,
-  parentPhone: p.parentphone,
-  enrolledClass: p.enrolledclass
-})));
-
-if (salesCon) setSalesContacts(salesCon.map((s: any) => ({
-  ...s,
-  institutionName: s.institution_name,
-  contactPerson: s.contact_person,
-  jobTitle: s.job_title,
-  lastContactDate: s.last_contact_date,
-  nextFollowupDate: s.next_followup_date,
-  dealStatus: s.deal_status,
-  meetingNotes: s.meeting_notes
-})));
-
 if (reps) setReports(reps.map((r: any) => ({
   ...r,
   teacherId: r.teacherid,
@@ -555,8 +528,6 @@ if (reps) setReports(reps.map((r: any) => ({
   studentAccounts={studentAccounts} setStudentAccounts={setStudentAccounts}
   transactions={transactions} setTransactions={setTransactions}
   studentPayments={studentPayments} setStudentPayments={setStudentPayments}
-  studentProfiles={studentProfiles} setStudentProfiles={setStudentProfiles}
-  salesContacts={salesContacts} setSalesContacts={setSalesContacts}
   reports={reports} setReports={setReports}
   subjects={subjects} setSubjects={setSubjects}
   classes={classes} setClasses={setClasses}
