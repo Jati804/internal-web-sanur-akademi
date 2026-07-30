@@ -5,7 +5,7 @@ import ReportTemplate, { formatDateToDMY } from '../ReportTemplate.tsx';
 import ModalPortal from '../ModalPortal.tsx';
 import { 
   GraduationCap, Search, X, Loader2, Check, Sparkles,
-  History, Trophy, Edit3, CheckCircle2, UserCheck, Layout, BookOpen, Printer,
+  History, Trophy, Edit3, CheckCircle2, UserCheck, Layout, BookOpen, Download,
   Quote, BadgeCheck, ClipboardList, Star, Calendar, Clock, AlertCircle, Trash2,
   FileEdit, ChevronRight, Zap, Info, Send, SendHorizonal, Save, AlertTriangle, FileDown, FileCheck,
   Filter // ✅ TAMBAH INI KALAU BELUM ADA
@@ -754,7 +754,7 @@ const handleDownloadPDF = async (req: any) => {
                                     <FileEdit size={16}/> EDIT
                                  </button>
                                  <button onClick={() => handleDownloadPDF(req)} disabled={activeDownloadId === req.id} className="py-4 bg-slate-900 text-white rounded-2xl font-black text-[9px] uppercase flex items-center justify-center gap-2 hover:bg-emerald-600 transition-all shadow-xl">
-                                    {activeDownloadId === req.id ? <Loader2 className="animate-spin" size={16}/> : <Printer size={16}/>} CETAK
+                                    {activeDownloadId === req.id ? <Loader2 className="animate-spin" size={16}/> : <Download size={16}/>} UNDUH
                                  </button>
                               </div>
                            </>
