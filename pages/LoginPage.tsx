@@ -273,18 +273,20 @@ setFieldErrors({ username: false, pin: false });
     <div className="h-screen flex flex-col font-sans" style={view === 'LOGIN' ? { backgroundColor: '#f8fafc' } : {}}>
       <BlobStyles />
 
-      {/* Indikator status koneksi — kecil & pojok, cuma buat dicek admin/dev, nggak ganggu tampilan user */}
-      <div
-        className="fixed bottom-4 left-4 z-50"
-        title={isSyncing ? "Connecting..." : connectionError ? "Cloud Offline" : "Database Terkoneksi"}
-      >
-        <div className="relative flex items-center justify-center w-3 h-3">
-          {!connectionError && (
-            <span className={`ping-slow absolute inline-flex h-full w-full rounded-full opacity-60 ${isSyncing ? 'bg-blue-400' : 'bg-emerald-400'}`} />
-          )}
-          <span className={`relative inline-flex rounded-full w-3 h-3 ${connectionError ? 'bg-rose-500' : isSyncing ? 'bg-blue-500' : 'bg-emerald-500'}`} />
+      {/* Indikator status koneksi — kecil & pojok, cuma buat dicek admin/dev, nggak ganggu tampilan user. Hanya tampil di homepage (SELECTION), nggak ikut ke area login. */}
+      {view === 'SELECTION' && (
+        <div
+          className="fixed bottom-4 left-4 z-50"
+          title={isSyncing ? "Connecting..." : connectionError ? "Cloud Offline" : "Database Terkoneksi"}
+        >
+          <div className="relative flex items-center justify-center w-3 h-3">
+            {!connectionError && (
+              <span className={`ping-slow absolute inline-flex h-full w-full rounded-full opacity-60 ${isSyncing ? 'bg-blue-400' : 'bg-emerald-400'}`} />
+            )}
+            <span className={`relative inline-flex rounded-full w-3 h-3 ${connectionError ? 'bg-rose-500' : isSyncing ? 'bg-blue-500' : 'bg-emerald-500'}`} />
+          </div>
         </div>
-      </div>
+      )}
 
 
 
