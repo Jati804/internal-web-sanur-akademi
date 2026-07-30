@@ -5,7 +5,7 @@ import { supabase } from '../services/supabase.ts';
 import { 
   ShieldCheck, Calendar, UserCheck, Package, ArrowRight,
   ClipboardCheck, Wallet, Edit3, Repeat, Heart, Sparkles,
-  ChevronDown, Filter, Search, X, Printer, Eye, Layers, Loader2,
+  ChevronDown, Filter, Search, X, FileDown, Eye, Layers, Loader2,
   Zap, Info, Trash2, AlertTriangle, Check, CheckCircle2, Maximize2
 } from 'lucide-react';
 import * as ReactRouterDOM from 'react-router-dom';
@@ -403,7 +403,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                          <Eye size={22}/> LIHAT BUKTI BAYAR
                       </button>
                       <button onClick={() => handleDownloadPdf(pkg)} disabled={isDownloading === pkg.id} className="px-10 py-5 bg-slate-900 text-white rounded-[1.8rem] font-black text-[11px] uppercase flex items-center justify-center gap-3 hover:bg-blue-600 transition-all shadow-xl disabled:opacity-50">
-                         {isDownloading === pkg.id ? <><Loader2 size={22} className="animate-spin"/> PROSES...</> : <><Printer size={22}/> DOWNLOAD SLIP GAJI</>}
+                        {isDownloading === pkg.id ? <><Loader2 size={22} className="animate-spin"/> PROSES...</> : <><FileDown size={22}/> DOWNLOAD SLIP GAJI</>}
                       </button>
                    </div>
                 )}
