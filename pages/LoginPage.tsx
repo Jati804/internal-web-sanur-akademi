@@ -273,23 +273,6 @@ setFieldErrors({ username: false, pin: false });
     <div className="h-screen flex flex-col font-sans" style={view === 'LOGIN' ? { backgroundColor: '#f8fafc' } : {}}>
       <BlobStyles />
 
-      {/* Indikator status koneksi — kecil & pojok, cuma buat dicek admin/dev, nggak ganggu tampilan user. Hanya tampil di homepage (SELECTION), nggak ikut ke area login. */}
-      {view === 'SELECTION' && (
-        <div
-          className="fixed bottom-4 left-4 z-50"
-          title={isSyncing ? "Connecting..." : connectionError ? "Cloud Offline" : "Database Terkoneksi"}
-        >
-          <div className="relative flex items-center justify-center w-3 h-3">
-            {!connectionError && (
-              <span className={`ping-slow absolute inline-flex h-full w-full rounded-full opacity-60 ${isSyncing ? 'bg-blue-400' : 'bg-emerald-400'}`} />
-            )}
-            <span className={`relative inline-flex rounded-full w-3 h-3 ${connectionError ? 'bg-rose-500' : isSyncing ? 'bg-blue-500' : 'bg-emerald-500'}`} />
-          </div>
-        </div>
-      )}
-
-
-
       {/* Main content area — grows to fill space, wallpaper only here */}
       <div
         className="flex-1 flex flex-col items-center justify-center p-6 relative overflow-hidden z-10"
@@ -308,17 +291,20 @@ setFieldErrors({ username: false, pin: false });
       <div className="w-full max-w-6xl flex flex-col items-center gap-10 animate-in fade-in duration-700">
         {view === 'SELECTION' && (
         <div className="text-center space-y-6">
-           <div className="fade-up inline-flex items-center gap-4 px-8 py-4 bg-white/70 border border-slate-200 rounded-3xl">
-              <img
-                src="https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png"
-                alt="SANUR Logo"
-                className="h-14 w-auto object-contain"
-              />
-              <div className="text-left border-l-2 border-slate-100 pl-4">
-                 <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">INTERNAL</h1>
-                 <p className="text-xs font-black text-blue-600 uppercase tracking-wide leading-tight">Management System</p>
-              </div>
-           </div>
+<div className="fade-up inline-flex items-center gap-4 px-8 py-4 bg-white/70 border border-slate-200 rounded-3xl">
+  <img
+    src="https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png"
+    alt="SANUR Logo"
+    className="h-14 w-auto object-contain"
+  />
+  <div
+    className={`text-left border-l-2 pl-4 ${connectionError ? 'border-rose-500' : isSyncing ? 'border-blue-500' : 'border-emerald-500'}`}
+    title={isSyncing ? "Connecting..." : connectionError ? "Cloud Offline" : "Database Terkoneksi"}
+  >
+    <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">INTERNAL</h1>
+    <p className="text-xs font-black text-blue-600 uppercase tracking-wide leading-tight">Management System</p>
+  </div>
+</div>
         </div>
         )}
 
