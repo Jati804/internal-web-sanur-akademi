@@ -297,10 +297,10 @@ setFieldErrors({ username: false, pin: false });
     alt="SANUR Logo"
     className="h-14 w-auto object-contain"
   />
-  <div
-    className={`text-left border-l-2 pl-4 ${connectionError ? 'border-rose-500' : isSyncing ? 'border-blue-500' : 'border-emerald-500'}`}
-    title={isSyncing ? "Connecting..." : connectionError ? "Cloud Offline" : "Database Terkoneksi"}
-  >
+<div
+  className={`text-left border-l pl-4 ${connectionError ? 'border-rose-500/40' : isSyncing ? 'border-blue-500/40' : 'border-emerald-500/40'}`}
+  title={isSyncing ? "Connecting..." : connectionError ? "Cloud Offline" : "Database Terkoneksi"}
+>
     <h1 className="text-xl font-black text-slate-900 tracking-tighter uppercase italic leading-none">INTERNAL</h1>
     <p className="text-xs font-black text-blue-600 uppercase tracking-wide leading-tight">Management System</p>
   </div>
