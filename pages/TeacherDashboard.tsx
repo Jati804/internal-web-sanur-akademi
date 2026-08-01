@@ -314,7 +314,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
       >
          {editData && (
            <div className="relative z-20 inline-flex px-6 py-2.5 bg-orange-500 text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg items-center gap-2">
-             <RotateCcw size={12}/> Kamu Sedang Edit Sesi Ini
+             <RotateCcw size={12}/> Mode edit
            </div>
          )}
          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full blur-[100px] -mr-32 -mt-32 opacity-50"></div>
