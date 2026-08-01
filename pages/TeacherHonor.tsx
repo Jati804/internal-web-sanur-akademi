@@ -525,11 +525,12 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
         <ModalPortal>
         <div data-modal-container className="fixed inset-0 z-[200000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}} onClick={() => setActionModalLog(null)}>
            <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-sm rounded-[4rem] p-12 text-center space-y-8 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+              <button onClick={() => setActionModalLog(null)} className="absolute top-8 right-8 p-2 text-slate-300 hover:text-slate-600 transition-colors"><X size={22} strokeWidth={3}/></button>
               <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner"><Edit3 size={36} /></div>
               <div className="space-y-2">
                  <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Sesi {actionModalLog.log.sessionNumber}</h4>
                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4 italic">
-                    Mau diapain sesi tanggal {formatDate(actionModalLog.log.date)} ini, Kak?
+                    {formatDate(actionModalLog.log.date)}
                  </p>
               </div>
               <div className="flex flex-col gap-4">
@@ -552,7 +553,6 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                  >
                     <Trash2 size={18}/> HAPUS SESI
                  </button>
-                 <button onClick={() => setActionModalLog(null)} className="w-full py-3 text-slate-400 font-black text-[10px] uppercase">BATAL</button>
               </div>
            </div>
         </div>
