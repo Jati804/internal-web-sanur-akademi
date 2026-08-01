@@ -30,7 +30,8 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
   const [showProofModal, setShowProofModal] = useState<string | null>(null);
   const [showPurgedInfo, setShowPurgedInfo] = useState(false);
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
-  const [confirmDeletePkg, setConfirmDeletePkg] = useState<any | null>(null);
+  const [actionModalLog, setActionModalLog] = useState<any | null>(null); // { log, pkg } - pilihan Edit/Hapus per sesi
+  const [confirmDeleteLog, setConfirmDeleteLog] = useState<any | null>(null); // { log, pkg } - konfirmasi hapus sesi
   const [isDeleting, setIsDeleting] = useState(false);
 
   const years = Array.from({ length: 11 }, (_, i) => (2024 + i).toString());
@@ -80,19 +81,19 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
     }
   };
 
-  const handleDeletePackage = async () => {
-  if (!confirmDeletePkg) return;
+  const handleDeleteSession = async () => {
+  if (!confirmDeleteLog) return;
   setIsDeleting(true);
   try {
     const { error } = await supabase
       .from('attendance')
       .delete()
-      .eq('packageid', confirmDeletePkg.id);
+      .eq('id', confirmDeleteLog.log.id);
     
     if (error) throw error;
     if (refreshAllData) await refreshAllData();
     
-    setConfirmDeletePkg(null); // Langsung close modal aja
+    setConfirmDeleteLog(null); // Langsung close modal aja
   } catch (e: any) {
     alert("Terjadi kendala saat menghapus: " + e.message);
   } finally {
@@ -302,16 +303,6 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                 className={`bg-white rounded-[4rem] border-2 shadow-2xl overflow-hidden group hover:border-blue-200 transition-all duration-500 relative ${isNew ? 'glow-new ring-4 ring-blue-500/20' : 'border-slate-50'}`}
               >
                 
-                {pkg.status === 'ANTREAN' && pkg.isCycleOwner && (
-                   <button 
-                     onClick={() => setConfirmDeletePkg(pkg)}
-                     className="absolute top-0 right-0 p-8 text-slate-200 hover:text-rose-600 transition-all z-30 active:scale-95 group/close"
-                     title="Hapus Kotak Honor Ini"
-                   >
-                     <X size={28} strokeWidth={4} className="group-hover/close:rotate-90 transition-transform duration-300" />
-                   </button>
-                )}
-
                 <div className="p-10 flex flex-col lg:flex-row lg:items-center justify-between gap-10">
                    <div className="flex items-center gap-8 flex-1 min-w-0">
                       <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner shrink-0 ${pkg.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'}`}><Package size={32} /></div>
@@ -378,7 +369,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                          return (
                            <div key={num} className={`relative p-5 py-8 rounded-[2.5rem] flex flex-col items-center justify-center text-center gap-2 transition-all ${bgColor}`}>
                               {canEdit && (
-                                <button onClick={() => navigate('/teacher', { state: { editLog: log } })} className="absolute -top-2 -right-2 w-10 h-10 bg-white text-slate-800 rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all border border-slate-100 z-20"><Edit3 size={14} /></button>
+                                <button onClick={() => setActionModalLog({ log, pkg })} className="absolute -top-2 -right-2 w-10 h-10 bg-white text-slate-800 rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all border border-slate-100 z-20"><Edit3 size={14} /></button>
                               )}
                               <p className="text-[9px] font-black uppercase tracking-widest opacity-60">Sesi {num}</p>
                               {isMeTeaching && !isMeSubstituting ? <UserCheck size={24}/> : isMeSubstituting ? <Repeat size={24}/> : isMeDelegated ? <Heart size={24}/> : <Zap size={24}/>}
@@ -530,20 +521,58 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
         </ModalPortal>
       )}
 
-      {confirmDeletePkg && (
+      {actionModalLog && (
+        <ModalPortal>
+        <div data-modal-container className="fixed inset-0 z-[200000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}} onClick={() => setActionModalLog(null)}>
+           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-sm rounded-[4rem] p-12 text-center space-y-8 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+              <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner"><Edit3 size={36} /></div>
+              <div className="space-y-2">
+                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Sesi {actionModalLog.log.sessionNumber}</h4>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4 italic">
+                    Mau diapain sesi tanggal {formatDate(actionModalLog.log.date)} ini, Kak?
+                 </p>
+              </div>
+              <div className="flex flex-col gap-4">
+                 <button 
+                   onClick={() => {
+                     const { log } = actionModalLog;
+                     setActionModalLog(null);
+                     navigate('/teacher', { state: { editLog: log } });
+                   }} 
+                   className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 flex items-center justify-center gap-2"
+                 >
+                    <Edit3 size={18}/> EDIT SESI
+                 </button>
+                 <button 
+                   onClick={() => {
+                     setConfirmDeleteLog(actionModalLog);
+                     setActionModalLog(null);
+                   }} 
+                   className="w-full py-5 bg-rose-50 text-rose-600 rounded-2xl font-black text-[10px] uppercase active:scale-95 flex items-center justify-center gap-2 border border-rose-100"
+                 >
+                    <Trash2 size={18}/> HAPUS SESI
+                 </button>
+                 <button onClick={() => setActionModalLog(null)} className="w-full py-3 text-slate-400 font-black text-[10px] uppercase">BATAL</button>
+              </div>
+           </div>
+        </div>
+        </ModalPortal>
+      )}
+
+      {confirmDeleteLog && (
         <ModalPortal>
         <div data-modal-container className="fixed inset-0 z-[200000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
            <div className="bg-white w-full max-w-sm rounded-[4rem] p-12 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner animate-pulse"><X size={40} className="text-rose-600" /></div>
               <div className="space-y-2">
-                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Hapus Kotak Honor?</h4>
+                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Hapus Sesi Ini?</h4>
                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4 italic">
-                    "Data pengajaran Kakak di kotak <span className="font-black text-rose-600">{confirmDeletePkg.className}</span> akan dihapus permanen dari antrean. Lakukan ini hanya jika data salah input ya Kak!"
+                    "Sesi <span className="font-black text-rose-600">{confirmDeleteLog.log.sessionNumber}</span> ({formatDate(confirmDeleteLog.log.date)}) di kelas <span className="font-black text-rose-600">{confirmDeleteLog.pkg.className}</span> akan dihapus permanen. Sesi lain di paket ini tidak akan terpengaruh. Lakukan ini hanya jika data salah input ya Kak!"
                  </p>
               </div>
               <div className="flex gap-4">
-                 <button onClick={() => setConfirmDeletePkg(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase">BATAL</button>
-                 <button onClick={handleDeletePackage} disabled={isDeleting} className="flex-[2] py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 flex items-center justify-center gap-2">
+                 <button onClick={() => setConfirmDeleteLog(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase">BATAL</button>
+                 <button onClick={handleDeleteSession} disabled={isDeleting} className="flex-[2] py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 flex items-center justify-center gap-2">
                     {isDeleting ? <Loader2 size={18} className="animate-spin" /> : <><Check size={18}/> IYA, HAPUS</>}
                  </button>
               </div>
