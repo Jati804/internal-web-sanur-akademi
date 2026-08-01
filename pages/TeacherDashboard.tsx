@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { User, Attendance } from '../types';
 import ModalPortal from '../ModalPortal.tsx';
 import { supabase } from '../services/supabase.ts';
@@ -32,6 +32,17 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   const navigate = useNavigate();
   
   const editData = location.state?.editLog as Attendance | undefined;
+  const formCardRef = useRef<HTMLDivElement>(null);
+
+  // AUTO-SCROLL KE KOTAK FORM (BUKAN KE ATAS HALAMAN) KHUSUS MODE EDIT
+  useEffect(() => {
+    if (editData) {
+      const timer = setTimeout(() => {
+        formCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 300);
+      return () => clearTimeout(timer);
+    }
+  }, [editData]);
 
   const [form, setForm] = useState({
     subject: '',
@@ -250,6 +261,12 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
             transform: scale(1);
           }
         }
+
+        @keyframes editHighlightPulse {
+          0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.45); }
+          50% { box-shadow: 0 0 0 18px rgba(249, 115, 22, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
+        }
       `}</style>
 
       <div className="max-w-4xl mx-auto space-y-12 pb-40 px-4">
@@ -290,7 +307,16 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
          </Link>
       </div>
 
-      <div className="bg-white p-10 md:p-14 rounded-[4rem] shadow-2xl border border-slate-100 space-y-12 relative overflow-hidden">
+      <div 
+        ref={formCardRef}
+        className={`bg-white p-10 md:p-14 rounded-[4rem] shadow-2xl border space-y-12 relative overflow-hidden scroll-mt-10 transition-colors duration-500 ${editData ? 'border-orange-200' : 'border-slate-100'}`}
+        style={editData ? { animation: 'editHighlightPulse 1.6s ease-out 2' } : undefined}
+      >
+         {editData && (
+           <div className="absolute -top-5 left-10 px-6 py-2.5 bg-orange-500 text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg flex items-center gap-2 z-20">
+             <RotateCcw size={12}/> Kamu Sedang Edit Sesi Ini
+           </div>
+         )}
          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full blur-[100px] -mr-32 -mt-32 opacity-50"></div>
          
          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
