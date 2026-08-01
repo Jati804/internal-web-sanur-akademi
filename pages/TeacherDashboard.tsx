@@ -309,11 +309,11 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
 
       <div 
         ref={formCardRef}
-        className={`bg-white p-10 md:p-14 rounded-[4rem] shadow-2xl border space-y-12 relative overflow-hidden scroll-mt-10 transition-colors duration-500 ${editData ? 'border-orange-200' : 'border-slate-100'}`}
+        className={`bg-white p-10 md:p-14 rounded-[4rem] shadow-2xl border space-y-12 relative overflow-hidden scroll-mt-32 transition-colors duration-500 ${editData ? 'border-orange-200' : 'border-slate-100'}`}
         style={editData ? { animation: 'editHighlightPulse 1.6s ease-out 2' } : undefined}
       >
          {editData && (
-           <div className="absolute -top-5 left-10 px-6 py-2.5 bg-orange-500 text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg flex items-center gap-2 z-20">
+           <div className="relative z-20 inline-flex px-6 py-2.5 bg-orange-500 text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg items-center gap-2">
              <RotateCcw size={12}/> Kamu Sedang Edit Sesi Ini
            </div>
          )}
