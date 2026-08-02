@@ -982,7 +982,7 @@ const handleDownloadPDFReport = async (course: any) => {
                           : 'bg-white text-slate-400 border-2 border-slate-100 hover:border-emerald-300'
                       }`}
                     >
-                      {subject.replace(/^PELATIHAN\s+/i, '')}
+                      {subject}
                     </button>
                   ))}
                 </div>
@@ -997,7 +997,7 @@ const handleDownloadPDFReport = async (course: any) => {
                      <div className="grid grid-cols-1 gap-6">
                  {group.payments
                    .map((p, i) => (
-                    <div key={p.id || i} className="bg-white p-8 md:p-10 rounded-[3.5rem] border border-slate-100 shadow-xl flex flex-col md:flex-row md:items-center justify-between group hover:border-emerald-500 transition-all gap-8 relative overflow-hidden">
+                    <div key={p.id || i} className="bg-white p-8 md:p-10 rounded-[3.5rem] border border-slate-100 shadow-xl flex flex-col md:flex-row items-center justify-between group hover:border-emerald-500 transition-all gap-8 relative overflow-hidden">
                        
                        {p.status === 'PENDING' && (
                          <button 
@@ -1010,7 +1010,7 @@ const handleDownloadPDFReport = async (course: any) => {
                        )}
 
                        <div className="flex-1 flex items-center gap-8 min-w-0">
-                         <div className={`hidden md:flex w-20 h-20 rounded-[2rem] items-center justify-center shadow-inner shrink-0 ${p.status === 'VERIFIED' ? 'bg-emerald-50 text-emerald-600' : 'bg-[#FFF5F2] text-[#FF4500]'}`}>
+                         <div className={`w-20 h-20 rounded-[2rem] flex items-center justify-center shadow-inner shrink-0 ${p.status === 'VERIFIED' ? 'bg-emerald-50 text-emerald-600' : 'bg-[#FFF5F2] text-[#FF4500]'}`}>
                            {p.status === 'VERIFIED' ? <BadgeCheck size={40} /> : <Clock size={40} />}
                          </div>
                          <div className="min-w-0 flex-1">
@@ -1024,8 +1024,8 @@ const handleDownloadPDFReport = async (course: any) => {
                          </div>
                        </div>
 
-                       <div className="flex flex-row items-center justify-between w-full pt-6 border-t border-slate-300 md:w-auto md:justify-end md:pt-0 md:border-t-0 gap-6 md:gap-10">
-                         <div className="text-left md:text-right">
+                       <div className="flex flex-col md:flex-row items-center gap-10">
+                         <div className="text-center md:text-right">
                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">NOMINAL</p>
                            <p className={`text-2xl font-black italic ${p.status === 'VERIFIED' ? 'text-emerald-600' : 'text-slate-800'}`}>Rp {p.amount.toLocaleString()}</p>
                          </div>
@@ -1079,7 +1079,7 @@ const handleDownloadPDFReport = async (course: any) => {
                : 'bg-white text-slate-400 border-2 border-slate-100 hover:border-emerald-300'
            }`}
          >
-           {subject.replace(/^PELATIHAN\s+/i, '')}
+           {subject}
          </button>
        ))}
      </div>
@@ -1169,7 +1169,7 @@ const completedSessions = studentAttendanceLogs
   {isReportPublished ? (
   <div className="space-y-4">
   {/* Grid sesi dulu */}
-  <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+  <div className="grid grid-cols-6 gap-2">
     {[1, 2, 3, 4, 5, 6].map(sNum => {
       const doneLog = completedSessions.find(s => s.num === sNum);
       return (
@@ -1210,7 +1210,7 @@ const completedSessions = studentAttendanceLogs
 </div>
 ) : isWaitingRelease ? (
   <div className="space-y-4">
-    <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+    <div className="grid grid-cols-6 gap-2">
       {[1, 2, 3, 4, 5, 6].map(sNum => {
         const doneLog = completedSessions.find(s => s.num === sNum);
         return (
@@ -1228,7 +1228,7 @@ const completedSessions = studentAttendanceLogs
   </div>
 ) : isRequesting ? (
   <div className="space-y-4">
-    <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+    <div className="grid grid-cols-6 gap-2">
       {[1, 2, 3, 4, 5, 6].map(sNum => {
         const doneLog = completedSessions.find(s => s.num === sNum);
         return (
@@ -1246,7 +1246,7 @@ const completedSessions = studentAttendanceLogs
   </div>
 ) : isProcessing ? (
   <div className="space-y-4">
-    <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+    <div className="grid grid-cols-6 gap-2">
       {[1, 2, 3, 4, 5, 6].map(sNum => {
         const doneLog = completedSessions.find(s => s.num === sNum);
         return (
@@ -1264,7 +1264,7 @@ const completedSessions = studentAttendanceLogs
   </div>
 ) : isRejected ? (
   <div className="space-y-6">
-    <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+    <div className="grid grid-cols-6 gap-2">
       {[1, 2, 3, 4, 5, 6].map(sNum => {
         const doneLog = completedSessions.find(s => s.num === sNum);
         return (
@@ -1286,7 +1286,7 @@ const completedSessions = studentAttendanceLogs
                         // AFTER
 ) : (
   <div className="space-y-6">
-     <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
+     <div className="grid grid-cols-6 gap-2">
         {[1, 2, 3, 4, 5, 6].map(sNum => {
            const doneLog = completedSessions.find(s => s.num === sNum);
            return (
