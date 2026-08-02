@@ -555,7 +555,7 @@ const handleDownloadPDF = async (req: any) => {
 <div className="flex justify-between items-start mb-10">
    <div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-3xl flex items-center justify-center shadow-inner"><GraduationCap size={40}/></div>
    <div className="flex flex-col items-center gap-1">
-      <span className="px-6 py-2 bg-orange-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-md">KLAIM BARU</span>
+      <button onClick={() => setShowMilestoneFor(req)} className="px-6 py-2 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-md hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-1.5"><History size={12}/> MILESTONE</button>
       {(() => {
          const lastSession = studentAttendanceLogs.find(l =>
             (l.packageid || '').toUpperCase().trim() === (req.packageId || '').toUpperCase().trim() &&
@@ -575,7 +575,6 @@ const handleDownloadPDF = async (req: any) => {
 <p className="text-[11px] font-bold text-blue-600 uppercase mb-6 Kalimat leading-relaxed">{req.className}</p>
 </div>
 <div className="space-y-4">
-   <button onClick={() => setShowMilestoneFor(req)} className="w-full py-5 bg-slate-50 text-slate-500 rounded-3xl font-black text-[10px] uppercase flex items-center justify-center gap-2 hover:bg-blue-600 hover:text-white transition-all border border-transparent shadow-sm"><History size={18}/> LIHAT MILESTONE</button>
    <button 
      onClick={() => handleAcceptRequest(req)} 
                       disabled={!!actionLoadingId}
