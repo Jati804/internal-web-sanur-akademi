@@ -1024,7 +1024,7 @@ const handleDownloadPDFReport = async (course: any) => {
                          </div>
                        </div>
 
-                       <div className="flex flex-row items-center justify-between w-full md:w-auto md:justify-end gap-6 md:gap-10">
+                       <div className="flex flex-row items-center justify-between w-full pt-6 border-t border-slate-100 md:w-auto md:justify-end md:pt-0 md:border-t-0 gap-6 md:gap-10">
                          <div className="text-left md:text-right">
                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">NOMINAL</p>
                            <p className={`text-2xl font-black italic ${p.status === 'VERIFIED' ? 'text-emerald-600' : 'text-slate-800'}`}>Rp {p.amount.toLocaleString()}</p>
