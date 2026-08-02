@@ -997,7 +997,7 @@ const handleDownloadPDFReport = async (course: any) => {
                      <div className="grid grid-cols-1 gap-6">
                  {group.payments
                    .map((p, i) => (
-                    <div key={p.id || i} className="bg-white p-8 md:p-10 rounded-[3.5rem] border border-slate-100 shadow-xl flex flex-col md:flex-row items-center justify-between group hover:border-emerald-500 transition-all gap-8 relative overflow-hidden">
+                    <div key={p.id || i} className="bg-white p-8 md:p-10 rounded-[3.5rem] border border-slate-100 shadow-xl flex flex-col md:flex-row md:items-center justify-between group hover:border-emerald-500 transition-all gap-8 relative overflow-hidden">
                        
                        {p.status === 'PENDING' && (
                          <button 
@@ -1024,8 +1024,8 @@ const handleDownloadPDFReport = async (course: any) => {
                          </div>
                        </div>
 
-                       <div className="flex flex-col md:flex-row items-center gap-10">
-                         <div className="text-center md:text-right">
+                       <div className="flex flex-row items-center justify-between w-full md:w-auto md:justify-end gap-6 md:gap-10">
+                         <div className="text-left md:text-right">
                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">NOMINAL</p>
                            <p className={`text-2xl font-black italic ${p.status === 'VERIFIED' ? 'text-emerald-600' : 'text-slate-800'}`}>Rp {p.amount.toLocaleString()}</p>
                          </div>
