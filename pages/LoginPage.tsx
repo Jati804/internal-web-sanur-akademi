@@ -270,12 +270,12 @@ setFieldErrors({ username: false, pin: false });
 
   // ── SELECTION + LOGIN ──────────────────────────────────────────────────
   return (
-    <div className="min-h-screen flex flex-col font-sans" style={view === 'LOGIN' ? { backgroundColor: '#f8fafc' } : {}}>
+    <div className="h-screen flex flex-col font-sans" style={view === 'LOGIN' ? { backgroundColor: '#f8fafc' } : {}}>
       <BlobStyles />
 
       {/* Main content area — grows to fill space, wallpaper only here */}
       <div
-        className="flex-1 flex flex-col items-center justify-center p-6 relative overflow-y-auto overflow-x-hidden z-10"
+        className="flex-1 flex flex-col items-center justify-center p-6 relative overflow-hidden z-10"
         style={view === 'SELECTION' ? { backgroundImage: "url('https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/Background%20Homepage.png')", backgroundSize: 'cover', backgroundPosition: 'center', backgroundRepeat: 'no-repeat' } : {}}
       >
       {/* Vignette merata semua sisi */}
@@ -328,7 +328,7 @@ setFieldErrors({ username: false, pin: false });
             </div>
           ) : (
             <div className="fade-up bg-white rounded-[4rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col md:flex-row">
-              <div className={`md:w-72 p-8 md:p-12 ${currentTheme.bg} text-white flex flex-col justify-between items-center text-center gap-6 md:gap-0`}>
+              <div className={`md:w-72 p-12 ${currentTheme.bg} text-white flex flex-col justify-between items-center text-center`}>
                  <button
                    onClick={() => setView(systemMaintenance ? 'MAINTENANCE' : 'SELECTION')}
                    className="flex items-center gap-2 px-8 pr-10 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-2xl transition-all hover:scale-105 active:scale-95"
