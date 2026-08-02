@@ -3,8 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="screen-orientation" content="landscape">
-    <meta name="orientation" content="landscape">
     
     <title>SANUR Internal System</title>
     <meta name="description" content="Sistem manajemen internal Sanur Akademi Inspirasi.">
@@ -45,27 +43,6 @@
       -webkit-tap-highlight-color: transparent;
     }
     
-    @media screen and (min-width: 768px) and (max-width: 1024px) {
-      @media (orientation: portrait) {
-        body:not(.hide-rotation-reminder)::before {
-          content: "🔄 Putar layar ke horizontal untuk pengalaman terbaik";
-          position: fixed;
-          top: 0;
-          left: 0;
-          right: 0;
-          background: linear-gradient(135deg, #2563eb 0%, #10b981 100%);
-          color: white;
-          text-align: center;
-          padding: 12px;
-          font-weight: 800;
-          font-size: 11px;
-          text-transform: uppercase;
-          letter-spacing: 0.1em;
-          z-index: 999999;
-          box-shadow: 0 4px 20px rgba(0,0,0,0.2);
-        }
-      }
-    }
         .custom-scrollbar::-webkit-scrollbar { width: 4px; height: 4px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: #f1f5f9; }
         .custom-scrollbar::-webkit-scrollbar-thumb { 
@@ -116,11 +93,6 @@
       const isVercelDomain = window.location.hostname.includes('vercel.app');
       if (isVercelDomain && (window.location.hash === '' || window.location.hash === '#/')) {
         window.location.hash = '#/verify';
-      }
-
-      // 🔄 Sembunyikan pengumuman putar layar HANYA di domain Vercel
-      if (isVercelDomain) {
-        document.body.classList.add('hide-rotation-reminder');
       }
     </script>
     <script type="module" src="/index.tsx"></script>
