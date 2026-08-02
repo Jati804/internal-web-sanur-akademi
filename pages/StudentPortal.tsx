@@ -982,7 +982,7 @@ const handleDownloadPDFReport = async (course: any) => {
                           : 'bg-white text-slate-400 border-2 border-slate-100 hover:border-emerald-300'
                       }`}
                     >
-                      {subject}
+                      {subject.replace(/^PELATIHAN\s+/i, '')}
                     </button>
                   ))}
                 </div>
@@ -1079,7 +1079,7 @@ const handleDownloadPDFReport = async (course: any) => {
                : 'bg-white text-slate-400 border-2 border-slate-100 hover:border-emerald-300'
            }`}
          >
-           {subject}
+           {subject.replace(/^PELATIHAN\s+/i, '')}
          </button>
        ))}
      </div>
@@ -1169,7 +1169,7 @@ const completedSessions = studentAttendanceLogs
   {isReportPublished ? (
   <div className="space-y-4">
   {/* Grid sesi dulu */}
-  <div className="grid grid-cols-6 gap-2">
+  <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
     {[1, 2, 3, 4, 5, 6].map(sNum => {
       const doneLog = completedSessions.find(s => s.num === sNum);
       return (
@@ -1210,7 +1210,7 @@ const completedSessions = studentAttendanceLogs
 </div>
 ) : isWaitingRelease ? (
   <div className="space-y-4">
-    <div className="grid grid-cols-6 gap-2">
+    <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
       {[1, 2, 3, 4, 5, 6].map(sNum => {
         const doneLog = completedSessions.find(s => s.num === sNum);
         return (
@@ -1228,7 +1228,7 @@ const completedSessions = studentAttendanceLogs
   </div>
 ) : isRequesting ? (
   <div className="space-y-4">
-    <div className="grid grid-cols-6 gap-2">
+    <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
       {[1, 2, 3, 4, 5, 6].map(sNum => {
         const doneLog = completedSessions.find(s => s.num === sNum);
         return (
@@ -1246,7 +1246,7 @@ const completedSessions = studentAttendanceLogs
   </div>
 ) : isProcessing ? (
   <div className="space-y-4">
-    <div className="grid grid-cols-6 gap-2">
+    <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
       {[1, 2, 3, 4, 5, 6].map(sNum => {
         const doneLog = completedSessions.find(s => s.num === sNum);
         return (
@@ -1264,7 +1264,7 @@ const completedSessions = studentAttendanceLogs
   </div>
 ) : isRejected ? (
   <div className="space-y-6">
-    <div className="grid grid-cols-6 gap-2">
+    <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
       {[1, 2, 3, 4, 5, 6].map(sNum => {
         const doneLog = completedSessions.find(s => s.num === sNum);
         return (
@@ -1286,7 +1286,7 @@ const completedSessions = studentAttendanceLogs
                         // AFTER
 ) : (
   <div className="space-y-6">
-     <div className="grid grid-cols-6 gap-2">
+     <div className="grid grid-cols-3 md:grid-cols-6 gap-2">
         {[1, 2, 3, 4, 5, 6].map(sNum => {
            const doneLog = completedSessions.find(s => s.num === sNum);
            return (
