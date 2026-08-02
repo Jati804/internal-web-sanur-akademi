@@ -567,7 +567,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
               <div className="space-y-2">
                  <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Hapus Sesi Ini?</h4>
                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4 italic">
-                    "Sesi <span className="font-black text-rose-600">{confirmDeleteLog.log.sessionNumber}</span> ({formatDate(confirmDeleteLog.log.date)}) di kelas <span className="font-black text-rose-600">{confirmDeleteLog.pkg.className}</span> akan dihapus permanen. Sesi lain di paket ini tidak akan terpengaruh."
+                    "Sesi <span className="font-black text-rose-600">{confirmDeleteLog.log.sessionNumber}</span> ({formatDate(confirmDeleteLog.log.date)}) di kelas <span className="font-black text-rose-600">{confirmDeleteLog.pkg.className}</span> akan dihapus. Sesi lain di paket ini tidak akan terpengaruh."
                  </p>
               </div>
               <div className="flex gap-4">
