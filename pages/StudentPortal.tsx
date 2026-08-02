@@ -1349,7 +1349,7 @@ const completedSessions = studentAttendanceLogs
            <div className="bg-white w-full max-w-[340px] rounded-[2.5rem] p-8 shadow-2xl text-center space-y-6 relative border-t-4 border-blue-500 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
               <button onClick={() => setSessionActionModal(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
               <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm"><Edit3 size={28} /></div>
-              <div className="space-y-1"><h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Sesi {sessionActionModal.num}</h4><p className="text-[8px] font-black text-blue-600 uppercase tracking-widest">{formatDateToDMY(sessionActionModal.date)} ✨</p></div>
+              <div className="space-y-1"><h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Sesi {sessionActionModal.num}</h4><p className="text-[8px] font-black text-blue-600 uppercase tracking-widest">{formatDateToDMY(sessionActionModal.date)}</p></div>
               <div className="flex flex-col gap-3">
                  <button 
                    onClick={() => { setEditDateValue(sessionActionModal.date); setShowEditDateModal(sessionActionModal); setSessionActionModal(null); }} 
