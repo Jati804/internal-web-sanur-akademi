@@ -200,13 +200,31 @@ const AppContent = ({
       const width = window.innerWidth;
       const height = window.innerHeight;
       
-      // 🎯 KHUSUS HALAMAN VERIFY: BOLEH PORTRAIT & LANDSCAPE
-      if (location.pathname === '/verify') {
+      // 🎯 BELUM LOGIN (LoginPage dirender berdasarkan status login, bukan path spesifik)
+      if (!user) {
+        setIsPortrait(false);
+        return;
+      }
+
+      // 🎯 ROUTE YANG BOLEH PORTRAIT & LANDSCAPE (Guru, Siswa, Verify)
+      // Sudah diaudit: modal & layout di halaman-halaman ini pakai pola
+      // responsif (w-full max-w-*, flex-col md:flex-row) jadi aman di layar sempit.
+      // Admin TETAP landscape-only karena ada tabel data lebar (Finance, Academic).
+      const PORTRAIT_ALLOWED_PATHS = [
+        '/verify',
+        '/teacher',
+        '/teacher/honor',
+        '/teacher/reports',
+        '/student',
+        '/student/payments',
+      ];
+
+      if (PORTRAIT_ALLOWED_PATHS.includes(location.pathname)) {
         setIsPortrait(false); // Gak tampilkan blocker
         return;
       }
       
-      // Halaman lain: Tetep wajib landscape (horizontal)
+      // Halaman lain (Admin dkk): Tetep wajib landscape (horizontal)
       const isMobileTablet = width <= 1024;
       const isPortraitMode = height > width;
       
@@ -221,7 +239,7 @@ const AppContent = ({
       window.removeEventListener('resize', checkOrientation);
       window.removeEventListener('orientationchange', checkOrientation);
     };
-  }, [location.pathname]);
+  }, [location.pathname, user]);
 
   // 🔥 KALO PORTRAIT -> TAMPILKAN BLOCKER (PRIORITAS TERTINGGI)
   if (isPortrait) {
