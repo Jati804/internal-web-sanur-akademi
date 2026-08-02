@@ -1010,7 +1010,7 @@ const handleDownloadPDFReport = async (course: any) => {
                        )}
 
                        <div className="flex-1 flex items-center gap-8 min-w-0">
-                         <div className={`w-20 h-20 rounded-[2rem] flex items-center justify-center shadow-inner shrink-0 ${p.status === 'VERIFIED' ? 'bg-emerald-50 text-emerald-600' : 'bg-[#FFF5F2] text-[#FF4500]'}`}>
+                         <div className={`hidden md:flex w-20 h-20 rounded-[2rem] items-center justify-center shadow-inner shrink-0 ${p.status === 'VERIFIED' ? 'bg-emerald-50 text-emerald-600' : 'bg-[#FFF5F2] text-[#FF4500]'}`}>
                            {p.status === 'VERIFIED' ? <BadgeCheck size={40} /> : <Clock size={40} />}
                          </div>
                          <div className="min-w-0 flex-1">
