@@ -583,13 +583,22 @@ const handleDownloadPDF = async (req: any) => {
                     >
                       {actionLoadingId === req.id ? <Loader2 className="animate-spin" size={20} /> : 'TERIMA & ISI RAPOT ✍️'}
                     </button>
-                    <button 
-                      onClick={() => setConfirmReject(req)} 
-                      disabled={!!actionLoadingId}
-                      className="w-full py-5 bg-rose-50 text-rose-500 rounded-[2rem] font-black text-[10px] uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all border border-rose-100"
-                    >
-                      TOLAK PERMINTAAN
-                    </button>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button 
+                        onClick={() => setConfirmReject(req)} 
+                        disabled={!!actionLoadingId}
+                        className="py-5 bg-rose-50 text-rose-500 rounded-[1.75rem] font-black text-[10px] uppercase tracking-widest hover:bg-rose-500 hover:text-white transition-all border border-rose-100 flex items-center justify-center gap-2"
+                      >
+                        <Trash2 size={16}/> TOLAK
+                      </button>
+                      <button 
+                        onClick={() => setConfirmNextClass(req)} 
+                        disabled={!!actionLoadingId}
+                        className="py-5 bg-purple-50 text-purple-600 rounded-[1.75rem] font-black text-[10px] uppercase tracking-widest hover:bg-purple-600 hover:text-white transition-all border border-purple-100 flex items-center justify-center gap-2"
+                      >
+                        <ChevronRight size={16}/> LANJUT KELAS
+                      </button>
+                    </div>
                  </div>
               </div>
             ))}
@@ -795,14 +804,11 @@ const handleDownloadPDF = async (req: any) => {
          <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
             <div className="bg-white w-full max-w-sm rounded-[3.5rem] p-10 text-center space-y-8 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
                <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm animate-pulse"><AlertCircle size={48} /></div>
-               <div className="space-y-2"><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Tolak Permintaan?</h4><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest Kalimat leading-relaxed px-4">Siswa akan diminta memilih pengajar lain untuk klaim rapot mereka.</p></div>
+               <div className="space-y-2"><h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Tolak Permintaan?</h4><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4">Siswa akan diminta memilih pengajar lain untuk klaim rapot mereka.</p></div>
                <div className="flex gap-4">
   <button onClick={() => setConfirmReject(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase">BATAL</button>
 <button onClick={handleRejectRequest} disabled={!!actionLoadingId} className="flex-1 py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl flex items-center justify-center gap-2">{actionLoadingId === `reject-${confirmReject.id}` ? <Loader2 size={18} className="animate-spin" /> : <Trash2 size={18}/>} IYA, TOLAK</button>
 </div>
-<button onClick={() => { setConfirmReject(null); setConfirmNextClass(confirmReject); }} className="w-full py-5 bg-purple-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl flex items-center justify-center gap-2 mt-2">
-  <ChevronRight size={18}/> LANJUT KELAS BERIKUTNYA
-</button>
             </div>
          </div>
          </ModalPortal>
@@ -814,7 +820,7 @@ const handleDownloadPDF = async (req: any) => {
       <div className="w-20 h-20 bg-purple-50 text-purple-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-sm animate-pulse"><ChevronRight size={48} /></div>
       <div className="space-y-2">
         <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Lanjut Kelas Berikutnya?</h4>
-        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest Kalimat leading-relaxed px-4">Siswa akan dilanjutkan ke kelas berikutnya. Keputusan ini tidak dapat diubah.</p>
+        <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4">Siswa akan dilanjutkan ke kelas berikutnya. Keputusan ini tidak dapat diubah.</p>
       </div>
       <div className="flex gap-4">
         <button onClick={() => setConfirmNextClass(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase">BATAL</button>
