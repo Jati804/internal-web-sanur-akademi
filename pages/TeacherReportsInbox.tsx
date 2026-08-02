@@ -555,7 +555,7 @@ const handleDownloadPDF = async (req: any) => {
 <div className="flex justify-between items-start mb-10">
    <div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-3xl flex items-center justify-center shadow-inner"><GraduationCap size={40}/></div>
    <div className="flex flex-col items-center gap-1">
-      <button onClick={() => setShowMilestoneFor(req)} className="px-6 py-2 bg-blue-600 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-md hover:bg-blue-700 active:scale-95 transition-all flex items-center gap-1.5"><History size={12}/> MILESTONE</button>
+      <button onClick={() => setShowMilestoneFor(req)} className="px-6 py-2 bg-orange-500 text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-md hover:bg-orange-600 active:scale-95 transition-all flex items-center gap-1.5"><History size={12}/> MILESTONE</button>
       {(() => {
          const lastSession = studentAttendanceLogs.find(l =>
             (l.packageid || '').toUpperCase().trim() === (req.packageId || '').toUpperCase().trim() &&
@@ -824,7 +824,7 @@ const handleDownloadPDF = async (req: any) => {
       <div className="flex gap-4">
         <button onClick={() => setConfirmNextClass(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase">BATAL</button>
         <button onClick={handleNextClass} disabled={!!actionLoadingId} className="flex-1 py-5 bg-purple-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl flex items-center justify-center gap-2">
-          {actionLoadingId === `next-${confirmNextClass.id}` ? <Loader2 size={18} className="animate-spin" /> : <ChevronRight size={18}/>} YA, LANJUTKAN ✨
+          {actionLoadingId === `next-${confirmNextClass.id}` ? <Loader2 size={18} className="animate-spin" /> : <ChevronRight size={18}/>} YA, LANJUTKAN
         </button>
       </div>
     </div>
