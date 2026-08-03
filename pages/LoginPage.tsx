@@ -264,13 +264,21 @@ setFieldErrors({ username: false, pin: false });
            </a>
            <p className="text-[8px] font-black text-slate-600 uppercase tracking-[0.8em]">SANUR Akademi Inspirasi</p>
         </div>
-      </div>
+        </div>
     );
   }
 
   // ── SELECTION + LOGIN ──────────────────────────────────────────────────
   return (
-    <div className="h-screen flex flex-col font-sans" style={view === 'LOGIN' ? { backgroundColor: '#f8fafc' } : {}}>
+    // ✅ FIX: h-screen -> min-h-screen. h-screen memaksa tinggi PAS 100vh
+    // dan menutup kemungkinan scroll sama sekali. Di layar yang lebih
+    // pendek dari kontennya (tablet, HP landscape, browser dengan devtools
+    // terbuka, dsb), konten (judul + form + tombol) jadi kepotong tanpa
+    // cara untuk di-scroll ke bagian yang tersembunyi. min-h-screen tetap
+    // memenuhi layar saat konten muat, tapi otomatis boleh lebih tinggi
+    // (dan halaman jadi bisa di-scroll) saat konten lebih panjang dari
+    // viewport - sama seperti perlakuan di view MAINTENANCE di atas.
+    <div className="min-h-screen flex flex-col font-sans" style={view === 'LOGIN' ? { backgroundColor: '#f8fafc' } : {}}>
       <BlobStyles />
 
       {/* Main content area — grows to fill space, wallpaper only here */}
