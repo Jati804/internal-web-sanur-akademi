@@ -250,8 +250,13 @@ const findOfficialReportLog = (course: any) => {
     try {
       const fullClassName = `${payForm.subject} (${payForm.level}) - ${payForm.room}`.toUpperCase();
       const payload = { studentname: normalizedUserName, classname: fullClassName, amount: Number(payForm.amount), date: payForm.date, status: 'PENDING', receiptdata: payForm.receiptData };
-      if (isEditing) { await supabase.from('student_payments').update(payload).eq('id', isEditing); }
-      else { await supabase.from('student_payments').insert([{ ...payload, id: `PAY-${Date.now()}` }]); }
+      if (isEditing) {
+        const { error } = await supabase.from('student_payments').update(payload).eq('id', isEditing);
+        if (error) throw error;
+      } else {
+        const { error } = await supabase.from('student_payments').insert([{ ...payload, id: `PAY-${Date.now()}` }]);
+        if (error) throw error;
+      }
       if (refreshAllData) await refreshAllData();
       resetForm();
       setShowSuccess(true);
@@ -285,7 +290,8 @@ setTimeout(() => {
     if (!confirmDeletePayment) return;
     setLoading(true);
     try {
-      await supabase.from('student_payments').delete().eq('id', confirmDeletePayment.id);
+      const { error } = await supabase.from('student_payments').delete().eq('id', confirmDeletePayment.id);
+      if (error) throw error;
       if (refreshAllData) await refreshAllData();
       setConfirmDeletePayment(null);
       setShowSuccess(true);
@@ -312,7 +318,8 @@ setTimeout(() => {
     };
     
     // ✅ GANTI TABLE-NYA!
-    await supabase.from('student_attendance').insert([payload]);
+    const { error } = await supabase.from('student_attendance').insert([payload]);
+    if (error) throw error;
     
     if (refreshAllData) await refreshAllData();
     setConfirmingAbsen(null);
@@ -326,7 +333,8 @@ setTimeout(() => {
   setLoading(true);
   try {
     // ✅ GANTI TABLE-NYA!
-    await supabase.from('student_attendance').update({ date: editDateValue }).eq('id', showEditDateModal.id);
+    const { error } = await supabase.from('student_attendance').update({ date: editDateValue }).eq('id', showEditDateModal.id);
+    if (error) throw error;
     
     if (refreshAllData) await refreshAllData();
     setShowEditDateModal(null);
@@ -339,7 +347,8 @@ setTimeout(() => {
   if (!confirmDeleteSession) return;
   setLoading(true);
   try {
-    await supabase.from('student_attendance').delete().eq('id', confirmDeleteSession.id);
+    const { error } = await supabase.from('student_attendance').delete().eq('id', confirmDeleteSession.id);
+    if (error) throw error;
     
     if (refreshAllData) await refreshAllData();
     setConfirmDeleteSession(null);
@@ -390,8 +399,10 @@ const executeFinalRequestReport = async () => {
     };
     
     // ✅ GANTI KE TABEL REPORTS!
-    await supabase.from('reports').delete().eq('packageid', requestingReportFor.id).eq('status', 'REPORT_REJECTED');
-    await supabase.from('reports').insert([payload]);
+    const { error: delErr } = await supabase.from('reports').delete().eq('packageid', requestingReportFor.id).eq('status', 'REPORT_REJECTED');
+    if (delErr) throw delErr;
+    const { error: insErr } = await supabase.from('reports').insert([payload]);
+    if (insErr) throw insErr;
     
     if (refreshAllData) await refreshAllData();
     setRequestingReportFor(null);
