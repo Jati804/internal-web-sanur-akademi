@@ -169,7 +169,8 @@ setReportForm({
   const handleAcceptRequest = async (req: any) => {
     setActionLoadingId(req.id);
     try {
-      await supabase.from('reports').update({ status: 'REPORT_PROCESSING' }).eq('id', req.id);
+      const { error } = await supabase.from('reports').update({ status: 'REPORT_PROCESSING' }).eq('id', req.id);
+      if (error) throw error;
       await refreshAllData();
       handleOpenWorkspace(req, false);
     } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
@@ -179,7 +180,8 @@ const handleRejectRequest = async () => {
   if (!confirmReject) return;
   setActionLoadingId(`reject-${confirmReject.id}`);
   try {
-    await supabase.from('reports').update({ status: 'REPORT_REJECTED' }).eq('id', confirmReject.id);
+    const { error } = await supabase.from('reports').update({ status: 'REPORT_REJECTED' }).eq('id', confirmReject.id);
+    if (error) throw error;
     await refreshAllData();
     setConfirmReject(null);
   } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
@@ -189,7 +191,8 @@ const handleNextClass = async () => {
   if (!confirmNextClass) return;
   setActionLoadingId(`next-${confirmNextClass.id}`);
   try {
-    await supabase.from('reports').update({ status: 'NEXT_CLASS' }).eq('id', confirmNextClass.id);
+    const { error } = await supabase.from('reports').update({ status: 'NEXT_CLASS' }).eq('id', confirmNextClass.id);
+    if (error) throw error;
     await refreshAllData();
     setConfirmNextClass(null);
   } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
@@ -222,7 +225,8 @@ const avgScore = useMemo(() => {
   studentscores: { [sName]: scores }, 
   date: isEditMode ? selectedPackage.date : new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()) 
 };
-      await supabase.from('reports').update(payload).eq('id', selectedPackage.id);
+      const { error } = await supabase.from('reports').update(payload).eq('id', selectedPackage.id);
+      if (error) throw error;
       await refreshAllData();
       
       setLastActionedId(selectedPackage.id);
@@ -234,7 +238,8 @@ const avgScore = useMemo(() => {
   const handleSendReportToStudent = async (req: any) => {
     setActionLoadingId(req.id);
     try {
-      await supabase.from('reports').update({ status: 'SESSION_LOG' }).eq('id', req.id);
+      const { error } = await supabase.from('reports').update({ status: 'SESSION_LOG' }).eq('id', req.id);
+      if (error) throw error;
       await refreshAllData();
       setLastActionedId(req.id); // Set sebagai yang terakhir diaksi agar loncat ke depan
       alert("Rapot Berhasil Dikirim ke Siswa! ✨");
