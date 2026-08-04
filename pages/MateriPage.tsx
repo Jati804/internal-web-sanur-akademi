@@ -389,7 +389,8 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
       const urlParts = confirmDelete.file_url.split('/materials/');
       const filePath = urlParts[1];
       if (filePath) await supabase.storage.from('materials').remove([filePath]);
-      await supabase.from('materials').delete().eq('id', confirmDelete.id);
+      const { error } = await supabase.from('materials').delete().eq('id', confirmDelete.id);
+      if (error) throw error;
       await fetchMaterials();
       setConfirmDelete(null);
     } catch (e: any) {
