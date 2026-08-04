@@ -142,10 +142,11 @@ useEffect(() => {
     setProcessingStatus('LOADING');
     setLoadingText("MENGUBAH STATUS...");
     try {
-      await supabase.from('settings').upsert({
+      const { error } = await supabase.from('settings').upsert({
         key: 'system_status',
         value: { maintenance: nextState, updatedAt: new Date().toISOString() }
       });
+      if (error) throw error;
       setIsMaintMode(nextState);
       triggerSuccessOverlay(nextState ? "SISTEM TERKUNCI! 🔒" : "SISTEM ONLINE! 🌐");
     } catch (e) {
@@ -178,7 +179,8 @@ useEffect(() => {
     setLoadingText("MENGHAPUS FOTO...");
     try {
       const table = confirmDeleteMedia.type === 'SESI' ? 'attendance' : 'student_payments';
-      await supabase.from(table).update({ receiptdata: null }).eq('id', confirmDeleteMedia.id);
+      const { error } = await supabase.from(table).update({ receiptdata: null }).eq('id', confirmDeleteMedia.id);
+      if (error) throw error;
       if (refreshAllData) await refreshAllData();
       setConfirmDeleteMedia(null);
       fetchGalleryMedia();
