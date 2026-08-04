@@ -74,7 +74,7 @@ const AdminPayroll: React.FC<AdminPayrollProps> = ({ attendanceLogs, setAttendan
       }));
       setShowReceiptInput(null);
       setReceiptUrl('');
-    } catch (e: any) { alert(e.message); } finally { setIsLoading(false); }
+    } catch (e: any) { console.error('❌ Gagal tandai honor dibayar:', e); alert("Gagal menyimpan status pembayaran honor. Coba lagi ya 🙏"); } finally { setIsLoading(false); }
   };
 
   return (
