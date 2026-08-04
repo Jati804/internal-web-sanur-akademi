@@ -114,10 +114,13 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
     if (!isStudent) {
       // ✅ Khusus guru: tulis nama asli (bukan dipaksa kapital), matching tetap aman
       // karena eq(teacherid) pakai ID dan ilike() sudah case-insensitive.
-      await supabase.from('attendance').update({ teachername: newNameTrim }).eq('teacherid', userId);
-      await supabase.from('attendance').update({ substitutefor: newNameTrim }).ilike('substitutefor', oldNameTrim);
+      const { error: nameErr } = await supabase.from('attendance').update({ teachername: newNameTrim }).eq('teacherid', userId);
+      if (nameErr) throw nameErr;
+      const { error: subErr } = await supabase.from('attendance').update({ substitutefor: newNameTrim }).ilike('substitutefor', oldNameTrim);
+      if (subErr) throw subErr;
     } else {
-      await supabase.from('student_payments').update({ studentname: newNameNorm }).ilike('studentname', oldNameNorm);
+      const { error: payErr } = await supabase.from('student_payments').update({ studentname: newNameNorm }).ilike('studentname', oldNameNorm);
+      if (payErr) throw payErr;
       const { data: affectedLogs } = await supabase.from('attendance').select('*');
       if (affectedLogs && affectedLogs.length > 0) {
         for (const log of affectedLogs) {
@@ -145,7 +148,8 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
               studenttopics: renameJsonKey(log.studenttopics),
               studentnarratives: renameJsonKey(log.studentnarratives)
             };
-            await supabase.from('attendance').update(updatePayload).eq('id', log.id);
+            const { error: logErr } = await supabase.from('attendance').update(updatePayload).eq('id', log.id);
+            if (logErr) throw logErr;
           }
         }
       }
