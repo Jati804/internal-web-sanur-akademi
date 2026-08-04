@@ -173,7 +173,7 @@ setReportForm({
       if (error) throw error;
       await refreshAllData();
       handleOpenWorkspace(req, false);
-    } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
+    } catch (e: any) { console.error('❌ Gagal terima permintaan rapot:', e); alert("Gagal memproses permintaan rapot ini. Coba lagi ya 🙏"); } finally { setActionLoadingId(null); }
   };
 
 const handleRejectRequest = async () => {
@@ -184,7 +184,7 @@ const handleRejectRequest = async () => {
     if (error) throw error;
     await refreshAllData();
     setConfirmReject(null);
-  } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
+  } catch (e: any) { console.error('❌ Gagal tolak permintaan rapot:', e); alert("Gagal menolak permintaan ini. Coba lagi ya 🙏"); } finally { setActionLoadingId(null); }
 };
 
 const handleNextClass = async () => {
@@ -195,7 +195,7 @@ const handleNextClass = async () => {
     if (error) throw error;
     await refreshAllData();
     setConfirmNextClass(null);
-  } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
+  } catch (e: any) { console.error('❌ Gagal lanjut kelas berikutnya:', e); alert("Gagal memproses ke kelas berikutnya. Coba lagi ya 🙏"); } finally { setActionLoadingId(null); }
 };
 
 const avgScore = useMemo(() => {
