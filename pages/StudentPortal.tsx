@@ -268,7 +268,7 @@ setTimeout(() => {
     riwayatSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 }, 500);  
-    } catch (e: any) { alert(e.message); } finally { setLoading(false); }
+    } catch (e: any) { console.error('❌ Gagal lapor bayar:', e); alert("Waduh, laporan pembayaran gagal disimpan. Coba cek koneksi internet kamu, terus coba lagi ya! Kalau masih gagal, hubungi Admin 🙏"); } finally { setLoading(false); }
   };
 
   const resetForm = () => {
@@ -296,7 +296,7 @@ setTimeout(() => {
       setConfirmDeletePayment(null);
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 2000);
-    } catch (e: any) { alert("Gagal menghapus laporan: " + e.message); } finally { setLoading(false); }
+    } catch (e: any) { console.error('❌ Gagal hapus laporan:', e); alert("Gagal menghapus laporan. Coba lagi ya, atau cek koneksi internet kamu 🙏"); } finally { setLoading(false); }
   };
 
   const handleConfirmAbsen = async () => {
@@ -325,7 +325,7 @@ setTimeout(() => {
     setConfirmingAbsen(null);
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 2000);
-  } catch (e: any) { alert(e.message); } finally { setLoading(false); }
+  } catch (e: any) { console.error('❌ Gagal presensi:', e); alert("Presensi gagal disimpan. Coba cek koneksi internet kamu, terus coba lagi ya 🙏"); } finally { setLoading(false); }
 };
 
   const executeUpdateSessionDate = async () => {
@@ -340,7 +340,7 @@ setTimeout(() => {
     setShowEditDateModal(null);
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 2000);
-  } catch (e: any) { alert("Gagal update tanggal: " + e.message); } finally { setLoading(false); }
+  } catch (e: any) { console.error('❌ Gagal update tanggal:', e); alert("Gagal mengubah tanggal sesi. Coba lagi ya 🙏"); } finally { setLoading(false); }
 };
 
   const executeDeleteSession = async () => {
@@ -354,7 +354,7 @@ setTimeout(() => {
     setConfirmDeleteSession(null);
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 2000);
-  } catch (e: any) { alert("Gagal menghapus sesi: " + e.message); } finally { setLoading(false); }
+  } catch (e: any) { console.error('❌ Gagal hapus sesi:', e); alert("Gagal menghapus sesi. Coba lagi ya 🙏"); } finally { setLoading(false); }
 };
 
   const handleRequestReport = async () => {
@@ -412,7 +412,7 @@ const executeFinalRequestReport = async () => {
     setTimeout(() => setShowSuccess(false), 2000);
   } catch (e: any) { 
     console.error('❌ ERROR INSERT REPORT:', e);
-    alert(`Gagal mengajukan rapot: ${e.message}`); 
+    alert("Gagal mengajukan klaim rapot. Coba cek koneksi internet kamu, terus coba lagi ya! Kalau masih gagal, hubungi Admin 🙏"); 
   } finally { 
     setLoading(false); 
   }
