@@ -66,7 +66,8 @@ const AdminPayroll: React.FC<AdminPayrollProps> = ({ attendanceLogs, setAttendan
     setIsLoading(true);
     const { pkgId, teacherId } = showReceiptInput;
     try {
-      await supabase.from('attendance').update({ paymentstatus: 'PAID', receiptdata: receiptUrl || 'BANK TRANSFER' }).eq('packageid', pkgId).eq('teacherid', teacherId);
+      const { error } = await supabase.from('attendance').update({ paymentstatus: 'PAID', receiptdata: receiptUrl || 'BANK TRANSFER' }).eq('packageid', pkgId).eq('teacherid', teacherId);
+      if (error) throw error;
       setAttendanceLogs(prev => prev.map(log => {
         if (log.packageId === pkgId && log.teacherId === teacherId) return { ...log, paymentStatus: 'PAID', receiptData: receiptUrl || 'BANK TRANSFER' };
         return log;
