@@ -393,7 +393,7 @@ useEffect(() => {
       setHighlightTx({ id: txId, type: 'INCOME' });
       setActiveTab('LEDGER');
       setConfirmingSpp(null);
-    } catch (e: any) { alert(e.message); } finally { setActionLoadingId(null); }
+    } catch (e: any) { console.error('❌ Gagal verifikasi SPP:', e); alert("Gagal memverifikasi pembayaran ini. Coba lagi ya, atau cek koneksi internet 🙏"); } finally { setActionLoadingId(null); }
   };
 
   const handleAddTransaction = async (e: React.FormEvent) => {
@@ -741,7 +741,7 @@ const executePayTeacher = async () => {
     setActiveTab('LEDGER'); 
   } catch (e: any) { 
     console.error('❌ Error lengkap:', e);
-    alert(e.message); 
+    alert("Gagal mencairkan honor. Coba lagi ya, atau cek koneksi internet kamu 🙏"); 
   } finally { 
     setIsLoading(false); 
   }
