@@ -138,10 +138,11 @@ const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const syncConfigToCloud = async (newSubjects: string[], newLevels: string[], newClasses: string[]) => {
     setIsLoading(true);
     try {
-      await supabase.from('settings').upsert({
+      const { error } = await supabase.from('settings').upsert({
         key: 'academic_config',
         value: { subjects: newSubjects, levels: newLevels, classes: newClasses }
       });
+      if (error) throw error;
     } catch (e) {
       alert("Gagal sinkron konfigurasi ke Cloud.");
     } finally {
@@ -152,10 +153,11 @@ const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const syncScheduleToCloud = async (newData: Record<string, string>) => {
     setIsLoading(true);
     try {
-      await supabase.from('settings').upsert({
+      const { error } = await supabase.from('settings').upsert({
         key: 'master_schedule',
         value: newData
       });
+      if (error) throw error;
       setScheduleData(newData);
     } catch (e) {
       alert("Gagal sinkron jadwal ke Cloud.");
@@ -167,10 +169,11 @@ const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   const syncSalaryToCloud = async () => {
     setIsLoading(true);
     try {
-      await supabase.from('settings').upsert({
+      const { error } = await supabase.from('settings').upsert({
         key: 'salary_config',
         value: tempSalary
       });
+      if (error) throw error;
       setSalaryConfig(tempSalary);
       alert("Tarif Honor Guru Berhasil Diperbarui! ✨");
     } catch (e) {
