@@ -383,8 +383,10 @@ useEffect(() => {
     setActionLoadingId(p.id);
     const txId = `TX-INC-${Date.now()}`;
     try {
-      await supabase.from('student_payments').update({ status: 'VERIFIED' }).eq('id', p.id);
-      await supabase.from('transactions').insert({ id: txId, type: 'INCOME', category: 'SPP SISWA', amount: p.amount, date: p.date, description: `SPP MASUK: ${p.studentName} | ${p.className}`.toUpperCase() });
+      const { error: payErr } = await supabase.from('student_payments').update({ status: 'VERIFIED' }).eq('id', p.id);
+      if (payErr) throw payErr;
+      const { error: txErr } = await supabase.from('transactions').insert({ id: txId, type: 'INCOME', category: 'SPP SISWA', amount: p.amount, date: p.date, description: `SPP MASUK: ${p.studentName} | ${p.className}`.toUpperCase() });
+      if (txErr) throw txErr;
       if (refreshAllData) await refreshAllData();
       await fetchLedgerData();
       
@@ -720,7 +722,7 @@ const executePayTeacher = async () => {
       throw result.error;
     }
     
-    await supabase.from('transactions').insert({ 
+    const { error: txInsertErr } = await supabase.from('transactions').insert({ 
       id: txId, 
       type: 'EXPENSE', 
       category: 'HONOR GURU', 
@@ -728,6 +730,7 @@ const executePayTeacher = async () => {
       date: payForm.date, 
       description: `HONOR CAIR: ${selectedPayout.teacherName} | ${selectedPayout.className}`.toUpperCase() 
     });
+    if (txInsertErr) throw txInsertErr;
     
     if (refreshAllData) await refreshAllData();
     await fetchLedgerData();
