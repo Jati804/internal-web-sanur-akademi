@@ -185,7 +185,7 @@ useEffect(() => {
       setConfirmDeleteMedia(null);
       fetchGalleryMedia();
       triggerSuccessOverlay("FOTO TERHAPUS! ✨");
-    } catch (e: any) { alert(e.message); setProcessingStatus('IDLE'); }
+    } catch (e: any) { console.error('❌ Gagal hapus foto:', e); alert("Gagal menghapus foto ini. Coba lagi ya 🙏"); setProcessingStatus('IDLE'); }
   };
 
   const mediaUsagePercent = Math.min((mediaStats.count / mediaStats.limit) * 100, 100);
