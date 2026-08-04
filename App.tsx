@@ -11,7 +11,7 @@ import {
   Sparkles, HelpCircle, Info, RotateCw, Library
 } from 'lucide-react';
 
-import { supabase } from './services/supabase.ts';
+import { supabase, waitForActiveSession } from './services/supabase.ts';
 
 import LoginPage from './pages/LoginPage.tsx';
 import AdminDashboard from './pages/AdminDashboard.tsx';
@@ -21,7 +21,6 @@ import AdminStaff from './pages/AdminStaff.tsx';
 import AdminAcademic from './pages/AdminAcademic.tsx';
 import AdminMaintenance from './pages/AdminMaintenance.tsx';
 import TeacherDashboard from './pages/TeacherDashboard.tsx';
-import TeacherHistory from './pages/TeacherHistory.tsx';
 import TeacherHonor from './pages/TeacherHonor.tsx';
 import TeacherReportsInbox from './pages/TeacherReportsInbox.tsx';
 import StudentPortal from './pages/StudentPortal.tsx';
@@ -523,8 +522,73 @@ if (reps) setReports(reps.map((r: any) => ({
   // begitu `user` beneran ada (abis login, atau sesi lama ke-restore dari
   // localStorage) — dan ini juga jadi prasyarat biar RLS bisa dikunci ke
   // "authenticated-only" tanpa mematahkan halaman Login.
+  //
+  // 🆕 FIX BUG "PAKET SISWA HILANG ABIS LOGIN": sebelumnya refreshAllData()
+  // langsung ditembak begitu `user` ke-set. Race condition-nya: sesi Auth
+  // yang baru aja kebentuk (abis signInWithPassword di LoginPage) belum
+  // tentu langsung aktif dipakai request pertama. RLS pun nganggep request
+  // itu anonim -> hasilnya array KOSONG (bukan error) buat tabel yang
+  // di-RLS-in (student_payments dkk). Reload manual "nyembuhin" karena sesi
+  // udah lebih dulu kesimpen sebelum query jalan. Sekarang: tunggu
+  // waitForActiveSession() beneran konfirmasi sesi aktif dulu (retry
+  // singkat), baru refreshAllData() ditembak.
   useEffect(() => {
-    if (user) refreshAllData();
+    if (!user) return;
+    let cancelled = false;
+
+    (async () => {
+      const ready = await waitForActiveSession();
+      if (cancelled) return;
+      if (!ready) {
+        console.warn('⚠️ Sesi Auth belum kekonfirmasi, tetap coba fetch data...');
+      }
+      refreshAllData();
+    })();
+
+    return () => { cancelled = true; };
+  }, [user, refreshAllData]);
+
+  // 🆕 FIX BUG "ANTREAN RAPOT KELIATAN 0 PADAHAL ADA 3": sebelumnya data
+  // cuma di-fetch SEKALI pas login/restore sesi, abis itu gak pernah
+  // di-refresh otomatis. Jadi kalau ADMIN nambah/ubah data (misal bikin
+  // entri rapot baru) di komputer lain, GURU yang udah lebih dulu buka
+  // halaman "Antrean Rapot" gak bakal lihat perubahan itu sampai dia
+  // reload manual / logout-login ulang. Ini BUKAN soal "1 akun gak bisa
+  // dibuka di 2 device bersamaan" — itu emang didukung normal sama
+  // Supabase Auth. ini soal data di browser yang gak pernah disegerakan
+  // ulang. Fix: subscribe Realtime ke tabel yang paling sering berubah,
+  // jadi semua sesi yang lagi kebuka otomatis refetch begitu ada
+  // perubahan dari device manapun (di-debounce biar gak spam query kalau
+  // ada beberapa perubahan beruntun). Ditambah jaring pengaman: refetch
+  // paksa begitu tab kembali aktif (misal abis laptop di-sleep & realtime
+  // socket-nya putus tanpa reconnect mulus).
+  useEffect(() => {
+    if (!user) return;
+
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleRefresh = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(() => refreshAllData(), 600);
+    };
+
+    const channel = supabase
+      .channel('sanur-realtime-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'reports' }, scheduleRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'student_payments' }, scheduleRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance' }, scheduleRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'student_attendance' }, scheduleRefresh)
+      .subscribe();
+
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') refreshAllData();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      supabase.removeChannel(channel);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, [user, refreshAllData]);
 
   return (
