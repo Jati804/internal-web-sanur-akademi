@@ -147,6 +147,58 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
 
   useEffect(() => { fetchMaterials(); }, []);
 
+  // 🆕 FIX: SEBELUMNYA materi cuma di-fetch SEKALI pas halaman kebuka, gak
+  // pernah refresh otomatis lagi. Ini bahaya khusus buat materi yang
+  // di-"Kunci" buat soal ujian: kalau siswa udah buka halaman ini dari
+  // sebelum jam ujian terus admin nge-unlock pas jam-H, siswa yang udah
+  // kebuka duluan gak bakal lihat perubahan itu SAMPAI mereka refresh
+  // manual — soal ujian keliatan tetep "🔒 Terkunci" di layar mereka
+  // padahal udah kebuka di database.
+  //
+  // Fix: subscribe Supabase Realtime ke tabel `materials`. Begitu ada
+  // perubahan (lock/unlock, upload baru, hapus, dst) dari device manapun,
+  // semua browser yang lagi kebuka halaman ini otomatis refetch — gak
+  // perlu refresh manual. Dipakai fetch versi "silent" (gak toggle
+  // `loading`) biar gak ada spinner/flicker ganggu siswa yang lagi nunggu.
+  //
+  // ⚠️ Prasyarat: tabel `materials` harus diaktifin di Supabase Dashboard
+  // → Database → Publications → `supabase_realtime` → centang `materials`.
+  useEffect(() => {
+    const fetchMaterialsSilent = async () => {
+      try {
+        const { data, error } = await supabase.from('materials').select('*').order('subject').order('level').order('sort_order');
+        if (error) throw error;
+        setMaterials(data || []);
+      } catch (e) {
+        console.error('Gagal sinkronisasi materi (realtime):', e);
+      }
+    };
+
+    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
+    const scheduleRefresh = () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(fetchMaterialsSilent, 400);
+    };
+
+    const channel = supabase
+      .channel('materi-realtime-sync')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'materials' }, scheduleRefresh)
+      .subscribe();
+
+    // 🛟 Jaring pengaman: kalau realtime socket sempat putus (misal device
+    // di-sleep lama), begitu tab keliatan aktif lagi -> paksa refetch sekali.
+    const handleVisibility = () => {
+      if (document.visibilityState === 'visible') fetchMaterialsSilent();
+    };
+    document.addEventListener('visibilitychange', handleVisibility);
+
+    return () => {
+      if (debounceTimer) clearTimeout(debounceTimer);
+      supabase.removeChannel(channel);
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
+  }, []);
+
   // 🎯 Pasangan Subject+Level yang "seharusnya" bisa diakses guru ini,
   // diambil dari histori presensi (bukan dari materials) — dipakai juga
   // buat ngedeteksi kelas yang UDAH diajar tapi materinya BELUM diupload.
