@@ -41,6 +41,13 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
     return dateStr.split('-').reverse().join('/');
   };
 
+  // 🆕 Format angka pakai titik sebagai pemisah ribuan (format Indonesia)
+  // Contoh: 720000 -> "720.000"
+  const formatRupiah = (amt: number) => {
+    if (!amt || isNaN(amt)) return '0';
+    return amt.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
   const getFullMonthName = (dateStr?: string) => {
     const dateToUse = dateStr ? new Date(dateStr) : new Date();
     return new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(dateToUse).toUpperCase();
@@ -229,7 +236,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                <div className="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-900/40"><Wallet size={32}/></div>
                <div>
                   <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Belum Cair ({selectedYear}):</p>
-                  <h4 className="text-3xl font-black text-emerald-400 italic">Rp {unpaidTotal.toLocaleString()}</h4>
+                  <h4 className="text-3xl font-black text-emerald-400 italic">Rp {formatRupiah(unpaidTotal)}</h4>
                </div>
             </div>
          </div>
@@ -324,7 +331,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                    
                    <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 min-w-[200px] text-center shadow-inner">
                       <p className="text-[10px] font-black text-slate-400 uppercase mb-1 italic">Diterima</p>
-                      <p className="text-3xl font-black italic tracking-tighter text-blue-600 whitespace-nowrap">Rp {pkg.myTotalPaid.toLocaleString()}</p>
+                      <p className="text-3xl font-black italic tracking-tighter text-blue-600 whitespace-nowrap">Rp {formatRupiah(pkg.myTotalPaid)}</p>
                    </div>
                 </div>
                 
@@ -456,7 +463,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                       <td className="py-4 text-center w-24">
                         <span className="text-blue-600 font-black text-[11px] uppercase tracking-wide">{s.duration || 2} JAM</span>
                       </td>
-                      <td className="py-4 text-right font-black text-slate-900 text-[13px]">Rp {s.earnings?.toLocaleString()}</td>
+                      <td className="py-4 text-right font-black text-slate-900 text-[13px]">Rp {formatRupiah(s.earnings)}</td>
                     </tr>
                   ))}
                 </tbody>
@@ -470,7 +477,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                   <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mt-1">Status: LUNAS</p>
                 </div>
               </div>
-              <p className="text-5xl font-black text-blue-600 leading-none mt-4 text-left">Rp {pkg.myTotalPaid.toLocaleString()}</p>
+              <p className="text-5xl font-black text-blue-600 leading-none mt-4 text-left">Rp {formatRupiah(pkg.myTotalPaid)}</p>
             </div>
             <div className="pt-10 border-t border-slate-100 flex justify-between items-end gap-10">
               <div className="max-w-xs text-left">
