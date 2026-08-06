@@ -980,9 +980,9 @@ const handleDownloadPDFReport = async (course: any) => {
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
                           disabled={loading}
-                          className={`w-full h-[72px] px-3 rounded-2xl border-2 flex items-center gap-3 outline-none shadow-inner transition-all active:scale-[0.98] active:bg-slate-100 ${showErrors && !payForm.receiptData ? 'border-rose-500 bg-rose-50' : 'border-slate-100 bg-slate-50 hover:bg-slate-100 hover:border-slate-200 hover:shadow-md'}`}
+                          className={`w-full h-[72px] px-3 rounded-2xl border-2 flex items-center gap-3 outline-none shadow-inner ${showErrors && !payForm.receiptData ? 'border-rose-500 bg-rose-50' : 'border-slate-100 bg-slate-50'}`}
                         >
-                          <span className="py-3 px-5 rounded-xl bg-emerald-600 text-white text-[9px] font-black uppercase shrink-0 flex items-center gap-2">
+                          <span className="py-3 px-5 rounded-xl bg-emerald-600 text-white text-[9px] font-black uppercase shrink-0 flex items-center gap-2 transition-all hover:bg-emerald-700 active:scale-90">
                             {loading && <Loader2 size={14} className="animate-spin" />}
                             {loading ? 'MEMPROSES' : 'PILIH FILE'}
                           </span>
