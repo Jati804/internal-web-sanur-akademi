@@ -954,7 +954,7 @@ const handleDownloadPDFReport = async (course: any) => {
                       setPayForm({...payForm, amount: parseInt(raw) || 0});
                       setShowErrors(false);
                     }} 
-                    className={`w-full h-[72px] px-8 py-6 rounded-[2rem] font-black text-[15px] outline-none transition-all shadow-inner border-2 ${showErrors && !payForm.amount ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-slate-50 focus:bg-white focus:border-orange-500'}`} 
+                    className={`w-full h-[72px] px-8 py-6 rounded-[2rem] font-black text-[14px] outline-none transition-all shadow-inner border-2 ${showErrors && !payForm.amount ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-slate-50 focus:bg-white focus:border-orange-500'}`} 
                   />
                 </div>
                 <div className="space-y-3">
@@ -980,7 +980,7 @@ const handleDownloadPDFReport = async (course: any) => {
                           type="button"
                           onClick={() => fileInputRef.current?.click()}
                           disabled={loading}
-                          className={`w-full h-[72px] px-3 rounded-2xl border-2 flex items-center gap-3 outline-none shadow-inner transition-all ${showErrors && !payForm.receiptData ? 'border-rose-500 bg-rose-50' : 'border-slate-100 bg-slate-50 hover:bg-slate-100'}`}
+                          className={`w-full h-[72px] px-3 rounded-2xl border-2 flex items-center gap-3 outline-none shadow-inner transition-all active:scale-[0.98] active:bg-slate-100 ${showErrors && !payForm.receiptData ? 'border-rose-500 bg-rose-50' : 'border-slate-100 bg-slate-50 hover:bg-slate-100 hover:border-slate-200 hover:shadow-md'}`}
                         >
                           <span className="py-3 px-5 rounded-xl bg-emerald-600 text-white text-[9px] font-black uppercase shrink-0 flex items-center gap-2">
                             {loading && <Loader2 size={14} className="animate-spin" />}
