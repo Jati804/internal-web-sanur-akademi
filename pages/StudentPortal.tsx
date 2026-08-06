@@ -954,7 +954,7 @@ const handleDownloadPDFReport = async (course: any) => {
                       setPayForm({...payForm, amount: parseInt(raw) || 0});
                       setShowErrors(false);
                     }} 
-                    className={`w-full h-[72px] px-8 py-6 rounded-[2rem] font-black text-[14px] outline-none transition-all shadow-inner border-2 ${showErrors && !payForm.amount ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-slate-50 focus:bg-white focus:border-orange-500'}`} 
+                    className={`w-full h-[72px] px-8 py-6 rounded-[2rem] font-black text-[15px] outline-none transition-all shadow-inner border-2 ${showErrors && !payForm.amount ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-slate-50 focus:bg-white focus:border-orange-500'}`} 
                   />
                 </div>
                 <div className="space-y-3">
