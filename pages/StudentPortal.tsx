@@ -955,24 +955,31 @@ const handleDownloadPDFReport = async (course: any) => {
                   <div className="flex gap-2">
                     {payForm.receiptData ? (
                       <div className="flex-1 flex gap-2 h-[72px]">
-                        <button onClick={() => setPreviewModal(payForm.receiptData)} className="flex-1 py-4 bg-emerald-50 text-emerald-600 rounded-[2rem] font-black text-[10px] uppercase border-2 border-emerald-100 flex items-center justify-center gap-3 hover:bg-emerald-100 transition-all shadow-sm">
+                        <button onClick={() => setPreviewModal(payForm.receiptData)} className="flex-1 px-4 bg-emerald-50 text-emerald-600 rounded-2xl font-black text-[10px] uppercase border-2 border-emerald-100 flex items-center justify-center gap-3 hover:bg-emerald-100 transition-all shadow-sm">
                           <Eye size={18}/> PREVIEW
                         </button>
-                        <button onClick={() => setPayForm({...payForm, receiptData: ''})} className="w-16 h-full bg-rose-50 text-rose-500 rounded-[1.5rem] flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm">
+                        <button onClick={() => setPayForm({...payForm, receiptData: ''})} className="w-16 h-full bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm">
                           <Trash2 size={20}/>
                         </button>
                       </div>
                     ) : (
                       <div className="w-full">
-                        <input
-                          type="file"
-                          ref={fileInputRef}
-                          onChange={handleFileChange}
-                          accept="image/*"
+                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
+                        <button
+                          type="button"
+                          onClick={() => fileInputRef.current?.click()}
                           disabled={loading}
-                          className={`w-full h-[72px] px-4 rounded-[2rem] font-bold text-[10px] text-slate-500 outline-none shadow-inner border-2 cursor-pointer transition-all file:mr-3 file:h-full file:my-0 file:py-0 file:px-6 file:rounded-full file:border-0 file:bg-emerald-600 file:text-white file:text-[9px] file:font-black file:uppercase file:cursor-pointer hover:file:bg-emerald-700 file:transition-all ${showErrors && !payForm.receiptData ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-slate-50'}`}
-                        />
-                        {loading && <p className="text-[9px] text-orange-500 font-black uppercase mt-2 ml-4 flex items-center gap-2"><Loader2 size={12} className="animate-spin" /> Compressing...</p>}
+                          className={`w-full h-[72px] px-3 rounded-2xl border-2 flex items-center gap-3 outline-none shadow-inner transition-all ${showErrors && !payForm.receiptData ? 'border-rose-500 bg-rose-50' : 'border-slate-100 bg-slate-50 hover:bg-slate-100'}`}
+                        >
+                          <span className="py-3 px-5 rounded-xl bg-emerald-600 text-white text-[9px] font-black uppercase shrink-0 flex items-center gap-2">
+                            {loading && <Loader2 size={14} className="animate-spin" />}
+                            {loading ? 'MEMPROSES' : 'PILIH FILE'}
+                          </span>
+                          <span className="text-[10px] font-bold text-slate-400 truncate text-left">
+                            {loading ? 'Sedang mengompres foto...' : 'Belum ada file yang dipilih'}
+                          </span>
+                        </button>
+                        <p className="text-[9px] text-slate-400 font-bold mt-2 ml-4">Format JPG / PNG</p>
                       </div>
                     )}
                   </div>
