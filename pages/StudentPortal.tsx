@@ -955,7 +955,7 @@ const handleDownloadPDFReport = async (course: any) => {
                   <div className="flex gap-2">
                     {payForm.receiptData ? (
                       <div className="flex-1 flex gap-2 h-[72px]">
-                        <button onClick={() => setPreviewModal(payForm.receiptData)} className="flex-1 px-4 bg-emerald-50 text-emerald-600 rounded-2xl font-black text-[10px] uppercase border-2 border-emerald-100 flex items-center justify-center gap-3 hover:bg-emerald-100 transition-all shadow-sm">
+                        <button onClick={() => setPreviewModal(payForm.receiptData)} className="flex-1 px-4 bg-emerald-50 text-emerald-600 rounded-2xl font-black text-xs uppercase border-2 border-emerald-100 flex items-center justify-center gap-3 hover:bg-emerald-100 transition-all shadow-sm">
                           <Eye size={18}/> PREVIEW
                         </button>
                         <button onClick={() => setPayForm({...payForm, receiptData: ''})} className="w-16 h-full bg-rose-50 text-rose-500 rounded-2xl flex items-center justify-center hover:bg-rose-500 hover:text-white transition-all shadow-sm">
