@@ -38,6 +38,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
   const statusMap: Record<string, any> = {};
   
   // ✅ GANTI: Pakai studentAttendanceLogs!
+  // 🆕 FIX: sebelumnya nyimpen sesi TERTINGGI yang PERNAH dicapai siswa
+  // (pakai `currentSess > statusMap[key].lastSess`). Masalahnya, kalau
+  // siswa itu udah daftar paket baru & mulai sesi 1-2-3 lagi, sistem tetep
+  // "inget" dia pernah nyampe sesi 6 sebelumnya dan gak pernah bisa lepas
+  // dari daftar follow-up walau udah aktif lagi.
+  // Sekarang: karena log-nya udah di-sort ascending by date, tiap iterasi
+  // TIMPA aja statusnya (bukan cuma kalau lebih tinggi) — jadi yang
+  // kesimpen di akhir selalu record PALING BARU per siswa+kelas. Kalau
+  // siswa mulai paket baru, status terbarunya otomatis balik ke sesi
+  // rendah lagi, jadi otomatis lepas dari daftar follow-up.
   [...studentAttendanceLogs]
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .forEach(log => {
@@ -47,20 +57,26 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
       
       const currentSess = log.sessionNumber || log.sessionnumber || 0;
       
-      if (!statusMap[key] || (currentSess > statusMap[key].lastSess)) {
-        statusMap[key] = { 
-          lastSess: currentSess, 
-          student: sName, 
-          lastDate: log.date, 
-          fullClass: cName 
-        };
-      }
+      statusMap[key] = { 
+        lastSess: currentSess, 
+        student: sName, 
+        lastDate: log.date, 
+        fullClass: cName 
+      };
     });
 
   return Object.values(statusMap).filter((s: any) => {
     const isSess5 = s.lastSess === 5;
-    const isSess6Today = s.lastSess >= 6 && s.lastDate === currentToday;
-    return isSess5 || isSess6Today;
+    // 🆕 GANTI: sebelumnya cuma nongol PAS HARI ITU JUGA siswa nyampe sesi
+    // 6 (`lastDate === currentToday`) — kalau admin kelewat 1 hari aja,
+    // siswa langsung ilang dari daftar padahal belum di-follow-up.
+    // Sekarang dikasih jendela 7 hari, biar admin punya waktu lebih buat
+    // notice & follow-up, tapi tetep otomatis ilang kalau emang udah lama
+    // banget & gak di-follow-up (biar gak numpuk selamanya sama siswa yang
+    // udah beneran berhenti).
+    const daysSinceLulus = (new Date(currentToday).getTime() - new Date(s.lastDate).getTime()) / (1000 * 60 * 60 * 24);
+    const isSess6Recent = s.lastSess >= 6 && daysSinceLulus <= 7;
+    return isSess5 || isSess6Recent;
   });
 }, [studentAttendanceLogs, currentToday]); // ✅ Ganti dependency!
 
@@ -160,7 +176,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
 
                   <div className={`inline-flex items-center gap-3 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${s.lastSess >= 6 ? 'bg-white/10 border-white/20 text-white shadow-lg' : 'bg-orange-50 border-orange-100 text-orange-600 shadow-sm'}`}>
                      {s.lastSess >= 6 ? (
-                       <><Zap size={14} className="text-yellow-400 fill-yellow-400"/> LULUS HARI INI ✨</>
+                       <><Zap size={14} className="text-yellow-400 fill-yellow-400"/> SUDAH LULUS ✨</>
                      ) : (
                        <><Clock size={14} /> PROGRES: SESI 5 / 6</>
                      )}
