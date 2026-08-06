@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { User, StudentPayment, Attendance } from '../types';
 import { supabase } from '../services/supabase.ts';
 import ModalPortal from '../ModalPortal.tsx';
@@ -131,6 +131,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
     uploadMode: 'file' as 'file' | 'link',
     locked: false,
   });
+  const materiFileInputRef = useRef<HTMLInputElement>(null);
 
   const fetchMaterials = async () => {
     setLoading(true);
@@ -714,12 +715,27 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                   </div>
                 </div>
                 {form.uploadMode === 'file' ? (
-                  <input
-                    type="file"
-                    accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png"
-                    onChange={e => setForm({ ...form, file: e.target.files?.[0] || null })}
-                    className="w-full mt-1 px-3 py-3 bg-slate-50 rounded-xl border-2 border-slate-100 text-[10px] font-bold text-slate-500 cursor-pointer file:mr-3 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:bg-blue-600 file:text-white file:text-[9px] file:font-black file:uppercase file:cursor-pointer hover:file:bg-blue-700 file:transition-all"
-                  />
+                  <div className="w-full mt-1">
+                    <input
+                      type="file"
+                      ref={materiFileInputRef}
+                      accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.jpg,.jpeg,.png"
+                      onChange={e => setForm({ ...form, file: e.target.files?.[0] || null })}
+                      className="hidden"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => materiFileInputRef.current?.click()}
+                      className="w-full px-3 py-3 bg-slate-50 rounded-xl border-2 border-slate-100 flex items-center gap-3 outline-none shadow-inner"
+                    >
+                      <span className="py-1.5 px-3 rounded-lg bg-blue-600 text-white text-[9px] font-black uppercase shrink-0 transition-all hover:bg-blue-700 active:scale-90">
+                        PILIH FILE
+                      </span>
+                      <span className="text-[10px] font-bold text-slate-500 truncate text-left">
+                        {form.file ? form.file.name : 'Belum ada file'}
+                      </span>
+                    </button>
+                  </div>
                 ) : (
                   <div className="w-full mt-1 px-4 py-3 bg-slate-50 rounded-xl border-2 border-dashed border-slate-200 text-[9px] font-bold text-slate-300 uppercase text-center">
                     Isi link di bawah ↓
