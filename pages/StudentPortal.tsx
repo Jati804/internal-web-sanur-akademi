@@ -951,7 +951,7 @@ const handleDownloadPDFReport = async (course: any) => {
                   <input type="date" value={payForm.date} onChange={e => setPayForm({...payForm, date: e.target.value})} className="w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-black text-xs outline-none h-[72px]" />
                 </div>
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Bukti Transfer</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Bukti Transfer (JPG/PNG)</label>
                   <div className="flex gap-2">
                     {payForm.receiptData ? (
                       <div className="flex-1 flex gap-2 h-[72px]">
@@ -976,10 +976,9 @@ const handleDownloadPDFReport = async (course: any) => {
                             {loading ? 'MEMPROSES' : 'PILIH FILE'}
                           </span>
                           <span className="text-[10px] font-bold text-slate-400 truncate text-left">
-                            {loading ? 'Sedang mengompres foto...' : 'Belum ada file yang dipilih'}
+                            {loading ? 'Sedang mengompres foto...' : 'Belum ada file'}
                           </span>
                         </button>
-                        <p className="text-[9px] text-slate-400 font-bold mt-2 ml-4">Format JPG / PNG</p>
                       </div>
                     )}
                   </div>
