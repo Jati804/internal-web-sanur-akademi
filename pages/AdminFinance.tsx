@@ -1203,7 +1203,7 @@ const executePayTeacher = async () => {
 
               <div className="grid md:grid-cols-2 gap-6">
                 {/* KOLOM KIRI: Info */}
-                <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 flex flex-col justify-center">
+                <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 shadow-inner flex flex-col justify-center">
                    <div className="flex justify-between items-center text-[8px] font-black text-slate-400 uppercase tracking-widest"><p>Detail:</p><p className={selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'}>{selectedPayout.sessionCount} SESI</p></div>
                    <div className="text-center border-t border-slate-100 pt-3"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Transfer</p><p className={`text-2xl font-black ${selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'} italic`}>Rp {formatRupiah(selectedPayout.amount)}</p></div>
                 </div>
@@ -1245,7 +1245,7 @@ const executePayTeacher = async () => {
 
               <div className={confirmingSpp.receiptData ? 'grid md:grid-cols-2 gap-6' : ''}>
                 {/* KOLOM KIRI: Info */}
-                <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 flex flex-col justify-center">
+                <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 shadow-inner flex flex-col justify-center">
                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">{confirmingSpp.className}</p>
                    <div className="pt-3 border-t border-slate-200 text-center"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Diterima</p><p className="text-2xl font-black text-emerald-600 italic">Rp {formatRupiah(confirmingSpp.amount)}</p></div>
                 </div>
