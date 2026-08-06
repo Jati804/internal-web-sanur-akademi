@@ -943,12 +943,12 @@ const handleDownloadPDFReport = async (course: any) => {
                       setPayForm({...payForm, amount: parseInt(raw) || 0});
                       setShowErrors(false);
                     }} 
-                    className={`w-full h-[72px] px-8 py-6 rounded-[2rem] font-black text-xs outline-none transition-all shadow-inner border-2 ${showErrors && !payForm.amount ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-slate-50 focus:bg-white focus:border-orange-500'}`} 
+                    className={`w-full h-[72px] px-8 py-6 rounded-[2rem] font-black text-[14px] outline-none transition-all shadow-inner border-2 ${showErrors && !payForm.amount ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-slate-50 focus:bg-white focus:border-orange-500'}`} 
                   />
                 </div>
                 <div className="space-y-3">
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Tanggal</label>
-                  <input type="date" value={payForm.date} onChange={e => setPayForm({...payForm, date: e.target.value})} className="w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-black text-xm outline-none h-[72px]" />
+                  <input type="date" value={payForm.date} onChange={e => setPayForm({...payForm, date: e.target.value})} className="w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-black text-[14px] outline-none h-[72px]" />
                 </div>
                 <div className="space-y-3">
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Bukti Transfer (JPG/PNG)</label>
