@@ -914,7 +914,11 @@ const handleDownloadPDFReport = async (course: any) => {
                     className={`w-full px-8 py-6 rounded-[2rem] font-black text-xs uppercase outline-none transition-all shadow-inner h-[72px] border-2 ${showErrors && !payForm.subject ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-slate-50 focus:bg-white focus:border-orange-500'}`}
                   >
                     <option value="">-- PILIH MATPEL --</option>
-                    {subjects.map(s => <option key={s} value={s}>{s}</option>)}
+{subjects.map(s => (
+  <option key={s} value={s}>
+    {s.replace(/^PELATIHAN\s+/i, '')}
+  </option>
+))}
                   </select>
                 </div>
                 <div className="space-y-3">
