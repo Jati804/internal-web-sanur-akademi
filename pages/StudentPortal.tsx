@@ -967,9 +967,10 @@ const handleDownloadPDFReport = async (course: any) => {
                         <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
                         <button 
                           onClick={() => fileInputRef.current?.click()} 
-                          className={`w-full py-6 rounded-[2rem] font-black text-[10px] uppercase shadow-inner border-2 border-dashed h-[72px] transition-all ${showErrors && !payForm.receiptData ? 'border-rose-500 bg-rose-50' : 'border-orange-200 bg-orange-50 text-orange-600'}`}
+                          className={`w-full py-6 rounded-[2rem] font-black text-[10px] uppercase shadow-inner border-2 border-dashed h-[72px] transition-all flex items-center justify-center gap-3 cursor-pointer hover:bg-orange-100 active:scale-95 ${showErrors && !payForm.receiptData ? 'border-rose-500 bg-rose-50' : 'border-orange-200 bg-orange-50 text-orange-600'}`}
                         >
-                          {loading ? 'COMPRESSING...' : 'UPLOAD BUKTI'}
+                          {loading ? <Loader2 size={20} className="animate-spin" /> : <Upload size={20} />}
+                          {loading ? 'COMPRESSING...' : 'KLIK DI SINI UNTUK UPLOAD FOTO'}
                         </button>
                       </>
                     )}
