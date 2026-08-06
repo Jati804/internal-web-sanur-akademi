@@ -28,6 +28,13 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
 }) => {
   const location = useLocation();
   const getWIBDate = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
+
+  // 🆕 Format angka pakai titik sebagai pemisah ribuan (format Indonesia)
+  // Contoh: 720000 -> "720.000"
+  const formatRupiah = (amt: number) => {
+    if (!amt || isNaN(amt)) return '0';
+    return amt.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
   
   const [activeTab, setActiveTab] = useState<'LEDGER' | 'PAYROLL' | 'STUDENT_ACC'>(() => {
     return location?.state?.tab || 'LEDGER';
@@ -780,15 +787,15 @@ const executePayTeacher = async () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full relative z-10 max-w-5xl">
           <div className="bg-white/5 backdrop-blur-xl p-10 rounded-[3rem] border border-white/10 text-center flex flex-col justify-center min-h-[180px]">
              <p className="text-[10px] font-black uppercase text-blue-300 tracking-[0.4em] mb-3">Kas Bersih</p>
-             <p className="text-[17px] font-black italic tracking-tighter leading-none">Rp {stats.balance.toLocaleString()}</p>
+             <p className="text-[17px] font-black italic tracking-tighter leading-none">Rp {formatRupiah(stats.balance)}</p>
           </div>
           <div className="bg-emerald-50/10 p-10 rounded-[3rem] border border-emerald-500/20 text-center flex flex-col justify-center min-h-[180px]">
              <div className="flex items-center gap-3 text-emerald-400 mb-4 justify-center"><ArrowUpCircle size={16}/><p className="text-[10px] font-black uppercase">Masuk</p></div>
-             <p className="text-[17px] font-black italic tracking-tighter leading-none">Rp {stats.income.toLocaleString()}</p>
+             <p className="text-[17px] font-black italic tracking-tighter leading-none">Rp {formatRupiah(stats.income)}</p>
           </div>
           <div className="bg-rose-50/10 p-10 rounded-[3rem] border border-rose-500/20 text-center flex flex-col justify-center min-h-[180px]">
              <div className="flex items-center gap-3 text-rose-400 mb-4 justify-center"><ArrowDownCircle size={16}/><p className="text-[10px] font-black uppercase">Keluar</p></div>
-             <p className="text-[17px] font-black italic tracking-tighter leading-none">Rp {stats.expense.toLocaleString()}</p>
+             <p className="text-[17px] font-black italic tracking-tighter leading-none">Rp {formatRupiah(stats.expense)}</p>
           </div>
         </div>
       </div>
@@ -1003,15 +1010,15 @@ const executePayTeacher = async () => {
     <div className="grid grid-cols-3 gap-4">
       <div className="text-center">
         <p className="text-[8px] font-black text-emerald-600 uppercase mb-1">Masuk</p>
-        <p className="text-lg font-black text-emerald-600 italic">Rp {filteredStats.income.toLocaleString()}</p>
+        <p className="text-lg font-black text-emerald-600 italic">Rp {formatRupiah(filteredStats.income)}</p>
       </div>
       <div className="text-center">
         <p className="text-[8px] font-black text-rose-600 uppercase mb-1">Keluar</p>
-        <p className="text-lg font-black text-rose-600 italic">Rp {filteredStats.expense.toLocaleString()}</p>
+        <p className="text-lg font-black text-rose-600 italic">Rp {formatRupiah(filteredStats.expense)}</p>
       </div>
       <div className="text-center">
         <p className="text-[8px] font-black text-blue-600 uppercase mb-1">Balance</p>
-        <p className="text-lg font-black text-blue-600 italic">Rp {filteredStats.balance.toLocaleString()}</p>
+        <p className="text-lg font-black text-blue-600 italic">Rp {formatRupiah(filteredStats.balance)}</p>
       </div>
     </div>
   </div>
@@ -1049,7 +1056,7 @@ const executePayTeacher = async () => {
                                     <p className="text-[14px] font-black text-slate-800 uppercase italic leading-tight">{t.description}</p>
                                     <span className="text-[8px] font-black text-blue-500 bg-blue-50 px-3 py-1 rounded-lg uppercase tracking-widest mt-3 italic">{t.category || 'UMUM'}</span>
                                  </td>
-                                 <td className="px-12 py-8 text-right min-w-[200px]"><div className={`flex items-baseline justify-end gap-1.5 font-black italic whitespace-nowrap flex-nowrap ${t.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'}`}><span className="text-xs md:text-sm">{t.type === 'INCOME' ? '+' : '-'} Rp</span><span className="text-2xl md:text-3xl tracking-tighter leading-none">{t.amount.toLocaleString()}</span></div></td>
+                                 <td className="px-12 py-8 text-right min-w-[200px]"><div className={`flex items-baseline justify-end gap-1.5 font-black italic whitespace-nowrap flex-nowrap ${t.type === 'INCOME' ? 'text-emerald-600' : 'text-rose-600'}`}><span className="text-xs md:text-sm">{t.type === 'INCOME' ? '+' : '-'} Rp</span><span className="text-2xl md:text-3xl tracking-tighter leading-none">{formatRupiah(t.amount)}</span></div></td>
                                  <td className="px-12 py-8 text-center min-w-[150px]"><div className="flex justify-center gap-2"><button onClick={() => setEditingTransaction(t)} className="p-3 bg-white text-slate-300 hover:text-blue-600 rounded-xl transition-all shadow-sm border border-slate-50"><Edit3 size={16}/></button><button onClick={() => setConfirmDeleteTx(t)} className="p-3 bg-white text-slate-300 hover:text-rose-500 rounded-xl transition-all shadow-sm border border-slate-50"><Trash2 size={16}/></button></div></td>
                               </tr>
                            );
@@ -1113,7 +1120,7 @@ const executePayTeacher = async () => {
                       <div className="flex items-center gap-2 pt-1"><Calendar size={12} className="text-slate-300"/><p className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Update: {formatDate(it.lastUpdate)}</p></div>
                     </div>
                   </div>
-                  <div className="bg-slate-50/80 backdrop-blur-sm p-8 rounded-[3rem] border border-slate-100 min-w-[240px] text-center space-y-6 shadow-sm"><div className="space-y-1"><p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] italic">TOTAL CAIRKAN</p><h4 className="text-3xl font-black italic tracking-tighter text-blue-600 leading-none">Rp {it.amount.toLocaleString()}</h4></div><button onClick={() => setSelectedPayout(it)} className="w-full py-4 bg-[#0F172A] text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-3 group">BAYAR SEKARANG <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform"/></button></div>
+                  <div className="bg-slate-50/80 backdrop-blur-sm p-8 rounded-[3rem] border border-slate-100 min-w-[240px] text-center space-y-6 shadow-sm"><div className="space-y-1"><p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] italic">TOTAL CAIRKAN</p><h4 className="text-3xl font-black italic tracking-tighter text-blue-600 leading-none">Rp {formatRupiah(it.amount)}</h4></div><button onClick={() => setSelectedPayout(it)} className="w-full py-4 bg-[#0F172A] text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-3 group">BAYAR SEKARANG <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform"/></button></div>
                 </div>
                 <div className="space-y-6">
                   <div className="flex items-center gap-6 px-2"><div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-blue-600"></div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Sesi Asli Guru Tersebut</p></div><div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-600"></div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Guru Tersebut Menggantikan</p></div><div className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest border ml-auto animate-pulse ${it.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>SIAP CAIR ({it.sessionCount} SESI)</div></div>
@@ -1159,7 +1166,7 @@ const executePayTeacher = async () => {
                        <p className="text-[10px] font-black text-slate-300 uppercase mb-1">{formatDate(p.date)}</p>
                        <h4 className="text-xl font-black text-slate-800 uppercase italic leading-tight mb-2 truncate">{p.studentName}</h4>
                        <p className="text-[10px] font-black text-blue-600 uppercase mb-8">{p.className}</p>
-                       <div className="bg-slate-50 p-6 rounded-3xl mb-10 text-center border border-slate-100 shadow-inner group-hover:bg-white group-hover:border-emerald-100 transition-all"><p className="text-[10px] font-black text-slate-400 uppercase mb-1">Nominal</p><p className="text-3xl font-black text-emerald-600 italic tracking-tighter">Rp {p.amount.toLocaleString()}</p></div>
+                       <div className="bg-slate-50 p-6 rounded-3xl mb-10 text-center border border-slate-100 shadow-inner group-hover:bg-white group-hover:border-emerald-100 transition-all"><p className="text-[10px] font-black text-slate-400 uppercase mb-1">Nominal</p><p className="text-3xl font-black text-emerald-600 italic tracking-tighter">Rp {formatRupiah(p.amount)}</p></div>
                     </div>
                     <div className="space-y-4 relative z-10">
                        <button onClick={() => handleOpenConfirmSpp(p)} disabled={!!actionLoadingId} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl hover:bg-emerald-600 transition-all flex items-center justify-center gap-2">
@@ -1198,7 +1205,7 @@ const executePayTeacher = async () => {
                 {/* KOLOM KIRI: Info */}
                 <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 flex flex-col justify-center">
                    <div className="flex justify-between items-center text-[8px] font-black text-slate-400 uppercase tracking-widest"><p>Detail:</p><p className={selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'}>{selectedPayout.sessionCount} SESI</p></div>
-                   <div className="text-center border-t border-slate-100 pt-3"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Transfer</p><p className={`text-2xl font-black ${selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'} italic`}>Rp {selectedPayout.amount.toLocaleString()}</p></div>
+                   <div className="text-center border-t border-slate-100 pt-3"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Transfer</p><p className={`text-2xl font-black ${selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'} italic`}>Rp {formatRupiah(selectedPayout.amount)}</p></div>
                 </div>
 
                 {/* KOLOM KANAN: Upload Bukti (ngikutin tinggi kolom kiri, tapi dibatasi max-h biar modal nggak makin memanjang) */}
@@ -1210,7 +1217,7 @@ const executePayTeacher = async () => {
                          <button onClick={(e) => { e.stopPropagation(); setPayForm({ receiptData: '' }); }} className="absolute top-3 right-3 p-2 bg-rose-600 text-white rounded-full shadow-xl hover:bg-rose-700 transition-all"><Trash2 size={14}/></button>
                       </div>
                    ) : (
-                      <div className="relative h-full max-h-40 min-h-[9rem]"><input type="file" ref={fileInputPayoutRef} onChange={handleUploadProof} className="hidden" accept="image/*" /><button onClick={() => fileInputPayoutRef.current?.click()} className={`w-full h-full bg-slate-50 rounded-3xl border-2 border-dashed ${selectedPayout.category === 'PRIVATE' ? 'border-orange-200 text-orange-600' : 'border-blue-200 text-blue-600'} font-black text-[9px] uppercase hover:bg-white transition-all flex flex-col items-center justify-center gap-2`}>{isLoading ? <Loader2 className="animate-spin" size={20} /> : <p>UPLOAD BUKTI<br/>TRANSFER</p>}</button></div>
+                      <div className="relative h-full max-h-40 min-h-[9rem]"><input type="file" ref={fileInputPayoutRef} onChange={handleUploadProof} className="hidden" accept="image/*" /><button onClick={() => fileInputPayoutRef.current?.click()} className="w-full h-full bg-slate-50 rounded-3xl border-2 border-slate-100 shadow-inner hover:bg-slate-100 transition-all flex flex-col items-center justify-center gap-3">{isLoading ? <Loader2 className="animate-spin text-slate-400" size={20} /> : <><span className={`py-3 px-6 rounded-xl text-white text-[9px] font-black uppercase shrink-0 ${selectedPayout.category === 'PRIVATE' ? 'bg-[#0F172A]' : 'bg-blue-600'}`}>PILIH FILE</span><span className="text-[9px] font-black text-slate-400 uppercase text-center leading-relaxed px-4">Belum ada file<br/>Bukti Transfer</span></>}</button></div>
                    )}
                 </div>
               </div>
@@ -1240,7 +1247,7 @@ const executePayTeacher = async () => {
                 {/* KOLOM KIRI: Info */}
                 <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 flex flex-col justify-center">
                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">{confirmingSpp.className}</p>
-                   <div className="pt-3 border-t border-slate-200 text-center"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Diterima</p><p className="text-2xl font-black text-emerald-600 italic">Rp {confirmingSpp.amount.toLocaleString()}</p></div>
+                   <div className="pt-3 border-t border-slate-200 text-center"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Diterima</p><p className="text-2xl font-black text-emerald-600 italic">Rp {formatRupiah(confirmingSpp.amount)}</p></div>
                 </div>
 
                 {/* KOLOM KANAN: Bukti (kalau ada) */}
@@ -1316,7 +1323,7 @@ const executePayTeacher = async () => {
 
                     {/* KOLOM KANAN */}
                     <div className="space-y-6">
-                      <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Nominal (Rp)</label><input type="number" placeholder="0" value={addForm.amount || ''} onChange={e => setAddForm({...addForm, amount: parseInt(e.target.value) || 0})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
+                      <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Nominal (Rp)</label><input type="text" inputMode="numeric" placeholder="0" value={addForm.amount ? formatRupiah(addForm.amount) : ''} onChange={e => { const raw = e.target.value.replace(/\D/g, ''); setAddForm({...addForm, amount: parseInt(raw) || 0}); }} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
                       <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Tanggal</label><input type="date" value={addForm.date} onChange={e => setAddForm({...addForm, date: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
                     </div>
                   </div>
@@ -1389,7 +1396,7 @@ const executePayTeacher = async () => {
 
                     {/* KOLOM KANAN */}
                     <div className="space-y-6">
-                      <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Nominal (Rp)</label><input type="number" placeholder="0" value={editingTransaction.amount || ''} onChange={e => setEditingTransaction({...editingTransaction, amount: parseInt(e.target.value) || 0})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
+                      <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Nominal (Rp)</label><input type="text" inputMode="numeric" placeholder="0" value={editingTransaction.amount ? formatRupiah(editingTransaction.amount) : ''} onChange={e => { const raw = e.target.value.replace(/\D/g, ''); setEditingTransaction({...editingTransaction, amount: parseInt(raw) || 0}); }} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
                       <div className="space-y-2"><label className="text-[9px] font-black text-slate-400 uppercase ml-4">Tanggal</label><input type="date" value={editingTransaction.date} onChange={e => setEditingTransaction({...editingTransaction, date: e.target.value})} className="w-full px-6 py-4 bg-slate-50 rounded-2xl font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 shadow-inner" /></div>
                     </div>
                   </div>
@@ -1410,7 +1417,7 @@ const executePayTeacher = async () => {
                <div className="space-y-2">
                   <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Hapus Transaksi?</h4>
                   <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-relaxed px-4 italic">
-                     Data "<span className="font-black text-rose-600">{confirmDeleteTx.description}</span>" senilai <span className="text-rose-600 font-black">Rp {confirmDeleteTx.amount.toLocaleString()}</span> akan dihapus permanen dari buku kas. ✨
+                     Data "<span className="font-black text-rose-600">{confirmDeleteTx.description}</span>" senilai <span className="text-rose-600 font-black">Rp {formatRupiah(confirmDeleteTx.amount)}</span> akan dihapus permanen dari buku kas. ✨
                   </p>
                </div>
                <div className="flex gap-4">
