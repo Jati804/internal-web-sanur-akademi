@@ -963,16 +963,17 @@ const handleDownloadPDFReport = async (course: any) => {
                         </button>
                       </div>
                     ) : (
-                      <>
-                        <input type="file" ref={fileInputRef} onChange={handleFileChange} className="hidden" accept="image/*" />
-                        <button 
-                          onClick={() => fileInputRef.current?.click()} 
-                          className={`w-full py-6 rounded-[2rem] font-black text-[10px] uppercase shadow-inner border-2 border-dashed h-[72px] transition-all flex items-center justify-center gap-3 cursor-pointer hover:bg-orange-100 active:scale-95 ${showErrors && !payForm.receiptData ? 'border-rose-500 bg-rose-50' : 'border-orange-200 bg-orange-50 text-orange-600'}`}
-                        >
-                          {loading ? <Loader2 size={20} className="animate-spin" /> : <Upload size={20} />}
-                          {loading ? 'COMPRESSING...' : 'KLIK DI SINI UNTUK UPLOAD FOTO'}
-                        </button>
-                      </>
+                      <div className="w-full">
+                        <input
+                          type="file"
+                          ref={fileInputRef}
+                          onChange={handleFileChange}
+                          accept="image/*"
+                          disabled={loading}
+                          className={`w-full h-[72px] px-4 rounded-[2rem] font-bold text-[10px] text-slate-500 outline-none shadow-inner border-2 cursor-pointer transition-all file:mr-3 file:h-full file:my-0 file:py-0 file:px-6 file:rounded-full file:border-0 file:bg-emerald-600 file:text-white file:text-[9px] file:font-black file:uppercase file:cursor-pointer hover:file:bg-emerald-700 file:transition-all ${showErrors && !payForm.receiptData ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-slate-50'}`}
+                        />
+                        {loading && <p className="text-[9px] text-orange-500 font-black uppercase mt-2 ml-4 flex items-center gap-2"><Loader2 size={12} className="animate-spin" /> Compressing...</p>}
+                      </div>
                     )}
                   </div>
                 </div>
