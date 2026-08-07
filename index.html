@@ -58,6 +58,32 @@
         @media (max-width: 768px) {
             input, select, textarea { font-size: 16px !important; }
             .mobile-card-grid { grid-template-columns: 1fr !important; }
+
+            /* 🆕 FIX MODAL KEPOTONG DI HP: semua modal (GuideModal, Hapus
+               Sesi, Edit Sesi, dll) dibungkus ModalPortal + [data-modal-container]
+               yang di-center pakai flexbox (align-items:center). Kalau HP
+               landscape-nya kependekan (dipaksa landscape sama PortraitBlocker,
+               ditambah bug "vh" khas browser mobile), modal yang lebih tinggi
+               dari layar jadi kepotong atas/bawah TANPA bisa digeser sama
+               sekali, jadi tombol close/aksi di bawah nggak kepencet.
+               Cuma khusus HP (max-width: 768px) — PC/laptop/tablet nggak
+               kesentuh, tetap 100% sama kayak sekarang.
+               Caranya: parent tetap flex, tapi ganti dari "align-items:center"
+               (yang bikin overflow-nya nggak bisa discroll) jadi
+               "align-items:flex-start" + overflow-y:auto, sementara modal-nya
+               sendiri dikasih margin:auto biar TETAP keliatan center kalau
+               muat di layar. Begitu kepanjangan dikit, tinggal geser jari
+               (scroll native bawaan browser, BUKAN auto-scroll JS) buat
+               nampilin bagian yang kepotong. */
+            [data-modal-container] {
+                align-items: flex-start !important;
+                overflow-y: auto !important;
+                -webkit-overflow-scrolling: touch;
+            }
+            [data-modal-container] > * {
+                margin-top: auto !important;
+                margin-bottom: auto !important;
+            }
         }
         .safe-pb { padding-bottom: env(safe-area-inset-bottom); }
     </style>
