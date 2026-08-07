@@ -567,7 +567,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
                     ? 'Ada histori mengajar/pembayaran untuk kelas ini, tapi materinya belum diupload. Yuk tagih ke gurunya!'
                     : isTeacher
                     ? 'Serahkan materimu ke admin ya, biar siswa bisa segera belajar! ✨'
-                    : 'Materi untuk kelas ini belum tersedia. Coba minta gurumu untuk melengkapi ya! 🙏'}
+                    : 'Coba minta gurumu untuk segera melengkapi materi ya! 🙏'}
                 </p>
               </div>
             ) : (
