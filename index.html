@@ -79,6 +79,12 @@
                 align-items: flex-start !important;
                 overflow-y: auto !important;
                 -webkit-overflow-scrolling: touch;
+                /* Nafas ekstra HP aja: p-6 (24px) bawaan kerasa mepet pas
+                   discroll di layar landscape HP yang tingginya kecil.
+                   2rem/32px dipilih biar ada jarak yang kerasa, tanpa
+                   makan porsi tinggi layar yang emang udah terbatas. */
+                padding-top: 2rem !important;
+                padding-bottom: 2rem !important;
             }
             [data-modal-container] > * {
                 margin-top: auto !important;
