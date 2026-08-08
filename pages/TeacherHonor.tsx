@@ -340,7 +340,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                      <div className="flex items-center gap-2"><div className="w-3 h-3 bg-blue-600 rounded-full"></div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Sesi Anda</p></div>
                      <div className="flex items-center gap-2"><div className="w-3 h-3 bg-orange-600 rounded-full ml-2"></div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Anda Gantikan Teman</p></div>
                    </div>
-                   <div className="grid grid-cols-2 md:grid-cols-6 gap-4 p-8 bg-slate-50 rounded-[3rem] border border-slate-100 shadow-inner">
+                   <div className="grid grid-cols-3 md:grid-cols-6 gap-4 p-8 bg-slate-50 rounded-[3rem] border border-slate-100 shadow-inner">
                       {[1,2,3,4,5,6].map((num) => {
                          const log = pkg.logs.find((l: any) => l.sessionNumber === num);
                          const isCycleOwner = log && log.originalTeacherId === user.id;
