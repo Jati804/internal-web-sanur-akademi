@@ -487,7 +487,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
       const filePath = confirmDelete.file_path || confirmDelete.file_url.split('/materials/')[1];
 
       if (filePath) {
-        const { error: storageError, data: removedData } = await supabase.storage.from('materials').remove([filePath]);
+        const { error: storageError } = await supabase.storage.from('materials').remove([filePath]);
         // ⚠️ FIX: sebelumnya error dari penghapusan file Storage nggak dicek sama sekali,
         // jadi kalau gagal (misal masalah jaringan/izin), kode tetap lanjut hapus row
         // database seolah berhasil -> file jadi "yatim" ketinggalan di Storage tanpa
@@ -495,13 +495,23 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
         // row database TIDAK ikut dihapus (biar file_url masih valid & bisa dicoba lagi).
         if (storageError) throw new Error('File materinya belum berhasil terhapus dari penyimpanan. Coba lagi beberapa saat ya, mungkin koneksinya lagi kurang stabil.');
 
-        // 🆕 FIX: Supabase Storage TIDAK nge-error kalau path yang di-remove() nggak
-        // ketemu (dianggap "sukses" walau 0 file yang beneran kehapus) — ini penyebab
-        // file jadi nyangkut permanen tanpa alert apa pun. Sekarang dicek manual:
-        // kalau nggak ada satupun object yang beneran kehapus, anggap gagal dan
-        // kasih tau usernya secara eksplisit, jangan diem-diem lanjut hapus row DB.
-        if (!removedData || removedData.length === 0) {
-          throw new Error('File-nya nggak ketemu di penyimpanan Storage (kemungkinan materi lama sebelum perbaikan sistem, path-nya sedikit beda). Materi ini BELUM dihapus — cek manual dulu file aslinya di folder Storage, lalu hapus manual dari sana kalau memang ketemu, baru coba hapus lagi dari sini.');
+        // 🆕 FIX: sebelumnya di sini dicek `data` hasil balikan remove() (kalau
+        // kosong/null dianggap gagal). Ternyata itu SALAH — response remove() nggak
+        // selalu ngebalikin daftar file yang beneran dihapus (tergantung versi/
+        // backend Storage-nya), jadi walau file itu BENERAN kehapus, datanya bisa
+        // aja kosong -> kecatet salah sebagai "gagal" padahal sukses (false alarm).
+        // Sekarang diverifikasi dengan cara yang lebih pasti: cek langsung ke folder
+        // Storage-nya pakai list(), apakah nama filenya masih nongol atau udah
+        // beneran hilang.
+        const lastSlash = filePath.lastIndexOf('/');
+        const folderPath = lastSlash > -1 ? filePath.slice(0, lastSlash) : '';
+        const fileName = lastSlash > -1 ? filePath.slice(lastSlash + 1) : filePath;
+        const { data: listData, error: listError } = await supabase.storage.from('materials').list(folderPath);
+        // Kalau list() sendiri gagal (misal masalah jaringan), jangan langsung
+        // dianggap file masih ada — cukup lewati verifikasi ini, biar nggak
+        // ngeblokir user gara-gara alasan yang nggak berhubungan sama delete-nya.
+        if (!listError && listData?.some(f => f.name === fileName)) {
+          throw new Error('File-nya masih terdeteksi ada di penyimpanan Storage setelah dihapus. Materi ini BELUM dihapus dari daftar — coba hapus lagi beberapa saat lagi, atau cek manual ke folder Storage-nya.');
         }
       }
       const { error } = await supabase.from('materials').delete().eq('id', confirmDelete.id);
