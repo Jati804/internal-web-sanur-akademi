@@ -441,7 +441,15 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
     try {
       const urlParts = confirmDelete.file_url.split('/materials/');
       const filePath = urlParts[1];
-      if (filePath) await supabase.storage.from('materials').remove([filePath]);
+      if (filePath) {
+        const { error: storageError } = await supabase.storage.from('materials').remove([filePath]);
+        // ⚠️ FIX: sebelumnya error dari penghapusan file Storage nggak dicek sama sekali,
+        // jadi kalau gagal (misal masalah jaringan/izin), kode tetap lanjut hapus row
+        // database seolah berhasil -> file jadi "yatim" ketinggalan di Storage tanpa
+        // ketahuan. Sekarang kalau gagal, proses berhenti di sini dan kasih tau usernya,
+        // row database TIDAK ikut dihapus (biar file_url masih valid & bisa dicoba lagi).
+        if (storageError) throw new Error('File materinya belum berhasil terhapus dari penyimpanan. Coba lagi beberapa saat ya, mungkin koneksinya lagi kurang stabil.');
+      }
       const { error } = await supabase.from('materials').delete().eq('id', confirmDelete.id);
       if (error) throw error;
       await fetchMaterials();
