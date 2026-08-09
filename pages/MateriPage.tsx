@@ -375,7 +375,23 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
       let storedFilePath: string | undefined = undefined;
 
       if (form.uploadMode === 'file' && form.file) {
-        const filePath = `${form.subject}/${form.level}/${id}_${form.file.name}`.replace(/\s+/g, '_');
+        // 🆕 FIX (akar masalah orphan file): SEBELUMNYA nama file storage nyelipin
+        // nama file asli (form.file.name) apa adanya — cuma spasi yang diganti
+        // underscore, karakter spesial lain (titik dua, kurung, dll) dibiarkan.
+        // getPublicUrl() otomatis nge-encode karakter itu jadi URL, dan proses
+        // decode-baliknya (waktu hapus) itulah yang rawan meleset dikit -> file
+        // nggak ketemu -> nyangkut permanen di Storage.
+        //
+        // Sekarang nama file storage CUMA pakai id (MAT-xxxxx) + ekstensi asli —
+        // nama file manusia (mis. "Even If This Love Disappears Tonight.pdf")
+        // SAMA SEKALI nggak pernah masuk ke path storage, jadi nggak ada lagi
+        // karakter aneh yang bisa bikin encode/decode meleset. Judul yang
+        // ditampilkan/didownload ke user tetap pakai form.title seperti biasa
+        // (lihat handleDownloadFile), cuma nama INTERNAL di Storage-nya yang
+        // dibikin konsisten & aman.
+        const extMatch = form.file.name.match(/\.[a-zA-Z0-9]+$/);
+        const ext = extMatch ? extMatch[0].toLowerCase() : '';
+        const filePath = `${form.subject}/${form.level}/${id}${ext}`.replace(/\s+/g, '_');
         const { error: uploadError } = await supabase.storage.from('materials').upload(filePath, form.file);
         if (uploadError) throw uploadError;
 
