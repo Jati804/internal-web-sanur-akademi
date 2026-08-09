@@ -14,6 +14,7 @@ interface Material {
   level: string;
   title: string;
   file_url: string;
+  file_path?: string; // Path asli di Supabase Storage (persis waktu upload), dipakai buat hapus biar akurat
   file_size?: number;
   sort_order?: number;
   created_at?: string;
@@ -362,6 +363,16 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
 
       let finalUrl = '';
       let fileSize: number | undefined = undefined;
+      // 🆕 FIX: simpan filePath MENTAH persis yang dipakai buat .upload(), biar nanti
+      // waktu hapus nggak perlu nebak-nebak lagi dari file_url. Sebelumnya delete
+      // ngambil path dengan cara motong file_url di '/materials/', padahal file_url
+      // itu HASIL ENCODE dari getPublicUrl() — kalau nama file aslinya ada karakter
+      // spesial (misal titik dua, kurung, dll — bukan cuma spasi), hasil encode-nya
+      // bisa beda dikit dari filePath asli. Bedanya sedikit itu bikin
+      // storage.remove() nggak nemu file yang mau dihapus, TAPI supabase nggak
+      // nganggep itu error (dianggap "sukses" walau 0 file yang kehapus) — jadi file
+      // lama nyangkut permanen di Storage tanpa ada alert error sama sekali.
+      let storedFilePath: string | undefined = undefined;
 
       if (form.uploadMode === 'file' && form.file) {
         const filePath = `${form.subject}/${form.level}/${id}_${form.file.name}`.replace(/\s+/g, '_');
@@ -371,6 +382,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
         const { data: publicUrlData } = supabase.storage.from('materials').getPublicUrl(filePath);
         finalUrl = publicUrlData.publicUrl;
         fileSize = form.file.size;
+        storedFilePath = filePath;
       } else {
         finalUrl = trimmedLink;
       }
@@ -381,6 +393,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
         level: targetLevel,
         title: form.title,
         file_url: finalUrl,
+        file_path: storedFilePath,
         file_size: fileSize,
         is_locked: form.locked,
       }]);
@@ -439,16 +452,29 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
     if (!confirmDelete) return;
     setLoading(true);
     try {
-      const urlParts = confirmDelete.file_url.split('/materials/');
-      const filePath = urlParts[1];
+      // 🆕 FIX (orphan file di Storage): PRIORITASKAN file_path yang disimpan
+      // persis waktu upload. Ini path yang PASTI cocok, apapun karakter di nama
+      // filenya. Fallback ke cara lama (motong dari file_url) cuma buat materi
+      // yang sudah kadung diupload SEBELUM kolom file_path ini ada.
+      const filePath = confirmDelete.file_path || confirmDelete.file_url.split('/materials/')[1];
+
       if (filePath) {
-        const { error: storageError } = await supabase.storage.from('materials').remove([filePath]);
+        const { error: storageError, data: removedData } = await supabase.storage.from('materials').remove([filePath]);
         // ⚠️ FIX: sebelumnya error dari penghapusan file Storage nggak dicek sama sekali,
         // jadi kalau gagal (misal masalah jaringan/izin), kode tetap lanjut hapus row
         // database seolah berhasil -> file jadi "yatim" ketinggalan di Storage tanpa
         // ketahuan. Sekarang kalau gagal, proses berhenti di sini dan kasih tau usernya,
         // row database TIDAK ikut dihapus (biar file_url masih valid & bisa dicoba lagi).
         if (storageError) throw new Error('File materinya belum berhasil terhapus dari penyimpanan. Coba lagi beberapa saat ya, mungkin koneksinya lagi kurang stabil.');
+
+        // 🆕 FIX: Supabase Storage TIDAK nge-error kalau path yang di-remove() nggak
+        // ketemu (dianggap "sukses" walau 0 file yang beneran kehapus) — ini penyebab
+        // file jadi nyangkut permanen tanpa alert apa pun. Sekarang dicek manual:
+        // kalau nggak ada satupun object yang beneran kehapus, anggap gagal dan
+        // kasih tau usernya secara eksplisit, jangan diem-diem lanjut hapus row DB.
+        if (!removedData || removedData.length === 0) {
+          throw new Error('File-nya nggak ketemu di penyimpanan Storage (kemungkinan materi lama sebelum perbaikan sistem, path-nya sedikit beda). Materi ini BELUM dihapus — cek manual dulu file aslinya di folder Storage, lalu hapus manual dari sana kalau memang ketemu, baru coba hapus lagi dari sini.');
+        }
       }
       const { error } = await supabase.from('materials').delete().eq('id', confirmDelete.id);
       if (error) throw error;
