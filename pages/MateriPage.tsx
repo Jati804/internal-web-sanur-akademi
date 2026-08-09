@@ -89,10 +89,10 @@ const DriveLogo: React.FC<{ size?: number }> = ({ size = 26 }) => (
 // Caranya: fetch file-nya jadi blob dulu, baru trigger <a download> ke blob url lokal itu.
 // Link Google Drive TIDAK lewat sini (biar tetep kebuka dokumennya di Drive).
 //
-// 🆕 Nama file hasil download SEKARANG ikut nama asli di Storage (mis. "MAT-172xxxx.pdf"),
-// BUKAN judul materi ("Materi 1.pdf") kayak sebelumnya. Judul materi itu cuma buat
-// tampilan visual di web — biar konsisten sama nama file "sebenarnya" yang tersimpan
-// di Storage, dan biar gak ada 2 nama berbeda buat 1 file yang sama.
+// Nama file hasil download ikut JUDUL MATERI (mis. "Materi 1.pdf"), bukan nama internal
+// di Storage (MAT-xxxx.pdf) — biar lebih enak dibaca user pas dibuka dari folder Download.
+// Nama internal di Storage sendiri tetap dijaga ringkas (cuma MAT-id + ekstensi, nggak ada
+// nama file asli) supaya nggak ada karakter aneh yang bisa bikin proses hapus meleset.
 const downloadFileAsBlob = async (m: Material, setDownloadingId: (id: string | null) => void) => {
   setDownloadingId(m.id);
   try {
@@ -100,18 +100,12 @@ const downloadFileAsBlob = async (m: Material, setDownloadingId: (id: string | n
     if (!res.ok) throw new Error('Gagal mengambil file');
     const blob = await res.blob();
     const blobUrl = URL.createObjectURL(blob);
-
-    // Ambil nama file asli dari file_path (path storage yang tersimpan), fallback
-    // ke bagian terakhir file_url kalau file_path belum ada (materi lama).
-    const rawName = m.file_path
-      ? m.file_path.split('/').pop() || ''
-      : decodeURIComponent((m.file_url.split('?')[0].split('/').pop()) || '');
     const ext = getFileExt(m.file_url).toLowerCase();
-    const downloadName = rawName || `${m.id || 'materi'}.${ext}`;
+    const safeTitle = (m.title || 'materi').replace(/[\\/:*?"<>|]/g, '_');
 
     const a = document.createElement('a');
     a.href = blobUrl;
-    a.download = downloadName;
+    a.download = `${safeTitle}.${ext}`;
     document.body.appendChild(a);
     a.click();
     a.remove();
