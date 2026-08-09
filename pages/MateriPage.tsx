@@ -88,6 +88,11 @@ const DriveLogo: React.FC<{ size?: number }> = ({ size = 26 }) => (
 // atribut HTML `download` (nggak jalan karena file_url beda domain / cross-origin).
 // Caranya: fetch file-nya jadi blob dulu, baru trigger <a download> ke blob url lokal itu.
 // Link Google Drive TIDAK lewat sini (biar tetep kebuka dokumennya di Drive).
+//
+// 🆕 Nama file hasil download SEKARANG ikut nama asli di Storage (mis. "MAT-172xxxx.pdf"),
+// BUKAN judul materi ("Materi 1.pdf") kayak sebelumnya. Judul materi itu cuma buat
+// tampilan visual di web — biar konsisten sama nama file "sebenarnya" yang tersimpan
+// di Storage, dan biar gak ada 2 nama berbeda buat 1 file yang sama.
 const downloadFileAsBlob = async (m: Material, setDownloadingId: (id: string | null) => void) => {
   setDownloadingId(m.id);
   try {
@@ -95,12 +100,18 @@ const downloadFileAsBlob = async (m: Material, setDownloadingId: (id: string | n
     if (!res.ok) throw new Error('Gagal mengambil file');
     const blob = await res.blob();
     const blobUrl = URL.createObjectURL(blob);
+
+    // Ambil nama file asli dari file_path (path storage yang tersimpan), fallback
+    // ke bagian terakhir file_url kalau file_path belum ada (materi lama).
+    const rawName = m.file_path
+      ? m.file_path.split('/').pop() || ''
+      : decodeURIComponent((m.file_url.split('?')[0].split('/').pop()) || '');
     const ext = getFileExt(m.file_url).toLowerCase();
-    const safeTitle = (m.title || 'materi').replace(/[\\/:*?"<>|]/g, '_');
+    const downloadName = rawName || `${m.id || 'materi'}.${ext}`;
 
     const a = document.createElement('a');
     a.href = blobUrl;
-    a.download = `${safeTitle}.${ext}`;
+    a.download = downloadName;
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -110,6 +121,7 @@ const downloadFileAsBlob = async (m: Material, setDownloadingId: (id: string | n
     window.open(m.file_url, '_blank');
   } finally {
     setDownloadingId(null);
+
   }
 };
 
