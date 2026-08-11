@@ -51,6 +51,10 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
   const [payForm, setPayForm] = useState({ receiptData: '', date: getWIBDate() });
   
   const [payrollSearch, setPayrollSearch] = useState('');
+  // 🆕 State buat fitur "Tutup Paket Manual" (kelas yang nyangkut < 6 sesi)
+  const [closingLog, setClosingLog] = useState<any | null>(null);
+  const [closeReason, setCloseReason] = useState('');
+  const [isClosingLoading, setIsClosingLoading] = useState(false);
   const [ledgerSearch, setLedgerSearch] = useState('');
   // 🆕 State untuk pagination & server-side data
   const [currentPage, setCurrentPage] = useState(1);
@@ -352,6 +356,42 @@ const uniqueCategories = useMemo(() => {
       result = result.filter((it: any) => it.teacherName.toLowerCase().includes(q) || it.className.toLowerCase().includes(q) || it.studentName.toLowerCase().includes(q) || it.category.toLowerCase().includes(q));
     }
     return result.sort((a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime());
+  }, [attendanceLogs, payrollSearch]);
+
+  // 🆕 Kandidat "Tutup Paket Manual": paket yang sessionNumber-nya belum genap 6,
+  // TANPA peduli status bayar (beda sama payrollQueue yang cuma nyari UNPAID).
+  // Sengaja cuma dihitung kalau payrollSearch diisi, biar nggak nongol otomatis
+  // pas admin baru buka tab Gaji Guru (hindarin salah pencet ke kelas yang lagi aktif normal).
+  const manualCloseCandidates = useMemo(() => {
+    if (!payrollSearch.trim()) return [];
+
+    const groups: Record<string, any> = {};
+    attendanceLogs
+      .filter(l => l.status === 'SESSION_LOG' || l.status === 'SUB_LOG')
+      .forEach(log => {
+        // Kunci kombinasi kelas: samain sama logic deteksi sesi di TeacherDashboard
+        // (REGULER digabung semua murid, PRIVATE dipisah per murid)
+        const key = log.sessionCategory === 'REGULER'
+          ? `${log.className}__${log.sessionCategory}`
+          : `${log.className}__${log.sessionCategory}__${log.studentsAttended?.[0] || ''}`;
+
+        const existing = groups[key];
+        const isNewer = !existing
+          || new Date(log.date).getTime() > new Date(existing.date).getTime()
+          || (log.date === existing.date && String(log.id).localeCompare(String(existing.id)) > 0);
+
+        if (isNewer) groups[key] = log;
+      });
+
+    const q = payrollSearch.toLowerCase();
+    return Object.values(groups)
+      .filter((l: any) => (l.sessionNumber || 0) < 6) // masih nyangkut, belum genap 6 sesi
+      .filter((l: any) =>
+        l.teacherName.toLowerCase().includes(q) ||
+        l.className.toLowerCase().includes(q) ||
+        (l.studentsAttended?.[0] || '').toLowerCase().includes(q)
+      )
+      .sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime());
   }, [attendanceLogs, payrollSearch]);
 
   const filteredSpp = useMemo(() => {
@@ -754,6 +794,42 @@ const executePayTeacher = async () => {
   }
 };
 
+  // 🆕 Eksekusi "Tutup Paket Manual" — nandain siklus selesai (sessionnumber = 6)
+  // walau belum genap 6 sesi, biar slot kelasnya bebas dipakai dari Sesi 1 lagi.
+  // TIDAK nyentuh paymentstatus sama sekali — status bayar yang udah ada tetap utuh.
+  const executeClosePackage = async () => {
+    if (!closingLog) return;
+    setIsClosingLoading(true);
+    try {
+      const { error } = await supabase
+        .from('attendance')
+        .update({ sessionnumber: 6 })
+        .eq('id', closingLog.id);
+      if (error) throw error;
+
+      // Catat alasan sebagai transaksi Rp 0 (opsional) biar ada jejak histori di Buku Kas
+      if (closeReason.trim()) {
+        await supabase.from('transactions').insert({
+          id: `TX-CLOSE-${Date.now()}`,
+          type: 'EXPENSE',
+          category: 'CATATAN SISTEM',
+          amount: 0,
+          date: getWIBDate(),
+          description: `PAKET DITUTUP MANUAL: ${closingLog.className} | ${closingLog.teacherName} | ALASAN: ${closeReason}`.toUpperCase()
+        });
+      }
+
+      if (refreshAllData) await refreshAllData();
+      setClosingLog(null);
+      setCloseReason('');
+      alert('Paket berhasil ditutup! Slot kelas ini sekarang bisa dipakai dari Sesi 1 lagi. ✨');
+    } catch (e: any) {
+      alert('Gagal menutup paket: ' + e.message);
+    } finally {
+      setIsClosingLoading(false);
+    }
+  };
+
   const formatDate = (dateStr: string) => dateStr.split('-').reverse().join('/');
 
   return (
@@ -1142,7 +1218,36 @@ const executePayTeacher = async () => {
                 </div>
               </div>
             ))}
-            {payrollQueue.length === 0 && (<div className="py-40 text-center bg-white rounded-[4rem] border-2 border-dashed border-slate-100 opacity-20"><ShieldCheck size={64} className="mx-auto mb-6 text-slate-300"/><p className="text-[12px] font-black uppercase tracking-[0.4em] italic leading-relaxed">Antrean Honor Sudah Lunas Semua! ✨</p></div>)}
+            {payrollQueue.length === 0 && !payrollSearch.trim() && (<div className="py-40 text-center bg-white rounded-[4rem] border-2 border-dashed border-slate-100 opacity-20"><ShieldCheck size={64} className="mx-auto mb-6 text-slate-300"/><p className="text-[12px] font-black uppercase tracking-[0.4em] italic leading-relaxed">Antrean Honor Sudah Lunas Semua! ✨</p></div>)}
+
+            {/* 🆕 ZONA MANUAL: cuma nongol pas admin lagi NGETIK pencarian, dan nemu kelas
+                yang nyangkut < 6 sesi (nggak peduli udah dibayar atau belum). Sengaja beda
+                warna & terpisah jauh dari tombol "BAYAR SEKARANG" biar nggak ketuker aksinya. */}
+            {manualCloseCandidates.length > 0 && (
+              <div className="space-y-6 pt-6">
+                <div className="flex items-center gap-3 px-4">
+                  <AlertTriangle size={18} className="text-amber-500" />
+                  <p className="text-[10px] font-black uppercase tracking-widest text-amber-600">Zona Manual — Kelas Nyangkut (Belum Genap 6 Sesi)</p>
+                </div>
+                {manualCloseCandidates.map((log: any) => (
+                  <div key={log.id} className="bg-amber-50 rounded-[3rem] border-2 border-dashed border-amber-200 shadow-sm p-8 md:p-10 flex flex-col md:flex-row justify-between items-center gap-6">
+                    <div className="flex items-center gap-6">
+                      <div className="w-14 h-14 rounded-3xl bg-amber-100 text-amber-600 flex items-center justify-center shrink-0"><AlertTriangle size={26}/></div>
+                      <div>
+                        <h4 className="text-lg font-black text-slate-800 uppercase italic leading-tight">{log.className}</h4>
+                        <p className="text-[9px] font-bold text-amber-700 uppercase tracking-widest mt-1">
+                          {log.teacherName} — Sesi {log.sessionNumber}/6 — {log.paymentStatus === 'PAID' ? 'LUNAS' : 'BELUM BAYAR'}
+                        </p>
+                        <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mt-1">Update terakhir: {formatDate(log.date)}</p>
+                      </div>
+                    </div>
+                    <button onClick={() => setClosingLog(log)} className="px-8 py-4 bg-amber-500 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest shadow-lg hover:bg-amber-600 transition-all active:scale-95 shrink-0">
+                      Tutup Paket Manual
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
          </div>
       )}
 
@@ -1226,6 +1331,42 @@ const executePayTeacher = async () => {
               </div>
            </div>
         </div>
+        </ModalPortal>
+      )}
+
+      {/* 🆕 MODAL: Konfirmasi Tutup Paket Manual */}
+      {closingLog && (
+        <ModalPortal>
+  <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+     <div className="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl relative overflow-hidden opacity-0 p-10" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+        <button onClick={() => { setClosingLog(null); setCloseReason(''); }} className="absolute top-8 right-8 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
+
+        <div className="flex flex-col items-center text-center mb-6">
+          <div className="w-14 h-14 bg-amber-50 text-amber-600 rounded-2xl flex items-center justify-center shadow-inner mb-4"><AlertTriangle size={28} /></div>
+          <h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Tutup Paket Ini?</h4>
+          <p className="text-[10px] font-bold text-amber-600 uppercase tracking-widest mt-2">{closingLog.className} — {closingLog.teacherName} (Sesi {closingLog.sessionNumber}/6)</p>
+        </div>
+
+        <p className="text-[10px] font-bold text-slate-500 text-center mb-6 leading-relaxed">
+          Paket ini akan ditandai SELESAI walau belum genap 6 sesi. Slot kelas ini akan bisa dipakai dari <b>Sesi 1</b> lagi oleh guru manapun. Data honor & pembayaran yang sudah ada TIDAK berubah.
+        </p>
+
+        <textarea
+          value={closeReason}
+          onChange={e => setCloseReason(e.target.value)}
+          placeholder="Alasan penutupan (opsional, tapi disaranin diisi)..."
+          rows={3}
+          className="w-full px-6 py-4 bg-slate-50 rounded-2xl text-[11px] font-bold outline-none border-2 border-transparent focus:border-amber-500 mb-6 shadow-inner"
+        />
+
+        <div className="flex gap-3">
+          <button onClick={() => { setClosingLog(null); setCloseReason(''); }} className="flex-1 py-4 bg-slate-100 text-slate-500 rounded-2xl font-black text-[10px] uppercase">Batal</button>
+          <button onClick={executeClosePackage} disabled={isClosingLoading} className="flex-1 py-4 bg-amber-500 text-white rounded-2xl font-black text-[10px] uppercase hover:bg-amber-600 transition-all disabled:opacity-40 flex items-center justify-center gap-2">
+            {isClosingLoading ? <Loader2 size={16} className="animate-spin" /> : 'Ya, Tutup Paket'}
+          </button>
+        </div>
+     </div>
+  </div>
         </ModalPortal>
       )}
 
