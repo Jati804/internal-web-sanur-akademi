@@ -4,7 +4,7 @@ import ModalPortal from '../ModalPortal.tsx';
 import { supabase } from '../services/supabase.ts';
 import { 
   ShieldCheck, Calendar, UserCheck, Package, ArrowRight,
-  ClipboardCheck, Wallet, Edit3, Repeat, Heart, Sparkles,
+  ClipboardCheck, Wallet, Edit3, Repeat, Clock, Sparkles,
   ChevronDown, Filter, Search, X, FileDown, Eye, Layers, Loader2,
   Zap, Info, Trash2, AlertTriangle, Check, CheckCircle2, Maximize2
 } from 'lucide-react';
@@ -379,7 +379,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                                 <button onClick={() => setActionModalLog({ log, pkg })} className="absolute -top-2 -right-2 w-10 h-10 bg-white text-slate-800 rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all border border-slate-100 z-20"><Edit3 size={14} /></button>
                               )}
                               <p className="text-[9px] font-black uppercase tracking-widest opacity-60">Sesi {num}</p>
-                              {isMeTeaching && !isMeSubstituting ? <UserCheck size={24}/> : isMeSubstituting ? <Repeat size={24}/> : isMeDelegated ? <Heart size={24}/> : <Zap size={24}/>}
+                              {isMeTeaching && !isMeSubstituting ? <UserCheck size={24}/> : isMeSubstituting ? <Repeat size={24}/> : isMeDelegated ? <Clock size={24}/> : <Zap size={24}/>}
                               <p className="text-[7px] font-black uppercase tracking-widest leading-none mt-1">{label}</p>
                               {subInfo && <p className="text-[6px] font-black opacity-90 mt-1">{subInfo}</p>}
                               {dateText && <div className="mt-2 pt-2 border-t border-white/20 w-full"><p className="text-[8px] font-black tracking-widest opacity-80">{dateText}</p></div>}
