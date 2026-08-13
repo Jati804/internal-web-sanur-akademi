@@ -94,8 +94,8 @@ const GuideModal = ({ role, onClose }: {
       faqs: [
         { q: 'Kenapa saya nggak absenin siswa?', a: 'Presensi siswa dilakukan mandiri oleh mereka sendiri di portal siswa — tugas pengajar cukup lapor sesi mengajar sendiri ✨' },
         { q: 'Antrean rapot ini dari mana asalnya?', a: 'Muncul otomatis begitu siswa klik "Klaim Rapot" di portal siswa, biasanya saat presensi siswa udah 6/6.' },
-        { q: 'Kelas saya belum muncul, ini kenapa?', a: 'Mata Pelajaran & Peta Ruangan itu diatur Pengurus di portalnya lewat menu Pengaturan Akademik — bukan otomatis dari sistem, jadi jika matkulnya belum ada hubungi Pengurus ya.' },
-        { q: 'Kenapa honor saya kurang dari biasanya?', a: 'Bisa jadi ada sesi yang dipegang teman lewat "Berhalangan Mengajar" — cek tracker Honor Saya, sesi itu otomatis pindah honornya ke yang gantiin.' }
+        { q: 'Kelas saya belum muncul, ini kenapa?', a: 'Mata Pelajaran & Peta Ruangan itu diatur Pengurus di portalnya lewat menu Pengaturan Akademik — bukan otomatis dari sistem, jadi jika matkulnya belum ada hubungi Pengurus yaa!.' },
+        { q: 'Kenapa honor saya kurang dari biasanya?', a: 'Bisa jadi ada sesi yang dipegang teman lewat "Berhalangan Mengajar" — cek tracker Honor Saya, sesi itu otomatis pindah honornya ke pengajar yang menggantikan.' }
       ]
     },
     STUDENT: {
@@ -109,10 +109,10 @@ const GuideModal = ({ role, onClose }: {
         { title: 'Unduh Rapot', desc: 'Sertifikat & Rapot PDF bisa diunduh di tab "Kelas Saya" setelah guru selesai menilai.' }
       ],
       faqs: [
-        { q: 'Kenapa paket belajar saya belum aktif?', a: 'Pengurus masih perlu verifikasi bukti bayar kamu dulu, ditunggu saja, kalau udah lama banget hubungi Pengurus yaa!' },
-        { q: 'Kenapa saya harus presensi mandiri?', a: 'Karena itu syarat buat bisa ajukan Klaim Rapot — tanpa presensi lengkap, progresmu nggak bakal nyampe 6/6 dan hasil belajarmu (rapot & sertifikat) nggak bisa diproses.' },
+        { q: 'Kenapa paket belajar saya belum aktif?', a: 'Pengurus masih perlu verifikasi bukti bayar kamu dulu, mohon ditunggu yaa, setelah pengurus memverifikasi pembayaranmu, paket belajar akan otomatis aktif.' },
+        { q: 'Kenapa saya harus presensi mandiri?', a: 'Karena itu syarat untuk bisa ajukan Klaim Rapot — tanpa presensi lengkap, progresmu tidak full 6 kali pertemuan dan hasil belajarmu (rapot & sertifikat) nggak bisa diproses.' },
         { q: 'Kenapa pas Klaim Rapot saya harus pilih guru?', a: 'Itu kolom "Guru Pembimbing" — pilih guru yang paling sering ngajar kamu di kelas tersebut, karena dialah yang bakal isi & nilai rapotmu.' },
-        { q: 'Kapan tombol Klaim Rapot muncul?', a: 'Begitu progres sesimu nyampe 6/6, tombolnya otomatis aktif — semangat menuju sana!' }
+        { q: 'Kapan tombol Klaim Rapot muncul?', a: 'Begitu progres sesimu sampai 6/6, tombolnya otomatis aktif — semangat menuju sana!' }
       ]
     }
   }[role] || { color: 'bg-slate-600', text: 'text-slate-600', steps: [], faqs: [] };
