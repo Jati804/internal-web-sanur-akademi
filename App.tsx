@@ -382,14 +382,14 @@ const pendingReportsCount = Array.isArray(reports) ?
   </p>
 </div>
           </div>
-          <div className="flex items-center gap-2.5">
-<button onClick={() => setShowGuide(true)} className={`px-4 py-2.5 ${roleGuideColor} text-white rounded-full shadow-lg hover:opacity-90 active:scale-95 transition-all flex items-center gap-1.5`}>
-   <HelpCircle size={16} />
-   <span className="hidden lg:inline text-[10px] font-black uppercase tracking-widest">Panduan</span>
+          <div className="flex items-center gap-3">
+<button onClick={() => setShowGuide(true)} className={`px-4 py-4 ${roleGuideColor} text-white rounded-2xl shadow-xl hover:opacity-90 active:scale-95 transition-all flex items-center gap-2`}>
+   <HelpCircle size={20} />
+   <span className="hidden lg:inline text-xs font-black uppercase tracking-widest">Panduan</span>
 </button>
-<button onClick={executeLogout} className="px-4 py-2.5 bg-rose-600 text-white rounded-full shadow-lg hover:bg-rose-700 active:scale-95 transition-all flex items-center gap-1.5">
-   <Power size={16} />
-   <span className="hidden lg:inline text-[10px] font-black uppercase tracking-widest">Keluar</span>
+<button onClick={executeLogout} className="px-4 py-4 bg-rose-600 text-white rounded-2xl shadow-xl hover:bg-rose-700 active:scale-95 transition-all flex items-center gap-2">
+   <Power size={20} />
+   <span className="hidden lg:inline text-xs font-black uppercase tracking-widest">Keluar</span>
 </button>
           </div>
         </header>
