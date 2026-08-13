@@ -73,6 +73,12 @@ const GuideModal = ({ role, onClose }: {
         { title: 'Pengaturan', desc: 'Atur mata pelajaran, kelas, level, jadwal master, dan tarif honor guru di menu "Pengaturan".' },
         { title: 'Materi', desc: 'Upload & kelola bahan ajar yang bisa diakses guru maupun siswa di menu "Materi".' },
         { title: 'Maintenance', desc: 'Hapus gambar bukti pembayaran dan aktifkan mode maintenance saat sedang perbaikan.' }
+      ],
+      faqs: [
+        { q: 'Guru komplain honornya kurang padahal ngajar 6x?', a: 'Cek riwayat "Berhalangan Mengajar" di paket itu — kemungkinan sebagian sesi didelegasikan, honornya otomatis pindah ke guru pengganti.' },
+        { q: 'Siswa nggak bisa akses kelasnya?', a: 'Cek status di Verif SPP (mungkin belum dikonfirmasi).' },
+        { q: 'Guru dan siswa nggak bisa login?', a: 'Cek Akses User — mungkin siswa dan guru akunnya belum dibuat, atau username dan sandinya keliru.' },
+        { q: 'Guru bilang kelasnya belum ada?', a: 'Tambahkan lewat Data Master di menu Pengaturan Akademik — ini murni tugas Pengurus, sistem nggak bikin otomatis.' }
       ]
     },
     TEACHER: {
@@ -84,6 +90,12 @@ const GuideModal = ({ role, onClose }: {
         { title: 'Pantau Honor', desc: 'Lihat status honor cair & unduh slip gaji digital resmi di menu "Honor Saya".' },
         { title: 'Materi', desc: 'Pantau & akses bahan ajar di menu "Materi".' },
         { title: 'Proses Rapot', desc: 'Terima pengajuan rapot dan isi data rapot siswa.' }
+      ],
+      faqs: [
+        { q: 'Kenapa saya nggak absenin siswa?', a: 'Presensi siswa dilakukan mandiri oleh mereka sendiri di portal siswa — tugas pengajar cukup lapor sesi mengajar sendiri ✨' },
+        { q: 'Antrean rapot ini dari mana asalnya?', a: 'Muncul otomatis begitu siswa klik "Klaim Rapot" di portal siswa, biasanya saat presensi siswa udah 6/6.' },
+        { q: 'Kelas saya belum muncul, ini kenapa?', a: 'Mata Pelajaran & Peta Ruangan itu diatur Pengurus lewat menu Pengaturan — bukan otomatis dari sistem, jadi jika matkulnya belum ada hubungi Pengurus ya.' },
+        { q: 'Kenapa honor saya kurang dari biasanya?', a: 'Bisa jadi ada sesi yang dipegang teman lewat "Berhalangan Mengajar" — cek tracker Honor Saya, sesi itu otomatis pindah honornya ke yang gantiin.' }
       ]
     },
     STUDENT: {
@@ -95,9 +107,17 @@ const GuideModal = ({ role, onClose }: {
         { title: 'Materi', desc: 'Akses bahan ajar dari guru di menu "Materi".' },
         { title: 'Klaim Rapot', desc: 'Tombol Klaim muncul saat progres 6/6. Pilih guru pembimbingmu untuk meminta penilaian.' },
         { title: 'Unduh Rapot', desc: 'Sertifikat & Rapot PDF bisa diunduh di tab "Kelas Saya" setelah guru selesai menilai.' }
+      ],
+      faqs: [
+        { q: 'Kenapa paket belajar saya belum aktif?', a: 'Pengurus masih perlu verifikasi bukti bayar kamu dulu, ditunggu saja, kalau udah lama banget hubungi Pengurus yaa!' },
+        { q: 'Kenapa saya harus presensi mandiri?', a: 'Karena itu syarat buat bisa ajukan Klaim Rapot — tanpa presensi lengkap, progresmu nggak bakal nyampe 6/6 dan hasil belajarmu (rapot & sertifikat) nggak bisa diproses.' },
+        { q: 'Kenapa pas Klaim Rapot saya harus pilih guru?', a: 'Itu kolom "Guru Pembimbing" — pilih guru yang paling sering ngajar kamu di kelas tersebut, karena dialah yang bakal isi & nilai rapotmu.' },
+        { q: 'Kapan tombol Klaim Rapot muncul?', a: 'Begitu progres sesimu nyampe 6/6, tombolnya otomatis aktif — semangat menuju sana!' }
       ]
     }
-  }[role] || { color: 'bg-slate-600', text: 'text-slate-600', steps: [] };
+  }[role] || { color: 'bg-slate-600', text: 'text-slate-600', steps: [], faqs: [] };
+
+  const [activeTab, setActiveTab] = useState<'panduan' | 'faq'>('panduan');
 
   return (
     <div data-modal-container className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
@@ -110,25 +130,46 @@ const GuideModal = ({ role, onClose }: {
   </div>
 </div>
 
-        {/* Content Area - selalu berupa panduan teks, seragam untuk semua role */}
+        {/* Tab Switcher */}
+        <div className="flex gap-2 px-8 pt-6 shrink-0">
+          <button onClick={() => setActiveTab('panduan')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'panduan' ? `${content.color} text-white shadow-lg` : 'bg-slate-100 text-slate-400'}`}>
+            Panduan
+          </button>
+          <button onClick={() => setActiveTab('faq')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'faq' ? `${content.color} text-white shadow-lg` : 'bg-slate-100 text-slate-400'}`}>
+            FAQ
+          </button>
+        </div>
+
+        {/* Content Area */}
         <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
-          <div className="space-y-6">
-            {content.steps.map((s, i) => (
-              <div key={i} className="flex gap-4">
-                <div className={`w-8 h-8 rounded-full ${content.color} text-white flex items-center justify-center font-black italic shrink-0 text-xs shadow-md`}>0{i+1}</div>
-                <div className="space-y-1">
-                  <h4 className={`text-xs font-black uppercase tracking-widest ${content.text}`}>{s.title}</h4>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase leading-relaxed">{s.desc}</p>
+          {activeTab === 'panduan' ? (
+            <div className="space-y-6">
+              {content.steps.map((s, i) => (
+                <div key={i} className="flex gap-4">
+                  <div className={`w-8 h-8 rounded-full ${content.color} text-white flex items-center justify-center font-black italic shrink-0 text-xs shadow-md`}>0{i+1}</div>
+                  <div className="space-y-1">
+                    <h4 className={`text-xs font-black uppercase tracking-widest ${content.text}`}>{s.title}</h4>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase leading-relaxed">{s.desc}</p>
+                  </div>
+                </div>
+              ))}
+              <div className="pt-4 border-t border-slate-50">
+                <div className="bg-slate-50 p-4 rounded-2xl flex items-center gap-3">
+                  <Info size={16} className="text-slate-400 shrink-0" />
+                  <p className="text-[9px] font-black text-slate-400 uppercase leading-tight italic">Hubungi Admin jika ada kendala teknis lebih lanjut ya! ✨</p>
                 </div>
               </div>
-            ))}
-            <div className="pt-4 border-t border-slate-50">
-              <div className="bg-slate-50 p-4 rounded-2xl flex items-center gap-3">
-                <Info size={16} className="text-slate-400 shrink-0" />
-                <p className="text-[9px] font-black text-slate-400 uppercase leading-tight italic">Hubungi Admin jika ada kendala teknis lebih lanjut ya! ✨</p>
-              </div>
             </div>
-          </div>
+          ) : (
+            <div className="space-y-4">
+              {content.faqs.map((f, i) => (
+                <div key={i} className="bg-slate-50 p-4 rounded-2xl space-y-1.5">
+                  <h4 className={`text-xs font-black tracking-tight ${content.text}`}>{f.q}</h4>
+                  <p className="text-[10px] font-bold text-slate-400 leading-relaxed">{f.a}</p>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Footer Button */}
