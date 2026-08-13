@@ -94,7 +94,7 @@ const GuideModal = ({ role, onClose }: {
       faqs: [
         { q: 'Kenapa saya nggak absenin siswa?', a: 'Presensi siswa dilakukan mandiri oleh mereka sendiri di portal siswa — tugas pengajar cukup lapor sesi mengajar sendiri ✨' },
         { q: 'Antrean rapot ini dari mana asalnya?', a: 'Muncul otomatis begitu siswa klik "Klaim Rapot" di portal siswa, biasanya saat presensi siswa udah 6/6.' },
-        { q: 'Kelas saya belum muncul, ini kenapa?', a: 'Mata Pelajaran & Peta Ruangan itu diatur Pengurus lewat menu Pengaturan — bukan otomatis dari sistem, jadi jika matkulnya belum ada hubungi Pengurus ya.' },
+        { q: 'Kelas saya belum muncul, ini kenapa?', a: 'Mata Pelajaran & Peta Ruangan itu diatur Pengurus di portalnya lewat menu Pengaturan Akademik — bukan otomatis dari sistem, jadi jika matkulnya belum ada hubungi Pengurus ya.' },
         { q: 'Kenapa honor saya kurang dari biasanya?', a: 'Bisa jadi ada sesi yang dipegang teman lewat "Berhalangan Mengajar" — cek tracker Honor Saya, sesi itu otomatis pindah honornya ke yang gantiin.' }
       ]
     },
