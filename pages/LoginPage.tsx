@@ -6,17 +6,11 @@ import {
   GraduationCap, 
   Mail, 
   ArrowLeft, 
-  Sparkles,
   Users,
   ShieldAlert,
   UserCheck,
   Lock,
-  Cloud,
-  WifiOff,
   Loader2,
-  Info,
-  CheckCircle2,
-  Database,
   Eye,
   EyeOff,
   Wrench,
@@ -86,17 +80,6 @@ const BlobStyles = () => (
     }
     .ping-slow { animation: ping-slow 2s ease-out infinite; }
   `}</style>
-);
-
-// Komponen Scribble (Coretan Asal) untuk penanda tombol rahasia
-const ScribbleMarker = () => (
-  <svg viewBox="0 0 100 100" className="w-full h-full stroke-slate-500 opacity-60 group-hover:opacity-100 group-hover:stroke-blue-400 transition-all duration-300 fill-none" strokeWidth="3" strokeLinecap="round">
-    <path d="M10,20 Q40,10 50,50 T90,80" className="animate-[pulse_1.5s_infinite]" />
-    <path d="M15,85 Q45,70 85,15" className="animate-[pulse_2s_infinite]" />
-    <path d="M30,30 L70,70 M70,30 L30,70" />
-    <path d="M50,10 C20,40 80,40 50,90" />
-    <circle cx="50" cy="50" r="10" className="animate-ping" />
-  </svg>
 );
 
 const LoginPage: React.FC<LoginPageProps> = ({ onLogin, teachers, studentAccounts, connectionError, isSyncing }) => {
@@ -336,7 +319,7 @@ setFieldErrors({ username: false, pin: false });
             </div>
           ) : (
             <div className="fade-up bg-white rounded-[4rem] shadow-2xl border border-slate-100 overflow-hidden flex flex-col md:flex-row">
-              <div className={`md:w-72 p-12 ${currentTheme.bg} text-white flex flex-col justify-between items-center text-center`}>
+              <div className={`md:w-72 p-8 md:p-12 ${currentTheme.bg} text-white flex flex-col justify-center gap-10 md:justify-between md:gap-0 items-center text-center`}>
                  <button
                    onClick={() => setView(systemMaintenance ? 'MAINTENANCE' : 'SELECTION')}
                    className="flex items-center gap-2 px-8 pr-10 py-2.5 bg-white/10 hover:bg-white/20 backdrop-blur-sm rounded-2xl transition-all hover:scale-105 active:scale-95"
