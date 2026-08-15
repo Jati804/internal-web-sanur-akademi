@@ -342,15 +342,15 @@ setFieldErrors({ username: false, pin: false });
                        <div className="space-y-2">
                           <label className="text-[10px] font-black text-slate-500 uppercase ml-4 tracking-widest">Username Akun</label>
                           <div className="relative group">
-                             <div className={`absolute left-6 top-1/2 -translate-y-1/2 z-10 ${currentTheme.text} transition-opacity`}><Mail size={24}/></div>
-                             <input type="text" value={username} onChange={(e) => { setUsername(e.target.value); setFieldErrors(f => ({ ...f, username: false })); }} placeholder="" className={`w-full pl-16 pr-8 py-6 bg-slate-50 border-2 rounded-[2rem] outline-none font-black text-base uppercase transition-all focus:bg-white focus:scale-[1.01] ${fieldErrors.username ? 'border-rose-400 bg-rose-50' : `border-transparent focus:${currentTheme.border}`}`} />
+                             <div className={`absolute left-6 top-1/2 -translate-y-1/2 ${currentTheme.text} opacity-30 group-focus-within:opacity-100 transition-opacity`}><Mail size={24}/></div>
+                             <input type="text" value={username} onChange={(e) => { setUsername(e.target.value); setFieldErrors(f => ({ ...f, username: false })); }} placeholder="ISI USERNAME" className={`w-full pl-16 pr-8 py-6 bg-slate-50 border-2 rounded-[2rem] outline-none font-black text-base uppercase transition-all focus:bg-white focus:scale-[1.01] ${fieldErrors.username ? 'border-rose-400 bg-rose-50' : `border-transparent focus:${currentTheme.border}`}`} />
                           </div>
                        </div>
                        <div className="space-y-2">
                           <label className="text-[10px] font-black text-slate-500 uppercase ml-4 tracking-widest">DIGIT PIN</label>
                           <div className="relative group">
-                             <div className={`absolute left-6 top-1/2 -translate-y-1/2 z-10 ${currentTheme.text} transition-opacity`}><Lock size={24}/></div>
-                             <input type={showPin ? "text" : "password"} maxLength={6} value={pin} onChange={(e) => { setPin(e.target.value.replace(/\D/g, '')); setFieldErrors(f => ({ ...f, pin: false })); }} placeholder="" className={`w-full pl-16 pr-16 py-6 bg-slate-50 border-2 rounded-[2rem] outline-none font-black text-xl tracking-[0.35em] text-left transition-all focus:bg-white focus:scale-[1.01] ${fieldErrors.pin ? 'border-rose-400 bg-rose-50' : `border-transparent focus:${currentTheme.border}`}`} />
+                             <div className={`absolute left-6 top-1/2 -translate-y-1/2 ${currentTheme.text} opacity-30 group-focus-within:opacity-100 transition-opacity`}><Lock size={24}/></div>
+                             <input type={showPin ? "text" : "password"} maxLength={6} value={pin} onChange={(e) => { setPin(e.target.value.replace(/\D/g, '')); setFieldErrors(f => ({ ...f, pin: false })); }} placeholder="******" className={`w-full pl-16 pr-16 py-6 bg-slate-50 border-2 rounded-[2rem] outline-none font-black text-xl tracking-[0.35em] text-center transition-all focus:bg-white focus:scale-[1.01] ${fieldErrors.pin ? 'border-rose-400 bg-rose-50' : `border-transparent focus:${currentTheme.border}`}`} />
                              <button type="button" onClick={() => setShowPin(!showPin)} className={`absolute right-6 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-white/50 hover:bg-white transition-all ${currentTheme.text}`}>{showPin ? <EyeOff size={22} /> : <Eye size={22} />}</button>
                           </div>
                        </div>
