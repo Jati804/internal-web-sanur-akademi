@@ -54,8 +54,6 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   const [confirmDeletePayment, setConfirmDeletePayment] = useState<StudentPayment | null>(null);
   const [showEditDateModal, setShowEditDateModal] = useState<any | null>(null);
   const [editDateValue, setEditDateValue] = useState('');
-  const [sessionActionModal, setSessionActionModal] = useState<any | null>(null); // { id, num, date } - pilihan Edit/Hapus
-  const [confirmDeleteSession, setConfirmDeleteSession] = useState<any | null>(null); // { id, num, date } - konfirmasi hapus
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState<string | null>(null);
@@ -341,20 +339,6 @@ setTimeout(() => {
     setShowSuccess(true);
     setTimeout(() => setShowSuccess(false), 2000);
   } catch (e: any) { console.error('❌ Gagal update tanggal:', e); alert("Gagal mengubah tanggal sesi. Coba lagi ya 🙏"); } finally { setLoading(false); }
-};
-
-  const executeDeleteSession = async () => {
-  if (!confirmDeleteSession) return;
-  setLoading(true);
-  try {
-    const { error } = await supabase.from('student_attendance').delete().eq('id', confirmDeleteSession.id);
-    if (error) throw error;
-    
-    if (refreshAllData) await refreshAllData();
-    setConfirmDeleteSession(null);
-    setShowSuccess(true);
-    setTimeout(() => setShowSuccess(false), 2000);
-  } catch (e: any) { console.error('❌ Gagal hapus sesi:', e); alert("Gagal menghapus sesi. Coba lagi ya 🙏"); } finally { setLoading(false); }
 };
 
   const handleRequestReport = async () => {
@@ -1337,7 +1321,7 @@ const completedSessions = studentAttendanceLogs
                                           <p className="text-[6px] md:text-[7px] font-black uppercase">{doneLog ? 'DONE' : `SESI ${sNum}`}</p>
                                        </button>
                                        {!!doneLog && !isRequesting && !isProcessing && !isNextClass && !isRejected && !isWaitingRelease && (
-                                          <button onClick={(e) => { e.stopPropagation(); setSessionActionModal(doneLog); }} className="absolute -top-1.5 -right-1.5 p-1.5 bg-white text-blue-500 rounded-full shadow-lg border border-blue-50 hover:bg-blue-50 transition-all z-20" title="Kelola Sesi"><Edit3 size={10} strokeWidth={3} /></button>
+                                          <button onClick={(e) => { e.stopPropagation(); setEditDateValue(doneLog.date); setShowEditDateModal(doneLog); }} className="absolute -top-1.5 -right-1.5 p-1.5 bg-white text-blue-500 rounded-full shadow-lg border border-blue-50 hover:bg-blue-50 transition-all z-20" title="Edit Tanggal Sesi"><Edit3 size={10} strokeWidth={3} /></button>
                                        )}
                                      </div>
                                    );
@@ -1371,45 +1355,6 @@ const completedSessions = studentAttendanceLogs
              </div>
            )}
         </section>
-      )}
-
-      {sessionActionModal && (
-        <ModalPortal>
-        <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-           <div className="bg-white w-full max-w-[340px] rounded-[2.5rem] p-8 shadow-2xl text-center space-y-6 relative border-t-4 border-blue-500 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-              <button onClick={() => setSessionActionModal(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
-              <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm"><Edit3 size={28} /></div>
-              <div className="space-y-1"><h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Sesi {sessionActionModal.num}</h4><p className="text-[8px] font-black text-blue-600 uppercase tracking-widest">{formatDateToDMY(sessionActionModal.date)}</p></div>
-              <div className="flex flex-col gap-3">
-                 <button 
-                   onClick={() => { setEditDateValue(sessionActionModal.date); setShowEditDateModal(sessionActionModal); setSessionActionModal(null); }} 
-                   className="w-full py-4 bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 flex items-center justify-center gap-2"
-                 >
-                   <Calendar size={14}/> EDIT TANGGAL
-                 </button>
-                 <button 
-                   onClick={() => { setConfirmDeleteSession(sessionActionModal); setSessionActionModal(null); }} 
-                   className="w-full py-4 bg-rose-50 text-rose-600 rounded-xl font-black text-[9px] uppercase active:scale-95 flex items-center justify-center gap-2 border border-rose-100"
-                 >
-                   <Trash2 size={14}/> HAPUS SESI
-                 </button>
-              </div>
-           </div>
-        </div>
-        </ModalPortal>
-      )}
-
-      {confirmDeleteSession && (
-        <ModalPortal>
-        <div data-modal-container className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-           <div className="bg-white w-full max-w-[340px] rounded-[2.5rem] p-8 text-center space-y-6 shadow-2xl relative border-t-4 border-rose-500 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-              <button onClick={() => setConfirmDeleteSession(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
-              <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mx-auto shadow-sm animate-bounce"><AlertTriangle size={32} /></div>
-              <div className="space-y-2"><h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Hapus Sesi {confirmDeleteSession.num}?</h4><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4">Catatan sesi tanggal <span className="text-slate-800 font-black underline">{formatDateToDMY(confirmDeleteSession.date)}</span> akan dihapus. Kamu bisa absen ulang sesi ini kapan saja.</p></div>
-              <div className="flex gap-3"><button onClick={() => setConfirmDeleteSession(null)} className="flex-1 py-4 bg-slate-50 text-slate-400 rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">BATAL</button><button onClick={executeDeleteSession} disabled={loading} className="flex-1 py-4 bg-rose-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 flex items-center justify-center gap-2">{loading ? <Loader2 size={14} className="animate-spin" /> : <Check size={14} />} HAPUS</button></div>
-           </div>
-        </div>
-        </ModalPortal>
       )}
 
       {showEditDateModal && (
