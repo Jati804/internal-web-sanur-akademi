@@ -32,6 +32,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
   const [isDownloading, setIsDownloading] = useState<string | null>(null);
   const [actionModalLog, setActionModalLog] = useState<any | null>(null); // { log, pkg } - pilihan Edit/Hapus per sesi
   const [confirmDeleteLog, setConfirmDeleteLog] = useState<any | null>(null); // { log, pkg } - konfirmasi hapus sesi
+  const [confirmDeletePkg, setConfirmDeletePkg] = useState<any | null>(null); // pkg - konfirmasi hapus seluruh paket
   const [isDeleting, setIsDeleting] = useState(false);
 
   const years = Array.from({ length: 11 }, (_, i) => (2024 + i).toString());
@@ -108,6 +109,44 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
   }
 };
 
+  const handleDeletePackage = async () => {
+  if (!confirmDeletePkg) return;
+  setIsDeleting(true);
+  try {
+    // ⚠️ SAFETY CHECK: pastikan tidak ada satupun sesi di paket ini yang sudah PAID
+    // (dicek ulang langsung ke DB, bukan cuma percaya state lokal, buat jaga-jaga kalau ada
+    // perubahan status pembayaran yang belum ke-refresh di layar)
+    const { data: freshRows, error: checkError } = await supabase
+      .from('attendance')
+      .select('id, paymentstatus')
+      .eq('packageid', confirmDeletePkg.id);
+
+    if (checkError) throw checkError;
+
+    const hasPaidSession = (freshRows || []).some((r: any) => r.paymentstatus === 'PAID');
+    if (hasPaidSession) {
+      alert("Paket ini sudah ada sesi yang LUNAS, jadi tidak bisa dihapus. Silakan hubungi Admin ya Kak! 🙏");
+      setConfirmDeletePkg(null);
+      setIsDeleting(false);
+      return;
+    }
+
+    const { error } = await supabase
+      .from('attendance')
+      .delete()
+      .eq('packageid', confirmDeletePkg.id);
+
+    if (error) throw error;
+    if (refreshAllData) await refreshAllData();
+
+    setConfirmDeletePkg(null);
+  } catch (e: any) {
+    alert("Terjadi kendala saat menghapus: " + e.message);
+  } finally {
+    setIsDeleting(false);
+  }
+};
+
   const cycleGroups = useMemo(() => {
     if (!Array.isArray(logs)) return [];
     const groups: Record<string, any> = {};
@@ -146,7 +185,11 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
           paidDate: fullCycle.find(l => l.teacherId === user.id && l.paymentStatus === 'PAID')?.paidDate || null,
           fullClassName: log.className,
           paidSessionsDetails: fullCycle.filter(l => l.teacherId === user.id),
-          isCycleOwner: isCycleOwner 
+          isCycleOwner: isCycleOwner,
+          // 🆕 Buat syarat tombol Hapus Paket: HARUS semua baris (siapapun pengajarnya) masih UNPAID
+          allUnpaid: fullCycle.every(l => l.paymentStatus === 'UNPAID'),
+          // 🆕 Buat syarat tombol Hapus Sesi kecil: cuma sesi dengan nomor tertinggi yang boleh dihapus
+          lastSessionNumber: fullCycle.reduce((max, l) => Math.max(max, l.sessionNumber || 0), 0)
         };
       } else if (new Date(log.date) > new Date(groups[pkgId].lastUpdate)) {
         groups[pkgId].lastUpdate = log.date;
@@ -309,7 +352,16 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                 id={`pkg-card-${pkg.id}`} // FIXED: Menambahkan ID untuk auto-scroll
                 className={`bg-white rounded-[4rem] border-2 shadow-2xl overflow-hidden group hover:border-blue-200 transition-all duration-500 relative ${isNew ? 'glow-new ring-4 ring-blue-500/20' : 'border-slate-50'}`}
               >
-                
+                {pkg.isCycleOwner && pkg.allUnpaid && (
+                   <button 
+                     onClick={() => setConfirmDeletePkg(pkg)}
+                     className="absolute top-0 right-0 p-8 text-slate-200 hover:text-rose-600 transition-all z-30 active:scale-95 group/close"
+                     title="Hapus Kotak Honor Ini"
+                   >
+                      <X size={28} strokeWidth={4} className="group-hover/close:rotate-90 transition-transform duration-300" />
+                   </button>
+                )}
+
                 <div className="p-10 flex flex-col lg:flex-row lg:items-center justify-between gap-10">
                    <div className="flex items-center gap-8 flex-1 min-w-0">
                       <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner shrink-0 ${pkg.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'}`}><Package size={32} /></div>
@@ -349,6 +401,8 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                          const isMeDelegated = log && log.originalTeacherId === user.id && log.teacherId !== user.id;
                          
                          const canEdit = isCycleOwner && log.paymentStatus === 'UNPAID';
+                         // 🆕 Cuma sesi dengan nomor tertinggi (terakhir) di paket ini yang boleh dihapus
+                         const isLastSession = log && num === pkg.lastSessionNumber;
                          
                          let bgColor = "bg-white text-slate-200 border-dashed border-2 border-slate-100";
                          let label = "BELUM ADA";
@@ -376,7 +430,18 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                          return (
                            <div key={num} className={`relative p-5 py-8 rounded-[2.5rem] flex flex-col items-center justify-center text-center gap-2 transition-all ${bgColor}`}>
                               {canEdit && (
-                                <button onClick={() => setActionModalLog({ log, pkg })} className="absolute -top-2 -right-2 w-10 h-10 bg-white text-slate-800 rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all border border-slate-100 z-20"><Edit3 size={14} /></button>
+                                <button 
+                                  onClick={() => {
+                                    if (isLastSession) {
+                                      setActionModalLog({ log, pkg }); // sesi terakhir: bisa pilih Edit atau Hapus
+                                    } else {
+                                      navigate('/teacher', { state: { editLog: log } }); // sesi lama: langsung Edit aja
+                                    }
+                                  }} 
+                                  className="absolute -top-2 -right-2 w-10 h-10 bg-white text-slate-800 rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all border border-slate-100 z-20"
+                                >
+                                  <Edit3 size={14} />
+                                </button>
                               )}
                               <p className="text-[9px] font-black uppercase tracking-widest opacity-60">Sesi {num}</p>
                               {isMeTeaching && !isMeSubstituting ? <UserCheck size={24}/> : isMeSubstituting ? <Repeat size={24}/> : isMeDelegated ? <Clock size={24}/> : <Zap size={24}/>}
@@ -580,6 +645,28 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
               <div className="flex gap-4">
                  <button onClick={() => setConfirmDeleteLog(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase">BATAL</button>
                  <button onClick={handleDeleteSession} disabled={isDeleting} className="flex-[2] py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 flex items-center justify-center gap-2">
+                    {isDeleting ? <Loader2 size={18} className="animate-spin" /> : <><Check size={18}/> IYA, HAPUS</>}
+                 </button>
+              </div>
+           </div>
+        </div>
+        </ModalPortal>
+      )}
+
+      {confirmDeletePkg && (
+        <ModalPortal>
+        <div data-modal-container className="fixed inset-0 z-[200000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+           <div className="bg-white w-full max-w-sm rounded-[4rem] p-12 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+              <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner animate-pulse"><X size={40} className="text-rose-600" /></div>
+              <div className="space-y-2">
+                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Hapus Kotak Honor?</h4>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4 italic">
+                    "Semua data pengajaran Kakak di kotak <span className="font-black text-rose-600">{confirmDeletePkg.className}</span> ({confirmDeletePkg.logs?.length || 0} sesi) akan dihapus permanen. Lakukan ini hanya jika data salah input ya Kak!"
+                 </p>
+              </div>
+              <div className="flex gap-4">
+                 <button onClick={() => setConfirmDeletePkg(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase">BATAL</button>
+                 <button onClick={handleDeletePackage} disabled={isDeleting} className="flex-[2] py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 flex items-center justify-center gap-2">
                     {isDeleting ? <Loader2 size={18} className="animate-spin" /> : <><Check size={18}/> IYA, HAPUS</>}
                  </button>
               </div>
