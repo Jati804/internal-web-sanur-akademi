@@ -130,12 +130,11 @@ const GuideModal = ({ role, onClose }: {
     <div data-modal-container className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
       <div className="bg-white w-full max-w-sm rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
         {/* Header */}
-        <div className={`p-8 ${content.color} text-white flex items-center justify-between shrink-0`}>
+        <div className={`p-8 ${content.color} text-white flex items-center shrink-0`}>
   <div className="flex items-center gap-3">
     <HelpCircle size={24} />
     <h3 className="text-lg font-black uppercase italic tracking-tighter">Panduan Sistem</h3>
   </div>
-  <button onClick={onClose} className="p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
 </div>
 
         {/* Tab Switcher */}
@@ -183,7 +182,7 @@ const GuideModal = ({ role, onClose }: {
         {/* Footer Button */}
         <div className="p-6 bg-white border-t border-slate-50 shrink-0">
           <button onClick={onClose} className={`w-full py-4 ${content.color} text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all`}>
-            SAYA MENGERTI ✨
+            TUTUP PANDUAN
           </button>
         </div>
       </div>
