@@ -350,7 +350,7 @@ setFieldErrors({ username: false, pin: false });
                           <label className="text-[10px] font-black text-slate-500 uppercase ml-4 tracking-widest">DIGIT PIN</label>
                           <div className="relative group">
                              <div className={`absolute left-6 top-1/2 -translate-y-1/2 ${currentTheme.text}`}><Lock size={24}/></div>
-                             <input type={showPin ? "text" : "password"} maxLength={6} value={pin} onChange={(e) => { setPin(e.target.value.replace(/\D/g, '')); setFieldErrors(f => ({ ...f, pin: false })); }} placeholder="******" className={`w-full pl-16 pr-16 py-6 bg-slate-50 border-2 rounded-[2rem] outline-none font-black text-base tracking-[0.5em] text-center transition-all focus:bg-white focus:scale-[1.01] ${fieldErrors.pin ? 'border-rose-400 bg-rose-50' : `border-transparent focus:${currentTheme.border}`}`} />
+                             <input type={showPin ? "text" : "password"} maxLength={6} value={pin} onChange={(e) => { setPin(e.target.value.replace(/\D/g, '')); setFieldErrors(f => ({ ...f, pin: false })); }} placeholder="******" className={`w-full pl-16 pr-16 py-6 bg-slate-50 border-2 rounded-[2rem] outline-none font-black text-base tracking-[0.3em] text-center transition-all focus:bg-white focus:scale-[1.01] ${fieldErrors.pin ? 'border-rose-400 bg-rose-50' : `border-transparent focus:${currentTheme.border}`}`} />
                              <button type="button" onClick={() => setShowPin(!showPin)} className={`absolute right-6 top-1/2 -translate-y-1/2 p-2 rounded-xl bg-white/50 hover:bg-white transition-all ${currentTheme.text}`}>{showPin ? <EyeOff size={22} /> : <Eye size={22} />}</button>
                           </div>
                        </div>
