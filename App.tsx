@@ -118,6 +118,13 @@ const GuideModal = ({ role, onClose }: {
   }[role] || { color: 'bg-slate-600', text: 'text-slate-600', steps: [], faqs: [] };
 
   const [activeTab, setActiveTab] = useState<'panduan' | 'faq'>('panduan');
+  const guideContentRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (guideContentRef.current) {
+      guideContentRef.current.scrollTop = 0;
+    }
+  }, [activeTab]);
 
   return (
     <div data-modal-container className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
@@ -141,7 +148,7 @@ const GuideModal = ({ role, onClose }: {
         </div>
 
         {/* Content Area */}
-        <div className="flex-1 overflow-y-auto custom-scrollbar p-8">
+        <div ref={guideContentRef} className="flex-1 overflow-y-auto custom-scrollbar p-8">
           {activeTab === 'panduan' ? (
             <div className="space-y-6">
               {content.steps.map((s, i) => (
