@@ -921,11 +921,11 @@ const handleDownloadPDFReport = async (course: any) => {
   {isEditing && (
     <div className="absolute top-6 right-6 z-30 flex items-center gap-2 px-5 py-2 bg-gradient-to-r from-orange-500 to-amber-500 text-white rounded-full shadow-xl animate-pulse">
       <Edit3 size={16} strokeWidth={3} className="animate-spin" style={{animationDuration: '3s'}} />
-      <span className="text-[10px] font-black uppercase tracking-widest">MODE UPDATE</span>
+      <span className="text-[10px] font-black uppercase tracking-widest">MODE EDIT</span>
     </div>
   )}
   
-  <div className="flex items-center gap-8 relative z-10"><div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-3xl flex items-center justify-center shadow-inner shrink-0"><Receipt size={36} /></div><div><h3 className="text-3xl font-black text-slate-800 uppercase italic leading-none">{isEditing ? 'Update Laporan' : 'Lapor Bayar'}</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Pastikan bukti transfer jelas ya ✨</p></div>{isEditing && <button onClick={resetForm} className="ml-auto p-4 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>}</div>
+  <div className="flex items-center gap-8 relative z-10"><div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-3xl flex items-center justify-center shadow-inner shrink-0"><Receipt size={36} /></div><div><h3 className="text-3xl font-black text-slate-800 uppercase italic leading-none">{isEditing ? 'Edit Laporan' : 'Lapor Bayar'}</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Pastikan bukti transfer jelas ya ✨</p></div>{isEditing && <button onClick={resetForm} className="ml-auto p-4 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>}</div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
                 <div className="space-y-3">
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Mata Pelajaran</label>
