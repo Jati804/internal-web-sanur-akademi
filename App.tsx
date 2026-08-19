@@ -399,7 +399,7 @@ const pendingReportsCount = Array.isArray(reports) ?
           </div>
         </header>
         
-        <div ref={contentRef} className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-12">
+        <div ref={contentRef} id="app-scroll-container" className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-12">
           <div className="max-w-7xl mx-auto">
             <Routes>
               <Route path="/admin" element={<AdminDashboard user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} setAttendanceLogs={setAttendanceLogs} teachers={teachers} transactions={transactions} />} />
