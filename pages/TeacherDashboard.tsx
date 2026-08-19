@@ -341,7 +341,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
              </div>
              <button 
                onClick={handleCloseEdit}
-               title="Batal edit, balik ke Lapor Presensi biasa"
+               title="Batal edit"
                className="p-3 bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 rounded-2xl transition-all active:scale-95 shadow-sm"
              >
                <X size={18} />
