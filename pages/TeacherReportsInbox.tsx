@@ -164,6 +164,9 @@ setReportForm({
   });
 }
     setActiveStep('WORKSPACE');
+    // Loncat ke atas halaman begitu Workspace kebuka — instant (bukan smooth-animated),
+    // biar kesannya kayak natural pindah halaman, bukan "digeser" ke atas.
+    setTimeout(() => window.scrollTo(0, 0), 50);
   };
 
   const handleAcceptRequest = async (req: any) => {
@@ -519,7 +522,7 @@ const handleDownloadPDF = async (req: any) => {
 
       <div className="flex bg-slate-100 p-2 rounded-full w-full max-w-xl mx-auto shadow-inner border border-slate-100">
          <button onClick={() => setActiveStep('ANTREAN')} className={`flex-1 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeStep === 'ANTREAN' ? 'bg-white text-orange-600 shadow-md' : 'text-slate-400'}`}>Antrean ({reportRequests.length})</button>
-         <button onClick={() => setActiveStep('WORKSPACE')} disabled={!selectedPackage} className={`flex-1 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeStep === 'WORKSPACE' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-400 disabled:opacity-30'}`}>Workspace</button>
+         <button onClick={() => { setActiveStep('WORKSPACE'); setTimeout(() => window.scrollTo(0, 0), 50); }} disabled={!selectedPackage} className={`flex-1 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeStep === 'WORKSPACE' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-400 disabled:opacity-30'}`}>Workspace</button>
          <button onClick={() => setActiveStep('HISTORY')} className={`flex-1 py-4 rounded-full text-[10px] font-black uppercase tracking-widest transition-all ${activeStep === 'HISTORY' ? 'bg-white text-emerald-600 shadow-md' : 'text-slate-400'}`}>Histori</button>
       </div>
 
