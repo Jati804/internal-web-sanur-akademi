@@ -7,7 +7,7 @@ import {
   GraduationCap, Search, X, Loader2, Check, Sparkles,
   History, Trophy, Edit3, CheckCircle2, UserCheck, Layout, BookOpen, Download,
   Quote, BadgeCheck, ClipboardList, Star, Calendar, Clock, AlertCircle, Trash2,
-  FileEdit, ChevronRight, Zap, Info, Send, SendHorizonal, Save, AlertTriangle, FileDown, FileCheck,
+  FileEdit, ChevronRight, Zap, Info, Send, SendHorizonal, Save, AlertTriangle, FileDown, FileCheck, RotateCcw,
   Filter // ✅ TAMBAH INI KALAU BELUM ADA
 } from 'lucide-react';
 
@@ -471,6 +471,12 @@ const handleDownloadPDF = async (req: any) => {
             transform: scale(1);
           }
         }
+
+        @keyframes editHighlightPulse {
+          0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.45); }
+          50% { box-shadow: 0 0 0 18px rgba(249, 115, 22, 0); }
+          100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
+        }
       `}</style>
 
       <div className="max-w-7xl mx-auto space-y-12 pb-40 px-4">
@@ -610,11 +616,21 @@ const handleDownloadPDF = async (req: any) => {
       )}
       
       {activeStep === 'WORKSPACE' && selectedPackage && (
-         <div className="bg-white rounded-[4rem] shadow-2xl border-4 border-blue-600 overflow-hidden animate-in zoom-in space-y-0">
-            <div className="p-10 bg-blue-600 text-white flex flex-col md:flex-row justify-between items-center gap-6">
+         <div 
+           className={`bg-white rounded-[4rem] shadow-2xl border-4 overflow-hidden animate-in zoom-in space-y-0 transition-colors duration-500 ${isEditMode ? 'border-orange-400' : 'border-blue-600'}`}
+           style={isEditMode ? { animation: 'editHighlightPulse 1.6s ease-out 2' } : undefined}
+         >
+            <div className={`p-10 text-white flex flex-col md:flex-row justify-between items-center gap-6 transition-colors duration-500 ${isEditMode ? 'bg-orange-500' : 'bg-blue-600'}`}>
                <div className="flex items-center gap-6">
-                  <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md shadow-inner shrink-0 rotate-3"><GraduationCap size={32} /></div>
-                  <div className="text-center md:text-left"><h3 className="text-2xl font-black uppercase italic leading-none">{isEditMode ? 'Edit Rapot Siswa' : 'Ruang Kerja Penilaian'}</h3><p className="text-[11px] font-black uppercase tracking-widest mt-2 opacity-80">{selectedPackage.studentsAttended?.[0]} — {selectedPackage.className}</p></div>
+                  <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md shadow-inner shrink-0 rotate-3">{isEditMode ? <RotateCcw size={32} /> : <GraduationCap size={32} />}</div>
+                  <div className="text-center md:text-left">
+                     <div className="inline-flex items-center gap-2 px-4 py-1 bg-white/15 rounded-full mb-2">
+                       <Sparkles size={11} className="text-yellow-300" />
+                       <span className="text-[8px] font-black uppercase tracking-widest">{isEditMode ? 'Mode Edit — Ubah Rapot Yang Sudah Ada' : 'Isi Rapot Dari Antrean'}</span>
+                     </div>
+                     <h3 className="text-2xl font-black uppercase italic leading-none">{isEditMode ? 'Edit Rapot Siswa' : 'Ruang Kerja Penilaian'}</h3>
+                     <p className="text-[11px] font-black uppercase tracking-widest mt-2 opacity-80">{selectedPackage.studentsAttended?.[0]} — {selectedPackage.className}</p>
+                  </div>
                </div>
                <button onClick={() => { setSelectedPackage(null); setIsEditMode(false); setActiveStep('ANTREAN'); setShowErrors(false); }} className="p-4 bg-white/20 rounded-2xl hover:bg-white/40 transition-all"><X/></button>
             </div>
