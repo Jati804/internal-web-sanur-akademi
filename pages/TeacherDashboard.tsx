@@ -335,18 +335,18 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
         style={editData ? { animation: 'editHighlightPulse 1.6s ease-out 2' } : undefined}
       >
          {editData && (
-           <>
-           <div className="relative z-20 inline-flex px-6 py-2.5 bg-orange-500 text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg items-center gap-2">
-             <RotateCcw size={12}/> Mode edit
+           <div className="relative z-20 flex items-center justify-between">
+             <div className="inline-flex px-6 py-2.5 bg-orange-500 text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg items-center gap-2">
+               <RotateCcw size={12}/> Mode edit
+             </div>
+             <button 
+               onClick={handleCloseEdit}
+               title="Batal edit, balik ke Lapor Presensi biasa"
+               className="p-3 bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 rounded-2xl transition-all active:scale-95 shadow-sm"
+             >
+               <X size={18} />
+             </button>
            </div>
-           <button 
-             onClick={handleCloseEdit}
-             title="Batal edit, balik ke Lapor Presensi biasa"
-             className="absolute top-8 right-8 md:top-10 md:right-10 z-30 p-3 bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 rounded-2xl transition-all active:scale-95 shadow-sm"
-           >
-             <X size={20} />
-           </button>
-           </>
          )}
          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full blur-[100px] -mr-32 -mt-32 opacity-50"></div>
          
