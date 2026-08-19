@@ -95,6 +95,28 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
     }
   }, [editData, user.id]);
 
+  // Nutup mode edit: balikin form ke kosong & bersihin location.state
+  // (biar editData balik jadi undefined, otomatis balik ke mode "Lapor Presensi" biasa)
+  const handleCloseEdit = () => {
+    setForm({
+      subject: '',
+      level: 'BASIC',
+      room: '',
+      category: 'REGULER',
+      studentName: '',
+      targetTeacherId: '',
+      sessionNumber: 1,
+      duration: 2,
+      date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date())
+    });
+    setIsDelegating(false);
+    setActivePackageId(null);
+    setActiveOriginalTeacherId(null);
+    setStudentInputValue('');
+    setTeacherInputValue('');
+    navigate(location.pathname, { replace: true, state: {} });
+  };
+
   const estimatedHonor = useMemo(() => {
     const hourlyRate = form.category === 'PRIVATE' ? (salaryConfig?.privateRate || 25000) : (salaryConfig?.regulerRate || 15000);
     return Math.round(hourlyRate * form.duration);
@@ -283,6 +305,15 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
 
       <header className="relative py-14 px-10 bg-slate-900 rounded-[4rem] text-white shadow-2xl overflow-hidden group">
          <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600 rounded-full blur-[100px] opacity-20 -mr-40 -mt-40"></div>
+         {editData && (
+           <button 
+             onClick={handleCloseEdit}
+             title="Batal edit, balik ke Lapor Presensi biasa"
+             className="absolute top-8 right-8 z-20 p-3 bg-white/10 hover:bg-white/25 rounded-2xl transition-all active:scale-95"
+           >
+             <X size={20} />
+           </button>
+         )}
          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="space-y-4 text-center md:text-left">
                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
