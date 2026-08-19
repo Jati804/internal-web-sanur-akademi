@@ -624,10 +624,6 @@ const handleDownloadPDF = async (req: any) => {
                <div className="flex items-center gap-6">
                   <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center backdrop-blur-md shadow-inner shrink-0 rotate-3">{isEditMode ? <RotateCcw size={32} /> : <GraduationCap size={32} />}</div>
                   <div className="text-center md:text-left">
-                     <div className="inline-flex items-center gap-2 px-4 py-1 bg-white/15 rounded-full mb-2">
-                       <Sparkles size={11} className="text-yellow-300" />
-                       <span className="text-[8px] font-black uppercase tracking-widest">{isEditMode ? 'Mode Edit — Ubah Rapot Yang Sudah Ada' : 'Isi Rapot Dari Antrean'}</span>
-                     </div>
                      <h3 className="text-2xl font-black uppercase italic leading-none">{isEditMode ? 'Edit Rapot Siswa' : 'Ruang Kerja Penilaian'}</h3>
                      <p className="text-[11px] font-black uppercase tracking-widest mt-2 opacity-80">{selectedPackage.studentsAttended?.[0]} — {selectedPackage.className}</p>
                   </div>
