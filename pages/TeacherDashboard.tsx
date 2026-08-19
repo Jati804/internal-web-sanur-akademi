@@ -305,15 +305,6 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
 
       <header className="relative py-14 px-10 bg-slate-900 rounded-[4rem] text-white shadow-2xl overflow-hidden group">
          <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600 rounded-full blur-[100px] opacity-20 -mr-40 -mt-40"></div>
-         {editData && (
-           <button 
-             onClick={handleCloseEdit}
-             title="Batal edit, balik ke Lapor Presensi biasa"
-             className="absolute top-8 right-8 z-20 p-3 bg-white/10 hover:bg-white/25 rounded-2xl transition-all active:scale-95"
-           >
-             <X size={20} />
-           </button>
-         )}
          <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
             <div className="space-y-4 text-center md:text-left">
                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
@@ -344,9 +335,18 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
         style={editData ? { animation: 'editHighlightPulse 1.6s ease-out 2' } : undefined}
       >
          {editData && (
+           <>
            <div className="relative z-20 inline-flex px-6 py-2.5 bg-orange-500 text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg items-center gap-2">
              <RotateCcw size={12}/> Mode edit
            </div>
+           <button 
+             onClick={handleCloseEdit}
+             title="Batal edit, balik ke Lapor Presensi biasa"
+             className="absolute top-8 right-8 md:top-10 md:right-10 z-30 p-3 bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 rounded-2xl transition-all active:scale-95 shadow-sm"
+           >
+             <X size={20} />
+           </button>
+           </>
          )}
          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full blur-[100px] -mr-32 -mt-32 opacity-50"></div>
          
