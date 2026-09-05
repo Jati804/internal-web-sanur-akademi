@@ -61,8 +61,20 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
 
   const handleDownloadPdf = async (pkg: any) => {
     setIsDownloading(pkg.id);
-    await new Promise(resolve => setTimeout(resolve, 800));
-    
+
+    // Pastikan font Inter beneran udah kemuat sempurna sebelum discreenshot.
+    // Sebelumnya pakai delay tetap (800ms) yang cuma nebak — kalau koneksi/device-nya
+    // lambat, font belum kemuat dalam 800ms, hasilnya jatuh ke font fallback bawaan
+    // OS (beda-beda tiap device). document.fonts.ready itu sinyal PASTI dari browser.
+    try {
+      if (document.fonts && document.fonts.ready) {
+        await document.fonts.ready;
+      }
+    } catch {
+      // Browser lama yang nggak dukung Font Loading API — fallback ke delay kecil
+      await new Promise(resolve => setTimeout(resolve, 800));
+    }
+
     const element = document.getElementById(`hidden-slip-${pkg.id}`);
     if (!element) {
       alert("Gagal memproses slip digital.");
@@ -482,7 +494,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
 
 <div className="fixed left-[-9999px] top-0 pointer-events-none">
         {cycleGroups.filter(p => p.status === 'LUNAS').map(pkg => (
-          <div id={`hidden-slip-${pkg.id}`} key={`slip-${pkg.id}`} className="bg-white p-12 md:p-20 space-y-8 w-[700px] mx-auto overflow-hidden text-slate-900">
+          <div id={`hidden-slip-${pkg.id}`} key={`slip-${pkg.id}`} className="bg-white p-12 md:p-20 space-y-8 w-[700px] mx-auto overflow-hidden text-slate-900 border-8 border-double border-slate-100">
             <div className="flex justify-between items-start border-b-2 border-slate-900 pb-10">
               <div className="min-w-0 text-left">
                 <img src="https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png" style={{ maxHeight: '90px', width: 'auto', objectFit: 'contain' }} />
