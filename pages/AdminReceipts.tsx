@@ -654,13 +654,13 @@ const isFormValid = () => {
                   <div className="max-w-xs text-left">
                     <p className="text-[10px] font-bold text-slate-400 italic text-left">
                       "{generatedReceipt.type === 'income' 
-                        ? 'Kuitansi ini sah sebagai bukti pembayaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal.'
-                        : 'Bon ini sah sebagai bukti pengeluaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal.'
+                        ? Kuitansi ini sah sebagai bukti pembayaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal.
+                        : Bon ini sah sebagai bukti pengeluaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal.
                       }"
                     </p>
                   </div>
                   <div className="text-center flex flex-col items-center shrink-0">
-                    <ShieldCheck size={44} className="text-slate-900 opacity-20 mb-2" />
+                    <ShieldCheck size={44} className="text-slate-900 opacity-50 mb-2" />
                     <p className="text-[13px] font-black uppercase text-slate-900 tracking-tight leading-none">Admin Sanur</p>
                     <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1.5">Official Receipt</p>
                   </div>
