@@ -582,7 +582,7 @@ const isFormValid = () => {
                   </div>
                   <div className="col-span-4 text-right">
                     <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Tanggal:</p>
-                    <p className="text-base font-black text-slate-800 uppercase">{formatDateToDMY(generatedReceipt.date)}</p>
+                    <p className="text-base font-black text-slate-900 uppercase">{formatDateToDMY(generatedReceipt.date)}</p>
                   </div>
                 </div>
 
