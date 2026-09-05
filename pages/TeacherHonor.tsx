@@ -526,7 +526,6 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
             </div>
             <div className="space-y-4">
               <div className="flex items-center gap-3 text-slate-900 border-b-2 border-slate-50 pb-2">
-                <Layers size={14} className="shrink-0" />
                 <p className="text-[10px] font-black uppercase tracking-[0.3em] leading-none">Rincian Per Sesi</p>
               </div>
               <table className="w-full text-left table-fixed">
