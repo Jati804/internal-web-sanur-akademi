@@ -588,7 +588,7 @@ const isFormValid = () => {
 
                 {/* Payment Details */}
                 <div className="space-y-6">
-                  <div className="flex items-center gap-3 text-slate-400 border-b-2 border-slate-50 pb-2">
+                  <div className="flex items-center gap-3 text-slate-800 border-b-2 border-slate-100 pb-2">
                     <ClipboardList size={14} />
                     <p className="text-[10px] font-black uppercase tracking-[0.3em]">
                       Rincian {generatedReceipt.type === 'income' ? 'Pembayaran' : 'Pengeluaran'}
