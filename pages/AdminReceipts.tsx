@@ -660,7 +660,7 @@ const isFormValid = () => {
                     </p>
                   </div>
                   <div className="text-center flex flex-col items-center shrink-0">
-                    <ShieldCheck size={44} className="text-slate-900 opacity-50 mb-2" />
+                    <ShieldCheck size={44} className="text-slate-900 opacity-40 mb-2" />
                     <p className="text-[13px] font-black uppercase text-slate-900 tracking-tight leading-none">Admin Sanur</p>
                     <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1.5">Official Receipt</p>
                   </div>
