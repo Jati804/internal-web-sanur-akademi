@@ -525,9 +525,9 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
               </div>
             </div>
             <div className="space-y-4">
-              <div className="flex items-center gap-3 text-slate-400 border-b-2 border-slate-50 pb-2">
-                <Layers size={14} />
-                <p className="text-[10px] font-black uppercase tracking-[0.3em]">Rincian Per Sesi</p>
+              <div className="flex items-center gap-3 text-slate-900 border-b-2 border-slate-50 pb-2">
+                <Layers size={14} className="shrink-0" />
+                <p className="text-[10px] font-black uppercase tracking-[0.3em] leading-none">Rincian Per Sesi</p>
               </div>
               <table className="w-full text-left table-fixed">
                 <tbody className="divide-y divide-slate-50">
@@ -558,10 +558,10 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
             </div>
             <div className="pt-10 border-t border-slate-100 flex justify-between items-end gap-10">
               <div className="max-w-xs text-left">
-                <p className="text-[10px] font-bold text-slate-400 italic leading-relaxed text-left">"Terima kasih atas kepercayaannya bergabung di SANUR Akademi Inspirasi. Slip ini adalah bukti pembayaran sah yang diverifikasi sistem internal."</p>
+                <p className="text-[10px] font-bold text-slate-400 italic leading-relaxed text-left">Terima kasih atas kepercayaannya bergabung di SANUR Akademi Inspirasi. Slip ini adalah bukti pembayaran sah yang diverifikasi sistem internal.</p>
               </div>
               <div className="text-center flex flex-col items-center shrink-0">
-                <ShieldCheck size={44} className="text-slate-900 opacity-20 mb-2" />
+                <ShieldCheck size={44} className="text-slate-900 opacity-40 mb-2" />
                 <p className="text-[13px] font-black uppercase text-slate-900 tracking-tight leading-none">Finance Sanur</p>
                 <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1.5">Official Digital Slip</p>
               </div>
