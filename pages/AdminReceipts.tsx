@@ -653,10 +653,10 @@ const isFormValid = () => {
                 <div className="pt-10 border-t border-slate-100 flex justify-between items-end gap-10">
                   <div className="max-w-xs text-left">
                     <p className="text-[10px] font-bold text-slate-400 italic text-left">
-                      "{generatedReceipt.type === 'income' 
-                        ? Kuitansi ini sah sebagai bukti pembayaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal.
-                        : Bon ini sah sebagai bukti pengeluaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal.
-                      }"
+                      {generatedReceipt.type === 'income' 
+                        ? 'Kuitansi ini sah sebagai bukti pembayaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal.'
+                        : 'Bon ini sah sebagai bukti pengeluaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal.'
+                      }
                     </p>
                   </div>
                   <div className="text-center flex flex-col items-center shrink-0">
