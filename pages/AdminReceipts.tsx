@@ -192,6 +192,12 @@ const isFormValid = () => {
     
     setDownloading(true);
     try {
+      // Tailwind versi CDN nge-generate CSS buat class warna yang baru PERTAMA KALI muncul
+      // di halaman secara async (misal 'orange-*' cuma kepake pas preview Bon Pengeluaran
+      // pertama kali di-generate, beda sama 'blue-*' yang udah dipake dari awal halaman kebuka).
+      // Kasih jeda 2 frame biar CSS-nya beneran ke-inject dulu sebelum discreenshot.
+      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
       const canvas = await html2canvas(slipRef.current, {
         scale: 2,
         useCORS: true,
