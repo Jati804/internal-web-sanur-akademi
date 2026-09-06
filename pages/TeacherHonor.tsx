@@ -175,11 +175,19 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
 
       y += 13;
 
-      /// ===== SECTION HEADER: Rincian Per Sesi =====
+      // ===== SECTION HEADER: Rincian Per Sesi (ikon garis tiga, satu unit rapet sama teks) =====
+      const sectionIconW = 3.5;
+      const sectionIconGap = 2;
+      pdf.setDrawColor(...slate900);
+      pdf.setLineWidth(0.9);
+      pdf.line(marginL, y - 1.6, marginL + sectionIconW, y - 1.6);
+      pdf.line(marginL, y - 0.1, marginL + sectionIconW, y - 0.1);
+      pdf.line(marginL, y + 1.4, marginL + sectionIconW, y + 1.4);
+
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(9);
       pdf.setTextColor(...slate900);
-      pdf.text('RINCIAN PER SESI', marginL, y + 1);
+      pdf.text('RINCIAN PER SESI', marginL + sectionIconW + sectionIconGap, y + 1);
 
       y += 4;
       pdf.setDrawColor(...slate100);
