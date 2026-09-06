@@ -12,6 +12,7 @@ import {
 } from 'lucide-react';
 
 import { supabase, waitForActiveSession } from './services/supabase.ts';
+import { useAutoRefreshOnDeploy } from './hooks/useAutoRefreshOnDeploy.ts';
 
 import LoginPage from './pages/LoginPage.tsx';
 import AdminDashboard from './pages/AdminDashboard.tsx';
@@ -435,6 +436,7 @@ const pendingReportsCount = Array.isArray(reports) ?
 };
 
 const App = () => {
+  useAutoRefreshOnDeploy();
   const [user, setUser] = useState<User | null>(null);
   const [attendanceLogs, setAttendanceLogs] = useState<Attendance[]>([]);
   const [teachers, setTeachers] = useState<User[]>([]);
