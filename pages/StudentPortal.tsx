@@ -6,11 +6,10 @@ import {
   BookOpen, Clock, Loader2, Sparkles, Check, X, Rocket, Trophy, Stars, 
   GraduationCap, BadgeCheck, FileText, Upload, Receipt, History, AlertCircle, 
   CreditCard, Eye, Trash2, Printer, Smile, Heart, Target, Edit3, Save, ChevronRight,
-  ClipboardList, Download, ShieldCheck, PartyPopper, UserCog, AlertTriangle, Zap, Star, Quote,
+  Download, PartyPopper, UserCog, AlertTriangle, Zap, Star, Quote,
   Layout, Info, FileDown, FileCheck, ImageIcon, Calendar, CheckCircle2, ArrowRight
 } from 'lucide-react';
 
-import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import ModalPortal from '../ModalPortal.tsx';
 
@@ -39,9 +38,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   const [activeDownloadId, setActiveDownloadId] = useState<string | null>(null);
   const [downloadProgress, setDownloadProgress] = useState(0);
   const [previewModal, setPreviewModal] = useState<string | null>(null);
-  const [showDigitalSlip, setShowDigitalSlip] = useState<StudentPayment | null>(null);
   const [downloadingPaymentId, setDownloadingPaymentId] = useState<string | null>(null);
-  const slipRef = useRef<HTMLDivElement>(null);
 
   const [confirmingAbsen, setConfirmingAbsen] = useState<{course: any, sessionNum: number} | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>('SEMUA');
@@ -736,37 +733,197 @@ const handleDownloadPDFReport = async (course: any) => {
   }
 };
 
+  // Muat gambar dari URL jadi data URL (base64), dibutuhin jsPDF buat nempel gambar (addImage).
+  const loadImageAsDataURL = (url: string): Promise<{ dataUrl: string; width: number; height: number }> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { reject(new Error('Canvas context tidak tersedia')); return; }
+        ctx.drawImage(img, 0, 0);
+        resolve({ dataUrl: canvas.toDataURL('image/png'), width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.onerror = () => reject(new Error('Gagal memuat gambar'));
+      img.src = url;
+    });
+  };
+
+  const LOGO_URL = "https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png";
+
   const handleDownloadSlipDirect = async (p: StudentPayment) => {
-  setShowDigitalSlip(p);
-  setDownloadingPaymentId(p.id); // 👈 Tandai payment ini yang lagi didownload
-  setTimeout(async () => {
-    if (!slipRef.current) { 
-      setDownloadingPaymentId(null); // 👈 Reset
-      setShowDigitalSlip(null); 
-      return; 
-    }
-    // Pastikan font Inter beneran udah kemuat sempurna sebelum discreenshot.
-    // (delay 500ms di atas cuma buat nunggu React nge-attach slipRef ke elemen
-    // yang bener; ini di bawah baru beneran mastiin font-nya siap)
+    setDownloadingPaymentId(p.id);
     try {
-      if (document.fonts && document.fonts.ready) {
-        await document.fonts.ready;
-      }
-    } catch {}
-    try {
-      const canvas = await html2canvas(slipRef.current, { scale: 2, useCORS: true, logging: false, width: 700, backgroundColor: '#ffffff' });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'px', [700, 1000]);
-      pdf.addImage(imgData, 'PNG', 0, 0, 700, 1000);
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const marginL = 20, marginR = 190;
+
+      const slate900: [number, number, number] = [15, 23, 42];
+      const slate800: [number, number, number] = [30, 41, 59];
+      const slate400: [number, number, number] = [148, 163, 184];
+      const slate200: [number, number, number] = [226, 232, 240];
+      const slate100: [number, number, number] = [241, 245, 249];
+      const slate50: [number, number, number] = [248, 250, 252];
+      const blue600: [number, number, number] = [37, 99, 235];
+
+      // Bingkai luar dobel, mepet ke tepi kertas
+      pdf.setDrawColor(...slate100);
+      pdf.setLineWidth(1.4);
+      pdf.rect(2, 2, 206, 293);
+      pdf.setLineWidth(0.3);
+      pdf.rect(4.5, 4.5, 201, 288);
+
+      let y = 24;
+
+      // ===== HEADER: Logo kiri, judul + ID kanan =====
+      try {
+        const logo = await loadImageAsDataURL(LOGO_URL);
+        const logoW = 36;
+        const logoH = (logo.height / logo.width) * logoW;
+        pdf.addImage(logo.dataUrl, 'PNG', marginL, y - 8, logoW, logoH);
+      } catch {}
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(15);
+      pdf.setTextColor(...slate800);
+      pdf.text('KUITANSI RESMI', marginR, y, { align: 'right' });
+      pdf.setFontSize(9);
+      pdf.text(`ID: ${p.id.toUpperCase()}`, marginR, y + 6, { align: 'right' });
+
+      y += 18;
+      pdf.setDrawColor(...slate900);
+      pdf.setLineWidth(0.6);
+      pdf.line(marginL, y, marginR, y);
+      y += 12;
+
+      // ===== INFO: Diterima Dari (kiri, besar) / Tanggal Bayar (kanan) =====
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(7);
+      pdf.setTextColor(...slate400);
+      pdf.text('DITERIMA DARI:', marginL, y);
+      pdf.text('TANGGAL BAYAR:', marginR, y, { align: 'right' });
+
+      y += 7;
+      pdf.setFontSize(14);
+      pdf.setTextColor(...slate900);
+      const namaLines = pdf.splitTextToSize(String(p.studentName).toUpperCase(), 110);
+      pdf.text(namaLines, marginL, y);
+
+      pdf.setFontSize(11);
+      pdf.setTextColor(...slate800);
+      pdf.text(formatDateToDMY(p.date).toUpperCase(), marginR, y, { align: 'right' });
+
+      y += namaLines.length * 6 + 8;
+
+      // ===== SECTION: Rincian Paket Pembelajaran (tanpa ikon) =====
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(9);
+      pdf.setTextColor(...slate900);
+      pdf.text('RINCIAN PAKET PEMBELAJARAN', marginL, y);
+      y += 4;
+      pdf.setDrawColor(...slate100);
+      pdf.setLineWidth(0.3);
+      pdf.line(marginL, y, marginR, y);
+      y += 10;
+
+      // Kotak abu-abu berbingkai
+      const boxPadX = 8, boxPadTop = 8;
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(11);
+      const kelasLines = pdf.splitTextToSize(String(p.className).toUpperCase(), (marginR - marginL) - boxPadX * 2);
+      const boxHeight = boxPadTop + 5 + (kelasLines.length * 5.5) + 8 + 10 + 8;
+      const boxTop = y;
+
+      pdf.setFillColor(...slate50);
+      pdf.setDrawColor(...slate900);
+      pdf.setLineWidth(0.6);
+      pdf.roundedRect(marginL, boxTop, marginR - marginL, boxHeight, 4, 4, 'FD');
+
+      let by = boxTop + boxPadTop;
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(7);
+      pdf.setTextColor(...slate400);
+      pdf.text('NAMA PROGRAM/KELAS:', marginL + boxPadX, by);
+      by += 5;
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(11);
+      pdf.setTextColor(...slate800);
+      pdf.text(kelasLines, marginL + boxPadX, by);
+      by += kelasLines.length * 5.5 + 6;
+
+      pdf.setDrawColor(...slate200);
+      pdf.setLineWidth(0.2);
+      pdf.line(marginL + boxPadX, by, marginR - boxPadX, by);
+      by += 8;
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(7);
+      pdf.setTextColor(...slate400);
+      pdf.text('TOTAL SESI PAKET:', marginL + boxPadX, by);
+      pdf.text('DURASI SESI:', marginR - boxPadX, by, { align: 'right' });
+      by += 5;
+      pdf.setFontSize(10);
+      pdf.setTextColor(...slate800);
+      pdf.text('6 SESI', marginL + boxPadX, by);
+      pdf.text('2 JAM / 120 MENIT', marginR - boxPadX, by, { align: 'right' });
+
+      y = boxTop + boxHeight + 12;
+
+      // ===== TOTAL & VERIFIKASI =====
+      pdf.setDrawColor(...slate900);
+      pdf.setLineWidth(0.6);
+      pdf.line(marginL, y, marginR, y);
+      y += 6;
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(8);
+      pdf.setTextColor(...slate400);
+      pdf.text('VERIFIKASI SISTEM:', marginL, y);
+      pdf.text('TERVERIFIKASI DIGITAL', marginR, y, { align: 'right' });
+      y += 5;
+      pdf.setTextColor(...blue600);
+      pdf.text('STATUS: LUNAS', marginR, y, { align: 'right' });
+
+      y += 15;
+      pdf.setFontSize(27);
+      pdf.setTextColor(...blue600);
+      pdf.text(`Rp ${formatRupiah(p.amount)}`, marginL, y);
+      y += 15;
+
+      // ===== FOOTER (tanpa ikon) =====
+      pdf.setDrawColor(...slate200);
+      pdf.setLineWidth(0.3);
+      pdf.line(marginL, y, marginR, y);
+      y += 8;
+
+      pdf.setFont('helvetica', 'italic');
+      pdf.setFontSize(8);
+      pdf.setTextColor(...slate400);
+      const disclaimer = pdf.splitTextToSize(
+        '"Terima kasih atas kepercayaannya bergabung di SANUR Akademi Inspirasi. Pembayaran ini sah diverifikasi sistem internal."',
+        115
+      );
+      pdf.text(disclaimer, marginL, y);
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(10);
+      pdf.setTextColor(...slate900);
+      pdf.text('ADMIN SANUR', marginR, y, { align: 'right' });
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(6);
+      pdf.setTextColor(...slate400);
+      pdf.text('OFFICIAL RECEIPT', marginR, y + 4, { align: 'right' });
+
       pdf.save(`Kuitansi_Sanur_${p.studentName.replace(/\s+/g, '_')}_${p.id.substring(0,8)}.pdf`);
-    } catch (e) { 
-      alert("Gagal download PDF"); 
-    } finally { 
-      setDownloadingPaymentId(null); // 👈 Reset setelah selesai
-      setShowDigitalSlip(null); 
+    } catch (e) {
+      console.error('Gagal generate PDF:', e);
+      alert("Gagal download PDF");
+    } finally {
+      setDownloadingPaymentId(null);
     }
-  }, 500);
-};
+  };
 
   // 🆕 Format angka pakai titik sebagai pemisah ribuan (format Indonesia)
   // Contoh: 720000 -> "720.000"
@@ -1554,15 +1711,6 @@ const completedSessions = studentAttendanceLogs
       
       <div className="fixed left-[-9999px] top-0 pointer-events-none">
          {verifiedCourses.map((course) => { const reportLog = findOfficialReportLog(course); return reportLog ? ( <ReportTemplate key={reportLog.id} reportLog={reportLog} allLogs={reports} studentAttendanceLogs={studentAttendanceLogs} studentName={normalizedUserName} /> ) : null; })}
-         {myPayments.map((p) => (
-            <div id={`slip-digital-${p.id}`} ref={p.id === showDigitalSlip?.id ? slipRef : null} key={p.id} className="bg-white p-12 md:p-20 space-y-10 w-[700px] mx-auto overflow-hidden text-slate-900 border-8 border-double border-slate-100">
-               <div className="flex justify-between items-start border-b-2 border-slate-900 pb-10"><div className="min-w-0 text-left"><img src="https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png" style={{ maxHeight: '90px', width: 'auto', objectFit: 'contain' }} /></div><div className="text-right flex flex-col items-end"><h2 className="text-xl font-black uppercase text-slate-800 leading-none">KUITANSI RESMI</h2><p className="text-[10px] font-black text-slate-800 uppercase tracking-widest mt-2 whitespace-nowrap">ID: {p.id.toUpperCase()}</p></div></div>
-               <div className="grid grid-cols-12 gap-10"><div className="col-span-8 pr-6 border-r border-slate-50 text-left"><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Diterima Dari:</p><p className="text-lg font-black text-slate-900 uppercase Kalimat text-left">{p.studentName}</p></div><div className="col-span-4 text-right"><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Tanggal Bayar:</p><p className="text-base font-black text-slate-800 uppercase Kalimat">{formatDateToDMY(p.date)}</p></div></div>
-               <div className="space-y-6"><div className="flex items-center gap-3 text-slate-900 border-b-2 border-slate-50 pb-2"><p className="text-[10px] font-black uppercase tracking-[0.3em] leading-none">Rincian Paket Pembelajaran</p></div><div className="bg-slate-50 p-8 rounded-[2.5rem] border-2 border-slate-900 flex flex-col gap-6"><div className="text-left"><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Nama Program/Kelas:</p><p className="text-[13px] font-black text-slate-800 uppercase Kalimat text-left">{p.className}</p></div><div className="grid grid-cols-2 gap-8 pt-6 border-t border-slate-200/60"><div className="text-left"><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1 text-left">Total Sesi Paket:</p><p className="text-[12px] font-black text-slate-800 uppercase tracking-tight text-left">6 Sesi</p></div><div className="text-right"><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Durasi Sesi:</p><p className="text-[12px] font-black text-slate-800 uppercase tracking-tight">2 Jam / 120 Menit</p></div></div></div></div>
-               <div className="pt-8 border-t-2 border-slate-900"><div className="flex justify-between items-start min-h-[32px]"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">VERIFIKASI SISTEM:</p><div className="text-right flex flex-col items-end"><p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Terverifikasi Digital</p><p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mt-1">Status: LUNAS</p></div></div><p className="text-5xl font-black text-blue-600 leading-none mt-4 text-left">Rp {formatRupiah(p.amount)}</p></div>
-               <div className="pt-10 border-t border-slate-100 flex justify-between items-end gap-10"><div className="max-w-xs text-left"><p className="text-[10px] font-bold text-slate-400 italic Kalimat text-left">Terima kasih atas kepercayaannya bergabung di SANUR Akademi Inspirasi. Pembayaran ini sah diverifikasi sistem internal.</p></div><div className="text-center flex flex-col items-center shrink-0"><ShieldCheck size={44} className="text-slate-900 opacity-40 mb-2" /><p className="text-[13px] font-black uppercase text-slate-900 tracking-tight leading-none">Admin Sanur</p><p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1.5">Official Receipt</p></div></div>
-            </div>
-         ))}
       </div>
     </div>
     </>
