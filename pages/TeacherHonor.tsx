@@ -3,13 +3,12 @@ import { User, Attendance } from '../types';
 import ModalPortal from '../ModalPortal.tsx';
 import { supabase } from '../services/supabase.ts';
 import { 
-  ShieldCheck, Calendar, UserCheck, Package, ArrowRight,
+  Calendar, UserCheck, Package, ArrowRight,
   ClipboardCheck, Wallet, Edit3, Repeat, Clock, Sparkles,
-  ChevronDown, Filter, Search, X, FileDown, Eye, Layers, Loader2,
+  ChevronDown, Filter, Search, X, FileDown, Eye, Loader2,
   Zap, Info, Trash2, AlertTriangle, Check, CheckCircle2, Maximize2
 } from 'lucide-react';
 import * as ReactRouterDOM from 'react-router-dom';
-import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 
 const { Link, useLocation, useNavigate } = ReactRouterDOM as any;
@@ -59,42 +58,221 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
     return `SN/PAY/${selectedYear}/${cleanId.slice(-6)}`;
   };
 
+  // Muat gambar dari URL jadi data URL (base64), dibutuhin jsPDF buat nempel gambar (addImage).
+  // Sekalian balikin dimensi asli gambarnya biar aspect ratio-nya nggak gepeng pas ditempel.
+  const loadImageAsDataURL = (url: string): Promise<{ dataUrl: string; width: number; height: number }> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { reject(new Error('Canvas context tidak tersedia')); return; }
+        ctx.drawImage(img, 0, 0);
+        resolve({ dataUrl: canvas.toDataURL('image/png'), width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.onerror = () => reject(new Error('Gagal memuat gambar'));
+      img.src = url;
+    });
+  };
+
+  const LOGO_URL = "https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png";
+
   const handleDownloadPdf = async (pkg: any) => {
     setIsDownloading(pkg.id);
-
-    // Pastikan font Inter beneran udah kemuat sempurna sebelum discreenshot.
-    // Sebelumnya pakai delay tetap (800ms) yang cuma nebak — kalau koneksi/device-nya
-    // lambat, font belum kemuat dalam 800ms, hasilnya jatuh ke font fallback bawaan
-    // OS (beda-beda tiap device). document.fonts.ready itu sinyal PASTI dari browser.
     try {
-      if (document.fonts && document.fonts.ready) {
-        await document.fonts.ready;
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const marginL = 20;
+      const marginR = 190;
+
+      // Palet warna (RGB), disamain persis sama warna Tailwind yang dipake di desain web-nya
+      const slate900: [number, number, number] = [15, 23, 42];
+      const slate800: [number, number, number] = [30, 41, 59];
+      const slate400: [number, number, number] = [148, 163, 184];
+      const slate200: [number, number, number] = [226, 232, 240];
+      const slate100: [number, number, number] = [241, 245, 249];
+      const blue600: [number, number, number] = [37, 99, 235];
+      const blue400: [number, number, number] = [96, 165, 250];
+
+      // Bingkai luar dobel (niru efek border-8 border-double)
+      pdf.setDrawColor(...slate100);
+      pdf.setLineWidth(1.4);
+      pdf.rect(8, 8, 194, 281);
+      pdf.setLineWidth(0.3);
+      pdf.rect(10.5, 10.5, 189, 276);
+
+      let y = 24;
+
+      // ===== HEADER: Logo kiri, judul + REF kanan =====
+      try {
+        const logo = await loadImageAsDataURL(LOGO_URL);
+        const logoW = 36;
+        const logoH = (logo.height / logo.width) * logoW;
+        pdf.addImage(logo.dataUrl, 'PNG', marginL, y - 8, logoW, logoH);
+      } catch {
+        // Kalau logo gagal dimuat (misal lagi offline), lanjut tanpa logo — nggak fatal
       }
-    } catch {
-      // Browser lama yang nggak dukung Font Loading API — fallback ke delay kecil
-      await new Promise(resolve => setTimeout(resolve, 800));
-    }
 
-    const element = document.getElementById(`hidden-slip-${pkg.id}`);
-    if (!element) {
-      alert("Gagal memproses slip digital.");
-      setIsDownloading(null);
-      return;
-    }
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(15);
+      pdf.setTextColor(...slate800);
+      pdf.text('SLIP HONOR DIGITAL', marginR, y, { align: 'right' });
+      pdf.setFontSize(9);
+      pdf.text(`REF: ${generateProRef(pkg.id)}`, marginR, y + 6, { align: 'right' });
 
-    try {
-      const canvas = await html2canvas(element, { 
-        scale: 2, 
-        useCORS: true, 
-        logging: false, 
-        width: 700,
-        backgroundColor: '#ffffff'
+      y += 18;
+      pdf.setDrawColor(...slate900);
+      pdf.setLineWidth(0.6);
+      pdf.line(marginL, y, marginR, y);
+      y += 10;
+
+      // ===== INFO GRID: Nama Pengajar / Ruangan Kelas / Tanggal Terbit =====
+      const col1X = marginL, col2X = marginL + 52, col3X = marginR;
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(7);
+      pdf.setTextColor(...slate400);
+      pdf.text('NAMA PENGAJAR:', col1X, y);
+      pdf.text('RUANGAN KELAS:', col2X, y);
+      pdf.text('TANGGAL TERBIT:', col3X, y, { align: 'right' });
+
+      y += 6;
+      pdf.setFontSize(11);
+      pdf.setTextColor(...slate900);
+      const namaLines = pdf.splitTextToSize(user.name, 48);
+      pdf.text(namaLines, col1X, y);
+
+      pdf.setTextColor(...slate800);
+      const kelasLines = pdf.splitTextToSize(String(pkg.fullClassName).toUpperCase(), 60);
+      pdf.text(kelasLines, col2X, y);
+
+      pdf.setTextColor(...blue600);
+      pdf.text(formatDate(pkg.paidDate || pkg.lastUpdate).toUpperCase(), col3X, y, { align: 'right' });
+
+      y += (Math.max(namaLines.length, kelasLines.length) - 1) * 5;
+
+      if (pkg.category === 'PRIVATE') {
+        y += 7;
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(6);
+        pdf.setTextColor(...blue400);
+        pdf.text('SISWA PRIVATE:', col2X, y);
+        y += 5;
+        pdf.setFontSize(10);
+        pdf.setTextColor(...blue600);
+        pdf.text(String(pkg.studentName).toUpperCase(), col2X, y);
+      }
+
+      y += 13;
+
+      // ===== SECTION HEADER: Rincian Per Sesi (ikon "layers" digambar manual pake garis) =====
+      pdf.setDrawColor(...slate900);
+      pdf.setLineWidth(0.5);
+      pdf.line(marginL, y - 1.5, marginL + 3.5, y - 1.5);
+      pdf.line(marginL + 0.7, y, marginL + 4.2, y);
+      pdf.line(marginL + 1.4, y + 1.5, marginL + 4.9, y + 1.5);
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(9);
+      pdf.setTextColor(...slate900);
+      pdf.text('RINCIAN PER SESI', marginL + 9, y + 1);
+
+      y += 4;
+      pdf.setDrawColor(...slate100);
+      pdf.setLineWidth(0.3);
+      pdf.line(marginL, y, marginR, y);
+      y += 9;
+
+      // ===== TABEL SESI =====
+      pkg.paidSessionsDetails.forEach((s: any, idx: number) => {
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(9);
+        pdf.setTextColor(...slate400);
+        pdf.text(String(s.sessionNumber), marginL + 3, y, { align: 'center' });
+
+        pdf.setFontSize(10);
+        pdf.setTextColor(...slate800);
+        pdf.text(formatDate(s.date).toUpperCase(), marginL + 13, y);
+
+        pdf.setFontSize(9);
+        pdf.setTextColor(...blue600);
+        pdf.text(`${s.duration || 2} JAM`, marginL + 100, y, { align: 'center' });
+
+        pdf.setFontSize(10);
+        pdf.setTextColor(...slate900);
+        pdf.text(`Rp ${formatRupiah(s.earnings)}`, marginR, y, { align: 'right' });
+
+        y += 7;
+        if (idx < pkg.paidSessionsDetails.length - 1) {
+          pdf.setDrawColor(...slate100);
+          pdf.setLineWidth(0.2);
+          pdf.line(marginL, y - 3, marginR, y - 3);
+        }
+        y += 3;
       });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'px', [700, 1000]);
-      pdf.addImage(imgData, 'PNG', 0, 0, 700, 1000);
+
+      y += 3;
+
+      // ===== TOTAL & VERIFIKASI =====
+      pdf.setDrawColor(...slate900);
+      pdf.setLineWidth(0.6);
+      pdf.line(marginL, y, marginR, y);
+      y += 6;
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(8);
+      pdf.setTextColor(...slate400);
+      pdf.text('VERIFIKASI SISTEM:', marginL, y);
+      pdf.text('TERVERIFIKASI DIGITAL', marginR, y, { align: 'right' });
+
+      y += 5;
+      pdf.setTextColor(...blue600);
+      pdf.text('STATUS: LUNAS', marginR, y, { align: 'right' });
+
+      y += 15;
+      pdf.setFontSize(27);
+      pdf.setTextColor(...blue600);
+      pdf.text(`Rp ${formatRupiah(pkg.myTotalPaid)}`, marginL, y);
+
+      y += 15;
+
+      // ===== FOOTER =====
+      pdf.setDrawColor(...slate200);
+      pdf.setLineWidth(0.3);
+      pdf.line(marginL, y, marginR, y);
+      y += 8;
+
+      pdf.setFont('helvetica', 'italic');
+      pdf.setFontSize(8);
+      pdf.setTextColor(...slate400);
+      const disclaimer = pdf.splitTextToSize(
+        '"Terima kasih atas kepercayaannya bergabung di SANUR Akademi Inspirasi. Slip ini adalah bukti pembayaran sah yang diverifikasi sistem internal."',
+        100
+      );
+      pdf.text(disclaimer, marginL, y);
+
+      // Ikon "terverifikasi" sederhana: lingkaran + centang (niru ShieldCheck)
+      const iconCx = marginR - 10, iconCy = y - 2;
+      pdf.setDrawColor(...slate400);
+      pdf.setLineWidth(0.4);
+      pdf.circle(iconCx, iconCy, 4, 'S');
+      pdf.setLineWidth(0.6);
+      pdf.line(iconCx - 2, iconCy, iconCx - 0.5, iconCy + 1.5);
+      pdf.line(iconCx - 0.5, iconCy + 1.5, iconCx + 2.2, iconCy - 1.8);
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(10);
+      pdf.setTextColor(...slate900);
+      pdf.text('FINANCE SANUR', marginR, y + 10, { align: 'right' });
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(6);
+      pdf.setTextColor(...slate400);
+      pdf.text('OFFICIAL DIGITAL SLIP', marginR, y + 14, { align: 'right' });
+
       pdf.save(`SLIP_HONOR_${user.name.replace(/[.,]/g, '').replace(/\s+/g, '_')}_${pkg.id.slice(-8)}.pdf`);
     } catch (e) {
+      console.error('Gagal generate PDF:', e);
       alert("Gagal mengunduh PDF. Coba lagi ya Kak!");
     } finally {
       setIsDownloading(null);
@@ -490,83 +668,6 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                <p className="font-black text-[11px] uppercase tracking-[0.4em] italic leading-relaxed text-center">Belum ada riwayat honor di tahun {selectedYear}</p>
             </div>
          )}
-      </div>
-
-<div className="fixed left-[-9999px] top-0 pointer-events-none">
-        {cycleGroups.filter(p => p.status === 'LUNAS').map(pkg => (
-          <div id={`hidden-slip-${pkg.id}`} key={`slip-${pkg.id}`} className="bg-white p-12 md:p-20 space-y-8 w-[700px] mx-auto overflow-hidden text-slate-900 border-8 border-double border-slate-100">
-            <div className="flex justify-between items-start border-b-2 border-slate-900 pb-10">
-              <div className="min-w-0 text-left">
-                <img src="https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png" style={{ maxHeight: '90px', width: 'auto', objectFit: 'contain' }} />
-              </div>
-              <div className="text-right flex flex-col items-end">
-                <h2 className="text-xl font-black uppercase text-slate-800 leading-none">SLIP HONOR DIGITAL</h2>
-                <p className="text-[10px] font-black text-slate-800 uppercase tracking-widest mt-2 whitespace-nowrap">REF: {generateProRef(pkg.id)}</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-12 gap-8">
-              <div className="col-span-4 pr-6 border-r border-slate-50">
-                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Nama Pengajar:</p>
-                <p className="text-[13px] font-black text-slate-900 leading-tight">{user.name}</p>
-              </div>
-              <div className="col-span-5 pr-6 border-r border-slate-50">
-                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Ruangan Kelas:</p>
-                <p className="text-[13px] font-bold text-slate-800 uppercase leading-tight">{pkg.fullClassName}</p>
-                {pkg.category === 'PRIVATE' && (
-                  <div className="mt-2">
-                    <p className="text-[7px] font-black text-blue-400 uppercase tracking-widest">Siswa Private:</p>
-                    <p className="text-[11px] font-black text-blue-600 uppercase leading-none">{pkg.studentName}</p>
-                  </div>
-                )}
-              </div>
-              <div className="col-span-3 text-right">
-                <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-1">Tanggal Terbit:</p>
-                <p className="text-[13px] font-black text-blue-600 uppercase leading-tight">{formatDate(pkg.paidDate || pkg.lastUpdate)}</p>
-              </div>
-            </div>
-            <div className="space-y-4">
-              <div className="flex items-center gap-3 text-slate-900 border-b-2 border-slate-50 pb-2">
-                <p className="text-[10px] font-black uppercase tracking-[0.3em] leading-none">Rincian Per Sesi</p>
-              </div>
-              <table className="w-full text-left table-fixed">
-                <tbody className="divide-y divide-slate-50">
-                  {pkg.paidSessionsDetails.map((s: any, idx: number) => (
-                    <tr key={idx} className="align-middle">
-                      <td className="py-4 text-center font-black text-slate-400 text-[11px] w-12">{s.sessionNumber}</td>
-                      <td className="py-4 px-4">
-                        <p className="font-black text-slate-800 text-[13px] uppercase leading-tight">{formatDate(s.date)}</p>
-                      </td>
-                      <td className="py-4 text-center w-24">
-                        <span className="text-blue-600 font-black text-[11px] uppercase tracking-wide">{s.duration || 2} JAM</span>
-                      </td>
-                      <td className="py-4 text-right font-black text-slate-900 text-[13px]">Rp {formatRupiah(s.earnings)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-            <div className="pt-8 border-t-2 border-slate-900">
-              <div className="flex justify-between items-start min-h-[32px]">
-                <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">VERIFIKASI SISTEM:</p>
-                <div className="text-right flex flex-col items-end">
-                  <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest">Terverifikasi Digital</p>
-                  <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mt-1">Status: LUNAS</p>
-                </div>
-              </div>
-              <p className="text-5xl font-black text-blue-600 leading-none mt-4 text-left">Rp {formatRupiah(pkg.myTotalPaid)}</p>
-            </div>
-            <div className="pt-10 border-t border-slate-100 flex justify-between items-end gap-10">
-              <div className="max-w-xs text-left">
-                <p className="text-[10px] font-bold text-slate-400 italic leading-relaxed text-left">Terima kasih atas kepercayaannya bergabung di SANUR Akademi Inspirasi. Slip ini adalah bukti pembayaran sah yang diverifikasi sistem internal.</p>
-              </div>
-              <div className="text-center flex flex-col items-center shrink-0">
-                <ShieldCheck size={44} className="text-slate-900 opacity-40 mb-2" />
-                <p className="text-[13px] font-black uppercase text-slate-900 tracking-tight leading-none">Finance Sanur</p>
-                <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1.5">Official Digital Slip</p>
-              </div>
-            </div>
-          </div>
-        ))}
       </div>
 
       {showProofModal && (
