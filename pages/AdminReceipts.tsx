@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Receipt, ShieldCheck, ClipboardList, Loader2, Download, AlertCircle, CheckCircle2, Sparkles, Plus, Trash2, X, TrendingUp, TrendingDown, Database } from 'lucide-react';
+import { Receipt, ClipboardList, Loader2, Download, AlertCircle, CheckCircle2, Sparkles, Plus, Trash2, X, TrendingUp, TrendingDown, Database } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { supabase } from '../services/supabase.ts';
 import * as ReactRouterDOM from 'react-router-dom';
@@ -761,7 +761,6 @@ const isFormValid = () => {
                 {/* Payment Details */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-3 text-slate-800 border-b-2 border-slate-100 pb-2">
-                    <ClipboardList size={14} />
                     <p className="text-[10px] font-black uppercase tracking-[0.3em]">
                       Rincian {generatedReceipt.type === 'income' ? 'Pembayaran' : 'Pengeluaran'}
                     </p>
@@ -822,7 +821,7 @@ const isFormValid = () => {
                 </div>
 
                 {/* Footer */}
-                <div className="pt-10 border-t border-slate-100 flex justify-between items-end gap-10">
+                <div className="pt-10 border-t border-slate-100 flex justify-between items-start gap-10">
                   <div className="max-w-xs text-left">
                     <p className="text-[10px] font-bold text-slate-400 italic text-left">
                       {generatedReceipt.type === 'income' 
@@ -831,8 +830,7 @@ const isFormValid = () => {
                       }
                     </p>
                   </div>
-                  <div className="text-center flex flex-col items-center shrink-0">
-                    <ShieldCheck size={44} className="text-slate-900 opacity-40 mb-2" />
+                  <div className="text-right flex flex-col items-end shrink-0">
                     <p className="text-[13px] font-black uppercase text-slate-900 tracking-tight leading-none">Admin Sanur</p>
                     <p className="text-[8px] font-bold text-slate-400 uppercase tracking-[0.3em] mt-1.5">Official Receipt</p>
                   </div>
