@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Receipt, ClipboardList, Loader2, Download, AlertCircle, CheckCircle2, Sparkles, Plus, Trash2, X, TrendingUp, TrendingDown, Database } from 'lucide-react';
+import { Receipt, ClipboardList, Loader2, Download, AlertCircle, CheckCircle2, Sparkles, Plus, Trash2, X, TrendingUp, TrendingDown, Database, Menu } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { supabase } from '../services/supabase.ts';
 import * as ReactRouterDOM from 'react-router-dom';
@@ -273,11 +273,19 @@ const isFormValid = () => {
 
       y += namaLines.length * 6 + 8;
 
-      // ===== SECTION: Rincian Pembayaran/Pengeluaran (tanpa ikon) =====
+      // ===== SECTION: Rincian Pembayaran/Pengeluaran (dengan ikon garis tiga) =====
+      const sectionIconW = 3.5;
+      const sectionIconGap = 2.2;
+      pdf.setDrawColor(...slate800);
+      pdf.setLineWidth(0.6);
+      pdf.line(marginL, y - 2.6, marginL + sectionIconW, y - 2.6);
+      pdf.line(marginL, y - 1.3, marginL + sectionIconW, y - 1.3);
+      pdf.line(marginL, y, marginL + sectionIconW, y);
+
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(9);
       pdf.setTextColor(...slate800);
-      pdf.text(`RINCIAN ${isIncome ? 'PEMBAYARAN' : 'PENGELUARAN'}`, marginL, y);
+      pdf.text(`RINCIAN ${isIncome ? 'PEMBAYARAN' : 'PENGELUARAN'}`, marginL + sectionIconW + sectionIconGap, y);
       y += 4;
       pdf.setDrawColor(...slate100);
       pdf.setLineWidth(0.3);
@@ -288,7 +296,7 @@ const isFormValid = () => {
       const descX = marginL, qtyMidX = 115, amountRightX = marginR;
       generatedReceipt.items.forEach((item: any, idx: number) => {
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(10);
+        pdf.setFontSize(9);
         pdf.setTextColor(...slate800);
         const descLines = pdf.splitTextToSize(String(item.description).toUpperCase(), 65);
         pdf.text(descLines, descX, y);
@@ -301,7 +309,7 @@ const isFormValid = () => {
         }
 
         pdf.setFont('helvetica', 'bold');
-        pdf.setFontSize(10);
+        pdf.setFontSize(9);
         pdf.setTextColor(...slate800);
         pdf.text(`Rp ${Number(item.amount).toLocaleString('id-ID')}`, amountRightX, y, { align: 'right' });
 
@@ -761,6 +769,7 @@ const isFormValid = () => {
                 {/* Payment Details */}
                 <div className="space-y-6">
                   <div className="flex items-center gap-3 text-slate-800 border-b-2 border-slate-100 pb-2">
+                    <Menu size={14} strokeWidth={2.5} className="shrink-0" />
                     <p className="text-[10px] font-black uppercase tracking-[0.3em]">
                       Rincian {generatedReceipt.type === 'income' ? 'Pembayaran' : 'Pengeluaran'}
                     </p>
