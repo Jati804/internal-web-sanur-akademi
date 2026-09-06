@@ -817,22 +817,17 @@ const handleDownloadPDFReport = async (course: any) => {
 
       y += namaLines.length * 6 + 8;
 
-      // ===== SECTION: Rincian Paket Pembelajaran (ikon "kartu/dokumen" kecil) =====
-      // Kotak kecil + garis-garis di dalamnya, niru bentuk 1 lembar dokumen —
-      // beda konsep sama ikon "layers" di Slip Honor (yang niru tumpukan beberapa sesi),
-      // soalnya di sini konteksnya 1 PAKET (1 dokumen), bukan beberapa hal ditumpuk.
+      // ===== SECTION: Rincian Paket Pembelajaran (ikon "layers" garis 3) =====
       pdf.setDrawColor(...slate900);
-      pdf.setLineWidth(0.35);
-      pdf.roundedRect(marginL, y - 3.6, 3.6, 4.6, 0.5, 0.5, 'S');
-      pdf.setLineWidth(0.25);
-      pdf.line(marginL + 0.8, y - 2.2, marginL + 2.8, y - 2.2);
-      pdf.line(marginL + 0.8, y - 1.2, marginL + 2.8, y - 1.2);
-      pdf.line(marginL + 0.8, y - 0.2, marginL + 2, y - 0.2);
+      pdf.setLineWidth(0.5);
+      pdf.line(marginL, y - 3.5, marginL + 3.5, y - 3.5);
+      pdf.line(marginL + 0.7, y - 2, marginL + 4.2, y - 2);
+      pdf.line(marginL + 1.4, y - 0.5, marginL + 4.9, y - 0.5);
 
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(9);
       pdf.setTextColor(...slate900);
-      pdf.text('RINCIAN PAKET PEMBELAJARAN', marginL + 6, y);
+      pdf.text('RINCIAN PAKET PEMBELAJARAN', marginL + 8, y);
       y += 4;
       pdf.setDrawColor(...slate100);
       pdf.setLineWidth(0.3);
