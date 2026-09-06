@@ -1,6 +1,5 @@
 import React, { useState, useRef } from 'react';
 import { Receipt, ShieldCheck, ClipboardList, Loader2, Download, AlertCircle, CheckCircle2, Sparkles, Plus, Trash2, X, TrendingUp, TrendingDown, Database } from 'lucide-react';
-import html2canvas from 'html2canvas';
 import { jsPDF } from 'jspdf';
 import { supabase } from '../services/supabase.ts';
 import * as ReactRouterDOM from 'react-router-dom';
@@ -187,38 +186,205 @@ const isFormValid = () => {
     }
   };
 
+  // Muat gambar dari URL jadi data URL (base64), dibutuhin jsPDF buat nempel gambar (addImage).
+  const loadImageAsDataURL = (url: string): Promise<{ dataUrl: string; width: number; height: number }> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { reject(new Error('Canvas context tidak tersedia')); return; }
+        ctx.drawImage(img, 0, 0);
+        resolve({ dataUrl: canvas.toDataURL('image/png'), width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.onerror = () => reject(new Error('Gagal memuat gambar'));
+      img.src = url;
+    });
+  };
+
+  const LOGO_URL = "https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png";
+
   const handleDownloadPDF = async () => {
-    if (!slipRef.current || !generatedReceipt) return;
-    
+    if (!generatedReceipt) return;
+
     setDownloading(true);
     try {
-      // Tailwind versi CDN nge-generate CSS buat class warna yang baru PERTAMA KALI muncul
-      // di halaman secara async (misal 'orange-*' cuma kepake pas preview Bon Pengeluaran
-      // pertama kali di-generate, beda sama 'blue-*' yang udah dipake dari awal halaman kebuka).
-      // Kasih jeda 2 frame biar CSS-nya beneran ke-inject dulu sebelum discreenshot.
-      await new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const marginL = 20, marginR = 190;
+      const isIncome = generatedReceipt.type === 'income';
 
-      const canvas = await html2canvas(slipRef.current, {
-        scale: 2,
-        useCORS: true,
-        logging: false,
-        backgroundColor: '#ffffff'
+      const slate900: [number, number, number] = [15, 23, 42];
+      const slate800: [number, number, number] = [30, 41, 59];
+      const slate400: [number, number, number] = [148, 163, 184];
+      const slate200: [number, number, number] = [226, 232, 240];
+      const slate100: [number, number, number] = [241, 245, 249];
+      // Warna aksen ikut jenis dokumen: biru buat Kuitansi, oranye buat Bon
+      const accentDark: [number, number, number] = isIncome ? [29, 78, 216] : [234, 88, 12];   // blue-700 / orange-600
+      const accentMid: [number, number, number] = isIncome ? [37, 99, 235] : [249, 115, 22];    // blue-600 / orange-500
+      const accentBorder: [number, number, number] = isIncome ? [191, 219, 254] : [254, 215, 170]; // blue-200 / orange-200
+
+      // Bingkai luar dobel, mepet ke tepi kertas
+      pdf.setDrawColor(...slate100);
+      pdf.setLineWidth(1.4);
+      pdf.rect(2, 2, 206, 293);
+      pdf.setLineWidth(0.3);
+      pdf.rect(4.5, 4.5, 201, 288);
+
+      let y = 24;
+
+      // ===== HEADER: Logo kiri, judul + ID kanan =====
+      try {
+        const logo = await loadImageAsDataURL(LOGO_URL);
+        const logoW = 36;
+        const logoH = (logo.height / logo.width) * logoW;
+        pdf.addImage(logo.dataUrl, 'PNG', marginL, y - 8, logoW, logoH);
+      } catch {}
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(15);
+      pdf.setTextColor(...accentDark);
+      pdf.text(isIncome ? 'KUITANSI RESMI' : 'BON PENGELUARAN', marginR, y, { align: 'right' });
+      pdf.setFontSize(9);
+      pdf.setTextColor(...slate800);
+      pdf.text(`ID: ${generatedReceipt.id}`, marginR, y + 6, { align: 'right' });
+
+      y += 18;
+      pdf.setDrawColor(...slate900);
+      pdf.setLineWidth(0.6);
+      pdf.line(marginL, y, marginR, y);
+      y += 12;
+
+      // ===== INFO: Diterima Dari / Dibayar Kepada (kiri, besar) / Tanggal (kanan) =====
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(7);
+      pdf.setTextColor(...slate400);
+      pdf.text(isIncome ? 'DITERIMA DARI:' : 'DIBAYAR KEPADA:', marginL, y);
+      pdf.text('TANGGAL:', marginR, y, { align: 'right' });
+
+      y += 7;
+      pdf.setFontSize(14);
+      pdf.setTextColor(...slate900);
+      const namaLines = pdf.splitTextToSize(String(generatedReceipt.receivedFrom).toUpperCase(), 110);
+      pdf.text(namaLines, marginL, y);
+      pdf.text(formatDateToDMY(generatedReceipt.date).toUpperCase(), marginR, y, { align: 'right' });
+
+      y += namaLines.length * 6 + 8;
+
+      // ===== SECTION: Rincian Pembayaran/Pengeluaran (tanpa ikon) =====
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(9);
+      pdf.setTextColor(...slate800);
+      pdf.text(`RINCIAN ${isIncome ? 'PEMBAYARAN' : 'PENGELUARAN'}`, marginL, y);
+      y += 4;
+      pdf.setDrawColor(...slate100);
+      pdf.setLineWidth(0.3);
+      pdf.line(marginL, y, marginR, y);
+      y += 8;
+
+      // ===== TABEL ITEM (gaya struk) =====
+      const descX = marginL, qtyMidX = 115, amountRightX = marginR;
+      generatedReceipt.items.forEach((item: any, idx: number) => {
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(10);
+        pdf.setTextColor(...slate800);
+        const descLines = pdf.splitTextToSize(String(item.description).toUpperCase(), 65);
+        pdf.text(descLines, descX, y);
+
+        if (Number(item.qty) > 1) {
+          pdf.setFont('helvetica', 'normal');
+          pdf.setFontSize(8);
+          pdf.setTextColor(...slate400);
+          pdf.text(`${item.qty} X RP ${Number(item.price).toLocaleString('id-ID')}`, qtyMidX, y, { align: 'center' });
+        }
+
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(10);
+        pdf.setTextColor(...slate800);
+        pdf.text(`Rp ${Number(item.amount).toLocaleString('id-ID')}`, amountRightX, y, { align: 'right' });
+
+        y += descLines.length * 5 + 3;
+        if (idx < generatedReceipt.items.length - 1) {
+          pdf.setDrawColor(...slate100);
+          pdf.setLineWidth(0.2);
+          pdf.line(marginL, y - 1.5, marginR, y - 1.5);
+        }
+        y += 3;
       });
 
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF({
-        orientation: 'portrait',
-        unit: 'mm',
-        format: 'a4'
-      });
+      y += 2;
 
-      const imgWidth = 210;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
-      
-      pdf.addImage(imgData, 'PNG', 0, 0, imgWidth, imgHeight);
-      const docType = generatedReceipt.type === 'income' ? 'KUITANSI' : 'BON';
+      // ===== TOTAL + METODE PEMBAYARAN =====
+      pdf.setDrawColor(...accentBorder);
+      pdf.setLineWidth(0.6);
+      pdf.line(marginL, y, marginR, y);
+      y += 6;
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(9);
+      pdf.setTextColor(...accentDark);
+      pdf.text('TOTAL', marginL, y);
+      pdf.text(`Rp ${generatedReceipt.total.toLocaleString('id-ID')}`, marginR, y, { align: 'right' });
+
+      y += 6;
+      pdf.setTextColor(...slate400);
+      pdf.text('METODE PEMBAYARAN', marginL, y);
+      pdf.setTextColor(...accentMid);
+      pdf.text(String(generatedReceipt.paymentMethod).toUpperCase(), marginR, y, { align: 'right' });
+
+      y += 10;
+
+      // ===== VERIFIKASI & TOTAL BESAR =====
+      pdf.setDrawColor(...slate900);
+      pdf.setLineWidth(0.6);
+      pdf.line(marginL, y, marginR, y);
+      y += 6;
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(8);
+      pdf.setTextColor(...slate400);
+      pdf.text('VERIFIKASI SISTEM:', marginL, y);
+      pdf.text('TERVERIFIKASI DIGITAL', marginR, y, { align: 'right' });
+      y += 5;
+      pdf.setTextColor(...accentMid);
+      pdf.text(`STATUS: ${isIncome ? 'LUNAS' : 'TERBAYAR'}`, marginR, y, { align: 'right' });
+
+      y += 15;
+      pdf.setFontSize(27);
+      pdf.setTextColor(...accentMid);
+      pdf.text(`Rp ${generatedReceipt.total.toLocaleString('id-ID')}`, marginL, y);
+      y += 15;
+
+      // ===== FOOTER (tanpa ikon) =====
+      pdf.setDrawColor(...slate200);
+      pdf.setLineWidth(0.3);
+      pdf.line(marginL, y, marginR, y);
+      y += 8;
+
+      pdf.setFont('helvetica', 'italic');
+      pdf.setFontSize(8);
+      pdf.setTextColor(...slate400);
+      const disclaimer = pdf.splitTextToSize(
+        isIncome
+          ? 'Kuitansi ini sah sebagai bukti pembayaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal.'
+          : 'Bon ini sah sebagai bukti pengeluaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal.',
+        115
+      );
+      pdf.text(disclaimer, marginL, y);
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(10);
+      pdf.setTextColor(...slate900);
+      pdf.text('ADMIN SANUR', marginR, y, { align: 'right' });
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(6);
+      pdf.setTextColor(...slate400);
+      pdf.text('OFFICIAL RECEIPT', marginR, y + 4, { align: 'right' });
+
+      const docType = isIncome ? 'KUITANSI' : 'BON';
       pdf.save(`${docType}_${generatedReceipt.id}_${generatedReceipt.receivedFrom.replace(/\s+/g, '_')}.pdf`);
-      
     } catch (error) {
       console.error('Error generating PDF:', error);
       alert('Gagal membuat PDF. Silakan coba lagi.');
