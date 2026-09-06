@@ -179,7 +179,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(9);
       pdf.setTextColor(...slate900);
-      pdf.text('RINCIAN PER SESI', marginL + 13, y + 1);
+      pdf.text('RINCIAN PER SESI', marginL, y + 1);
 
       y += 4;
       pdf.setDrawColor(...slate100);
