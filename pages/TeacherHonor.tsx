@@ -96,12 +96,12 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
       const blue600: [number, number, number] = [37, 99, 235];
       const blue400: [number, number, number] = [96, 165, 250];
 
-      // Bingkai luar dobel (niru efek border-8 border-double)
+      // Bingkai luar dobel (niru efek border-8 border-double), mepet ke tepi kertas
       pdf.setDrawColor(...slate100);
       pdf.setLineWidth(1.4);
-      pdf.rect(8, 8, 194, 281);
+      pdf.rect(2, 2, 206, 293);
       pdf.setLineWidth(0.3);
-      pdf.rect(10.5, 10.5, 189, 276);
+      pdf.rect(4.5, 4.5, 201, 288);
 
       let y = 24;
 
@@ -129,26 +129,31 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
       y += 10;
 
       // ===== INFO GRID: Nama Pengajar / Ruangan Kelas / Tanggal Terbit =====
-      const col1X = marginL, col2X = marginL + 52, col3X = marginR;
+      // 3 kolom lebar SAMA RATA & rata kiri semua, biar jaraknya konsisten
+      // nggak peduli seberapa panjang/pendek isi tiap kolom.
+      const colWidth = (marginR - marginL) / 3; // ~56.6mm per kolom
+      const col1X = marginL, col2X = marginL + colWidth, col3X = marginL + colWidth * 2;
+      const colGap = 6; // jarak aman dari kolom sebelah biar teks nggak mepet
+
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(7);
       pdf.setTextColor(...slate400);
       pdf.text('NAMA PENGAJAR:', col1X, y);
       pdf.text('RUANGAN KELAS:', col2X, y);
-      pdf.text('TANGGAL TERBIT:', col3X, y, { align: 'right' });
+      pdf.text('TANGGAL TERBIT:', col3X, y);
 
       y += 6;
       pdf.setFontSize(11);
       pdf.setTextColor(...slate900);
-      const namaLines = pdf.splitTextToSize(user.name, 48);
+      const namaLines = pdf.splitTextToSize(user.name, colWidth - colGap);
       pdf.text(namaLines, col1X, y);
 
       pdf.setTextColor(...slate800);
-      const kelasLines = pdf.splitTextToSize(String(pkg.fullClassName).toUpperCase(), 60);
+      const kelasLines = pdf.splitTextToSize(String(pkg.fullClassName).toUpperCase(), colWidth - colGap);
       pdf.text(kelasLines, col2X, y);
 
       pdf.setTextColor(...blue600);
-      pdf.text(formatDate(pkg.paidDate || pkg.lastUpdate).toUpperCase(), col3X, y, { align: 'right' });
+      pdf.text(formatDate(pkg.paidDate || pkg.lastUpdate).toUpperCase(), col3X, y);
 
       y += (Math.max(namaLines.length, kelasLines.length) - 1) * 5;
 
@@ -250,25 +255,35 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
         '"Terima kasih atas kepercayaannya bergabung di SANUR Akademi Inspirasi. Slip ini adalah bukti pembayaran sah yang diverifikasi sistem internal."',
         100
       );
-      pdf.text(disclaimer, marginL, y);
 
-      // Ikon "terverifikasi" sederhana: lingkaran + centang (niru ShieldCheck)
+      // Seimbangin tinggi paragraf "terima kasih" (kiri) sama tinggi kolom ikon (kanan) —
+      // dihitung biar dua-duanya vertically-centered sejajar, bukan nempel di atas doang.
+      const lineHeight = 3.6;
+      const rightColTop = y - 6; // dikit di atas y, karena lingkaran mulai dari iconCy - radius
+      const rightColBottom = y + 15;
+      const leftColHeight = disclaimer.length * lineHeight;
+      const leftColStart = rightColTop + ((rightColBottom - rightColTop) - leftColHeight) / 2 + lineHeight;
+
+      pdf.text(disclaimer, marginL, leftColStart);
+
+      // Ikon "terverifikasi" sederhana: lingkaran + centang (niru ShieldCheck).
+      // Centang-nya dibikin simetris kiri-kanan biar pas di tengah lingkaran, nggak menjorok.
       const iconCx = marginR - 10, iconCy = y - 2;
       pdf.setDrawColor(...slate400);
       pdf.setLineWidth(0.4);
       pdf.circle(iconCx, iconCy, 4, 'S');
       pdf.setLineWidth(0.6);
-      pdf.line(iconCx - 2, iconCy, iconCx - 0.5, iconCy + 1.5);
-      pdf.line(iconCx - 0.5, iconCy + 1.5, iconCx + 2.2, iconCy - 1.8);
+      pdf.line(iconCx - 1.8, iconCy, iconCx - 0.3, iconCy + 1.5);
+      pdf.line(iconCx - 0.3, iconCy + 1.5, iconCx + 1.8, iconCy - 1.5);
 
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(10);
       pdf.setTextColor(...slate900);
-      pdf.text('FINANCE SANUR', marginR, y + 10, { align: 'right' });
+      pdf.text('FINANCE SANUR', iconCx, y + 10, { align: 'center' });
       pdf.setFont('helvetica', 'normal');
       pdf.setFontSize(6);
       pdf.setTextColor(...slate400);
-      pdf.text('OFFICIAL DIGITAL SLIP', marginR, y + 14, { align: 'right' });
+      pdf.text('OFFICIAL DIGITAL SLIP', iconCx, y + 14, { align: 'center' });
 
       pdf.save(`SLIP_HONOR_${user.name.replace(/[.,]/g, '').replace(/\s+/g, '_')}_${pkg.id.slice(-8)}.pdf`);
     } catch (e) {
