@@ -820,9 +820,9 @@ const handleDownloadPDFReport = async (course: any) => {
       // ===== SECTION: Rincian Paket Pembelajaran (ikon "layers" garis 3) =====
       pdf.setDrawColor(...slate900);
       pdf.setLineWidth(0.5);
-      pdf.line(marginL, y - 3.5, marginL + 3.5, y - 3.5);
-      pdf.line(marginL + 0.7, y - 2, marginL + 4.2, y - 2);
-      pdf.line(marginL + 1.4, y - 0.5, marginL + 4.9, y - 0.5);
+      pdf.line(marginL, y - 2.5, marginL + 3.5, y - 2.5);
+      pdf.line(marginL + 0.7, y - 1, marginL + 4.2, y - 1);
+      pdf.line(marginL + 1.4, y + 0.5, marginL + 4.9, y + 0.5);
 
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(9);
