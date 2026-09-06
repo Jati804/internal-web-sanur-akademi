@@ -175,13 +175,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
 
       y += 13;
 
-      // ===== SECTION HEADER: Rincian Per Sesi (ikon "layers" digambar manual pake garis) =====
-      pdf.setDrawColor(...slate900);
-      pdf.setLineWidth(0.5);
-      pdf.line(marginL + 1.25, y - 1.6, marginL + 4.75, y - 1.6);
-      pdf.line(marginL + 1.25, y - 0.1, marginL + 4.75, y - 0.1);
-      pdf.line(marginL + 1.25, y + 1.4, marginL + 4.75, y + 1.4);
-
+      /// ===== SECTION HEADER: Rincian Per Sesi =====
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(9);
       pdf.setTextColor(...slate900);
