@@ -470,7 +470,7 @@ const handleDownloadPDFReport = async (course: any) => {
       <div style="flex:1; padding:0 35px; overflow:hidden; text-align:left;">
         <span style="font-weight:800; color:#1e293b; font-size:14px; text-transform:uppercase; letter-spacing:-0.005em; line-height:1.25; display:block;">${topics[i] || 'Materi Pembelajaran'}</span>
       </div>
-      <div style="width:120px; flex-shrink:0; display:flex; align-items:baseline; justify-content:center; gap:3px; align-self:stretch; border-left:1px solid #f1f5f9; background:${isPass ? 'rgba(37, 99, 235, 0.05)' : 'rgba(234, 88, 12, 0.05)'};">
+      <div style="width:234px; flex-shrink:0; display:flex; align-items:center; justify-content:center; gap:3px; align-self:stretch; border-left:1px solid #f1f5f9; background:${isPass ? 'rgba(37, 99, 235, 0.05)' : 'rgba(234, 88, 12, 0.05)'};">
         <span style="font-weight:900; color:${accentColor}; font-size:18px;">${score}</span>
         <span style="color:#94a3b8; font-weight:700; font-size:10px;">/100</span>
       </div>
@@ -507,8 +507,8 @@ const handleDownloadPDFReport = async (course: any) => {
     }
 
     .page-landscape {
-      width: 297mm;
-      height: 210mm;
+      width: 1123px;
+      height: 794px;
       background: white;
       overflow: hidden;
       display: flex;
@@ -527,8 +527,8 @@ const handleDownloadPDFReport = async (course: any) => {
     }
 
     .page-transkrip {
-      width: 297mm;
-      height: 210mm;
+      width: 1123px;
+      height: 794px;
       background: white;
       overflow: hidden;
       display: flex;
@@ -698,7 +698,7 @@ const handleDownloadPDFReport = async (course: any) => {
         <div style="flex:1; padding:9px 35px; text-align:left;">
           <span style="font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:0.15em;">Materi</span>
         </div>
-        <div style="width:120px; padding:9px 14px; text-align:center; border-left:1px solid rgba(255,255,255,0.15);">
+        <div style="width:234px; padding:9px 14px; text-align:center; border-left:1px solid rgba(255,255,255,0.15);">
           <span style="font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:0.15em;">Nilai</span>
         </div>
       </div>
