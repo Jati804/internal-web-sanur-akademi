@@ -289,8 +289,6 @@ const studentOnlyLogs = (() => {
 
 {/* Footer Transkrip - ukuran natural, nempel langsung di bawah kotak materi (nggak stretch); sisa ruang dibiarin kosong di bawah */}
 <div style={{ padding: '22px 32px', backgroundColor: '#0f172a', borderRadius: '36px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
-  <div style={{ position: 'absolute', top: 0, right: 0, width: '180px', height: '180px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '999px', marginRight: '-100px', marginTop: '-100px' }}></div>
-  
   <div style={{ position: 'relative', zIndex: 10 }}>
     <p style={{ fontSize: '8px', fontWeight: '900', color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.5em', marginBottom: '3px' }}>Evaluasi Kumulatif</p>
     <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
