@@ -21,6 +21,16 @@ export const formatDateToDMY = (dateStr: string) => {
 
 export const SESSION_COLORS = ['text-blue-500', 'text-emerald-500', 'text-orange-500', 'text-rose-500', 'text-purple-500', 'text-amber-500'];
 
+// ✅ Ubah teks jadi "Kalimat awal huruf besar" — nggak peduli data disimpan ALL CAPS atau apa aja,
+// tampilan di transkrip selalu konsisten (cuma huruf pertama kalimat yang kapital)
+export const toSentenceCase = (str: string) => {
+  if (!str) return str;
+  const trimmed = str.trim();
+  if (!trimmed) return trimmed;
+  const lower = trimmed.toLowerCase();
+  return lower.charAt(0).toUpperCase() + lower.slice(1);
+};
+
 const ASSETS = { 
   LOGO: "https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png" 
 };
@@ -55,6 +65,10 @@ const isPass = avg >= 80;
   
   // ✅ AMBIL PERIODE DARI DATABASE
   const sessionNumbers = Array.from({ length: scores.length }, (_, i) => i + 1);
+
+  // ✅ Selalu 1 kolom, maks 8 baris (batasnya udah diatur di form guru)
+  const materiCount = sessionNumbers.length;
+  const ROW_HEIGHT = 50; // px per baris — pas buat nampung s/d 8 materi di halaman landscape
   
   // 2. DATA SISWA ONLY (Untuk Milestone)
 const sNameNorm = studentName.toUpperCase().trim();
@@ -89,22 +103,10 @@ const studentOnlyLogs = (() => {
     @import url('https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,900;1,900&display=swap');
   `;
 
-  // ✅ HALAMAN 1: LANDSCAPE (1123x794px)
+  // ✅ HALAMAN 1 & 2: LANDSCAPE (1123x794px) — SEKARANG DUA-DUANYA SAMA
   const PAGE_LANDSCAPE: React.CSSProperties = {
     width: '1123px',
     height: '794px',
-    backgroundColor: 'white',
-    position: 'relative',
-    overflow: 'hidden',
-    boxSizing: 'border-box',
-    display: 'flex',
-    flexDirection: 'column'
-  };
-
-  // HALAMAN 2 & 3: PORTRAIT (794x1123px)
-  const PAGE_PORTRAIT: React.CSSProperties = {
-    width: '794px',
-    height: '1123px',
     backgroundColor: 'white',
     position: 'relative',
     overflow: 'hidden',
@@ -213,20 +215,20 @@ const studentOnlyLogs = (() => {
         </div> {/* Tutup wrapper dengan border */}
       </div> {/* Tutup halaman 1 */}
 
-      {/* ✅ HALAMAN 2: TRANSKRIP (PORTRAIT) - PERIODE HIGHLIGHTED */}
-      <div id={`transcript-render-${reportLog.id}`} style={{ ...PAGE_PORTRAIT, padding: '70px 60px' }}>
+      {/* ✅ HALAMAN 2: TRANSKRIP — SEKARANG LANDSCAPE, MATERI FLEKSIBEL */}
+      <div id={`transcript-render-${reportLog.id}`} style={{ ...PAGE_LANDSCAPE, padding: '40px 60px' }}>
   <style>{FONT_STYLE}</style>
         
-        <div style={{ display: 'flex', alignItems: 'flex-end', gap: '16px', marginBottom: '20px', position: 'relative', zIndex: 10 }}>
-          <div style={{ width: '52px', height: '52px', backgroundColor: '#0f172a', color: 'white', borderRadius: '18px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(6deg)' }}><Layout size={26}/></div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginBottom: '16px', position: 'relative', zIndex: 10, flexShrink: 0 }}>
+          <div style={{ width: '44px', height: '44px', backgroundColor: '#0f172a', color: 'white', borderRadius: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center', transform: 'rotate(6deg)', flexShrink: 0 }}><Layout size={22}/></div>
           <div>
-            <h1 style={{ fontSize: '34px', fontWeight: '900', fontStyle: 'italic', color: '#1e293b', textTransform: 'uppercase', letterSpacing: '-0.05em', lineHeight: 1 }}>Transkrip <span style={{ color: isPass ? '#2563eb' : '#ea580c' }}>Nilai</span></h1>
+            <h1 style={{ fontSize: '28px', fontWeight: '900', fontStyle: 'italic', color: '#1e293b', textTransform: 'uppercase', letterSpacing: '-0.05em', lineHeight: 1, margin: 0 }}>Transkrip <span style={{ color: isPass ? '#2563eb' : '#ea580c' }}>Nilai</span></h1>
           </div>
         </div>
         
         
-<div style={{ marginBottom: '30px', position: 'relative', zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
-  <p style={{ fontSize: '13px', fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', textTransform: 'uppercase', letterSpacing: '0.3em', margin: 0 }}>
+<div style={{ marginBottom: '16px', position: 'relative', zIndex: 10, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexShrink: 0 }}>
+  <p style={{ fontSize: '12px', fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', textTransform: 'uppercase', letterSpacing: '0.3em', margin: 0 }}>
     📚 MATERI KURIKULUM
   </p>
   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', textAlign: 'right' }}>
@@ -235,61 +237,80 @@ const studentOnlyLogs = (() => {
   </div>
 </div>
 
-        <div style={{ backgroundColor: 'white', borderRadius: '35px', border: '3px solid #f1f5f9', overflow: 'hidden', marginBottom: '30px', position: 'relative', zIndex: 10 }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead>
-              <tr style={{ backgroundColor: '#0f172a', color: 'white' }}>
-                <th style={{ padding: '14px', textAlign: 'center', fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em' }}>Materi</th>
-                <th style={{ padding: '14px', textAlign: 'center', fontSize: '11px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em', width: '120px' }}>Nilai</th>
-              </tr>
-            </thead>
-            <tbody>
-              {/* ✅ GANTI NOMOR SESI JADI DINAMIS */}
-              {sessionNumbers.map((sessionNum, i) => (
-                <tr key={i} style={{ borderBottom: '1px solid #f1f5f9', height: '78px' }}>
-                  <td style={{ padding: '0 35px', verticalAlign: 'middle' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
-                        <span style={{ fontWeight: '900', color: '#1e293b', fontSize: '20px', textTransform: 'uppercase', letterSpacing: '-0.01em', lineHeight: 1.1, display: 'block' }}>{topics[i] || "MATERI PEMBELAJARAN"}</span>
-                    </div>
-                  </td>
-                  <td style={{ textAlign: 'center', verticalAlign: 'middle' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '3px', height: '100%' }}>
-                      <span style={{ fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', fontSize: '20px' }}>{scores[i] || 0}</span>
-                      <span style={{ color: '#94a3b8', fontWeight: '700', fontSize: '11px' }}>/100</span>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+
+        {/* ✅ KOTAK MATERI - 1 KOLOM, TINGGI PER BARIS TETAP (NGGAK DI-STRETCH), MAKS 8 BARIS */}
+        <div style={{ 
+          backgroundColor: 'white', 
+          borderRadius: '32px', 
+          border: '3px solid #f1f5f9', 
+          overflow: 'hidden', 
+          marginBottom: '18px', 
+          position: 'relative', 
+          zIndex: 10,
+          flexShrink: 0
+        }}>
+          {/* HEADER BAR - MATERI & NILAI DIPISAH, MASING-MASING CENTER DI KOLOMNYA SENDIRI */}
+          <div style={{ backgroundColor: '#0f172a', color: 'white', display: 'flex' }}>
+            <div style={{ flex: 1, padding: '9px 14px', textAlign: 'center' }}>
+              <span style={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.15em' }}>Materi</span>
+            </div>
+            <div style={{ width: '120px', padding: '9px 14px', textAlign: 'center', borderLeft: '1px solid rgba(255,255,255,0.15)' }}>
+              <span style={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.15em' }}>Nilai</span>
+            </div>
+          </div>
+
+          {materiCount === 0 ? (
+            <div style={{ padding: '30px', textAlign: 'center' }}>
+              <span style={{ fontSize: '12px', fontWeight: '900', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.2em' }}>Belum ada data materi</span>
+            </div>
+          ) : (
+            sessionNumbers.map((sessionNum, i) => (
+              <div key={i} style={{
+                height: `${ROW_HEIGHT}px`,
+                display: 'flex',
+                alignItems: 'center',
+                borderBottom: i < sessionNumbers.length - 1 ? '1px solid #f1f5f9' : 'none'
+              }}>
+                <div style={{ flex: 1, padding: '0 35px', overflow: 'hidden' }}>
+                  <span style={{ fontWeight: '800', color: '#1e293b', fontSize: '14px', letterSpacing: '-0.005em', lineHeight: 1.25, display: 'block' }}>
+                    {topics[i] ? toSentenceCase(topics[i]) : 'Materi pembelajaran'}
+                  </span>
+                </div>
+                <div style={{ width: '120px', display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '3px', flexShrink: 0 }}>
+                  <span style={{ fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', fontSize: '18px' }}>{scores[i] || 0}</span>
+                  <span style={{ color: '#94a3b8', fontWeight: '700', fontSize: '10px' }}>/100</span>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
-{/* Footer Transkrip */}
-<div style={{ padding: '30px 40px', backgroundColor: '#0f172a', borderRadius: '42px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', overflow: 'hidden' }}>
-  <div style={{ position: 'absolute', top: 0, right: 0, width: '230px', height: '230px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '999px', marginRight: '-130px', marginTop: '-130px' }}></div>
+{/* Footer Transkrip - ukuran natural, nempel langsung di bawah kotak materi (nggak stretch); sisa ruang dibiarin kosong di bawah */}
+<div style={{ padding: '22px 32px', backgroundColor: '#0f172a', borderRadius: '36px', color: 'white', display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
+  <div style={{ position: 'absolute', top: 0, right: 0, width: '180px', height: '180px', backgroundColor: 'rgba(255,255,255,0.05)', borderRadius: '999px', marginRight: '-100px', marginTop: '-100px' }}></div>
   
   <div style={{ position: 'relative', zIndex: 10 }}>
-    <p style={{ fontSize: '9px', fontWeight: '900', color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.5em', marginBottom: '4px' }}>Evaluasi Kumulatif</p>
-    <div style={{ display: 'flex', alignItems: 'baseline', gap: '14px' }}>
-      <p style={{ fontSize: '15px', fontWeight: '900', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>RATA-RATA:</p>
-      <h4 style={{ fontSize: '60px', fontWeight: '900', fontStyle: 'italic', letterSpacing: '-0.05em' }}>{avg}</h4>
-      <span style={{ fontSize: '18px', color: 'rgba(255,255,255,0.3)', fontWeight: '900', fontStyle: 'italic' }}>/ 100</span>
+    <p style={{ fontSize: '8px', fontWeight: '900', color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.5em', marginBottom: '3px' }}>Evaluasi Kumulatif</p>
+    <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
+      <p style={{ fontSize: '13px', fontWeight: '900', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>RATA-RATA:</p>
+      <h4 style={{ fontSize: '44px', fontWeight: '900', fontStyle: 'italic', letterSpacing: '-0.05em', margin: 0 }}>{avg}</h4>
+      <span style={{ fontSize: '15px', color: 'rgba(255,255,255,0.3)', fontWeight: '900', fontStyle: 'italic' }}>/ 100</span>
     </div>
   </div>
   
   <div style={{ 
     backgroundColor: 'rgba(255,255,255,0.1)', 
-    padding: '18px 24px', 
-    borderRadius: '25px', 
+    padding: '14px 20px', 
+    borderRadius: '22px', 
     border: '1px solid rgba(255,255,255,0.2)', 
-    borderBottom: `6px solid ${isPass ? '#10b981' : '#f97316'}`,
+    borderBottom: `5px solid ${isPass ? '#10b981' : '#f97316'}`,
     textAlign: 'center', 
-    minWidth: '190px', 
+    minWidth: '170px', 
     position: 'relative', 
     zIndex: 10 
   }}>
-    <p style={{ fontSize: '9px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#93c5fd', marginBottom: '5px' }}>Status Capaian</p>
-    <p style={{ fontSize: '17px', fontWeight: '900', fontStyle: 'italic', textTransform: 'uppercase' }}>{isPass ? 'KOMPETEN' : 'REMEDIAL'}</p>
+    <p style={{ fontSize: '8px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#93c5fd', marginBottom: '4px' }}>Status Capaian</p>
+    <p style={{ fontSize: '15px', fontWeight: '900', fontStyle: 'italic', textTransform: 'uppercase', margin: 0 }}>{isPass ? 'KOMPETEN' : 'REMEDIAL'}</p>
   </div>
 </div>
 </div>
