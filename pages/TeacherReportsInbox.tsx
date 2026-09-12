@@ -275,25 +275,16 @@ const handleDownloadPDF = async (req: any) => {
     ? 'linear-gradient(135deg, #1e3a8a, #0f172a)'
     : 'linear-gradient(135deg, #ea580c, #0f172a)';
 
-  // ✅ Cuma huruf pertama kalimat yang dipaksa kapital, sisanya persis apa yang diketik guru
-  // (jadi capslock manual di tengah kalimat, misal "Pengenalan CPNS dan tes", tetep kebaca CPNS)
-  const toSentenceCase = (str: string) => {
-    if (!str) return str;
-    const trimmed = str.trim();
-    if (!trimmed) return trimmed;
-    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
-  };
-
   // ✅ Selalu 1 kolom, maks 8 baris (batasnya diatur di form guru), tinggi per baris TETAP (nggak di-stretch)
   const materiCount = scores.length;
   const ROW_HEIGHT = 50;
 
   const materiRowsHtml = scores.map((score, i) => `
     <div style="height:${ROW_HEIGHT}px; display:flex; align-items:center; ${i < scores.length - 1 ? 'border-bottom:1px solid #f1f5f9;' : ''}">
-      <div style="flex:1; padding:0 35px; overflow:hidden;">
-        <span style="font-weight:800; color:#1e293b; font-size:14px; letter-spacing:-0.005em; line-height:1.25; display:block;">${topics[i] ? toSentenceCase(topics[i]) : 'Materi pembelajaran'}</span>
+      <div style="flex:1; padding:0 35px; overflow:hidden; text-align:left;">
+        <span style="font-weight:800; color:#1e293b; font-size:14px; text-transform:uppercase; letter-spacing:-0.005em; line-height:1.25; display:block;">${topics[i] || 'Materi Pembelajaran'}</span>
       </div>
-      <div style="width:120px; flex-shrink:0; display:flex; align-items:baseline; justify-content:center; gap:3px;">
+      <div style="width:120px; flex-shrink:0; display:flex; align-items:baseline; justify-content:center; gap:3px; align-self:stretch; border-left:1px solid #f1f5f9; background:${isPass ? 'rgba(37, 99, 235, 0.05)' : 'rgba(234, 88, 12, 0.05)'};">
         <span style="font-weight:900; color:${accentColor}; font-size:18px;">${score}</span>
         <span style="color:#94a3b8; font-weight:700; font-size:10px;">/100</span>
       </div>
@@ -434,7 +425,7 @@ const handleDownloadPDF = async (req: any) => {
     <!-- ✅ KOTAK MATERI - 1 KOLOM, TINGGI PER BARIS TETAP (MAKS 8 BARIS), NGGAK DI-STRETCH -->
     <div style="background:white; border-radius:32px; border:3px solid #f1f5f9; overflow:hidden; margin-bottom:18px; flex-shrink:0;">
       <div style="background:#0f172a; color:white; display:flex;">
-        <div style="flex:1; padding:9px 14px; text-align:center;">
+        <div style="flex:1; padding:9px 35px; text-align:left;">
           <span style="font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:0.15em;">Materi</span>
         </div>
         <div style="width:120px; padding:9px 14px; text-align:center; border-left:1px solid rgba(255,255,255,0.15);">
@@ -692,13 +683,13 @@ const handleDownloadPDF = async (req: any) => {
                                   Materi Pembelajaran 
                                   <span className={`font-black px-1.5 py-0.5 rounded-md text-[6px] border ${showErrors && !s.material.trim() ? 'bg-rose-500 text-white border-rose-600 animate-pulse' : 'bg-rose-50 text-rose-500 border-rose-100'}`}>WAJIB DIISI ✨</span>
                                 </label>
-                                <span className={`text-[7px] font-black ${s.material.length >= 45 ? 'text-rose-500' : 'text-slate-300'}`}>{s.material.length}/45</span>
+                                <span className={`text-[7px] font-black ${s.material.length >= 65 ? 'text-rose-500' : 'text-slate-300'}`}>{s.material.length}/65</span>
                               </div>
                               <input 
                                 type="text" 
                                 placeholder="Misal: Pengenalan tools..." 
                                 value={s.material} 
-                                maxLength={45} 
+                                maxLength={65} 
                                 onChange={e => { 
                                   const n = [...reportForm.sessions]; 
                                   n[i].material = e.target.value; 
