@@ -244,7 +244,7 @@ const studentOnlyLogs = (() => {
             <div style={{ flex: 1, padding: '9px 35px', textAlign: 'left' }}>
               <span style={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.15em' }}>Materi</span>
             </div>
-            <div style={{ width: '120px', padding: '9px 14px', textAlign: 'center', borderLeft: '1px solid rgba(255,255,255,0.15)' }}>
+            <div style={{ width: '234px', padding: '9px 14px', textAlign: 'center', borderLeft: '1px solid rgba(255,255,255,0.15)' }}>
               <span style={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.15em' }}>Nilai</span>
             </div>
           </div>
@@ -267,10 +267,11 @@ const studentOnlyLogs = (() => {
                   </span>
                 </div>
                 {/* ✅ Opsi B: garis pembatas + tint warna tipis biar kolom nilai keliatan "kotak" sendiri */}
+                {/* ✅ Lebar 234px + center align biar sejajar sama kotak Status Capaian di footer */}
                 <div style={{
-                  width: '120px',
+                  width: '234px',
                   display: 'flex',
-                  alignItems: 'baseline',
+                  alignItems: 'center',
                   justifyContent: 'center',
                   gap: '3px',
                   flexShrink: 0,
