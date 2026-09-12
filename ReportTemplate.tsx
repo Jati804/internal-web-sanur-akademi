@@ -21,15 +21,6 @@ export const formatDateToDMY = (dateStr: string) => {
 
 export const SESSION_COLORS = ['text-blue-500', 'text-emerald-500', 'text-orange-500', 'text-rose-500', 'text-purple-500', 'text-amber-500'];
 
-// ✅ Cuma huruf pertama kalimat yang dipaksa kapital, sisanya persis apa yang diketik guru
-// (jadi kalau guru sengaja capslock di tengah kalimat, misal "Pengenalan CPNS dan tes", itu tetep kebaca CPNS)
-export const toSentenceCase = (str: string) => {
-  if (!str) return str;
-  const trimmed = str.trim();
-  if (!trimmed) return trimmed;
-  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
-};
-
 const ASSETS = { 
   LOGO: "https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png" 
 };
@@ -248,9 +239,9 @@ const studentOnlyLogs = (() => {
           zIndex: 10,
           flexShrink: 0
         }}>
-          {/* HEADER BAR - MATERI & NILAI DIPISAH, MASING-MASING CENTER DI KOLOMNYA SENDIRI */}
+          {/* HEADER BAR - MATERI RATA KIRI (SEJAJAR ISI BARIS), NILAI TETEP RATA TENGAH */}
           <div style={{ backgroundColor: '#0f172a', color: 'white', display: 'flex' }}>
-            <div style={{ flex: 1, padding: '9px 14px', textAlign: 'center' }}>
+            <div style={{ flex: 1, padding: '9px 35px', textAlign: 'left' }}>
               <span style={{ fontSize: '10px', fontWeight: '900', textTransform: 'uppercase', letterSpacing: '0.15em' }}>Materi</span>
             </div>
             <div style={{ width: '120px', padding: '9px 14px', textAlign: 'center', borderLeft: '1px solid rgba(255,255,255,0.15)' }}>
@@ -270,12 +261,23 @@ const studentOnlyLogs = (() => {
                 alignItems: 'center',
                 borderBottom: i < sessionNumbers.length - 1 ? '1px solid #f1f5f9' : 'none'
               }}>
-                <div style={{ flex: 1, padding: '0 35px', overflow: 'hidden' }}>
-                  <span style={{ fontWeight: '800', color: '#1e293b', fontSize: '14px', letterSpacing: '-0.005em', lineHeight: 1.25, display: 'block' }}>
-                    {topics[i] ? toSentenceCase(topics[i]) : 'Materi pembelajaran'}
+                <div style={{ flex: 1, padding: '0 35px', overflow: 'hidden', textAlign: 'left' }}>
+                  <span style={{ fontWeight: '800', color: '#1e293b', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '-0.005em', lineHeight: 1.25, display: 'block' }}>
+                    {topics[i] || 'Materi Pembelajaran'}
                   </span>
                 </div>
-                <div style={{ width: '120px', display: 'flex', alignItems: 'baseline', justifyContent: 'center', gap: '3px', flexShrink: 0 }}>
+                {/* ✅ Opsi B: garis pembatas + tint warna tipis biar kolom nilai keliatan "kotak" sendiri */}
+                <div style={{
+                  width: '120px',
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  justifyContent: 'center',
+                  gap: '3px',
+                  flexShrink: 0,
+                  alignSelf: 'stretch',
+                  borderLeft: '1px solid #f1f5f9',
+                  backgroundColor: isPass ? 'rgba(37, 99, 235, 0.05)' : 'rgba(234, 88, 12, 0.05)'
+                }}>
                   <span style={{ fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', fontSize: '18px' }}>{scores[i] || 0}</span>
                   <span style={{ color: '#94a3b8', fontWeight: '700', fontSize: '10px' }}>/100</span>
                 </div>
