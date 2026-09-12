@@ -574,7 +574,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                    </div>
                    
                    <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 min-w-[200px] text-center shadow-inner">
-                      <p className="text-[10px] font-black text-slate-400 uppercase mb-1 italic">Diterima</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase mb-1 italic">{pkg.status === 'LUNAS' ? 'Diterima' : 'Belum Cair'}</p>
                       <p className="text-3xl font-black italic tracking-tighter text-blue-600 whitespace-nowrap">Rp {formatRupiah(pkg.myTotalPaid)}</p>
                    </div>
                 </div>
