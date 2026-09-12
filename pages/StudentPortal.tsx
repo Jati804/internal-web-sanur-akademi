@@ -613,7 +613,7 @@ const handleDownloadPDFReport = async (course: any) => {
     <div class="page-landscape-inner">
 
       <!-- SIDEBAR QR -->
-      <div style="width:140px; background:${gradientSidebar}; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 15px; flex-shrink:0;">
+      <div style="width:142px; margin:0 -1px; background:${gradientSidebar}; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 15px; flex-shrink:0;">
         <div style="background:white; padding:12px; border-radius:15px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
           <img src="${qrUrl}" style="width:100px; height:100px; display:block;" />
         </div>
@@ -712,7 +712,7 @@ const handleDownloadPDFReport = async (course: any) => {
         <p style="font-size:8px; font-weight:900; color:#60a5fa; text-transform:uppercase; letter-spacing:0.5em; margin-bottom:3px;">Evaluasi Kumulatif</p>
         <div style="display:flex; align-items:baseline; gap:12px;">
           <p style="font-size:13px; font-weight:900; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.1em;">RATA-RATA:</p>
-          <h4 style="font-size:44px; font-weight:900; font-style:italic; letter-spacing:-0.05em; margin:0;">${avg}</h4>
+          <h4 style="font-size:44px; font-weight:900; font-style:italic; letter-spacing:-0.05em; margin:0; transform:translateY(4px);">${avg}</h4>
           <span style="font-size:15px; color:rgba(255,255,255,0.3); font-weight:900; font-style:italic;">/ 100</span>
         </div>
       </div>
