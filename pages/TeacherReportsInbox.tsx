@@ -362,7 +362,7 @@ const handleDownloadPDF = async (req: any) => {
 <div class="page-wrapper">
   <div class="page-landscape">
     <div class="page-landscape-inner">
-      <div style="width:142px; margin:0 -1px; background:${gradientSidebar}; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 15px; flex-shrink:0;">
+      <div style="width:143px; margin:0 -1.5px; background:${gradientSidebar}; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 15px; flex-shrink:0;">
         <div style="background:white; padding:12px; border-radius:15px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
           <img src="${qrUrl}" style="width:100px; height:100px; display:block;" />
         </div>
@@ -692,7 +692,7 @@ const handleDownloadPDF = async (req: any) => {
                                 maxLength={65} 
                                 onChange={e => { 
                                   const n = [...reportForm.sessions]; 
-                                  n[i].material = e.target.value; 
+                                  n[i].material = e.target.value.toUpperCase(); 
                                   setReportForm({...reportForm, sessions: n}); 
                                 }} 
                                 className={`w-full px-5 py-3 rounded-xl font-black text-[10px] outline-none transition-all border ${showErrors && !s.material.trim() ? 'bg-rose-50 border-rose-500 placeholder:text-rose-300' : 'bg-white border-slate-200 focus:border-blue-500'}`} 
