@@ -295,7 +295,7 @@ const studentOnlyLogs = (() => {
     <p style={{ fontSize: '8px', fontWeight: '900', color: '#60a5fa', textTransform: 'uppercase', letterSpacing: '0.5em', marginBottom: '3px' }}>Evaluasi Kumulatif</p>
     <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px' }}>
       <p style={{ fontSize: '13px', fontWeight: '900', color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.1em' }}>RATA-RATA:</p>
-      <h4 style={{ fontSize: '44px', fontWeight: '900', fontStyle: 'italic', letterSpacing: '-0.05em', margin: 0 }}>{avg}</h4>
+      <h4 style={{ fontSize: '44px', fontWeight: '900', fontStyle: 'italic', letterSpacing: '-0.05em', margin: 0, transform: 'translateY(4px)' }}>{avg}</h4>
       <span style={{ fontSize: '15px', color: 'rgba(255,255,255,0.3)', fontWeight: '900', fontStyle: 'italic' }}>/ 100</span>
     </div>
   </div>
