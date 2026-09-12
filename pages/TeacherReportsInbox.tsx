@@ -220,7 +220,7 @@ const avgScore = useMemo(() => {
     setActionLoadingId(selectedPackage.id);
     try {
       const sName = selectedPackage.studentsAttended?.[0] || 'SISWA';
-      const topics = reportForm.sessions.map(s => (s.material || '').toUpperCase());
+      const topics = reportForm.sessions.map(s => (s.material || '').trim());
       const scores = reportForm.sessions.map(s => Number(s.score) || 0);
       const payload = { 
   status: 'REPORT_READY', 
@@ -275,19 +275,34 @@ const handleDownloadPDF = async (req: any) => {
     ? 'linear-gradient(135deg, #1e3a8a, #0f172a)'
     : 'linear-gradient(135deg, #ea580c, #0f172a)';
 
-  const tableRows = scores.map((score, i) => `
-    <tr style="border-bottom: 1px solid #f1f5f9; height: 78px;">
-      <td style="padding: 0 35px; vertical-align: middle;">
-        <span style="font-weight:900; color:#1e293b; font-size:20px; text-transform:uppercase; letter-spacing:-0.01em; line-height:1.1; display:block;">
-          ${topics[i] || 'MATERI PEMBELAJARAN'}
-        </span>
-      </td>
-      <td style="text-align:center; vertical-align:middle;">
-        <span style="font-weight:900; color:${accentColor}; font-size:20px;">${score}</span>
-        <span style="color:#94a3b8; font-weight:700; font-size:11px;">/100</span>
-      </td>
-    </tr>
+  // ✅ Cuma huruf pertama kalimat yang dipaksa kapital, sisanya persis apa yang diketik guru
+  // (jadi capslock manual di tengah kalimat, misal "Pengenalan CPNS dan tes", tetep kebaca CPNS)
+  const toSentenceCase = (str: string) => {
+    if (!str) return str;
+    const trimmed = str.trim();
+    if (!trimmed) return trimmed;
+    return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
+  };
+
+  // ✅ Selalu 1 kolom, maks 8 baris (batasnya diatur di form guru), tinggi per baris TETAP (nggak di-stretch)
+  const materiCount = scores.length;
+  const ROW_HEIGHT = 50;
+
+  const materiRowsHtml = scores.map((score, i) => `
+    <div style="height:${ROW_HEIGHT}px; display:flex; align-items:center; ${i < scores.length - 1 ? 'border-bottom:1px solid #f1f5f9;' : ''}">
+      <div style="flex:1; padding:0 35px; overflow:hidden;">
+        <span style="font-weight:800; color:#1e293b; font-size:14px; letter-spacing:-0.005em; line-height:1.25; display:block;">${topics[i] ? toSentenceCase(topics[i]) : 'Materi pembelajaran'}</span>
+      </div>
+      <div style="width:120px; flex-shrink:0; display:flex; align-items:baseline; justify-content:center; gap:3px;">
+        <span style="font-weight:900; color:${accentColor}; font-size:18px;">${score}</span>
+        <span style="color:#94a3b8; font-weight:700; font-size:10px;">/100</span>
+      </div>
+    </div>
   `).join('');
+
+  const materiBodyHtml = materiCount === 0
+    ? `<div style="padding:30px; text-align:center;"><span style="font-size:12px; font-weight:900; color:#cbd5e1; text-transform:uppercase; letter-spacing:0.2em;">Belum ada data materi</span></div>`
+    : materiRowsHtml;
 
   const html = `<!DOCTYPE html>
 <html lang="id">
@@ -302,10 +317,9 @@ const handleDownloadPDF = async (req: any) => {
     .page-wrapper { display: flex; align-items: center; justify-content: center; width: 100vw; min-height: 100vh; background: #111; padding: 40px 0; }
     .page-landscape { width: 297mm; height: 210mm; background: white; overflow: hidden; display: flex; flex-direction: column; border: 25px double ${mainColor}; flex-shrink: 0; }
     .page-landscape-inner { width: 100%; height: 100%; border: 4px solid #cbd5e1; display: flex; flex-direction: row; box-sizing: border-box; }
-    .page-portrait { width: 210mm; height: 297mm; background: white; overflow: hidden; display: flex; flex-direction: column; padding: 70px 60px; flex-shrink: 0; }
+    .page-transkrip { width: 297mm; height: 210mm; background: white; overflow: hidden; display: flex; flex-direction: column; padding: 40px 60px; flex-shrink: 0; }
     @media print {
-      @page:first { size: A4 landscape; margin: 0; }
-      @page { size: A4 portrait; margin: 0; }
+      @page { size: A4 landscape; margin: 0; }
       body { background: white; margin: 0; }
       .page-wrapper { display: block; width: auto; min-height: auto; padding: 0; background: white; }
       .page-landscape { page-break-after: always; border: 25px double ${mainColor}; }
@@ -396,48 +410,57 @@ const handleDownloadPDF = async (req: any) => {
   </div>
 </div>
 
-<!-- HALAMAN 2: TRANSKRIP PORTRAIT -->
+<!-- HALAMAN 2: TRANSKRIP LANDSCAPE -->
 <div class="page-wrapper">
-  <div class="page-portrait">
-    <div style="display:flex; align-items:flex-end; gap:16px; margin-bottom:20px;">
-      <div style="width:52px; height:52px; background:#0f172a; color:white; border-radius:18px; display:flex; align-items:center; justify-content:center; transform:rotate(6deg); flex-shrink:0;">
-        <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+  <div class="page-transkrip">
+
+    <!-- HEADER -->
+    <div style="display:flex; align-items:center; gap:14px; margin-bottom:16px; flex-shrink:0;">
+      <div style="width:44px; height:44px; background:#0f172a; color:white; border-radius:16px; display:flex; align-items:center; justify-content:center; transform:rotate(6deg); flex-shrink:0;">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
       </div>
-      <h1 style="font-size:34px; font-weight:900; font-style:italic; color:#1e293b; text-transform:uppercase; letter-spacing:-0.05em; line-height:1;">Transkrip <span style="color:${accentColor};">Nilai</span></h1>
+      <h1 style="font-size:28px; font-weight:900; font-style:italic; color:#1e293b; text-transform:uppercase; letter-spacing:-0.05em; line-height:1; margin:0;">Transkrip <span style="color:${accentColor};">Nilai</span></h1>
     </div>
-    <div style="margin-bottom:30px; display:flex; justify-content:space-between; align-items:flex-end;">
-      <p style="font-size:13px; font-weight:900; color:${accentColor}; text-transform:uppercase; letter-spacing:0.3em; margin:0;">📚 MATERI KURIKULUM</p>
+
+    <!-- SUBHEADER -->
+    <div style="margin-bottom:16px; display:flex; justify-content:space-between; align-items:flex-end; flex-shrink:0;">
+      <p style="font-size:12px; font-weight:900; color:${accentColor}; text-transform:uppercase; letter-spacing:0.3em; margin:0;">📚 MATERI KURIKULUM</p>
       <div style="display:flex; flex-direction:column; align-items:flex-end; text-align:right;">
         <p style="font-size:9px; font-weight:900; color:#94a3b8; text-transform:uppercase; letter-spacing:0.3em; margin:0 -0.3em 3px 0;">Guru Penilai</p>
         <p style="font-size:13px; font-weight:900; color:#1e293b; letter-spacing:0.05em; margin:0 -0.05em 0 0; white-space:nowrap;">${req.teacherName || '-'}</p>
       </div>
     </div>
-    <div style="background:white; border-radius:35px; border:3px solid #f1f5f9; overflow:hidden; margin-bottom:30px;">
-      <table style="width:100%; border-collapse:collapse;">
-        <thead>
-          <tr style="background:#0f172a; color:white;">
-            <th style="padding:14px; text-align:center; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em;">Materi</th>
-            <th style="padding:14px; text-align:center; font-size:11px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; width:120px;">Nilai</th>
-          </tr>
-        </thead>
-        <tbody>${tableRows}</tbody>
-      </table>
-    </div>
-    <div style="padding:30px 40px; background:#0f172a; border-radius:42px; color:white; display:flex; justify-content:space-between; align-items:center; position:relative; overflow:hidden;">
-      <div style="position:absolute; top:0; right:0; width:230px; height:230px; background:rgba(255,255,255,0.05); border-radius:999px; margin-right:-130px; margin-top:-130px;"></div>
-      <div style="position:relative; z-index:10;">
-        <p style="font-size:9px; font-weight:900; color:#60a5fa; text-transform:uppercase; letter-spacing:0.5em; margin-bottom:4px;">Evaluasi Kumulatif</p>
-        <div style="display:flex; align-items:baseline; gap:14px;">
-          <p style="font-size:15px; font-weight:900; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.1em;">RATA-RATA:</p>
-          <h4 style="font-size:60px; font-weight:900; font-style:italic; letter-spacing:-0.05em;">${avg}</h4>
-          <span style="font-size:18px; color:rgba(255,255,255,0.3); font-weight:900; font-style:italic;">/ 100</span>
+
+    <!-- ✅ KOTAK MATERI - 1 KOLOM, TINGGI PER BARIS TETAP (MAKS 8 BARIS), NGGAK DI-STRETCH -->
+    <div style="background:white; border-radius:32px; border:3px solid #f1f5f9; overflow:hidden; margin-bottom:18px; flex-shrink:0;">
+      <div style="background:#0f172a; color:white; display:flex;">
+        <div style="flex:1; padding:9px 14px; text-align:center;">
+          <span style="font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:0.15em;">Materi</span>
+        </div>
+        <div style="width:120px; padding:9px 14px; text-align:center; border-left:1px solid rgba(255,255,255,0.15);">
+          <span style="font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:0.15em;">Nilai</span>
         </div>
       </div>
-      <div style="background:rgba(255,255,255,0.1); padding:18px 24px; border-radius:25px; border:1px solid rgba(255,255,255,0.2); border-bottom:6px solid ${isPass ? '#10b981' : '#f97316'}; text-align:center; min-width:190px; position:relative; z-index:10;">
-        <p style="font-size:9px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; color:#93c5fd; margin-bottom:5px;">Status Capaian</p>
-        <p style="font-size:17px; font-weight:900; font-style:italic; text-transform:uppercase;">${isPass ? 'KOMPETEN' : 'REMEDIAL'}</p>
+      ${materiBodyHtml}
+    </div>
+
+    <!-- FOOTER TRANSKRIP - ukuran natural, nempel langsung di bawah kotak materi (nggak stretch); sisa ruang dibiarin kosong di bawah -->
+    <div style="padding:22px 32px; background:#0f172a; border-radius:36px; color:white; display:flex; justify-content:space-between; align-items:center; position:relative; overflow:hidden; flex-shrink:0;">
+      <div style="position:absolute; top:0; right:0; width:180px; height:180px; background:rgba(255,255,255,0.05); border-radius:999px; margin-right:-100px; margin-top:-100px;"></div>
+      <div style="position:relative; z-index:10;">
+        <p style="font-size:8px; font-weight:900; color:#60a5fa; text-transform:uppercase; letter-spacing:0.5em; margin-bottom:3px;">Evaluasi Kumulatif</p>
+        <div style="display:flex; align-items:baseline; gap:12px;">
+          <p style="font-size:13px; font-weight:900; color:rgba(255,255,255,0.4); text-transform:uppercase; letter-spacing:0.1em;">RATA-RATA:</p>
+          <h4 style="font-size:44px; font-weight:900; font-style:italic; letter-spacing:-0.05em; margin:0;">${avg}</h4>
+          <span style="font-size:15px; color:rgba(255,255,255,0.3); font-weight:900; font-style:italic;">/ 100</span>
+        </div>
+      </div>
+      <div style="background:rgba(255,255,255,0.1); padding:14px 20px; border-radius:22px; border:1px solid rgba(255,255,255,0.2); border-bottom:5px solid ${isPass ? '#10b981' : '#f97316'}; text-align:center; min-width:170px; position:relative; z-index:10;">
+        <p style="font-size:8px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; color:#93c5fd; margin-bottom:4px;">Status Capaian</p>
+        <p style="font-size:15px; font-weight:900; font-style:italic; text-transform:uppercase; margin:0;">${isPass ? 'KOMPETEN' : 'REMEDIAL'}</p>
       </div>
     </div>
+
   </div>
 </div>
 
@@ -669,19 +692,19 @@ const handleDownloadPDF = async (req: any) => {
                                   Materi Pembelajaran 
                                   <span className={`font-black px-1.5 py-0.5 rounded-md text-[6px] border ${showErrors && !s.material.trim() ? 'bg-rose-500 text-white border-rose-600 animate-pulse' : 'bg-rose-50 text-rose-500 border-rose-100'}`}>WAJIB DIISI ✨</span>
                                 </label>
-                                <span className={`text-[7px] font-black ${s.material.length >= 35 ? 'text-rose-500' : 'text-slate-300'}`}>{s.material.length}/35</span>
+                                <span className={`text-[7px] font-black ${s.material.length >= 45 ? 'text-rose-500' : 'text-slate-300'}`}>{s.material.length}/45</span>
                               </div>
                               <input 
                                 type="text" 
-                                placeholder="MISAL: PENGENALAN TOOLS..." 
+                                placeholder="Misal: Pengenalan tools..." 
                                 value={s.material} 
-                                maxLength={35} 
+                                maxLength={45} 
                                 onChange={e => { 
                                   const n = [...reportForm.sessions]; 
                                   n[i].material = e.target.value; 
                                   setReportForm({...reportForm, sessions: n}); 
                                 }} 
-                                className={`w-full px-5 py-3 rounded-xl font-black uppercase text-[10px] outline-none transition-all border ${showErrors && !s.material.trim() ? 'bg-rose-50 border-rose-500 placeholder:text-rose-300' : 'bg-white border-slate-200 focus:border-blue-500'}`} 
+                                className={`w-full px-5 py-3 rounded-xl font-black text-[10px] outline-none transition-all border ${showErrors && !s.material.trim() ? 'bg-rose-50 border-rose-500 placeholder:text-rose-300' : 'bg-white border-slate-200 focus:border-blue-500'}`} 
                               />
                              {reportForm.sessions.length > 1 && (
   <button onClick={() => setReportForm(prev => ({ ...prev, sessions: prev.sessions.filter((_, idx) => idx !== i).map((s, idx) => ({ ...s, num: idx + 1 })) }))} className="w-full py-2 text-rose-400 font-black text-[8px] uppercase hover:text-rose-600 transition-all">
