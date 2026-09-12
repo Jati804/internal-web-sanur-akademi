@@ -21,14 +21,13 @@ export const formatDateToDMY = (dateStr: string) => {
 
 export const SESSION_COLORS = ['text-blue-500', 'text-emerald-500', 'text-orange-500', 'text-rose-500', 'text-purple-500', 'text-amber-500'];
 
-// ✅ Ubah teks jadi "Kalimat awal huruf besar" — nggak peduli data disimpan ALL CAPS atau apa aja,
-// tampilan di transkrip selalu konsisten (cuma huruf pertama kalimat yang kapital)
+// ✅ Cuma huruf pertama kalimat yang dipaksa kapital, sisanya persis apa yang diketik guru
+// (jadi kalau guru sengaja capslock di tengah kalimat, misal "Pengenalan CPNS dan tes", itu tetep kebaca CPNS)
 export const toSentenceCase = (str: string) => {
   if (!str) return str;
   const trimmed = str.trim();
   if (!trimmed) return trimmed;
-  const lower = trimmed.toLowerCase();
-  return lower.charAt(0).toUpperCase() + lower.slice(1);
+  return trimmed.charAt(0).toUpperCase() + trimmed.slice(1);
 };
 
 const ASSETS = { 
