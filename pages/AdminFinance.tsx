@@ -709,11 +709,12 @@ const executePayTeacher = async () => {
     console.log('teacherId:', teacherId);
     console.log('selectedPayout:', selectedPayout);
     
+    // LANGKAH 1: Update status LUNAS + tanggal bayar ke SEMUA sesi dalam paket ini
+    // (tanpa foto dulu, biar nggak kegandain per baris)
     const result = await supabase
       .from('attendance')
       .update({ 
       paymentstatus: 'PAID',
-      receiptdata: payForm.receiptData,
       paiddate: payForm.date
       })
       .eq('packageid', packageId)
@@ -728,6 +729,28 @@ const executePayTeacher = async () => {
     if (result.error) {
       throw result.error;
     }
+
+    // LANGKAH 2: Tempel foto bukti transfer HANYA ke satu baris representatif
+    // (sesi dengan sessionnumber paling tinggi/terakhir milik teacherid ini di paket ini —
+    // otomatis aman buat kasus guru pengganti, karena filter teacherid tetap dipertahankan)
+    const { data: repRow, error: repErr } = await supabase
+      .from('attendance')
+      .select('id')
+      .eq('packageid', packageId)
+      .eq('teacherid', teacherId)
+      .eq('paymentstatus', 'PAID')
+      .order('sessionnumber', { ascending: false })
+      .limit(1)
+      .single();
+
+    if (repErr) throw repErr;
+
+    const { error: receiptErr } = await supabase
+      .from('attendance')
+      .update({ receiptdata: payForm.receiptData })
+      .eq('id', repRow.id);
+
+    if (receiptErr) throw receiptErr;
     
     const { error: txInsertErr } = await supabase.from('transactions').insert({ 
       id: txId, 
