@@ -373,7 +373,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
           myTotalPaid: myEarningsInThisCycle,
           lastUpdate: log.date,
           status: fullCycle.some(l => l.teacherId === user.id && l.paymentStatus === 'UNPAID') ? 'ANTREAN' : 'LUNAS',
-          receiptData: fullCycle.find(l => l.teacherId === user.id && l.paymentStatus === 'PAID')?.receiptData || null,
+          receiptData: fullCycle.find(l => l.teacherId === user.id && l.paymentStatus === 'PAID' && l.receiptData)?.receiptData || null,
           paidDate: fullCycle.find(l => l.teacherId === user.id && l.paymentStatus === 'PAID')?.paidDate || null,
           fullClassName: log.className,
           paidSessionsDetails: fullCycle.filter(l => l.teacherId === user.id),
