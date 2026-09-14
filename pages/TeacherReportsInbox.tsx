@@ -307,7 +307,7 @@ const handleDownloadPDF = async (req: any) => {
     body { font-family: 'Inter', serif; background: #111; }
     .page-wrapper { display: flex; align-items: center; justify-content: center; width: 100vw; min-height: 100vh; background: #111; padding: 40px 0; }
     .page-landscape { width: 1123px; height: 794px; background: white; overflow: hidden; display: flex; flex-direction: column; border: 25px double ${mainColor}; flex-shrink: 0; }
-    .page-landscape-inner { width: 100%; height: 100%; border: 4px solid #cbd5e1; display: flex; flex-direction: row; box-sizing: border-box; }
+    .page-landscape-inner { width: 100%; height: 100%; border-top: 4px solid #cbd5e1; border-right: 4px solid #cbd5e1; border-bottom: 4px solid #cbd5e1; border-left: 5.5px solid #cbd5e1; display: flex; flex-direction: row; box-sizing: border-box; }
     .page-transkrip { width: 1123px; height: 794px; background: white; overflow: hidden; display: flex; flex-direction: column; padding: 40px 60px; flex-shrink: 0; }
     @media print {
       @page { size: A4 landscape; margin: 0; }
@@ -437,6 +437,7 @@ const handleDownloadPDF = async (req: any) => {
 
     <!-- FOOTER TRANSKRIP - ukuran natural, nempel langsung di bawah kotak materi (nggak stretch); sisa ruang dibiarin kosong di bawah -->
     <div style="padding:22px 32px; background:#0f172a; border-radius:36px; color:white; display:flex; justify-content:space-between; align-items:center; position:relative; overflow:hidden; flex-shrink:0;">
+      <div style="position:absolute; top:0; right:0; width:180px; height:180px; background:rgba(255,255,255,0.05); border-radius:999px; margin-right:-100px; margin-top:-100px;"></div>
       <div style="position:relative; z-index:10;">
         <p style="font-size:8px; font-weight:900; color:#60a5fa; text-transform:uppercase; letter-spacing:0.5em; margin-bottom:3px;">Evaluasi Kumulatif</p>
         <div style="display:flex; align-items:baseline; gap:12px;">
