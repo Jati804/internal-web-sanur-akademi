@@ -520,7 +520,10 @@ const handleDownloadPDFReport = async (course: any) => {
     .page-landscape-inner {
       width: 100%;
       height: 100%;
-      border: 4px solid #cbd5e1;
+      border-top: 4px solid #cbd5e1;
+      border-right: 4px solid #cbd5e1;
+      border-bottom: 4px solid #cbd5e1;
+      border-left: 6.5px solid #cbd5e1;
       display: flex;
       flex-direction: row;
       box-sizing: border-box;
@@ -613,7 +616,7 @@ const handleDownloadPDFReport = async (course: any) => {
     <div class="page-landscape-inner">
 
       <!-- SIDEBAR QR -->
-      <div style="width:143px; margin:0 -1.5px; background:${gradientSidebar}; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 15px; flex-shrink:0;">
+      <div style="width:145px; margin:0 -2.5px; background:${gradientSidebar}; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 15px; flex-shrink:0;">
         <div style="background:white; padding:12px; border-radius:15px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
           <img src="${qrUrl}" style="width:100px; height:100px; display:block;" />
         </div>
@@ -707,6 +710,7 @@ const handleDownloadPDFReport = async (course: any) => {
 
     <!-- FOOTER TRANSKRIP - ukuran natural, nempel langsung di bawah kotak materi (nggak stretch); sisa ruang dibiarin kosong di bawah -->
     <div style="padding:22px 32px; background:#0f172a; border-radius:36px; color:white; display:flex; justify-content:space-between; align-items:center; position:relative; overflow:hidden; flex-shrink:0;">
+      <div style="position:absolute; top:0; right:0; width:180px; height:180px; background:rgba(255,255,255,0.05); border-radius:999px; margin-right:-100px; margin-top:-100px;"></div>
       <div style="position:relative; z-index:10;">
         <p style="font-size:8px; font-weight:900; color:#60a5fa; text-transform:uppercase; letter-spacing:0.5em; margin-bottom:3px;">Evaluasi Kumulatif</p>
         <div style="display:flex; align-items:baseline; gap:12px;">
