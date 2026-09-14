@@ -307,7 +307,7 @@ const handleDownloadPDF = async (req: any) => {
     body { font-family: 'Inter', serif; background: #111; }
     .page-wrapper { display: flex; align-items: center; justify-content: center; width: 100vw; min-height: 100vh; background: #111; padding: 40px 0; }
     .page-landscape { width: 1123px; height: 794px; background: white; overflow: hidden; display: flex; flex-direction: column; border: 25px double ${mainColor}; flex-shrink: 0; }
-    .page-landscape-inner { width: 100%; height: 100%; border-top: 4px solid #cbd5e1; border-right: 4px solid #cbd5e1; border-bottom: 4px solid #cbd5e1; border-left: 6px solid #cbd5e1; display: flex; flex-direction: row; box-sizing: border-box; }
+    .page-landscape-inner { width: 100%; height: 100%; border-top: 4px solid #cbd5e1; border-right: 4px solid #cbd5e1; border-bottom: 4px solid #cbd5e1; border-left: 6.5px solid #cbd5e1; display: flex; flex-direction: row; box-sizing: border-box; }
     .page-transkrip { width: 1123px; height: 794px; background: white; overflow: hidden; display: flex; flex-direction: column; padding: 40px 60px; flex-shrink: 0; }
     @media print {
       @page { size: A4 landscape; margin: 0; }
@@ -362,7 +362,7 @@ const handleDownloadPDF = async (req: any) => {
 <div class="page-wrapper">
   <div class="page-landscape">
     <div class="page-landscape-inner">
-      <div style="width:144px; margin:0 -2px; background:${gradientSidebar}; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 15px; flex-shrink:0;">
+      <div style="width:145px; margin:0 -2.5px; background:${gradientSidebar}; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 15px; flex-shrink:0;">
         <div style="background:white; padding:12px; border-radius:15px; box-shadow:0 4px 12px rgba(0,0,0,0.2);">
           <img src="${qrUrl}" style="width:100px; height:100px; display:block;" />
         </div>
