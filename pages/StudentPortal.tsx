@@ -521,8 +521,7 @@ const handleDownloadPDFReport = async (course: any) => {
       width: 100%;
       height: 100%;
       border: 4px solid #cbd5e1;
-      box-shadow: inset 2.5px 0 0 0 #cbd5e1;
-      border-left: 6.5px solid #cbd5e1;
+      background-color: #cbd5e1;
       display: flex;
       flex-direction: row;
       box-sizing: border-box;
@@ -615,7 +614,7 @@ const handleDownloadPDFReport = async (course: any) => {
     <div class="page-landscape-inner">
 
       <!-- SIDEBAR QR -->
-      <div style="width:145px; margin:0 -2.5px; background:${gradientSidebar}; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 15px; flex-shrink:0;">
+      <div style="width:140px; background:${gradientSidebar}; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 15px; flex-shrink:0;">
         <div style="background:white; padding:12px; border-radius:15px; box-shadow:0 6px 10px -4px rgba(0,0,0,0.25);">
           <img src="${qrUrl}" style="width:100px; height:100px; display:block;" />
         </div>
