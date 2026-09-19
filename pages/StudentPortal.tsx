@@ -520,7 +520,7 @@ const handleDownloadPDFReport = async (course: any) => {
     .page-landscape-inner {
       width: 100%;
       height: 100%;
-      border: 4px solid #cbd5e1;
+      border: 3px solid #cbd5e1;
       background-color: #cbd5e1;
       display: flex;
       flex-direction: row;
