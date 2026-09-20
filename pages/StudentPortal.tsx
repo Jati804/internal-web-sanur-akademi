@@ -614,7 +614,7 @@ const handleDownloadPDFReport = async (course: any) => {
     <div class="page-landscape-inner">
 
       <!-- SIDEBAR QR -->
-      <div style="width:140px; background:${gradientSidebar}; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 15px; flex-shrink:0;">
+      <div style="width:165px; background:${gradientSidebar}; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 22px; flex-shrink:0;">
         <div style="background:white; padding:12px; border-radius:15px; box-shadow:0 6px 10px -4px rgba(0,0,0,0.25);">
           <img src="${qrUrl}" style="width:100px; height:100px; display:block;" />
         </div>
