@@ -158,8 +158,8 @@ const studentOnlyLogs = (() => {
 
           {/* KONTEN UTAMA */}
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center', alignItems: 'center', textAlign: 'center' }}>
-            <h2 style={{ fontSize: '38px', fontFamily: 'serif', fontStyle: 'normal', color: isPass ? '#1e3a8a' : '#ea580c', margin: '0 0 25px 0' }}>
-              {isPass ? 'SERTIFIKAT KELULUSAN' : 'CAPAIAN PEMBELAJARAN'}
+            <h2 style={{ fontSize: '38px', fontFamily: 'serif', fontStyle: 'italic', color: isPass ? '#1e3a8a' : '#ea580c', margin: '0 0 25px 0' }}>
+              {isPass ? 'Sertifikat Kelulusan' : 'Capaian Pembelajaran'}
             </h2>
             
             <p style={{ fontSize: '14px', fontFamily: 'serif', fontStyle: 'italic', color: '#64748b', margin: '0 0 15px 0' }}>
@@ -178,8 +178,8 @@ const studentOnlyLogs = (() => {
     ? "Telah menyelesaikan seluruh materi pelatihan dan lulus dalam ujian standar kompetensi" 
     : "Telah berkomitmen mengikuti dan menyelesaikan seluruh rangkaian program pelatihan"}
 </p>
-<p style={{ fontSize: '14px', fontFamily: 'serif', fontStyle: 'normal', color: isPass ? '#1e3a8a' : '#ea580c', fontWeight: '700', margin: '0 0 40px 0' }}>
-  SANUR AKADEMI INSPIRASI
+<p style={{ fontSize: '14px', fontFamily: 'serif', fontStyle: 'italic', color: isPass ? '#1e3a8a' : '#ea580c', fontWeight: '700', margin: '0 0 40px 0' }}>
+  Sanur Akademi Inspirasi
 </p>
 
             {/* ✅ KOTAK HANYA UNTUK SUBJECT & LEVEL */}
