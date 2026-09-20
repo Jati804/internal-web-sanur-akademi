@@ -144,7 +144,7 @@ const studentOnlyLogs = (() => {
     textTransform: 'uppercase',
     letterSpacing: '0.1em'
   }}>
-    Scan untuk verifikasi
+    Verifikasi
   </p>
 </div>
 
