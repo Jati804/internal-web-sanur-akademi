@@ -507,20 +507,38 @@ const handleDownloadPDFReport = async (course: any) => {
     }
 
     .page-landscape {
-      width: 1123px;
-      height: 794px;
+      width: 1157px;
+      height: 828px;
       background: white;
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      border: 25px double ${mainColor};
+      border: 8px solid ${mainColor};
       flex-shrink: 0;
+    }
+
+    .page-landscape-gap {
+      width: 100%;
+      height: 100%;
+      border: 9px solid white;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .page-landscape-line2 {
+      width: 100%;
+      height: 100%;
+      border: 8px solid ${mainColor};
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
     }
 
     .page-landscape-inner {
       width: 100%;
       height: 100%;
-      border: 3px solid #cbd5e1;
+      border: 4px solid #cbd5e1;
       background-color: #cbd5e1;
       display: flex;
       flex-direction: row;
@@ -548,7 +566,7 @@ const handleDownloadPDFReport = async (course: any) => {
         padding: 0;
         background: white;
       }
-      .page-landscape { page-break-after: always; border: 25px double ${mainColor}; }
+      .page-landscape { page-break-after: always; border: 8px solid ${mainColor}; }
       .no-print { display: none !important; }
     }
   </style>
@@ -611,7 +629,9 @@ const handleDownloadPDFReport = async (course: any) => {
 <!-- HALAMAN 1: SERTIFIKAT LANDSCAPE -->
 <div class="page-wrapper">
   <div class="page-landscape">
-    <div class="page-landscape-inner">
+   <div class="page-landscape-gap">
+    <div class="page-landscape-line2">
+     <div class="page-landscape-inner">
 
       <!-- SIDEBAR QR -->
       <div style="width:140px; background:${gradientSidebar}; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 15px; flex-shrink:0;">
@@ -666,7 +686,9 @@ const handleDownloadPDFReport = async (course: any) => {
         </div>
 
       </div>
+     </div>
     </div>
+   </div>
   </div>
 </div>
 
