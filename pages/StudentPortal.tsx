@@ -460,7 +460,7 @@ const handleDownloadPDFReport = async (course: any) => {
   const gradientBox = isPass
     ? 'linear-gradient(135deg, #1e3a8a, #0f172a)'
     : 'linear-gradient(135deg, #ea580c, #0f172a)';
-  const nameFontSize = user.name.length > 25 ? 30 : 34;
+  const nameFontSize = user.name.length > 25 ? 32 : 34;
 
   // ✅ Selalu 1 kolom, maks 8 baris (batasnya diatur di form guru), tinggi per baris TETAP (nggak di-stretch)
   const materiCount = scores.length;
