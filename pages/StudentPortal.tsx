@@ -646,7 +646,7 @@ const handleDownloadPDFReport = async (course: any) => {
             ${isPass ? 'Telah menyelesaikan seluruh materi pelatihan dan lulus dalam ujian standar kompetensi' : 'Telah berkomitmen mengikuti dan menyelesaikan seluruh rangkaian program pelatihan'}
           </p>
           <p style="font-size:14px; font-family:serif; font-style:italic; color:${mainColor}; font-weight:700; margin:0 0 40px 0;">
-            Sanur Akademi Inspirasi
+            SANUR Akademi Inspirasi
           </p>
           <div style="background:${gradientBox}; width:700px; padding:30px 20px; border-radius:35px; display:flex; flex-direction:column; align-items:center; justify-content:center; box-shadow:0 12px 30px -8px rgba(0,0,0,0.15); margin-bottom:50px;">
             <p style="font-size:22px; font-weight:900; color:white; text-transform:uppercase; font-style:italic; margin:0; line-height:1.2;">${subject}</p>
