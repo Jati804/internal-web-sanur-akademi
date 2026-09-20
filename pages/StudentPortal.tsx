@@ -619,7 +619,7 @@ const handleDownloadPDFReport = async (course: any) => {
         <div style="background:white; padding:10px; border-radius:14px; box-shadow:0 6px 10px -4px rgba(0,0,0,0.25);">
           <img src="${qrUrl}" style="width:85px; height:85px; display:block;" />
         </div>
-        <p style="font-size:8px; font-weight:900; color:white; text-align:center; margin-top:12px; text-transform:uppercase; letter-spacing:0.1em;">Scan untuk verifikasi</p>
+        <p style="font-size:8px; font-weight:900; color:white; text-align:center; margin-top:12px; text-transform:uppercase; letter-spacing:0.1em;">Verifikasi</p>
       </div>
 
       <!-- KONTEN UTAMA -->
