@@ -274,6 +274,7 @@ const handleDownloadPDF = async (req: any) => {
   const gradientBox = isPass
     ? 'linear-gradient(135deg, #1e3a8a, #0f172a)'
     : 'linear-gradient(135deg, #ea580c, #0f172a)';
+  const nameFontSize = studentName.length > 25 ? 32 : 34;
 
   // ✅ Selalu 1 kolom, maks 8 baris (batasnya diatur di form guru), tinggi per baris TETAP (nggak di-stretch)
   const materiCount = scores.length;
@@ -307,7 +308,7 @@ const handleDownloadPDF = async (req: any) => {
     body { font-family: 'Inter', serif; background: #111; }
     .page-wrapper { display: flex; align-items: center; justify-content: center; width: 100vw; min-height: 100vh; background: #111; padding: 40px 0; }
     .page-landscape { width: 1123px; height: 794px; background: white; overflow: hidden; display: flex; flex-direction: column; border: 25px double ${mainColor}; flex-shrink: 0; }
-    .page-landscape-inner { width: 100%; height: 100%; border: 4px solid #cbd5e1; box-shadow: inset 2.5px 0 0 0 #cbd5e1; display: flex; flex-direction: row; box-sizing: border-box; }
+    .page-landscape-inner { width: 100%; height: 100%; border: 4px solid #cbd5e1; background-color: #cbd5e1; display: flex; flex-direction: row; box-sizing: border-box; }
     .page-transkrip { width: 1123px; height: 794px; background: white; overflow: hidden; display: flex; flex-direction: column; padding: 40px 60px; flex-shrink: 0; }
     @media print {
       @page { size: A4 landscape; margin: 0; }
@@ -362,13 +363,13 @@ const handleDownloadPDF = async (req: any) => {
 <div class="page-wrapper">
   <div class="page-landscape">
     <div class="page-landscape-inner">
-      <div style="width:145px; margin:0 -2.5px; background:${gradientSidebar}; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 15px; flex-shrink:0;">
-        <div style="background:white; padding:12px; border-radius:15px; box-shadow:0 6px 10px -4px rgba(0,0,0,0.25);">
-          <img src="${qrUrl}" style="width:100px; height:100px; display:block;" />
+      <div style="width:152px; background:${gradientSidebar}; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 16px; flex-shrink:0;">
+        <div style="background:white; padding:10px; border-radius:14px; box-shadow:0 6px 10px -4px rgba(0,0,0,0.25);">
+          <img src="${qrUrl}" style="width:85px; height:85px; display:block;" />
         </div>
         <p style="font-size:8px; font-weight:900; color:white; text-align:center; margin-top:12px; text-transform:uppercase; letter-spacing:0.1em;">Scan untuk verifikasi</p>
       </div>
-      <div style="flex:1; display:flex; flex-direction:column; padding:50px 80px;">
+      <div style="flex:1; background:white; display:flex; flex-direction:column; padding:50px 80px;">
         <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:50px;">
           <img src="${logoUrl}" style="max-width:240px; max-height:80px; object-fit:contain;" />
         </div>
@@ -376,7 +377,7 @@ const handleDownloadPDF = async (req: any) => {
           <h2 style="font-size:38px; font-family:serif; font-style:italic; color:${mainColor}; margin:0 0 25px 0;">${isPass ? 'Sertifikat Kelulusan' : 'Capaian Pembelajaran'}</h2>
           <p style="font-size:14px; font-family:serif; font-style:italic; color:#64748b; margin:0 0 15px 0;">Diberikan kepada:</p>
           <div style="display:inline-block; margin-bottom:40px;">
-            <h3 style="font-size:34px; font-weight:900; color:${accentColor}; text-transform:uppercase; letter-spacing:0.05em; margin:0; line-height:1.1;">${studentName.toUpperCase()}</h3>
+            <h3 style="font-size:${nameFontSize}px; font-weight:900; color:${accentColor}; text-transform:uppercase; letter-spacing:0.05em; margin:0; line-height:1.1;">${studentName.toUpperCase()}</h3>
             <div style="width:100%; height:4px; background:${isPass ? '#dbeafe' : '#ffedd5'}; margin-top:10px; border-radius:10px;"></div>
           </div>
           <p style="font-size:14px; font-family:serif; font-style:italic; color:#475569; line-height:1.7; margin:0 0 8px 0; padding:0 100px;">${isPass ? 'Telah menyelesaikan seluruh materi pelatihan dan lulus dalam ujian standar kompetensi' : 'Telah berkomitmen mengikuti dan menyelesaikan seluruh rangkaian program pelatihan'}</p>
@@ -437,7 +438,6 @@ const handleDownloadPDF = async (req: any) => {
 
     <!-- FOOTER TRANSKRIP - ukuran natural, nempel langsung di bawah kotak materi (nggak stretch); sisa ruang dibiarin kosong di bawah -->
     <div style="padding:22px 32px; background:#0f172a; border-radius:36px; color:white; display:flex; justify-content:space-between; align-items:center; position:relative; overflow:hidden; flex-shrink:0;">
-      <div style="position:absolute; top:0; right:0; width:180px; height:180px; background:rgba(255,255,255,0.05); border-radius:999px; margin-right:-100px; margin-top:-100px;"></div>
       <div style="position:relative; z-index:10;">
         <p style="font-size:8px; font-weight:900; color:#60a5fa; text-transform:uppercase; letter-spacing:0.5em; margin-bottom:3px;">Evaluasi Kumulatif</p>
         <div style="display:flex; align-items:baseline; gap:12px;">
