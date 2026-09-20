@@ -460,6 +460,7 @@ const handleDownloadPDFReport = async (course: any) => {
   const gradientBox = isPass
     ? 'linear-gradient(135deg, #1e3a8a, #0f172a)'
     : 'linear-gradient(135deg, #ea580c, #0f172a)';
+  const nameFontSize = user.name.length > 25 ? 30 : 34;
 
   // ✅ Selalu 1 kolom, maks 8 baris (batasnya diatur di form guru), tinggi per baris TETAP (nggak di-stretch)
   const materiCount = scores.length;
@@ -614,9 +615,9 @@ const handleDownloadPDFReport = async (course: any) => {
     <div class="page-landscape-inner">
 
       <!-- SIDEBAR QR -->
-      <div style="width:165px; background:${gradientSidebar}; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 22px; flex-shrink:0;">
-        <div style="background:white; padding:12px; border-radius:15px; box-shadow:0 6px 10px -4px rgba(0,0,0,0.25);">
-          <img src="${qrUrl}" style="width:100px; height:100px; display:block;" />
+      <div style="width:152px; background:${gradientSidebar}; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:30px 16px; flex-shrink:0;">
+        <div style="background:white; padding:10px; border-radius:14px; box-shadow:0 6px 10px -4px rgba(0,0,0,0.25);">
+          <img src="${qrUrl}" style="width:85px; height:85px; display:block;" />
         </div>
         <p style="font-size:8px; font-weight:900; color:white; text-align:center; margin-top:12px; text-transform:uppercase; letter-spacing:0.1em;">Scan untuk verifikasi</p>
       </div>
@@ -636,7 +637,7 @@ const handleDownloadPDFReport = async (course: any) => {
           </h2>
           <p style="font-size:14px; font-family:serif; font-style:italic; color:#64748b; margin:0 0 15px 0;">Diberikan kepada:</p>
           <div style="display:inline-block; margin-bottom:40px;">
-            <h3 style="font-size:34px; font-weight:900; color:${accentColor}; text-transform:uppercase; letter-spacing:0.05em; margin:0; line-height:1.1;">
+            <h3 style="font-size:${nameFontSize}px; font-weight:900; color:${accentColor}; text-transform:uppercase; letter-spacing:0.05em; margin:0; line-height:1.1;">
               ${user.name.toUpperCase()}
             </h3>
             <div style="width:100%; height:4px; background:${isPass ? '#dbeafe' : '#ffedd5'}; margin-top:10px; border-radius:10px;"></div>
