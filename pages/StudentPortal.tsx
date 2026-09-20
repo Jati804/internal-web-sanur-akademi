@@ -632,8 +632,8 @@ const handleDownloadPDFReport = async (course: any) => {
 
         <!-- BODY -->
         <div style="flex:1; display:flex; flex-direction:column; justify-content:center; align-items:center; text-align:center;">
-          <h2 style="font-size:38px; font-family:serif; font-style:italic; color:${mainColor}; margin:0 0 25px 0;">
-            ${isPass ? 'Sertifikat Kelulusan' : 'Capaian Pembelajaran'}
+          <h2 style="font-size:38px; font-family:serif; font-style:normal; color:${mainColor}; margin:0 0 25px 0;">
+            ${isPass ? 'SERTIFIKAT KELULUSAN' : 'CAPAIAN PEMBELAJARAN'}
           </h2>
           <p style="font-size:14px; font-family:serif; font-style:italic; color:#64748b; margin:0 0 15px 0;">Diberikan kepada:</p>
           <div style="display:inline-block; margin-bottom:40px;">
