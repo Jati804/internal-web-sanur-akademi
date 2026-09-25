@@ -232,7 +232,7 @@ const studentOnlyLogs = (() => {
         <div style={{ 
           backgroundColor: 'white', 
           borderRadius: '32px', 
-          border: '3px solid #f1f5f9', 
+          border: '3px solid #cbd5e1', 
           overflow: 'hidden', 
           marginBottom: '18px', 
           position: 'relative', 
@@ -259,7 +259,7 @@ const studentOnlyLogs = (() => {
                 height: `${ROW_HEIGHT}px`,
                 display: 'flex',
                 alignItems: 'center',
-                borderBottom: i < sessionNumbers.length - 1 ? '1px solid #f1f5f9' : 'none'
+                borderBottom: i < sessionNumbers.length - 1 ? '1px solid #cbd5e1' : 'none'
               }}>
                 <div style={{ flex: 1, padding: '0 35px', overflow: 'hidden', textAlign: 'left' }}>
                   <span style={{ fontWeight: '800', color: '#1e293b', fontSize: '14px', textTransform: 'uppercase', letterSpacing: '-0.005em', lineHeight: 1.25, display: 'block' }}>
@@ -276,7 +276,7 @@ const studentOnlyLogs = (() => {
                   gap: '3px',
                   flexShrink: 0,
                   alignSelf: 'stretch',
-                  borderLeft: '1px solid #f1f5f9',
+                  borderLeft: '1px solid #cbd5e1',
                   backgroundColor: isPass ? 'rgba(37, 99, 235, 0.05)' : 'rgba(234, 88, 12, 0.05)'
                 }}>
                   <span style={{ fontWeight: '900', color: isPass ? '#2563eb' : '#ea580c', fontSize: '18px' }}>{scores[i] || 0}</span>
