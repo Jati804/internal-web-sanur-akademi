@@ -713,7 +713,7 @@ const handleDownloadPDFReport = async (course: any) => {
     </div>
 
     <!-- FOOTER TRANSKRIP - ukuran natural, nempel langsung di bawah kotak materi (nggak stretch); sisa ruang dibiarin kosong di bawah -->
-    <div style="padding:22px 32px; background:#0f172a; border-radius:36px; color:white; display:flex; justify-content:space-between; align-items:center; position:relative; overflow:hidden; flex-shrink:0;">
+    <div style="padding:22px 32px; background:#0f172a; border-radius:36px; border:3px solid #cbd5e1; color:white; display:flex; justify-content:space-between; align-items:center; position:relative; overflow:hidden; flex-shrink:0;">
       <div style="position:relative; z-index:10;">
         <p style="font-size:8px; font-weight:900; color:#60a5fa; text-transform:uppercase; letter-spacing:0.5em; margin-bottom:3px;">Evaluasi Kumulatif</p>
         <div style="display:flex; align-items:baseline; gap:12px;">
