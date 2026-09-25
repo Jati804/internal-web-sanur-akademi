@@ -338,15 +338,8 @@ const handleDownloadPDF = async (req: any) => {
         <p style="font-size:12px; color:#64748b;">Di dialog print yang muncul, ganti printer ke <strong>"Save as PDF"</strong></p>
       </div>
     </div>
-    <div style="display:flex; gap:16px; align-items:flex-start; margin-bottom:20px;">
-      <div style="width:32px; height:32px; background:#2563eb; color:white; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; flex-shrink:0;">2</div>
-      <div>
-        <p style="font-weight:900; color:#0f172a; font-size:14px; margin-bottom:2px;">Centang <span style="color:#2563eb;">Background Graphics</span></p>
-        <p style="font-size:12px; color:#64748b;">Klik <strong>"More settings"</strong> lalu centang <strong>"Background graphics"</strong> — agar warna, gradient, dan gambar ikut tercetak</p>
-      </div>
-    </div>
     <div style="display:flex; gap:16px; align-items:flex-start; margin-bottom:32px;">
-      <div style="width:32px; height:32px; background:#2563eb; color:white; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; flex-shrink:0;">3</div>
+      <div style="width:32px; height:32px; background:#2563eb; color:white; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; flex-shrink:0;">2</div>
       <div>
         <p style="font-weight:900; color:#0f172a; font-size:14px; margin-bottom:2px;">Klik <span style="color:#2563eb;">Save</span></p>
         <p style="font-size:12px; color:#64748b;">Pilih lokasi penyimpanan dan klik <strong>"Save"</strong></p>
