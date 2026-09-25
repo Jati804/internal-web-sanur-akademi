@@ -281,11 +281,11 @@ const handleDownloadPDF = async (req: any) => {
   const ROW_HEIGHT = 50;
 
   const materiRowsHtml = scores.map((score, i) => `
-    <div style="height:${ROW_HEIGHT}px; display:flex; align-items:center; ${i < scores.length - 1 ? 'border-bottom:1px solid #f1f5f9;' : ''}">
+    <div style="height:${ROW_HEIGHT}px; display:flex; align-items:center; ${i < scores.length - 1 ? 'border-bottom:1px solid #cbd5e1;' : ''}">
       <div style="flex:1; padding:0 35px; overflow:hidden; text-align:left;">
         <span style="font-weight:800; color:#1e293b; font-size:14px; text-transform:uppercase; letter-spacing:-0.005em; line-height:1.25; display:block;">${topics[i] || 'Materi Pembelajaran'}</span>
       </div>
-      <div style="width:234px; flex-shrink:0; display:flex; align-items:center; justify-content:center; gap:3px; align-self:stretch; border-left:1px solid #f1f5f9; background:${isPass ? 'rgba(37, 99, 235, 0.05)' : 'rgba(234, 88, 12, 0.05)'};">
+      <div style="width:234px; flex-shrink:0; display:flex; align-items:center; justify-content:center; gap:3px; align-self:stretch; border-left:1px solid #cbd5e1; background:${isPass ? 'rgba(37, 99, 235, 0.05)' : 'rgba(234, 88, 12, 0.05)'};">
         <span style="font-weight:900; color:${accentColor}; font-size:18px;">${score}</span>
         <span style="color:#94a3b8; font-weight:700; font-size:10px;">/100</span>
       </div>
@@ -312,7 +312,7 @@ const handleDownloadPDF = async (req: any) => {
     .page-transkrip { width: 1123px; height: 794px; background: white; overflow: hidden; display: flex; flex-direction: column; padding: 40px 60px; flex-shrink: 0; }
     @media print {
       @page { size: A4 landscape; margin: 0; }
-      body { background: white; margin: 0; }
+      body { background: white; margin: 0; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .page-wrapper { display: block; width: auto; min-height: auto; padding: 0; background: white; }
       .page-landscape { page-break-after: always; border: 25px double ${mainColor}; }
       .no-print { display: none !important; }
@@ -424,7 +424,7 @@ const handleDownloadPDF = async (req: any) => {
     </div>
 
     <!-- ✅ KOTAK MATERI - 1 KOLOM, TINGGI PER BARIS TETAP (MAKS 8 BARIS), NGGAK DI-STRETCH -->
-    <div style="background:white; border-radius:32px; border:3px solid #f1f5f9; overflow:hidden; margin-bottom:18px; flex-shrink:0;">
+    <div style="background:white; border-radius:32px; border:3px solid #cbd5e1; overflow:hidden; margin-bottom:18px; flex-shrink:0;">
       <div style="background:#0f172a; color:white; display:flex;">
         <div style="flex:1; padding:9px 35px; text-align:left;">
           <span style="font-size:10px; font-weight:900; text-transform:uppercase; letter-spacing:0.15em;">Materi</span>
