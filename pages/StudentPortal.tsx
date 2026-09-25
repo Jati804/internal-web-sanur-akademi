@@ -584,17 +584,8 @@ const handleDownloadPDFReport = async (course: any) => {
     </div>
 
     <!-- STEP 2 -->
-    <div style="display:flex; gap:16px; align-items:flex-start; margin-bottom:20px;">
-      <div style="width:32px; height:32px; background:#2563eb; color:white; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; flex-shrink:0;">2</div>
-      <div>
-        <p style="font-weight:900; color:#0f172a; font-size:14px; margin-bottom:2px;">Centang <span style="color:#2563eb;">Background Graphics</span></p>
-        <p style="font-size:12px; color:#64748b;">Klik <strong>"More settings"</strong> lalu centang <strong>"Background graphics"</strong> — agar warna, gradient, dan gambar ikut tercetak</p>
-      </div>
-    </div>
-
-    <!-- STEP 3 -->
     <div style="display:flex; gap:16px; align-items:flex-start; margin-bottom:32px;">
-      <div style="width:32px; height:32px; background:#2563eb; color:white; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; flex-shrink:0;">3</div>
+      <div style="width:32px; height:32px; background:#2563eb; color:white; border-radius:10px; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:14px; flex-shrink:0;">2</div>
       <div>
         <p style="font-weight:900; color:#0f172a; font-size:14px; margin-bottom:2px;">Klik <span style="color:#2563eb;">Save</span></p>
         <p style="font-size:12px; color:#64748b;">Pilih lokasi penyimpanan dan klik <strong>"Save"</strong></p>
@@ -607,7 +598,7 @@ const handleDownloadPDFReport = async (course: any) => {
         Batal
       </button>
       <button onclick="document.getElementById('print-modal').style.display='none'; window.print();" style="flex:2; padding:12px; background:#2563eb; color:white; border:none; border-radius:12px; font-weight:900; font-size:13px; cursor:pointer; text-transform:uppercase; letter-spacing:0.05em;">
-        🖨️ Mengerti, Lanjut Print!
+        🖨️ Lanjut
       </button>
     </div>
 
