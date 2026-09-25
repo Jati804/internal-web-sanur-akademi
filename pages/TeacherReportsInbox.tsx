@@ -347,7 +347,7 @@ const handleDownloadPDF = async (req: any) => {
     </div>
     <div style="display:flex; gap:12px;">
       <button onclick="document.getElementById('print-modal').style.display='none'" style="flex:1; padding:12px; border:2px solid #e2e8f0; background:white; border-radius:12px; font-weight:900; font-size:13px; cursor:pointer; color:#64748b; text-transform:uppercase; letter-spacing:0.05em;">Batal</button>
-      <button onclick="document.getElementById('print-modal').style.display='none'; window.print();" style="flex:2; padding:12px; background:#2563eb; color:white; border:none; border-radius:12px; font-weight:900; font-size:13px; cursor:pointer; text-transform:uppercase; letter-spacing:0.05em;">🖨️ Mengerti, Lanjut Print!</button>
+      <button onclick="document.getElementById('print-modal').style.display='none'; window.print();" style="flex:2; padding:12px; background:#2563eb; color:white; border:none; border-radius:12px; font-weight:900; font-size:13px; cursor:pointer; text-transform:uppercase; letter-spacing:0.05em;">🖨️ Lanjut</button>
     </div>
   </div>
 </div>
