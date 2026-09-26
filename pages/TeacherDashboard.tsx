@@ -46,7 +46,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
   const [form, setForm] = useState({
     subject: '',
-    level: 'BASIC',
+    level: '',
     room: '',
     category: 'REGULER' as 'REGULER' | 'PRIVATE',
     studentName: '',
@@ -100,7 +100,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
   const handleCloseEdit = () => {
     setForm({
       subject: '',
-      level: 'BASIC',
+      level: '',
       room: '',
       category: 'REGULER',
       studentName: '',
@@ -124,7 +124,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
 
   // LOGIKA DETEKSI SESI OTOMATIS (FIXED: ENTRY TIME BASED)
   useEffect(() => {
-    if (editData || !form.subject || !form.room || !Array.isArray(logs)) return;
+    if (editData || !form.subject || !form.level || !form.room || !Array.isArray(logs)) return;
     
     if (form.category === 'PRIVATE' && !form.studentName) {
       setForm(prev => ({ ...prev, sessionNumber: 1 }));
@@ -191,7 +191,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
 
   const handleLaporPresensi = async () => {
     if (isDetecting) return;
-    if (!form.subject || !form.room) return alert("Pilih Matpel & Ruangan dulu ya! ✨");
+    if (!form.subject || !form.level || !form.room) return alert("Pilih Matpel, Level & Ruangan dulu ya! ✨");
     if (form.category === 'PRIVATE' && !form.studentName) return alert("Pilih Nama Siswa dulu untuk kelas Private! ✨");
     if (isDelegating && !form.targetTeacherId) return alert("Pilih Nama Teman yang menggantikan dulu ya! ✨");
     
@@ -362,8 +362,9 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
             <div className="space-y-4">
                <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><Layers size={14} className="text-blue-500"/> Level Belajar</label>
                <select value={form.level} onChange={e => setForm({...form, level: e.target.value})} className="w-full px-8 py-6 bg-slate-50 border-2 border-transparent focus:border-blue-500 rounded-[2rem] font-black text-xs uppercase outline-none transition-all shadow-inner h-[72px]">
-                  {levels.map(l => <option key={l} value={l}>{l}</option>)}
-               </select>
+   <option value="">-- PILIH LEVEL --</option>
+   {levels.map(l => <option key={l} value={l}>{l}</option>)}
+</select>
             </div>
 
             <div className="space-y-4">
@@ -587,7 +588,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
 
          <button 
            onClick={handleLaporPresensi} 
-           disabled={loading || isDetecting || !form.subject || !form.room} 
+           disabled={loading || isDetecting || !form.subject || !form.level || !form.room}
            className="w-full py-10 bg-blue-600 text-white rounded-[3rem] font-black text-[14px] uppercase tracking-[0.5em] shadow-2xl hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30 group"
          >
             {loading ? <Loader2 className="animate-spin" size={32} /> : isDetecting ? 'HARAP TUNGGU...' : (editData ? <><Save size={28}/> SIMPAN PERUBAHAN ✨</> : <><Send size={28} className="group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform" /> KIRIM PRESENSI</>)}
