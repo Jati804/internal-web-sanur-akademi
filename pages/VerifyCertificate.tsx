@@ -90,11 +90,6 @@ const VerifyCertificate: React.FC = () => {
         <>
           <div className="absolute top-0 left-0 w-96 h-96 bg-gradient-to-br from-blue-100 via-blue-50 to-cyan-50 rounded-full blur-[120px] -ml-48 -mt-48 opacity-60 animate-pulse"></div>
           <div className="absolute bottom-0 right-0 w-96 h-96 bg-gradient-to-br from-cyan-100 via-cyan-50 to-blue-50 rounded-full blur-[120px] -mr-48 -mb-48 opacity-60 animate-pulse"></div>
-          {/* Cyan sparkles effect */}
-          <div className="absolute top-1/4 right-1/4 w-2 h-2 bg-cyan-400 rounded-full animate-ping"></div>
-          <div className="absolute bottom-1/3 left-1/3 w-2 h-2 bg-cyan-400 rounded-full animate-ping" style={{animationDelay: '0.5s'}}></div>
-          <div className="absolute top-1/3 left-1/4 w-1 h-1 bg-blue-400 rounded-full animate-ping" style={{animationDelay: '1s'}}></div>
-          <div className="absolute top-1/2 right-1/3 w-1.5 h-1.5 bg-cyan-300 rounded-full animate-ping" style={{animationDelay: '1.5s'}}></div>
         </>
       ) : (
         <>
