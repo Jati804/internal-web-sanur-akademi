@@ -129,8 +129,6 @@ const VerifyCertificate: React.FC = () => {
                     {/* Inner glow */}
                     <div className="absolute inset-2 bg-gradient-to-br from-cyan-400/20 to-transparent rounded-[2rem]"></div>
                     <ShieldCheck size={48} className="relative z-10 text-cyan-300 drop-shadow-lg md:w-16 md:h-16" />
-                    {/* Cyan accent dot */}
-                    <div className="absolute -top-2 -right-2 w-6 h-6 bg-cyan-400 rounded-full shadow-lg animate-pulse"></div>
                   </div>
                 </div>
               ) : (
