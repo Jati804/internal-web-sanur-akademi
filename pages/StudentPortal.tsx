@@ -57,7 +57,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [showErrors, setShowErrors] = useState(false);
-  const [payForm, setPayForm] = useState({ subject: '', level: 'BASIC', room: '', amount: 0, date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), receiptData: '' });
+  const [payForm, setPayForm] = useState({ subject: '', level: '', room: '', amount: 0, date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), receiptData: '' });
 
   const normalizedUserName = (user?.name || '').toUpperCase().trim();
   const firstName = (user?.name || 'Siswa').split(' ')[0].toUpperCase();
@@ -239,7 +239,7 @@ const findOfficialReportLog = (course: any) => {
 };
 
   const handleLaporBayar = async () => {
-    if (!payForm.subject || !payForm.room || !payForm.amount || !payForm.receiptData) {
+    if (!payForm.subject || !payForm.level || !payForm.room || !payForm.amount || !payForm.receiptData) {
       setShowErrors(true);
       return alert("Waduh! Tolong lengkapi kolom yang warna merah dulu yaa ✨");
     }
@@ -269,7 +269,7 @@ setTimeout(() => {
   };
 
   const resetForm = () => {
-    setPayForm({ subject: '', level: 'BASIC', room: '', amount: 0, date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), receiptData: '' });
+    setPayForm({ subject: '', level: '', room: '', amount: 0, date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), receiptData: '' });
     setIsEditing(null);
     setShowErrors(false);
   };
@@ -1115,7 +1115,10 @@ const handleDownloadPDFReport = async (course: any) => {
                 </div>
                 <div className="space-y-3">
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Level Belajar</label>
-                  <select value={payForm.level} onChange={e => setPayForm({...payForm, level: e.target.value})} className="w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-orange-500 h-[72px]">{levels.map(l => <option key={l} value={l}>{l}</option>)}</select>
+                  <select value={payForm.level} onChange={e => { setPayForm({...payForm, level: e.target.value}); setShowErrors(false); }} className={`w-full px-8 py-6 rounded-[2rem] font-black text-xs outline-none transition-all shadow-inner h-[72px] border-2 ${showErrors && !payForm.level ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-slate-50 focus:bg-white focus:border-orange-500'}`}>
+  <option value="">-- PILIH LEVEL --</option>
+  {levels.map(l => <option key={l} value={l}>{l}</option>)}
+</select>
                 </div>
                 <div className="space-y-3">
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Ruangan</label>
