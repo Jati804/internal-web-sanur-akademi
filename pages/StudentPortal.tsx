@@ -399,7 +399,7 @@ const executeFinalRequestReport = async () => {
     
     // ✅ PAYLOAD LENGKAP SESUAI TABEL REPORTS
     const payload = { 
-      id: `REQ-${Date.now()}`, 
+      id: `REQ-${Date.now().toString(36).toUpperCase()}`, 
       teacherid: selectedTeacherForReport, 
       teachername: teacher?.name || 'Guru', 
       date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), 
