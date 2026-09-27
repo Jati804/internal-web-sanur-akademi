@@ -658,7 +658,7 @@ const handleDownloadPDFReport = async (course: any) => {
           </div>
           <div style="text-align:center;">
             <p style="font-size:9px; font-weight:900; color:${isPass ? '#60a5fa' : '#fb923c'}; text-transform:uppercase; letter-spacing:0.2em; margin-bottom:3px;">ID Sertifikat</p>
-            <p style="font-size:11px; font-weight:900; color:#64748b; font-style:italic;">${reportLog.id.toUpperCase()}</p>
+            <p style="font-size:13px; font-weight:900; color:#64748b; font-style:italic;">${reportLog.id.toUpperCase()}</p>
           </div>
         </div>
 
