@@ -497,7 +497,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
                      </div>
                      <div>
                         <h4 className={`text-sm font-black uppercase italic ${isDelegating ? 'text-rose-600' : 'text-slate-500'}`}>Saya Berhalangan Mengajar?</h4>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Gunakan ini jika teman menggantikan sesi Kakak ✨</p>
+                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Gunakan ini jika teman menggantikan sesi ✨</p>
                      </div>
                   </div>
                   <button onClick={() => setIsDelegating(!isDelegating)} className={`w-16 h-8 rounded-full p-1.5 transition-all duration-500 flex ${isDelegating ? 'bg-rose-500 justify-end' : 'bg-slate-300 justify-start'}`}>
@@ -508,7 +508,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
                {isDelegating && (
   <div className="mt-8 space-y-4 animate-in slide-in-from-top-4 relative">
      <label className="text-[9px] font-black text-rose-500 uppercase ml-4 tracking-widest flex items-center gap-2">
-       <UserPlus size={12}/> Pilih Rekan Yang Menggantikan Kakak:
+       <UserPlus size={12}/> Pilih Rekan Yang Menggantikan Anda:
      </label>
      
      <div className="relative">
