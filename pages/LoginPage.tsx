@@ -302,7 +302,7 @@ setFieldErrors({ username: false, pin: false });
         <div className="w-full max-w-4xl">
           {view === 'SELECTION' ? (
             <div className="flex flex-col items-center gap-8">
-              <p className="fade-up-d1 text-[11px] font-bold text-slate-500 tracking-wide leading-relaxed text-center">
+              <p className="fade-up-d1 text-lg font-bold text-slate-700 tracking-normal leading-relaxed text-center max-w-3xl">
                 Halo! Selamat datang di Portal Internal SANUR Akademi Inspirasi. Silakan pilih peran di bawah untuk melanjutkan.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
@@ -392,7 +392,7 @@ const RoleCard = ({ icon: Icon, title, desc, color, onClick }: any) => {
         <Icon size={40} />
       </div>
       <h3 className="text-xl font-black uppercase italic tracking-tighter text-slate-800 mb-2">{title}</h3>
-      <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{desc}</p>
+      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wider leading-relaxed">{desc}</p>
     </button>
   );
 };
