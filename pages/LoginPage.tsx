@@ -282,7 +282,7 @@ setFieldErrors({ username: false, pin: false });
       <div className="w-full max-w-6xl flex flex-col items-center gap-10 animate-in fade-in duration-700">
         {view === 'SELECTION' && (
         <div className="text-center space-y-6">
-<div className="fade-up inline-flex items-center gap-4 px-8 py-4 bg-white border-2 border-slate-100 shadow-xl rounded-3xl">
+<div className="fade-up inline-flex items-center gap-4 px-8 py-4 bg-white/70 border border-slate-200 rounded-3xl">
   <img
     src="https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png"
     alt="SANUR Logo"
