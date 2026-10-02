@@ -303,7 +303,7 @@ setFieldErrors({ username: false, pin: false });
           {view === 'SELECTION' ? (
             <div className="flex flex-col items-center gap-8">
               <p className="fade-up-d1 text-[15px] font-bold text-slate-700 tracking-normal leading-relaxed text-center md:whitespace-nowrap">
-                Halo! Selamat datang di Portal Internal SANUR Akademi Inspirasi. Silakan pilih peran di bawah untuk melanjutkan.
+                Selamat datang di Portal Internal SANUR Akademi Inspirasi. Silakan pilih peran di bawah untuk melanjutkan.
               </p>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 w-full">
                 <div className="fade-up-d2"><RoleCard icon={UserCog} title="Pengurus" color="blue" desc="Administrasi, Manajemen, Operasional" onClick={() => handleSelectRole('ADMIN')} /></div>
