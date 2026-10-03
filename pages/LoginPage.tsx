@@ -311,8 +311,8 @@ setFieldErrors({ username: false, pin: false });
                 <div className="fade-up-d4"><RoleCard icon={Users} title="Siswa" color="emerald" desc="Pembayaran, Progres, Sertifikat" onClick={() => handleSelectRole('STUDENT')} /></div>
               </div>
               <div className="fade-up-d4 flex items-center gap-3">
-                <p className="text-[14px] font-bold text-slate-500 tracking-wide">Ada masalah atau pertanyaan?</p>
-                <a href="https://wa.me/6285111331048?text=Halo%20Admin%20SANUR%2C%20saya%20ingin%20bertanya%20mengenai%20akses%20login%20portal%20internal.%20Mohon%20bantuannya." target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full text-[11px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
+                <p className="text-[12px] font-bold text-slate-600 tracking-wide">Ada masalah atau pertanyaan?</p>
+                <a href="https://wa.me/6285111331048?text=Halo%20Admin%20SANUR%2C%20saya%20ingin%20bertanya%20mengenai%20akses%20login%20portal%20internal.%20Mohon%20bantuannya." target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white rounded-full text-[19px] font-black uppercase tracking-widest transition-all hover:scale-105 active:scale-95">
                   💬 Hubungi Admin
                 </a>
               </div>
