@@ -7,7 +7,7 @@ import {
   GraduationCap, BadgeCheck, FileText, Upload, Receipt, History, AlertCircle, 
   CreditCard, Eye, Trash2, Printer, Smile, Heart, Target, Edit3, Save, ChevronRight,
   Download, PartyPopper, UserCog, AlertTriangle, Zap, Star, Quote,
-  Layout, Info, FileDown, FileCheck, ImageIcon, Calendar, CheckCircle2, ArrowRight, Lock
+  Layout, Info, FileDown, FileCheck, ImageIcon, Calendar, CheckCircle2, ArrowRight
 } from 'lucide-react';
 
 import { jsPDF } from 'jspdf';
@@ -1240,10 +1240,9 @@ const handleDownloadPDFReport = async (course: any) => {
                     <div
                       aria-readonly="true"
                       title="Terhitung otomatis dari biaya pelatihan + transport"
-                      className="w-full h-[72px] px-8 rounded-[2rem] bg-slate-50 border-2 border-transparent shadow-inner flex items-center justify-between font-black text-[15px] text-slate-400 opacity-70 cursor-not-allowed select-none"
+                      className="w-full h-[72px] px-8 rounded-[2rem] bg-slate-50 border-2 border-transparent shadow-inner flex items-center font-black text-[15px] cursor-not-allowed select-none"
                     >
-                      <span>Rp {formatRupiah((Number(payForm.amount) || 0) + (Number(payForm.transportAmount) || 0))}</span>
-                      <Lock size={18} className="text-slate-400 shrink-0" />
+                      Rp {formatRupiah((Number(payForm.amount) || 0) + (Number(payForm.transportAmount) || 0))}
                     </div>
                   </div>
                 )}
