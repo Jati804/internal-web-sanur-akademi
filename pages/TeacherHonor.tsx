@@ -612,9 +612,6 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                          <div className="flex flex-wrap items-center gap-3">
                             <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-tight">{pkg.className}</h4>
                             <span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${pkg.category === 'PRIVATE' ? 'bg-orange-500 text-white' : 'bg-blue-900 text-white'}`}>{pkg.category}</span>
-                            {isNew && (
-                               <span className="px-4 py-1 bg-blue-600 text-white rounded-full text-[8px] font-black uppercase tracking-widest animate-bounce shadow-lg">DATA TERBARU ✨</span>
-                            )}
                          </div>
                          <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mt-2 italic">Siswa: {pkg.studentName}</p>
                          <div className="flex flex-wrap items-center gap-4 mt-2">
