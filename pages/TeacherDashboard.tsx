@@ -56,6 +56,9 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
     date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date())
   });
 
+  // 🏠 Home Tutoring: guru wajib datang sendiri selama 6 pertemuan -> tidak ada opsi "digantikan teman"
+  const isHomeTutoring = (form.room || '').toUpperCase().includes('HOME TUTORING');
+
   const [activePackageId, setActivePackageId] = useState<string | null>(null);
   const [activeOriginalTeacherId, setActiveOriginalTeacherId] = useState<string | null>(null);
   
@@ -116,6 +119,16 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
     setTeacherInputValue('');
     navigate(location.pathname, { replace: true, state: {} });
   };
+
+  // Kalau ruang diganti ke Home Tutoring, status "berhalangan" & guru penggantinya ikut direset
+  useEffect(() => {
+    if (isHomeTutoring && isDelegating) {
+      setIsDelegating(false);
+      setForm(prev => ({ ...prev, targetTeacherId: '' }));
+      setTeacherInputValue('');
+      setShowTeacherSuggestions(false);
+    }
+  }, [isHomeTutoring, isDelegating]);
 
   const estimatedHonor = useMemo(() => {
     const hourlyRate = form.category === 'PRIVATE' ? (salaryConfig?.privateRate || 25000) : (salaryConfig?.regulerRate || 15000);
@@ -191,9 +204,10 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
 
   const handleLaporPresensi = async () => {
     if (isDetecting) return;
+    const delegating = isDelegating && !isHomeTutoring; // Home Tutoring: tidak boleh digantikan
     if (!form.subject || !form.level || !form.room) return alert("Pilih Matpel, Level & Ruangan dulu ya! ✨");
     if (form.category === 'PRIVATE' && !form.studentName) return alert("Pilih Nama Siswa dulu untuk kelas Private! ✨");
-    if (isDelegating && !form.targetTeacherId) return alert("Pilih Nama Teman yang menggantikan dulu ya! ✨");
+    if (delegating && !form.targetTeacherId) return alert("Pilih Nama Teman yang menggantikan dulu ya! ✨");
     
     // ⭐ VALIDASI OWNERSHIP SEBELUM SUBMIT!
     if (activePackageId && activeOriginalTeacherId && activeOriginalTeacherId !== user.id) {
@@ -230,11 +244,11 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
 
       const payload: any = {
         id: editData ? editData.id : `ATT-${Date.now()}`, // ID berisi timestamp untuk sorting
-        teacherid: isDelegating ? (targetTeacher?.id || user.id) : user.id,
-        teachername: isDelegating ? (targetTeacher?.name || user.name) : user.name,
+        teacherid: delegating ? (targetTeacher?.id || user.id) : user.id,
+        teachername: delegating ? (targetTeacher?.name || user.name) : user.name,
         date: form.date,
         clockin: editData ? editData.clockIn : new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' }).format(new Date()),
-        status: isDelegating ? 'SUB_LOG' : 'SESSION_LOG',
+        status: delegating ? 'SUB_LOG' : 'SESSION_LOG',
         classname: fullClassName,
         level: form.level,
         sessioncategory: form.category,
@@ -244,7 +258,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
         earnings: estimatedHonor,
         paymentstatus: 'UNPAID',
         duration: form.duration,
-        substitutefor: isDelegating ? user.name : (editData?.substituteFor || null),
+        substitutefor: delegating ? user.name : (editData?.substituteFor || null),
         originalteacherid: finalOriginalTeacherId 
       };
 
@@ -489,6 +503,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
                <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner h-[72px]" />
             </div>
 
+            {!isHomeTutoring && (
             <div className={`md:col-span-2 p-8 rounded-[3.5rem] border-2 transition-all duration-500 ${isDelegating ? 'bg-rose-50 border-rose-200 shadow-xl' : 'bg-slate-50 border-transparent'}`}>
                <div className="flex items-center justify-between gap-6">
                   <div className="flex items-center gap-4">
@@ -567,8 +582,10 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
   </div>
 )}
             </div>
+            )}
          </div>
 
+         <div>
          <div className="bg-slate-900 p-8 rounded-[3rem] text-white flex items-center justify-between shadow-2xl overflow-hidden relative">
             <div className="absolute top-0 left-0 w-40 h-40 bg-blue-500/10 rounded-full blur-[40px] -ml-20 -mt-20"></div>
             <div className="flex items-center gap-4 relative z-10">
@@ -584,6 +601,12 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
                   {isDelegating ? (teachers.find(t=>t.id===form.targetTeacherId)?.name || 'PILIH TEMAN') : 'SAYA SENDIRI'}
                </h3>
             </div>
+         </div>
+         {isHomeTutoring && (
+            <p className="mt-4 px-6 text-[10px] font-bold text-slate-400 italic leading-relaxed">
+               ✨ Estimasi ini belum termasuk honor transport. Honor transport dibayarkan di akhir paket sesuai kesepakatan antara orang tua siswa dan guru.
+            </p>
+         )}
          </div>
 
          <button 
