@@ -7,7 +7,7 @@ import {
   GraduationCap, BadgeCheck, FileText, Upload, Receipt, History, AlertCircle, 
   CreditCard, Eye, Trash2, Printer, Smile, Heart, Target, Edit3, Save, ChevronRight,
   Download, PartyPopper, UserCog, AlertTriangle, Zap, Star, Quote,
-  Layout, Info, FileDown, FileCheck, ImageIcon, Calendar, CheckCircle2, ArrowRight
+  Layout, Info, FileDown, FileCheck, ImageIcon, Calendar, CheckCircle2, ArrowRight, Lock
 } from 'lucide-react';
 
 import { jsPDF } from 'jspdf';
@@ -995,6 +995,14 @@ const handleDownloadPDFReport = async (course: any) => {
     return amt > 0 ? `Rp ${formatRupiah(amt)}` : 'Rp ';
   };
 
+  // 🏠 Nominal yang tampil di daftar riwayat: khusus Home Tutoring = biaya pelatihan + transport.
+  // Kelas lain (dan Home Tutoring lama yang belum punya transport) tetap pakai biaya pelatihan saja.
+  const getListAmount = (p: StudentPayment) => {
+    const isHT = String(p.className || '').toUpperCase().includes('HOME TUTORING');
+    const transport = isHT ? (Number((p as any).transportamount) || 0) : 0;
+    return Number(p.amount) + transport;
+  };
+
   const handleFetchReceiptPreview = async (payId: string) => {
     setLoading(true);
     try {
@@ -1226,6 +1234,19 @@ const handleDownloadPDFReport = async (course: any) => {
                     </div>
                   </>
                 )}
+                {payForm.room.toUpperCase() === 'HOME TUTORING' && (
+                  <div className="space-y-3">
+                    <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Total Pembayaran</label>
+                    <div
+                      aria-readonly="true"
+                      title="Terhitung otomatis dari biaya pelatihan + transport"
+                      className="w-full h-[72px] px-8 rounded-[2rem] bg-slate-50 border-2 border-transparent shadow-inner flex items-center justify-between font-black text-[15px] text-slate-400 opacity-70 cursor-not-allowed select-none"
+                    >
+                      <span>Rp {formatRupiah((Number(payForm.amount) || 0) + (Number(payForm.transportAmount) || 0))}</span>
+                      <Lock size={18} className="text-slate-400 shrink-0" />
+                    </div>
+                  </div>
+                )}
                 <div className="space-y-3">
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Tanggal</label>
                   <input type="date" value={payForm.date} onChange={e => setPayForm({...payForm, date: e.target.value})} className="w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-black text-[14px] outline-none h-[72px]" />
@@ -1326,7 +1347,7 @@ const handleDownloadPDFReport = async (course: any) => {
                        <div className="w-full md:w-auto flex items-center justify-between md:justify-normal gap-6 md:gap-10 bg-slate-50 md:bg-transparent rounded-2xl md:rounded-none p-5 md:p-0">
                          <div className="text-left md:text-right">
                            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">NOMINAL</p>
-                           <p className={`text-2xl font-black italic ${p.status === 'VERIFIED' ? 'text-emerald-600' : 'text-slate-800'}`}>Rp {formatRupiah(p.amount)}</p>
+                           <p className={`text-2xl font-black italic ${p.status === 'VERIFIED' ? 'text-emerald-600' : 'text-slate-800'}`}>Rp {formatRupiah(getListAmount(p))}</p>
                          </div>
                          
                          <div className="flex gap-3">
