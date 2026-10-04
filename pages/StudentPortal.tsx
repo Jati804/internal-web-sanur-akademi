@@ -239,7 +239,7 @@ const findOfficialReportLog = (course: any) => {
 };
 
   const handleLaporBayar = async () => {
-    const isHomeTutoring = payForm.room === 'HOME TUTORING';
+    const isHomeTutoring = payForm.room.toUpperCase() === 'HOME TUTORING';
     if (!payForm.subject || !payForm.level || !payForm.room || !payForm.amount || !payForm.receiptData || (isHomeTutoring && (!payForm.transportAmount || !payForm.transportTeacherId))) {
       setShowErrors(true);
       return alert("Waduh! Tolong lengkapi kolom yang warna merah dulu yaa ✨");
@@ -1147,7 +1147,7 @@ const handleDownloadPDFReport = async (course: any) => {
                   </select>
                 </div>
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">{payForm.room === 'HOME TUTORING' ? 'Biaya Pelatihan (Rp)' : 'Nominal Transfer (Rp)'}</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">{payForm.room.toUpperCase() === 'HOME TUTORING' ? 'Biaya Pelatihan (Rp)' : 'Nominal Transfer (Rp)'}</label>
                   <input 
                     type="text" 
                     placeholder="Rp 720000" 
@@ -1161,7 +1161,7 @@ const handleDownloadPDFReport = async (course: any) => {
                   />
                 </div>
 
-                {payForm.room === 'HOME TUTORING' && (
+                {payForm.room.toUpperCase() === 'HOME TUTORING' && (
                   <>
                     <div className="col-span-full bg-amber-50 border-2 border-amber-100 rounded-2xl px-6 py-4">
                       <p className="text-[10px] font-bold text-amber-700 leading-relaxed">
