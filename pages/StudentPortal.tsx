@@ -57,7 +57,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isEditing, setIsEditing] = useState<string | null>(null);
   const [showErrors, setShowErrors] = useState(false);
-  const [payForm, setPayForm] = useState({ subject: '', level: '', room: '', amount: 0, date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), receiptData: '' });
+  const [payForm, setPayForm] = useState({ subject: '', level: '', room: '', amount: 0, transportAmount: 0, transportTeacherId: '', date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), receiptData: '' });
 
   const normalizedUserName = (user?.name || '').toUpperCase().trim();
   const firstName = (user?.name || 'Siswa').split(' ')[0].toUpperCase();
@@ -239,14 +239,24 @@ const findOfficialReportLog = (course: any) => {
 };
 
   const handleLaporBayar = async () => {
-    if (!payForm.subject || !payForm.level || !payForm.room || !payForm.amount || !payForm.receiptData) {
+    const isHomeTutoring = payForm.room.toUpperCase() === 'HOME TUTORING';
+    if (!payForm.subject || !payForm.level || !payForm.room || !payForm.amount || !payForm.receiptData || (isHomeTutoring && (!payForm.transportAmount || !payForm.transportTeacherId))) {
       setShowErrors(true);
       return alert("Waduh! Tolong lengkapi kolom yang warna merah dulu yaa ✨");
     }
     setLoading(true);
     try {
       const fullClassName = `${payForm.subject} (${payForm.level}) - ${payForm.room}`.toUpperCase();
-      const payload = { studentname: normalizedUserName, classname: fullClassName, amount: Number(payForm.amount), date: payForm.date, status: 'PENDING', receiptdata: payForm.receiptData };
+      const payload = { 
+        studentname: normalizedUserName, 
+        classname: fullClassName, 
+        amount: Number(payForm.amount), 
+        date: payForm.date, 
+        status: 'PENDING', 
+        receiptdata: payForm.receiptData,
+        transportamount: isHomeTutoring ? Number(payForm.transportAmount) : null,
+        transportteacherid: isHomeTutoring ? payForm.transportTeacherId : null,
+      };
       if (isEditing) {
         const { error } = await supabase.from('student_payments').update(payload).eq('id', isEditing);
         if (error) throw error;
@@ -269,7 +279,7 @@ setTimeout(() => {
   };
 
   const resetForm = () => {
-    setPayForm({ subject: '', level: '', room: '', amount: 0, date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), receiptData: '' });
+    setPayForm({ subject: '', level: '', room: '', amount: 0, transportAmount: 0, transportTeacherId: '', date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()), receiptData: '' });
     setIsEditing(null);
     setShowErrors(false);
   };
@@ -406,7 +416,12 @@ const executeFinalRequestReport = async () => {
       status: 'REQ',  // ✅ GANTI JADI 'REQ'
       classname: requestingReportFor.className.toUpperCase(), 
       level: requestingReportFor.level || 'BASIC',  // ✅ TAMBAH
-      sessioncategory: requestingReportFor.sessionCategory || 'REGULER',  // ✅ TAMBAH
+      sessioncategory: (() => {
+        const cn = (requestingReportFor.className || '').toUpperCase();
+        if (cn.includes('HOME TUTORING')) return 'PRIVATE';
+        const m = cn.match(/-\s*(REGULER|PRIVATE)\s*\d+/);
+        return m ? m[1] : 'REGULER';
+      })(),  // ✅ FIX: derive dari className, bukan field yang nggak pernah keisi
       packageid: requestingReportFor.id, 
       sessionnumber: 6,  // ✅ TAMBAH
       studentsattended: [normalizedUserName], 
@@ -879,6 +894,42 @@ const handleDownloadPDFReport = async (course: any) => {
 
       y = boxTop + boxHeight + 12;
 
+      // ===== RINCIAN HOME TUTORING (kalau ada biaya transport) =====
+      const isHT = String(p.className).toUpperCase().includes('HOME TUTORING');
+      const transportAmt = Number((p as any).transportamount) || 0;
+      const transportTeacherName = isHT
+        ? (teachers.find(t => t.id === (p as any).transportteacherid)?.name || '-')
+        : '';
+      const totalAmount = isHT ? Number(p.amount) + transportAmt : Number(p.amount);
+
+      if (isHT && transportAmt > 0) {
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(7);
+        pdf.setTextColor(...slate400);
+        pdf.text('RINCIAN BIAYA:', marginL, y);
+        y += 6;
+
+        pdf.setFont('helvetica', 'normal');
+        pdf.setFontSize(10);
+        pdf.setTextColor(...slate800);
+        pdf.text('Biaya Pelatihan', marginL, y);
+        pdf.text(`Rp ${formatRupiah(p.amount)}`, marginR, y, { align: 'right' });
+        y += 6;
+        pdf.text(`Biaya Transport (untuk ${transportTeacherName})`, marginL, y);
+        pdf.text(`Rp ${formatRupiah(transportAmt)}`, marginR, y, { align: 'right' });
+        y += 8;
+
+        pdf.setFont('helvetica', 'italic');
+        pdf.setFontSize(7);
+        pdf.setTextColor(...slate400);
+        const transportNote = pdf.splitTextToSize(
+          'Uang transport 100% akan diserahkan kepada guru, sesuai kesepakatan antar orang tua siswa dan guru.',
+          marginR - marginL
+        );
+        pdf.text(transportNote, marginL, y);
+        y += transportNote.length * 3.5 + 6;
+      }
+
       // ===== TOTAL & VERIFIKASI =====
       pdf.setDrawColor(...slate900);
       pdf.setLineWidth(0.6);
@@ -897,7 +948,7 @@ const handleDownloadPDFReport = async (course: any) => {
       y += 15;
       pdf.setFontSize(27);
       pdf.setTextColor(...blue600);
-      pdf.text(`Rp ${formatRupiah(p.amount)}`, marginL, y);
+      pdf.text(`Rp ${formatRupiah(totalAmount)}`, marginL, y);
       y += 15;
 
       // ===== FOOTER (tanpa ikon) =====
@@ -1132,7 +1183,7 @@ const handleDownloadPDFReport = async (course: any) => {
                   </select>
                 </div>
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Nominal Transfer (Rp)</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">{payForm.room.toUpperCase() === 'HOME TUTORING' ? 'Biaya Pelatihan (Rp)' : 'Nominal Transfer (Rp)'}</label>
                   <input 
                     type="text" 
                     placeholder="Rp 720000" 
@@ -1145,6 +1196,36 @@ const handleDownloadPDFReport = async (course: any) => {
                     className={`w-full h-[72px] px-8 py-6 rounded-[2rem] font-black text-[15px] outline-none transition-all shadow-inner border-2 ${showErrors && !payForm.amount ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-slate-50 focus:bg-white focus:border-orange-500'}`} 
                   />
                 </div>
+
+                {payForm.room.toUpperCase() === 'HOME TUTORING' && (
+                  <>
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Biaya Transport (Rp)</label>
+                      <input 
+                        type="text" 
+                        placeholder="Rp 50000" 
+                        value={getDisplayAmount(payForm.transportAmount)} 
+                        onChange={e => {
+                          const raw = e.target.value.replace(/\D/g, ''); 
+                          setPayForm({...payForm, transportAmount: parseInt(raw) || 0});
+                          setShowErrors(false);
+                        }} 
+                        className={`w-full h-[72px] px-8 py-6 rounded-[2rem] font-black text-[15px] outline-none transition-all shadow-inner border-2 ${showErrors && !payForm.transportAmount ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-slate-50 focus:bg-white focus:border-orange-500'}`} 
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Transport Untuk Guru</label>
+                      <select 
+                        value={payForm.transportTeacherId} 
+                        onChange={e => { setPayForm({...payForm, transportTeacherId: e.target.value}); setShowErrors(false); }} 
+                        className={`w-full px-8 py-6 rounded-[2rem] font-black text-xs uppercase outline-none transition-all shadow-inner h-[72px] border-2 ${showErrors && !payForm.transportTeacherId ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-slate-50 focus:bg-white focus:border-orange-500'}`}
+                      >
+                        <option value="">-- PILIH GURU --</option>
+                        {teachers.filter(t => t.role === 'TEACHER').map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                      </select>
+                    </div>
+                  </>
+                )}
                 <div className="space-y-3">
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Tanggal</label>
                   <input type="date" value={payForm.date} onChange={e => setPayForm({...payForm, date: e.target.value})} className="w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-black text-[14px] outline-none h-[72px]" />
