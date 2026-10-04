@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useRef, useEffect } from 'react';
-import { Attendance, Transaction, StudentPayment } from '../types';
+import { Attendance, Transaction, StudentPayment, User } from '../types';
 import ModalPortal from '../ModalPortal.tsx';
 import { supabase } from '../services/supabase.ts';
 import { 
@@ -17,12 +17,14 @@ interface AdminFinanceProps {
   attendanceLogs: Attendance[];
   transactions: Transaction[];
   studentPayments: StudentPayment[];
+  teachers?: User[];
   refreshAllData?: () => Promise<void>;
 }
 
 const AdminFinance: React.FC<AdminFinanceProps> = ({ 
   transactions, 
   studentPayments,
+  teachers = [],
   refreshAllData,
   attendanceLogs,
 }) => {
@@ -49,6 +51,9 @@ const AdminFinance: React.FC<AdminFinanceProps> = ({
   const [selectedPayout, setSelectedPayout] = useState<any | null>(null);
   const [confirmingSpp, setConfirmingSpp] = useState<StudentPayment | null>(null);
   const [payForm, setPayForm] = useState({ receiptData: '', date: getWIBDate() });
+  // 🏠 Honor transport Home Tutoring (diketik admin saat pencairan). String angka murni, '' = belum diisi.
+  const [payoutTransport, setPayoutTransport] = useState('');
+  useEffect(() => { setPayoutTransport(''); }, [selectedPayout]);
   
   const [payrollSearch, setPayrollSearch] = useState('');
   const [ledgerSearch, setLedgerSearch] = useState('');
@@ -354,6 +359,18 @@ const uniqueCategories = useMemo(() => {
     return result.sort((a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime());
   }, [attendanceLogs, payrollSearch]);
 
+  // 🚗 Rincian transport — KHUSUS Home Tutoring (kolom transportamount / transportteacherid di student_payments).
+  // Kelas lain & pembayaran Home Tutoring lama (belum ada transport) tetap tampil seperti biasa.
+  const getSppBreakdown = (p: StudentPayment) => {
+    const isHT = String(p.className || '').toUpperCase().includes('HOME TUTORING');
+    const transport = isHT ? (Number((p as any).transportamount) || 0) : 0;
+    const teacherName = transport > 0
+      ? (teachers.find(t => t.id === (p as any).transportteacherid)?.name || '-')
+      : '';
+    return { hasTransport: transport > 0, transport, teacherName, total: Number(p.amount) + transport };
+  };
+  const confirmingBreakdown = confirmingSpp ? getSppBreakdown(confirmingSpp) : null;
+
   const filteredSpp = useMemo(() => {
     let result = studentPayments.filter(p => p.status === 'PENDING');
     if (sppSearch.trim()) {
@@ -388,11 +405,27 @@ useEffect(() => {
 
   const handleVerifySPP = async (p: StudentPayment) => {
     setActionLoadingId(p.id);
-    const txId = `TX-INC-${Date.now()}`;
+    // ID transport dibuat lebih kecil 1 angka dari ID SPP, supaya di ledger (urut ID menurun) baris SPP tampil di atas baris transport.
+    const now = Date.now();
+    const txId = `TX-INC-${now + 1}`;
+    const txTransportId = `TX-INC-${now}`;
     try {
       const { error: payErr } = await supabase.from('student_payments').update({ status: 'VERIFIED' }).eq('id', p.id);
       if (payErr) throw payErr;
-      const { error: txErr } = await supabase.from('transactions').insert({ id: txId, type: 'INCOME', category: 'SPP SISWA', amount: p.amount, date: p.date, description: `SPP MASUK: ${p.studentName} | ${p.className}`.toUpperCase() });
+
+      // Baris 1: biaya pelatihan (selalu ada)
+      const rows: any[] = [
+        { id: txId, type: 'INCOME', category: 'SPP SISWA', amount: p.amount, date: p.date, description: `SPP MASUK: ${p.studentName} | ${p.className}`.toUpperCase() }
+      ];
+      // Baris 2: uang transport guru — KHUSUS Home Tutoring yang ada transport-nya.
+      // Dicatat sebagai pemasukan karena siswa membayarnya di awal, sedangkan ke guru baru dibayar setelah 6 pertemuan.
+      const b = getSppBreakdown(p);
+      if (b.hasTransport) {
+        const untuk = b.teacherName && b.teacherName !== '-' ? ` (UNTUK ${b.teacherName})` : '';
+        rows.push({ id: txTransportId, type: 'INCOME', category: 'TRANSPORT GURU', amount: b.transport, date: p.date, description: `TRANSPORT HOME TUTORING${untuk}: ${p.studentName} | ${p.className}`.toUpperCase() });
+      }
+      // Satu perintah insert untuk semua baris -> kalau gagal, tidak ada yang tersimpan setengah-setengah
+      const { error: txErr } = await supabase.from('transactions').insert(rows);
       if (txErr) throw txErr;
       if (refreshAllData) await refreshAllData();
       await fetchLedgerData();
@@ -696,10 +729,18 @@ const handleExportExcel = async () => {
     } catch (err) { alert("Gagal proses gambar! ✨"); } finally { setIsLoading(false); }
   };
 
+const isHTpayout = !!selectedPayout && String(selectedPayout.className || '').toUpperCase().includes('HOME TUTORING');
+const payoutTransportNum = isHTpayout ? (parseInt(payoutTransport, 10) || 0) : 0;
+const payoutTotal = selectedPayout ? Number(selectedPayout.amount) + payoutTransportNum : 0;
+
 const executePayTeacher = async () => {
   if (!selectedPayout || !payForm.receiptData) return alert("Upload bukti transfer dulu! ✨");
+  if (isHTpayout && payoutTransport === '') return alert("Isi nominal honor transport dulu ya (isi 0 kalau tidak ada) ✨");
   setIsLoading(true);
-  const txId = `TX-PAY-${Date.now()}`;
+  // ID transport dibuat lebih kecil 1 angka dari ID honor, supaya di ledger (urut ID menurun) baris honor tampil di atas baris transport.
+  const now = Date.now();
+  const txId = `TX-PAY-${now + 1}`;
+  const txTransportId = `TX-PAY-${now}`;
   try {
     const { packageId, teacherId } = selectedPayout;
     
@@ -747,19 +788,21 @@ const executePayTeacher = async () => {
 
     const { error: receiptErr } = await supabase
       .from('attendance')
-      .update({ receiptdata: payForm.receiptData })
+      // Home Tutoring: nominal transport (per paket) ikut disimpan di baris perwakilan yang sama (sesi terakhir)
+      .update(isHTpayout ? { receiptdata: payForm.receiptData, transportamount: payoutTransportNum } : { receiptdata: payForm.receiptData })
       .eq('id', repRow.id);
 
     if (receiptErr) throw receiptErr;
     
-    const { error: txInsertErr } = await supabase.from('transactions').insert({ 
-      id: txId, 
-      type: 'EXPENSE', 
-      category: 'HONOR GURU', 
-      amount: selectedPayout.amount, 
-      date: payForm.date, 
-      description: `HONOR CAIR: ${selectedPayout.teacherName} | ${selectedPayout.className}`.toUpperCase() 
-    });
+    const expenseRows: any[] = [
+      { id: txId, type: 'EXPENSE', category: 'HONOR GURU', amount: selectedPayout.amount, date: payForm.date, description: `HONOR CAIR: ${selectedPayout.teacherName} | ${selectedPayout.className}`.toUpperCase() }
+    ];
+    // Home Tutoring: transport dicatat sebagai pengeluaran tersendiri (pasangan dari pemasukan TRANSPORT GURU saat SPP diverifikasi)
+    if (isHTpayout && payoutTransportNum > 0) {
+      expenseRows.push({ id: txTransportId, type: 'EXPENSE', category: 'TRANSPORT GURU', amount: payoutTransportNum, date: payForm.date, description: `TRANSPORT CAIR: ${selectedPayout.teacherName} | ${selectedPayout.studentName} | ${selectedPayout.className}`.toUpperCase() });
+    }
+    // Satu perintah insert untuk semua baris -> tidak ada yang tersimpan setengah-setengah
+    const { error: txInsertErr } = await supabase.from('transactions').insert(expenseRows);
     if (txInsertErr) throw txInsertErr;
     
     if (refreshAllData) await refreshAllData();
@@ -1143,7 +1186,7 @@ const executePayTeacher = async () => {
                       <div className="flex items-center gap-2 pt-1"><Calendar size={12} className="text-slate-300"/><p className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Update: {formatDate(it.lastUpdate)}</p></div>
                     </div>
                   </div>
-                  <div className="bg-slate-50/80 backdrop-blur-sm p-8 rounded-[3rem] border border-slate-100 min-w-[240px] text-center space-y-6 shadow-sm"><div className="space-y-1"><p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] italic">TOTAL CAIRKAN</p><h4 className="text-3xl font-black italic tracking-tighter text-blue-600 leading-none">Rp {formatRupiah(it.amount)}</h4></div><button onClick={() => setSelectedPayout(it)} className="w-full py-4 bg-[#0F172A] text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-3 group">BAYAR SEKARANG <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform"/></button></div>
+                  <div className="bg-slate-50/80 backdrop-blur-sm p-8 rounded-[3rem] border border-slate-100 min-w-[240px] text-center space-y-6 shadow-sm"><div className="space-y-1"><p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] italic">TOTAL CAIRKAN</p><h4 className="text-3xl font-black italic tracking-tighter text-blue-600 leading-none">Rp {formatRupiah(it.amount)}</h4>{String(it.className || '').toUpperCase().includes('HOME TUTORING') && (<p className="text-[8px] font-bold text-orange-500 italic mt-2 leading-snug">+ honor transport diisi saat pembayaran</p>)}</div><button onClick={() => setSelectedPayout(it)} className="w-full py-4 bg-[#0F172A] text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-3 group">BAYAR SEKARANG <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform"/></button></div>
                 </div>
                 <div className="space-y-6">
                   <div className="flex items-center gap-6 px-2"><div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-blue-600"></div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Sesi Asli Guru Tersebut</p></div><div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-600"></div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Guru Tersebut Menggantikan</p></div><div className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest border ml-auto animate-pulse ${it.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>SIAP CAIR ({it.sessionCount} SESI)</div></div>
@@ -1189,7 +1232,18 @@ const executePayTeacher = async () => {
                        <p className="text-[10px] font-black text-slate-300 uppercase mb-1">{formatDate(p.date)}</p>
                        <h4 className="text-xl font-black text-slate-800 uppercase italic leading-tight mb-2 truncate">{p.studentName}</h4>
                        <p className="text-[10px] font-black text-blue-600 uppercase mb-8">{p.className}</p>
-                       <div className="bg-slate-50 p-6 rounded-3xl mb-10 text-center border border-slate-100 shadow-inner group-hover:bg-white group-hover:border-emerald-100 transition-all"><p className="text-[10px] font-black text-slate-400 uppercase mb-1">Nominal</p><p className="text-3xl font-black text-emerald-600 italic tracking-tighter">Rp {formatRupiah(p.amount)}</p></div>
+                       {(() => { const b = getSppBreakdown(p); return (
+                       <div className="bg-slate-50 p-6 rounded-3xl mb-10 text-center border border-slate-100 shadow-inner group-hover:bg-white group-hover:border-emerald-100 transition-all">
+                          {b.hasTransport && (
+                            <div className="space-y-2 mb-4 pb-4 border-b border-slate-200 text-left">
+                              <div className="flex justify-between items-baseline gap-4"><p className="text-[9px] font-black text-slate-400 uppercase">Biaya Pelatihan</p><p className="text-[12px] font-black text-slate-700">Rp {formatRupiah(Number(p.amount))}</p></div>
+                              <div className="flex justify-between items-baseline gap-4"><p className="text-[9px] font-black text-orange-500 uppercase">Transport untuk <span className="normal-case">{b.teacherName}</span></p><p className="text-[12px] font-black text-orange-600 whitespace-nowrap">Rp {formatRupiah(b.transport)}</p></div>
+                            </div>
+                          )}
+                          <p className="text-[10px] font-black text-slate-400 uppercase mb-1">{b.hasTransport ? 'Total Transfer' : 'Nominal'}</p>
+                          <p className="text-3xl font-black text-emerald-600 italic tracking-tighter">Rp {formatRupiah(b.total)}</p>
+                       </div>
+                    ); })()}
                     </div>
                     <div className="space-y-4 relative z-10">
                        <button onClick={() => handleOpenConfirmSpp(p)} disabled={!!actionLoadingId} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl hover:bg-emerald-600 transition-all flex items-center justify-center gap-2">
@@ -1228,7 +1282,13 @@ const executePayTeacher = async () => {
                 {/* KOLOM KIRI: Info */}
                 <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 shadow-inner flex flex-col justify-center">
                    <div className="flex justify-between items-center text-[8px] font-black text-slate-400 uppercase tracking-widest"><p>Detail:</p><p className={selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'}>{selectedPayout.sessionCount} SESI</p></div>
-                   <div className="text-center border-t border-slate-100 pt-3"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Transfer</p><p className={`text-2xl font-black ${selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'} italic`}>Rp {formatRupiah(selectedPayout.amount)}</p></div>
+                   {isHTpayout && (
+                     <div className="border-t border-slate-100 pt-3 space-y-2">
+                        <div className="flex justify-between items-baseline gap-4"><p className="text-[9px] font-black text-slate-400 uppercase">Honor Mengajar</p><p className="text-[12px] font-black text-slate-700">Rp {formatRupiah(Number(selectedPayout.amount))}</p></div>
+                        <div className="flex justify-between items-baseline gap-4"><p className="text-[9px] font-black text-orange-500 uppercase">Honor Transport</p><p className="text-[12px] font-black text-orange-600 whitespace-nowrap">Rp {formatRupiah(payoutTransportNum)}</p></div>
+                     </div>
+                   )}
+                   <div className="text-center border-t border-slate-100 pt-3"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">{isHTpayout ? 'Total Transfer' : 'Nominal Transfer'}</p><p className={`text-2xl font-black ${selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'} italic`}>Rp {formatRupiah(payoutTotal)}</p></div>
                 </div>
 
                 {/* KOLOM KANAN: Upload Bukti (ngikutin tinggi kolom kiri, tapi dibatasi max-h biar modal nggak makin memanjang) */}
@@ -1245,7 +1305,20 @@ const executePayTeacher = async () => {
                 </div>
               </div>
 
-              <button onClick={executePayTeacher} disabled={isLoading || !payForm.receiptData} className={`w-full mt-10 py-6 ${selectedPayout.category === 'PRIVATE' ? 'bg-[#0F172A]' : 'bg-blue-600'} text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl hover:bg-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-30`}>{isLoading ? <Loader2 size={18} className="animate-spin" /> : <><CheckCircle2 size={18}/> SELESAIKAN PEMBAYARAN ✨</>}</button>
+              {isHTpayout && (
+                <div className="mt-6 bg-orange-50 border-2 border-orange-100 rounded-3xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                   <div>
+                      <p className="text-[9px] font-black text-orange-600 uppercase tracking-widest">Honor Transport (Home Tutoring)</p>
+                      <p className="text-[9px] font-bold text-slate-400 mt-1 leading-relaxed">Sesuai kesepakatan orang tua siswa dan guru, dibayarkan 100% tanpa potongan. Isi 0 jika tidak ada.</p>
+                   </div>
+                   <div className="relative w-full md:w-52 shrink-0">
+                      <span className="absolute left-5 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-400">Rp</span>
+                      <input type="text" inputMode="numeric" placeholder="0" value={payoutTransport === '' ? '' : formatRupiah(payoutTransportNum)} onChange={e => setPayoutTransport(e.target.value.replace(/\D/g, '').replace(/^0+(?=\d)/, ''))} className="w-full pl-12 pr-5 py-4 bg-white rounded-2xl font-black text-sm outline-none border-2 border-orange-100 focus:border-orange-500 text-right shadow-inner" />
+                   </div>
+                </div>
+              )}
+
+              <button onClick={executePayTeacher} disabled={isLoading || !payForm.receiptData || (isHTpayout && payoutTransport === '')} className={`w-full mt-10 py-6 ${selectedPayout.category === 'PRIVATE' ? 'bg-[#0F172A]' : 'bg-blue-600'} text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl hover:bg-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-30`}>{isLoading ? <Loader2 size={18} className="animate-spin" /> : <><CheckCircle2 size={18}/> SELESAIKAN PEMBAYARAN ✨</>}</button>
               </div>
            </div>
         </div>
@@ -1270,7 +1343,13 @@ const executePayTeacher = async () => {
                 {/* KOLOM KIRI: Info */}
                 <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 shadow-inner flex flex-col justify-center">
                    <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">{confirmingSpp.className}</p>
-                   <div className="pt-3 border-t border-slate-200 text-center"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">Nominal Diterima</p><p className="text-2xl font-black text-emerald-600 italic">Rp {formatRupiah(confirmingSpp.amount)}</p></div>
+                   {confirmingBreakdown?.hasTransport && (
+                     <div className="pt-3 border-t border-slate-200 space-y-2">
+                        <div className="flex justify-between items-baseline gap-4"><p className="text-[9px] font-black text-slate-400 uppercase">Biaya Pelatihan</p><p className="text-[12px] font-black text-slate-700">Rp {formatRupiah(Number(confirmingSpp.amount))}</p></div>
+                        <div className="flex justify-between items-baseline gap-4"><p className="text-[9px] font-black text-orange-500 uppercase">Transport untuk <span className="normal-case">{confirmingBreakdown.teacherName}</span></p><p className="text-[12px] font-black text-orange-600 whitespace-nowrap">Rp {formatRupiah(confirmingBreakdown.transport)}</p></div>
+                     </div>
+                   )}
+                   <div className="pt-3 border-t border-slate-200 text-center"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">{confirmingBreakdown?.hasTransport ? 'Total Diterima' : 'Nominal Diterima'}</p><p className="text-2xl font-black text-emerald-600 italic">Rp {formatRupiah(confirmingBreakdown ? confirmingBreakdown.total : Number(confirmingSpp.amount))}</p></div>
                 </div>
 
                 {/* KOLOM KANAN: Bukti (kalau ada) */}
