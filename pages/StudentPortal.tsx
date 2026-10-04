@@ -1183,7 +1183,7 @@ const handleDownloadPDFReport = async (course: any) => {
                   </select>
                 </div>
                 <div className="space-y-3">
-                  <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">{payForm.room.toUpperCase() === 'HOME TUTORING' ? 'Biaya Pelatihan (Rp)' : 'Nominal Transfer (Rp)'}</label>
+                  <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Biaya Pelatihan (Rp)</label>
                   <input 
                     type="text" 
                     placeholder="Rp 720000" 
