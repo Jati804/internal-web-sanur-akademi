@@ -288,7 +288,7 @@ setTimeout(() => {
     setIsEditing(p.id);
     setShowErrors(false);
     const match = p.className.match(/(.*) \((.*)\) - (.*)/);
-    if (match) { setPayForm({ subject: match[1], level: match[2], room: match[3], amount: p.amount, date: p.date, receiptData: p.receiptData || '' }); }
+    if (match) { setPayForm({ subject: match[1], level: match[2], room: match[3], amount: p.amount, transportAmount: Number((p as any).transportamount) || 0, transportTeacherId: (p as any).transportteacherid || '', date: p.date, receiptData: p.receiptData || '' }); }
     else { setPayForm({ ...payForm, subject: p.className, amount: p.amount, date: p.date, receiptData: p.receiptData || '' }); }
     setTimeout(() => { const formEl = document.getElementById('form-bayar'); if (formEl) formEl.scrollIntoView({ behavior: 'smooth', block: 'center' }); }, 100);
   };
@@ -1218,7 +1218,7 @@ const handleDownloadPDFReport = async (course: any) => {
                       <select 
                         value={payForm.transportTeacherId} 
                         onChange={e => { setPayForm({...payForm, transportTeacherId: e.target.value}); setShowErrors(false); }} 
-                        className={`w-full px-8 py-6 rounded-[2rem] font-black text-xs uppercase outline-none transition-all shadow-inner h-[72px] border-2 ${showErrors && !payForm.transportTeacherId ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-slate-50 focus:bg-white focus:border-orange-500'}`}
+                        className={`w-full px-8 py-6 rounded-[2rem] font-black text-xs outline-none transition-all shadow-inner h-[72px] border-2 ${showErrors && !payForm.transportTeacherId ? 'border-rose-500 bg-rose-50' : 'border-transparent bg-slate-50 focus:bg-white focus:border-orange-500'}`}
                       >
                         <option value="">-- PILIH GURU --</option>
                         {teachers.filter(t => t.role === 'TEACHER').map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
@@ -1418,7 +1418,7 @@ const completedSessions = studentAttendanceLogs
               const isRejected = courseLogs.some(r => r.status === 'REPORT_REJECTED');
               const isNextClass = courseLogs.some(r => r.status === 'NEXT_CLASS');
               const requestingLog = courseLogs.find(r => r.status === 'REQ' || r.status === 'REPORT_PROCESSING' || r.status === 'REPORT_REJECTED' || r.status === 'REPORT_READY');
-              const teacherDisplay = requestingLog?.teachername ? requestingLog.teachername.toUpperCase() : null;
+              const teacherDisplay = requestingLog ? (teachers.find(t => t.id === (requestingLog.teacherId || requestingLog.teacherid))?.name || requestingLog.teachername || null) : null;
               const displayMaxSess = (isReportPublished || isWaitingRelease) ? 6 : maxSess;
               const progressPercent = Math.min((displayMaxSess / 6) * 100, 100);
 
@@ -1522,7 +1522,7 @@ const completedSessions = studentAttendanceLogs
     </div>
     <div className="bg-amber-50 p-6 rounded-[2rem] border border-amber-100 flex items-center gap-4">
       <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-amber-600 shrink-0"><Zap size={20}/></div>
-      <div><p className="text-[10px] font-black text-amber-800 uppercase italic">Penilaian Selesai!</p>{teacherDisplay && <p className="text-[9px] font-black text-amber-700 uppercase mt-0.5">Guru: {teacherDisplay}</p>}<p className="text-[9px] font-bold text-amber-600 uppercase mt-1">Tunggu Guru Mengirimkan Rapotmu Ke Sini ✨</p></div>
+      <div><p className="text-[10px] font-black text-amber-800 uppercase italic">Penilaian Selesai!</p>{teacherDisplay && <p className="text-[9px] font-black text-amber-700 mt-0.5">Guru: {teacherDisplay}</p>}<p className="text-[9px] font-bold text-amber-600 uppercase mt-1">Tunggu Guru Mengirimkan Rapotmu Ke Sini ✨</p></div>
     </div>
   </div>
 ) : isRequesting ? (
@@ -1540,7 +1540,7 @@ const completedSessions = studentAttendanceLogs
     </div>
     <div className="bg-amber-50 p-6 rounded-[2rem] border border-amber-100 flex items-center gap-4">
       <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-amber-600 shrink-0"><Clock size={20}/></div>
-      <div><p className="text-[10px] font-black text-amber-800 uppercase italic leading-none">Sedang Meminta Persetujuan Guru Untuk Rapot</p>{teacherDisplay && <p className="text-[9px] font-black text-amber-700 uppercase mt-0.5">Guru: {teacherDisplay}</p>}<p className="text-[9px] font-bold text-amber-600 uppercase mt-1">Tunggu Guru Menerima Permintaanmu Ya ✨</p></div>
+      <div><p className="text-[10px] font-black text-amber-800 uppercase italic leading-none">Sedang Meminta Persetujuan Guru Untuk Rapot</p>{teacherDisplay && <p className="text-[9px] font-black text-amber-700 mt-0.5">Guru: {teacherDisplay}</p>}<p className="text-[9px] font-bold text-amber-600 uppercase mt-1">Tunggu Guru Menerima Permintaanmu Ya ✨</p></div>
     </div>
   </div>
 ) : isProcessing ? (
@@ -1558,7 +1558,7 @@ const completedSessions = studentAttendanceLogs
     </div>
     <div className="bg-orange-50 p-6 rounded-[2rem] border border-orange-100 flex items-center gap-4">
       <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-orange-600 shrink-0"><Edit3 size={20}/></div>
-      <div><p className="text-[10px] font-black text-orange-800 uppercase italic leading-none">Sedang Di Proses</p>{teacherDisplay && <p className="text-[9px] font-black text-orange-700 uppercase mt-0.5">Guru: {teacherDisplay}</p>}<p className="text-[9px] font-bold text-orange-600 uppercase mt-1">Sertifikat & Rapotmu Sedang Diisi Oleh Guru ✨</p></div>
+      <div><p className="text-[10px] font-black text-orange-800 uppercase italic leading-none">Sedang Di Proses</p>{teacherDisplay && <p className="text-[9px] font-black text-orange-700 mt-0.5">Guru: {teacherDisplay}</p>}<p className="text-[9px] font-bold text-orange-600 uppercase mt-1">Sertifikat & Rapotmu Sedang Diisi Oleh Guru ✨</p></div>
     </div>
   </div>
 ) : isRejected ? (
@@ -1576,7 +1576,7 @@ const completedSessions = studentAttendanceLogs
     </div>
     <div className="bg-rose-50 p-6 rounded-[2rem] border border-rose-100 flex items-center gap-4 shadow-sm">
       <AlertCircle className="text-rose-600 shrink-0" size={24}/>
-      <div><p className="text-[10px] font-black text-rose-800 uppercase italic leading-relaxed">Di tolak, pilih guru lain ya! ✨</p>{teacherDisplay && <p className="text-[9px] font-black text-rose-700 uppercase mt-0.5">Ditolak oleh: {teacherDisplay}</p>}<p className="text-[9px] font-bold text-rose-600 uppercase mt-1">Silakan ajukan ke pembimbing lainnya.</p></div>
+      <div><p className="text-[10px] font-black text-rose-800 uppercase italic leading-relaxed">Di tolak, pilih guru lain ya! ✨</p>{teacherDisplay && <p className="text-[9px] font-black text-rose-700 mt-0.5">Ditolak oleh: {teacherDisplay}</p>}<p className="text-[9px] font-bold text-rose-600 uppercase mt-1">Silakan ajukan ke pembimbing lainnya.</p></div>
     </div>
     <button onClick={() => setRequestingReportFor(course)} className="w-full py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl flex items-center justify-center gap-3 active:scale-95 transition-all">
       <GraduationCap size={20}/> KLAIM ULANG RAPOT 🎓
