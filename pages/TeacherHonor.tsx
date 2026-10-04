@@ -239,10 +239,56 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
       pdf.setTextColor(...blue600);
       pdf.text('STATUS: LUNAS', marginR, y, { align: 'right' });
 
-      y += 15;
+      // 🏠 Home Tutoring: transport tampil sebagai baris tersendiri (dibayar 100% tanpa potongan)
+      const transportPaid = pkg.isHomeTutoring ? (Number(pkg.myTransport) || 0) : 0;
+      const grandTotal = pkg.myTotalPaid + transportPaid;
+
+      if (transportPaid > 0) {
+        y += 11;
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(8);
+        pdf.setTextColor(...slate400);
+        pdf.text('HONOR MENGAJAR', marginL, y);
+        pdf.setFontSize(10);
+        pdf.setTextColor(...slate800);
+        pdf.text(`Rp ${formatRupiah(pkg.myTotalPaid)}`, marginR, y, { align: 'right' });
+
+        y += 7;
+        pdf.setFontSize(8);
+        pdf.setTextColor(...slate400);
+        pdf.text('HONOR TRANSPORT', marginL, y);
+        pdf.setFontSize(10);
+        pdf.setTextColor(...slate800);
+        pdf.text(`Rp ${formatRupiah(transportPaid)}`, marginR, y, { align: 'right' });
+
+        // Kalimat 100% khusus untuk transport saja (honor mengajar tetap ada potongan/charge yayasan)
+        y += 5;
+        pdf.setFont('helvetica', 'italic');
+        pdf.setFontSize(7);
+        pdf.setTextColor(...slate400);
+        const transportNote = pdf.splitTextToSize('Honor transport dibayarkan 100% dari orang tua siswa kepada guru, tanpa potongan.', marginR - marginL);
+        pdf.text(transportNote, marginL, y);
+        y += (transportNote.length - 1) * 3.5;
+        pdf.setFont('helvetica', 'bold');
+
+        y += 4;
+        pdf.setDrawColor(...slate100);
+        pdf.setLineWidth(0.3);
+        pdf.line(marginL, y, marginR, y);
+
+        y += 7;
+        pdf.setFontSize(8);
+        pdf.setTextColor(...slate400);
+        pdf.text('TOTAL DITERIMA', marginL, y);
+        y += 13;
+      } else {
+        y += 15;
+      }
+
+      pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(27);
       pdf.setTextColor(...blue600);
-      pdf.text(`Rp ${formatRupiah(pkg.myTotalPaid)}`, marginL, y);
+      pdf.text(`Rp ${formatRupiah(grandTotal)}`, marginL, y);
 
       y += 15;
 
@@ -376,6 +422,11 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
           receiptData: fullCycle.find(l => l.teacherId === user.id && l.paymentStatus === 'PAID' && l.receiptData)?.receiptData || null,
           paidDate: fullCycle.find(l => l.teacherId === user.id && l.paymentStatus === 'PAID')?.paidDate || null,
           fullClassName: log.className,
+          // 🏠 Home Tutoring: transport diisi admin saat pencairan (disimpan di satu baris sesi terakhir paket)
+          isHomeTutoring: String(log.className || '').toUpperCase().includes('HOME TUTORING'),
+          myTransport: fullCycle
+            .filter(l => l.teacherId === user.id)
+            .reduce((sum, curr) => sum + (Number((curr as any).transportamount) || 0), 0),
           paidSessionsDetails: fullCycle.filter(l => l.teacherId === user.id),
           isCycleOwner: isCycleOwner,
           // 🆕 Buat syarat tombol Hapus Paket: HARUS semua baris (siapapun pengajarnya) masih UNPAID
@@ -580,9 +631,23 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                 </div>
                 
                 <div className="px-10 pb-6">
-                   <div className="mb-4 flex items-center gap-4">
+                   <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
                      <div className="flex items-center gap-2"><div className="w-3 h-3 bg-blue-600 rounded-full"></div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Sesi Anda</p></div>
-                     <div className="flex items-center gap-2"><div className="w-3 h-3 bg-orange-600 rounded-full ml-2"></div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Anda Gantikan Teman</p></div>
+                     {!pkg.isHomeTutoring && (
+                       <div className="flex items-center gap-2"><div className="w-3 h-3 bg-orange-600 rounded-full ml-2"></div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Anda Gantikan Teman</p></div>
+                     )}
+                     {pkg.isHomeTutoring && pkg.status !== 'LUNAS' && (
+                       <div className="flex items-center gap-2 px-4 py-1.5 bg-orange-50 border border-orange-100 rounded-full">
+                         <Info size={12} className="text-orange-500 shrink-0" />
+                         <p className="text-[10px] font-bold text-orange-600 italic">Honor transport akan dibayarkan di akhir paket.</p>
+                       </div>
+                     )}
+                     {pkg.isHomeTutoring && pkg.status === 'LUNAS' && pkg.myTransport > 0 && (
+                       <div className="flex items-center gap-2 px-4 py-1.5 bg-emerald-50 border border-emerald-100 rounded-full">
+                         <CheckCircle2 size={12} className="text-emerald-600 shrink-0" />
+                         <p className="text-[10px] font-bold text-emerald-700 italic">Honor transport sebesar Rp {formatRupiah(pkg.myTransport)} telah diterima.</p>
+                       </div>
+                     )}
                    </div>
                    <div className="grid grid-cols-3 md:grid-cols-6 gap-4 p-8 bg-slate-50 rounded-[3rem] border border-slate-100 shadow-inner">
                       {[1,2,3,4,5,6].map((num) => {
