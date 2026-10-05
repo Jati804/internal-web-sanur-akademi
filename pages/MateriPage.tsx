@@ -29,8 +29,10 @@ interface MateriPageProps {
   attendanceLogs?: Attendance[];
 }
 
+// Buang akhiran "(LEVEL) - RUANGAN" dari nama kelas, jadi tinggal nama pelatihannya.
+// Ruangan bisa REGULER n / PRIVATE n, atau HOME TUTORING (tanpa nomor).
 const stripLabel = (className: string) =>
-  (className || '').replace(/\s*\(.*?\)\s*-\s*(REGULER|PRIVATE)\s*\d+/i, '').trim();
+  (className || '').replace(/\s*\(.*?\)\s*-\s*(?:(?:REGULER|PRIVATE)\s*\d+|HOME TUTORING)/i, '').trim();
 
 // Urutan level dari ATAS ke BAWAH tampilan (BUKAN alfabetis, BUKAN urutan di Pengaturan,
 // karena urutan penambahan di Pengaturan bisa aja kebalik-balik / nggak berurutan)
