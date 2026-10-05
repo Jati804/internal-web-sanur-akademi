@@ -915,7 +915,7 @@ const handleDownloadPDFReport = async (course: any) => {
         pdf.text('Biaya Pelatihan', marginL, y);
         pdf.text(`Rp ${formatRupiah(p.amount)}`, marginR, y, { align: 'right' });
         y += 6;
-        pdf.text(`Biaya Transport Guru: ${transportTeacherName}`, marginL, y);
+        pdf.text(`Biaya Transport (untuk ${transportTeacherName})`, marginL, y);
         pdf.text(`Rp ${formatRupiah(transportAmt)}`, marginR, y, { align: 'right' });
         y += 8;
 
@@ -923,7 +923,7 @@ const handleDownloadPDFReport = async (course: any) => {
         pdf.setFontSize(7);
         pdf.setTextColor(...slate400);
         const transportNote = pdf.splitTextToSize(
-          'Uang transport 100% akan diserahkan kepada guru, nominal sesuai dari kesepakatan antar orang tua siswa dan guru.',
+          'Uang transport 100% akan diserahkan kepada guru, sesuai kesepakatan antar orang tua siswa dan guru.',
           marginR - marginL
         );
         pdf.text(transportNote, marginL, y);
@@ -994,6 +994,9 @@ const handleDownloadPDFReport = async (course: any) => {
   const getDisplayAmount = (amt: number) => {
     return amt > 0 ? `Rp ${formatRupiah(amt)}` : 'Rp ';
   };
+
+  // Label pil filter: buang kata "Pelatihan" di depan (hanya tampilan, nilai filter tetap utuh)
+  const getPillLabel = (subject: string) => subject.replace(/^PELATIHAN\s+/i, '');
 
   // 🏠 Nominal yang tampil di daftar riwayat: khusus Home Tutoring = biaya pelatihan + transport.
   // Kelas lain (dan Home Tutoring lama yang belum punya transport) tetap pakai biaya pelatihan saja.
@@ -1301,7 +1304,7 @@ const handleDownloadPDFReport = async (course: any) => {
                           : 'bg-white text-slate-400 border-2 border-slate-100 hover:border-emerald-300'
                       }`}
                     >
-                      {subject}
+                      {getPillLabel(subject)}
                     </button>
                   ))}
                 </div>
@@ -1398,7 +1401,7 @@ const handleDownloadPDFReport = async (course: any) => {
                : 'bg-white text-slate-400 border-2 border-slate-100 hover:border-emerald-300'
            }`}
          >
-           {subject}
+           {getPillLabel(subject)}
          </button>
        ))}
      </div>
