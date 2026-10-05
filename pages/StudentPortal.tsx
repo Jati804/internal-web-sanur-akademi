@@ -132,7 +132,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
 
 const uniqueSubjects = useMemo(() => {
   const names = verifiedCourses.map(c =>
-    (c.className || '').replace(/\s*\(.*?\)\s*-\s*(REGULER|PRIVATE)\s*\d+/i, '').trim()
+    (c.className || '').replace(/\s*\(.*?\)\s*-\s*(?:(?:REGULER|PRIVATE)\s*\d+|HOME TUTORING)/i, '').trim()
   );
   return ['SEMUA', ...Array.from(new Set(names))];
 }, [verifiedCourses]);
@@ -145,13 +145,13 @@ const uniqueSubjects = useMemo(() => {
 const groupedFilteredCourses = useMemo(() => {
   const filtered = verifiedCourses.filter(course => {
     if (activeFilter === 'SEMUA') return true;
-    const name = (course.className || '').replace(/\s*\(.*?\)\s*-\s*(REGULER|PRIVATE)\s*\d+/i, '').trim();
+    const name = (course.className || '').replace(/\s*\(.*?\)\s*-\s*(?:(?:REGULER|PRIVATE)\s*\d+|HOME TUTORING)/i, '').trim();
     return name === activeFilter;
   });
 
   const groupsMap = new Map<string, typeof filtered>();
   filtered.forEach(course => {
-    const groupName = (course.className || '').replace(/\s*\(.*?\)\s*-\s*(REGULER|PRIVATE)\s*\d+/i, '').trim();
+    const groupName = (course.className || '').replace(/\s*\(.*?\)\s*-\s*(?:(?:REGULER|PRIVATE)\s*\d+|HOME TUTORING)/i, '').trim();
     if (!groupsMap.has(groupName)) groupsMap.set(groupName, []);
     groupsMap.get(groupName)!.push(course);
   });
@@ -180,7 +180,7 @@ const groupedFilteredCourses = useMemo(() => {
 
   const uniquePaymentSubjects = useMemo(() => {
     const names = myPayments.map(p =>
-      (p.className || '').replace(/\s*\(.*?\)\s*-\s*(REGULER|PRIVATE)\s*\d+/i, '').trim()
+      (p.className || '').replace(/\s*\(.*?\)\s*-\s*(?:(?:REGULER|PRIVATE)\s*\d+|HOME TUTORING)/i, '').trim()
     );
     return ['SEMUA', ...Array.from(new Set(names))];
   }, [myPayments]);
@@ -192,13 +192,13 @@ const groupedFilteredCourses = useMemo(() => {
   const groupedFilteredPayments = useMemo(() => {
     const filtered = myPayments.filter(p => {
       if (activePaymentFilter === 'SEMUA') return true;
-      const name = (p.className || '').replace(/\s*\(.*?\)\s*-\s*(REGULER|PRIVATE)\s*\d+/i, '').trim();
+      const name = (p.className || '').replace(/\s*\(.*?\)\s*-\s*(?:(?:REGULER|PRIVATE)\s*\d+|HOME TUTORING)/i, '').trim();
       return name === activePaymentFilter;
     });
 
     const groupsMap = new Map<string, typeof filtered>();
     filtered.forEach(p => {
-      const groupName = (p.className || '').replace(/\s*\(.*?\)\s*-\s*(REGULER|PRIVATE)\s*\d+/i, '').trim();
+      const groupName = (p.className || '').replace(/\s*\(.*?\)\s*-\s*(?:(?:REGULER|PRIVATE)\s*\d+|HOME TUTORING)/i, '').trim();
       if (!groupsMap.has(groupName)) groupsMap.set(groupName, []);
       groupsMap.get(groupName)!.push(p);
     });
