@@ -59,6 +59,17 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   // 🏠 Home Tutoring: guru wajib datang sendiri selama 6 pertemuan -> tidak ada opsi "digantikan teman"
   const isHomeTutoring = (form.room || '').toUpperCase().includes('HOME TUTORING');
 
+  // 🏷️ Tipe sesi otomatis ngikutin ruang kelas:
+  // REGULER n -> REGULER | PRIVATE n & HOME TUTORING -> PRIVATE (Home Tutoring pasti private).
+  // Kalau nama ruang belum dikenali (misal ada nama ruang baru), pilihan manual tetap bisa dipakai.
+  const autoCategory: 'REGULER' | 'PRIVATE' | null = (() => {
+    const r = (form.room || '').toUpperCase().trim();
+    if (r.includes('HOME TUTORING') || r.startsWith('PRIVATE')) return 'PRIVATE';
+    if (r.startsWith('REGULER')) return 'REGULER';
+    return null;
+  })();
+  const shownCategory = form.room ? (autoCategory ?? form.category) : null;
+
   const [activePackageId, setActivePackageId] = useState<string | null>(null);
   const [activeOriginalTeacherId, setActiveOriginalTeacherId] = useState<string | null>(null);
   
@@ -129,6 +140,16 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
       setShowTeacherSuggestions(false);
     }
   }, [isHomeTutoring, isDelegating]);
+
+  // Ruang kelas dipilih/diganti -> tipe sesi ikut berubah otomatis
+  useEffect(() => {
+    if (!autoCategory || autoCategory === form.category) return;
+    setForm(prev => ({ ...prev, category: autoCategory, studentName: autoCategory === 'REGULER' ? '' : prev.studentName }));
+    if (autoCategory === 'REGULER') {
+      setStudentInputValue('');
+      setShowStudentSuggestions(false);
+    }
+  }, [autoCategory, form.category]);
 
   const estimatedHonor = useMemo(() => {
     const hourlyRate = form.category === 'PRIVATE' ? (salaryConfig?.privateRate || 25000) : (salaryConfig?.regulerRate || 15000);
@@ -390,11 +411,12 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
             </div>
 
             <div className="space-y-4">
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><Zap size={14} className="text-blue-500"/> Tipe Sesi</label>
-               <div className="flex gap-4 p-1.5 bg-slate-100 rounded-[2rem] h-[72px]">
-                  <button onClick={() => setForm({...form, category: 'REGULER', studentName: ''})} className={`flex-1 py-4 rounded-[1.5rem] text-[10px] font-black uppercase transition-all ${form.category === 'REGULER' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-600'}`}>Reguler</button>
-                  <button onClick={() => setForm({...form, category: 'PRIVATE'})} className={`flex-1 py-4 rounded-[1.5rem] text-[10px] font-black uppercase transition-all ${form.category === 'PRIVATE' ? 'bg-white text-orange-600 shadow-md' : 'text-slate-600'}`}>Private</button>
+               <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><Zap size={14} className="text-blue-500"/> Tipe Sesi {autoCategory && <span className="px-2.5 py-0.5 bg-slate-100 text-slate-400 rounded-full text-[8px] tracking-widest">(Otomatis)</span>}</label>
+               <div className="flex gap-4 p-1.5 bg-slate-100 rounded-[2rem] h-[72px]" title={autoCategory ? 'Mengikuti ruang kelas yang dipilih' : undefined}>
+                  <button type="button" disabled={!form.room || !!autoCategory} onClick={() => setForm({...form, category: 'REGULER', studentName: ''})} className={`flex-1 py-4 rounded-[1.5rem] text-[10px] font-black uppercase transition-all disabled:cursor-not-allowed ${shownCategory === 'REGULER' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-600'}`}>Reguler</button>
+                  <button type="button" disabled={!form.room || !!autoCategory} onClick={() => setForm({...form, category: 'PRIVATE'})} className={`flex-1 py-4 rounded-[1.5rem] text-[10px] font-black uppercase transition-all disabled:cursor-not-allowed ${shownCategory === 'PRIVATE' ? 'bg-white text-orange-600 shadow-md' : 'text-slate-600'}`}>Private</button>
                </div>
+               {!form.room && <p className="text-[8px] font-bold text-slate-400 uppercase ml-4 tracking-widest italic">Pilih ruang kelas dulu, tipe sesi mengikuti ruangannya ✨</p>}
             </div>
 
             {form.category === 'PRIVATE' && (
