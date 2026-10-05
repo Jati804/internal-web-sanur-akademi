@@ -604,7 +604,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
          </div>
          {isHomeTutoring && (
             <p className="mt-4 px-6 text-[10px] font-bold text-slate-400 italic leading-relaxed">
-               ✨ Estimasi ini belum termasuk honor transport. Honor transport dibayarkan di akhir paket sesuai kesepakatan antara orang tua siswa dan guru.
+               ✨ Estimasi ini belum termasuk honor transport. Honor transport 100% akan dibayarkan di akhir paket.
             </p>
          )}
          </div>
