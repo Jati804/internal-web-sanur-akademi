@@ -370,7 +370,6 @@ const uniqueCategories = useMemo(() => {
     return { hasTransport: transport > 0, transport, teacherName, total: Number(p.amount) + transport };
   };
   const confirmingBreakdown = confirmingSpp ? getSppBreakdown(confirmingSpp) : null;
-  const isHTspp = !!confirmingSpp && String(confirmingSpp.className || '').toUpperCase().includes('HOME TUTORING');
 
   const filteredSpp = useMemo(() => {
     let result = studentPayments.filter(p => p.status === 'PENDING');
@@ -1259,7 +1258,7 @@ const executePayTeacher = async () => {
         </div>
       )}
 
-      {selectedPayout && isHTpayout && (
+      {selectedPayout && (
         <ModalPortal>
           <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
             <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
@@ -1282,19 +1281,24 @@ const executePayTeacher = async () => {
 
                 <div className="bg-slate-50 rounded-3xl border border-slate-100 shadow-inner p-5 space-y-3">
                   <div className="flex justify-between items-baseline gap-4">
-                    <p className="text-[9px] font-black text-slate-400 uppercase">Honor Mengajar <span className={selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'}>({selectedPayout.sessionCount} sesi)</span></p>
-                    <p className="text-[12px] font-black text-slate-700 whitespace-nowrap">Rp {formatRupiah(Number(selectedPayout.amount))}</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase">{isHTpayout ? 'Honor Mengajar' : 'Detail'}</p>
+                    {isHTpayout
+                      ? <p className="text-[12px] font-black text-slate-700 whitespace-nowrap"><span className={`mr-2 text-[9px] ${selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'}`}>{selectedPayout.sessionCount} SESI</span>Rp {formatRupiah(Number(selectedPayout.amount))}</p>
+                      : <p className={`text-[12px] font-black whitespace-nowrap ${selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'}`}>{selectedPayout.sessionCount} SESI</p>}
                   </div>
-                  <div className="flex justify-between items-center gap-4">
-                    <p className="text-[9px] font-black text-orange-500 uppercase">Honor Transport</p>
-                    <div className="relative w-40 shrink-0">
-                      <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-400">Rp</span>
-                      <input type="text" inputMode="numeric" placeholder="0" value={payoutTransport === '' ? '' : formatRupiah(payoutTransportNum)} onChange={e => setPayoutTransport(e.target.value.replace(/\D/g, '').replace(/^0+(?=\d)/, ''))} className="w-full pl-10 pr-4 py-3 bg-white rounded-xl font-black text-[12px] outline-none border-2 border-orange-100 focus:border-orange-500 text-right shadow-inner" />
-                    </div>
-                  </div>
-                  <p className="text-[8px] font-bold text-slate-400 leading-relaxed">Sesuai kesepakatan orang tua siswa dan guru, dibayarkan 100% tanpa potongan. Isi 0 jika tidak ada.</p>
+                  {isHTpayout && (
+                    <>
+                      <div className="flex justify-between items-center gap-4">
+                        <p className="text-[9px] font-black text-orange-500 uppercase">Honor Transport</p>
+                        <div className="relative w-40 shrink-0">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-400">Rp</span>
+                          <input type="text" inputMode="numeric" placeholder="0" value={payoutTransport === '' ? '' : formatRupiah(payoutTransportNum)} onChange={e => setPayoutTransport(e.target.value.replace(/\D/g, '').replace(/^0+(?=\d)/, ''))} className="w-full pl-10 pr-4 py-3 bg-white rounded-xl font-black text-[12px] outline-none border-2 border-orange-100 focus:border-orange-500 text-right shadow-inner" />
+                        </div>
+                      </div>
+                    </>
+                  )}
                   <div className="border-t border-slate-200 pt-3 flex justify-between items-baseline gap-4">
-                    <p className="text-[9px] font-black text-slate-400 uppercase">Total Transfer</p>
+                    <p className="text-[9px] font-black text-slate-400 uppercase">{isHTpayout ? 'Total Transfer' : 'Nominal Transfer'}</p>
                     <p className={`text-xl font-black italic whitespace-nowrap ${selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'}`}>Rp {formatRupiah(payoutTotal)}</p>
                   </div>
                 </div>
@@ -1319,82 +1323,14 @@ const executePayTeacher = async () => {
                   </div>
                 )}
 
-                <button onClick={executePayTeacher} disabled={isLoading || !payForm.receiptData || payoutTransport === ''} className={`w-full py-5 ${selectedPayout.category === 'PRIVATE' ? 'bg-[#0F172A]' : 'bg-blue-600'} text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl hover:bg-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-30`}>{isLoading ? <Loader2 size={18} className="animate-spin" /> : <><CheckCircle2 size={18}/> SELESAIKAN PEMBAYARAN ✨</>}</button>
+                <button onClick={executePayTeacher} disabled={isLoading || !payForm.receiptData || (isHTpayout && payoutTransport === '')} className={`w-full py-5 ${selectedPayout.category === 'PRIVATE' ? 'bg-[#0F172A]' : 'bg-blue-600'} text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl hover:bg-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-30`}>{isLoading ? <Loader2 size={18} className="animate-spin" /> : <><CheckCircle2 size={18}/> SELESAIKAN PEMBAYARAN ✨</>}</button>
               </div>
             </div>
           </div>
         </ModalPortal>
       )}
 
-      {selectedPayout && !isHTpayout && (
-        <ModalPortal>
-  <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-     <div className="bg-white w-full max-w-3xl rounded-[4rem] shadow-2xl relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-              <div className="p-10 md:p-12">
-              <button onClick={() => { setSelectedPayout(null); setPayForm({ receiptData: '', date: getWIBDate() }); }} className="absolute top-10 right-10 z-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
-
-              <div className="flex flex-col items-center text-center mb-6">
-                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Cairkan Honor</h4>
-                 <p className="text-[10px] font-bold text-blue-600 tracking-widest mt-2">{selectedPayout.teacherName} - <span className="uppercase">{selectedPayout.className.replace(/PELATIHAN\s*/i, '')}</span></p>
-              </div>
-
-<div className="flex justify-center mb-6">
-   <input
-     type="date"
-     value={payForm.date}
-     onChange={e => setPayForm({ ...payForm, date: e.target.value })}
-     className={`px-3 py-2 bg-slate-50 rounded-xl font-black text-[11px] outline-none border-2 shadow-inner text-center ${selectedPayout.category === 'PRIVATE' ? 'border-orange-100 focus:border-orange-500' : 'border-blue-100 focus:border-blue-500'}`}
-   />
-</div>
-
-              <div className="grid md:grid-cols-2 gap-6">
-                {/* KOLOM KIRI: Info */}
-                <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 shadow-inner flex flex-col justify-center">
-                   <div className="flex justify-between items-center text-[8px] font-black text-slate-400 uppercase tracking-widest"><p>Detail:</p><p className={selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'}>{selectedPayout.sessionCount} SESI</p></div>
-                   {isHTpayout && (
-                     <div className="border-t border-slate-100 pt-3 space-y-2">
-                        <div className="flex justify-between items-baseline gap-4"><p className="text-[9px] font-black text-slate-400 uppercase">Honor Mengajar</p><p className="text-[12px] font-black text-slate-700">Rp {formatRupiah(Number(selectedPayout.amount))}</p></div>
-                        <div className="flex justify-between items-baseline gap-4"><p className="text-[9px] font-black text-orange-500 uppercase">Honor Transport</p><p className="text-[12px] font-black text-orange-600 whitespace-nowrap">Rp {formatRupiah(payoutTransportNum)}</p></div>
-                     </div>
-                   )}
-                   <div className="text-center border-t border-slate-100 pt-3"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">{isHTpayout ? 'Total Transfer' : 'Nominal Transfer'}</p><p className={`text-2xl font-black ${selectedPayout.category === 'PRIVATE' ? 'text-orange-600' : 'text-blue-600'} italic`}>Rp {formatRupiah(payoutTotal)}</p></div>
-                </div>
-
-                {/* KOLOM KANAN: Upload Bukti (ngikutin tinggi kolom kiri, tapi dibatasi max-h biar modal nggak makin memanjang) */}
-                <div className="h-full max-h-40">
-                   {payForm.receiptData ? (
-                      <div className="relative group cursor-pointer h-full max-h-40 min-h-[9rem]" onClick={() => setPreviewImg(payForm.receiptData)}>
-                         <img src={payForm.receiptData} className="w-full h-full object-cover rounded-3xl shadow-lg border-4 border-emerald-500" alt="Proof" />
-                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-all rounded-[1.3rem]"><Maximize2 size={24} className="mb-1"/><p className="text-[7px] font-black uppercase">KLIK PREVIEW</p></div>
-                         <button onClick={(e) => { e.stopPropagation(); setPayForm({ receiptData: '' }); }} className="absolute top-3 right-3 p-2 bg-rose-600 text-white rounded-full shadow-xl hover:bg-rose-700 transition-all"><Trash2 size={14}/></button>
-                      </div>
-                   ) : (
-                      <div className="relative h-full max-h-40 min-h-[9rem]"><input type="file" ref={fileInputPayoutRef} onChange={handleUploadProof} className="hidden" accept="image/*" /><button onClick={() => fileInputPayoutRef.current?.click()} className="w-full h-full bg-slate-50 rounded-3xl border-2 border-slate-100 shadow-inner flex flex-col items-center justify-center gap-3">{isLoading ? <Loader2 className="animate-spin text-slate-400" size={20} /> : <><span className={`py-3 px-6 rounded-xl text-white text-[9px] font-black uppercase shrink-0 transition-all active:scale-90 ${selectedPayout.category === 'PRIVATE' ? 'bg-[#0F172A] hover:bg-slate-800' : 'bg-blue-600 hover:bg-blue-700'}`}>PILIH FILE</span><span className="text-[9px] font-black text-slate-400 uppercase text-center leading-relaxed px-4">Belum ada file<br/>Bukti Transfer</span></>}</button></div>
-                   )}
-                </div>
-              </div>
-
-              {isHTpayout && (
-                <div className="mt-6 bg-orange-50 border-2 border-orange-100 rounded-3xl p-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                   <div>
-                      <p className="text-[9px] font-black text-orange-600 uppercase tracking-widest">Honor Transport (Home Tutoring)</p>
-                      <p className="text-[9px] font-bold text-slate-400 mt-1 leading-relaxed">Sesuai kesepakatan orang tua siswa dan guru, dibayarkan 100% tanpa potongan. Isi 0 jika tidak ada.</p>
-                   </div>
-                   <div className="relative w-full md:w-52 shrink-0">
-                      <span className="absolute left-5 top-1/2 -translate-y-1/2 text-[11px] font-black text-slate-400">Rp</span>
-                      <input type="text" inputMode="numeric" placeholder="0" value={payoutTransport === '' ? '' : formatRupiah(payoutTransportNum)} onChange={e => setPayoutTransport(e.target.value.replace(/\D/g, '').replace(/^0+(?=\d)/, ''))} className="w-full pl-12 pr-5 py-4 bg-white rounded-2xl font-black text-sm outline-none border-2 border-orange-100 focus:border-orange-500 text-right shadow-inner" />
-                   </div>
-                </div>
-              )}
-
-              <button onClick={executePayTeacher} disabled={isLoading || !payForm.receiptData || (isHTpayout && payoutTransport === '')} className={`w-full mt-10 py-6 ${selectedPayout.category === 'PRIVATE' ? 'bg-[#0F172A]' : 'bg-blue-600'} text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl hover:bg-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-30`}>{isLoading ? <Loader2 size={18} className="animate-spin" /> : <><CheckCircle2 size={18}/> SELESAIKAN PEMBAYARAN ✨</>}</button>
-              </div>
-           </div>
-        </div>
-        </ModalPortal>
-      )}
-
-      {confirmingSpp && isHTspp && (
+      {confirmingSpp && (
         <ModalPortal>
           <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
             <div className="bg-white w-full max-w-md rounded-[2.5rem] shadow-2xl relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
@@ -1435,49 +1371,6 @@ const executePayTeacher = async () => {
               </div>
             </div>
           </div>
-        </ModalPortal>
-      )}
-
-      {confirmingSpp && !isHTspp && (
-        <ModalPortal>
-  <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-     <div className="bg-white w-full max-w-2xl rounded-[4rem] shadow-2xl relative overflow-hidden opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-              <div className="p-10 md:p-12">
-
-              <button onClick={() => setConfirmingSpp(null)} className="absolute top-10 right-10 z-10 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
-
-              <div className="flex flex-col items-center text-center mb-10">
-                 <div className="w-16 h-16 shrink-0 bg-emerald-50 text-emerald-600 rounded-[1.5rem] flex items-center justify-center shadow-inner rotate-3 mb-4"><CheckCircle2 size={32}/></div>
-                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Verifikasi SPP</h4>
-                 <p className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest mt-2">{confirmingSpp.studentName}</p>
-              </div>
-
-              <div className={confirmingSpp.receiptData ? 'grid md:grid-cols-2 gap-6' : ''}>
-                {/* KOLOM KIRI: Info */}
-                <div className="bg-slate-50 p-6 rounded-3xl space-y-3 border border-slate-100 shadow-inner flex flex-col justify-center">
-                   <p className="text-[9px] font-black text-slate-400 uppercase tracking-widest text-center">{confirmingSpp.className}</p>
-                   {confirmingBreakdown?.hasTransport && (
-                     <div className="pt-3 border-t border-slate-200 space-y-2">
-                        <div className="flex justify-between items-baseline gap-4"><p className="text-[9px] font-black text-slate-400 uppercase">Biaya Pelatihan</p><p className="text-[12px] font-black text-slate-700">Rp {formatRupiah(Number(confirmingSpp.amount))}</p></div>
-                        <div className="flex justify-between items-baseline gap-4"><p className="text-[9px] font-black text-orange-500 uppercase">Transport untuk <span className="normal-case">{confirmingBreakdown.teacherName}</span></p><p className="text-[12px] font-black text-orange-600 whitespace-nowrap">Rp {formatRupiah(confirmingBreakdown.transport)}</p></div>
-                     </div>
-                   )}
-                   <div className="pt-3 border-t border-slate-200 text-center"><p className="text-[9px] font-black text-slate-400 uppercase mb-1">{confirmingBreakdown?.hasTransport ? 'Total Diterima' : 'Nominal Diterima'}</p><p className="text-2xl font-black text-emerald-600 italic">Rp {formatRupiah(confirmingBreakdown ? confirmingBreakdown.total : Number(confirmingSpp.amount))}</p></div>
-                </div>
-
-                {/* KOLOM KANAN: Bukti (kalau ada) */}
-                {confirmingSpp.receiptData && (
-                   <div className="relative group cursor-pointer h-36" onClick={() => setPreviewImg(confirmingSpp.receiptData!)}>
-                      <img src={confirmingSpp.receiptData} className="w-full h-36 object-cover rounded-3xl shadow-lg border-4 border-emerald-100" alt="Receipt" />
-                      <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center text-white transition-all rounded-[1.3rem]"><Maximize2 size={24} className="mb-1"/><p className="text-[7px] font-black uppercase">KLIK PREVIEW</p></div>
-                   </div>
-                )}
-              </div>
-
-              <button onClick={() => handleVerifySPP(confirmingSpp)} disabled={!!actionLoadingId} className="w-full mt-10 py-6 bg-emerald-600 text-white rounded-[2rem] font-black text-[10px] uppercase tracking-[0.3em] shadow-2xl hover:bg-emerald-700 active:scale-95 transition-all flex items-center justify-center gap-3 disabled:opacity-30">{actionLoadingId === confirmingSpp.id ? <Loader2 size={18} className="animate-spin" /> : <><Check size={18}/> KONFIRMASI ✨</>}</button>
-              </div>
-           </div>
-        </div>
         </ModalPortal>
       )}
 
