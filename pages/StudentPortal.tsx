@@ -915,7 +915,7 @@ const handleDownloadPDFReport = async (course: any) => {
         pdf.text('Biaya Pelatihan', marginL, y);
         pdf.text(`Rp ${formatRupiah(p.amount)}`, marginR, y, { align: 'right' });
         y += 6;
-        pdf.text(`Biaya Transport (untuk ${transportTeacherName})`, marginL, y);
+        pdf.text(`Biaya Transport Guru: ${transportTeacherName}`, marginL, y);
         pdf.text(`Rp ${formatRupiah(transportAmt)}`, marginR, y, { align: 'right' });
         y += 8;
 
