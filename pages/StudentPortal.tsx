@@ -923,7 +923,7 @@ const handleDownloadPDFReport = async (course: any) => {
         pdf.setFontSize(7);
         pdf.setTextColor(...slate400);
         const transportNote = pdf.splitTextToSize(
-          'Uang transport 100% akan diserahkan kepada guru, sesuai kesepakatan antar orang tua siswa dan guru.',
+          'Biaya transport 100% akan diberikan kepada guru.',
           marginR - marginL
         );
         pdf.text(transportNote, marginL, y);
