@@ -245,19 +245,25 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
       });
   }, [user, studentPayments]);
 
-  // 🆕 [PERCOBAAN] Tanggal bayar VERIFIED paling baru per Subject, khusus siswa.
-  // Dipakai buat nyortir grup Materi biar Subject yang paling baru dibayar
-  // muncul paling atas, ngikutin pola yang sama kayak "Kelas Saya".
-  const subjectRecency = useMemo(() => {
+  // 🆕 Urutan matkul khusus siswa: SAMA PERSIS dengan "Kelas Saya" & "Pembayaran".
+  // Di sana, pembayaran diurutkan tanggal terbaru dulu, kalau tanggalnya sama dilihat
+  // ID-nya (terbaru dulu), lalu matkul diurutkan berdasarkan kemunculan pertamanya.
+  // Di sini kita bikin urutan yang sama, jadi matkul di Materi ikut posisi yang sama.
+  const subjectOrder = useMemo(() => {
     const map = new Map<string, number>();
     if (user.role !== 'STUDENT') return map;
     const normalizedName = (user.name || '').toUpperCase().trim();
-    (studentPayments || [])
+    [...(studentPayments || [])]
       .filter(p => (p.studentName || '').toUpperCase().trim() === normalizedName && p.status === 'VERIFIED')
+      .sort((a, b) => {
+        const dateA = new Date(a.date || 0).getTime();
+        const dateB = new Date(b.date || 0).getTime();
+        if (dateB !== dateA) return dateB - dateA;
+        return b.id.localeCompare(a.id);
+      })
       .forEach(p => {
         const subject = stripLabel(p.className);
-        const time = new Date(p.date || 0).getTime();
-        if (!map.has(subject) || time > map.get(subject)!) map.set(subject, time);
+        if (!map.has(subject)) map.set(subject, map.size);
       });
     return map;
   }, [user, studentPayments]);
@@ -342,11 +348,11 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
     });
     return Array.from(map.values()).sort((a, b) => {
       if (a.subject !== b.subject) {
-        // 🧪 Khusus siswa: matkul yang paling BARU dibayar ditaruh paling atas
+        // 🧪 Khusus siswa: urutan matkul sama persis dengan "Kelas Saya" & "Pembayaran"
         if (user.role === 'STUDENT') {
-          const recencyA = subjectRecency.get(a.subject) || 0;
-          const recencyB = subjectRecency.get(b.subject) || 0;
-          if (recencyA !== recencyB) return recencyB - recencyA;
+          const orderA = subjectOrder.get(a.subject);
+          const orderB = subjectOrder.get(b.subject);
+          if (orderA !== undefined && orderB !== undefined && orderA !== orderB) return orderA - orderB;
         }
         // Subject yang udah dihapus dari Pengaturan (indexOf = -1) ditaruh PALING BAWAH,
         // bukan malah loncat ke atas (indexOf -1 secara default lebih kecil dari index manapun)
@@ -357,7 +363,7 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
       // Urutkan level dari atas ke bawah (ADVANCED -> INTERMEDIATE -> BASIC)
       return getLevelRank(a.level) - getLevelRank(b.level);
     });
-  }, [visibleMaterials, missingGroups, subjects, levels, user, subjectRecency]);
+  }, [visibleMaterials, missingGroups, subjects, levels, user, subjectOrder]);
 
   const resetForm = () => {
     setForm({ subject: subjects[0] || '', level: levels[0] || '', title: '', file: null, linkUrl: '', uploadMode: 'file', locked: false });
