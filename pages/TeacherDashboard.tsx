@@ -158,12 +158,18 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
 
   // LOGIKA DETEKSI SESI OTOMATIS (FIXED: ENTRY TIME BASED)
   useEffect(() => {
-    if (editData || !form.subject || !form.level || !form.room || !Array.isArray(logs)) return;
+    // Pencarian yang lagi jalan dibatalin oleh cleanup di bawah (clearTimeout), jadi flag
+    // "lagi mencari" harus dimatiin di setiap jalur keluar. Kalau nggak, overlay loading nyangkut.
+    if (editData || !form.subject || !form.level || !form.room || !Array.isArray(logs)) {
+      setIsDetecting(false);
+      return;
+    }
     
     if (form.category === 'PRIVATE' && !form.studentName) {
       setForm(prev => ({ ...prev, sessionNumber: 1 }));
       setActivePackageId(null);
       setActiveOriginalTeacherId(null);
+      setIsDetecting(false);
       return;
     }
 
@@ -416,7 +422,6 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
                   <button type="button" disabled={!form.room || !!autoCategory} onClick={() => setForm({...form, category: 'REGULER', studentName: ''})} className={`flex-1 py-4 rounded-[1.5rem] text-[10px] font-black uppercase transition-all disabled:cursor-not-allowed ${shownCategory === 'REGULER' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-600'}`}>Reguler</button>
                   <button type="button" disabled={!form.room || !!autoCategory} onClick={() => setForm({...form, category: 'PRIVATE'})} className={`flex-1 py-4 rounded-[1.5rem] text-[10px] font-black uppercase transition-all disabled:cursor-not-allowed ${shownCategory === 'PRIVATE' ? 'bg-white text-orange-600 shadow-md' : 'text-slate-600'}`}>Private</button>
                </div>
-               {!form.room && <p className="text-[8px] font-bold text-slate-400 uppercase ml-4 tracking-widest italic">Pilih ruang kelas dulu, tipe sesi mengikuti ruangannya ✨</p>}
             </div>
 
             {form.category === 'PRIVATE' && (
