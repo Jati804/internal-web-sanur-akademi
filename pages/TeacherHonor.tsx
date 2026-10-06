@@ -759,7 +759,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                  <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3">
                     <Zap size={16} className="text-emerald-600 shrink-0" />
                     <p className="text-[9px] font-black text-emerald-800 uppercase text-left leading-tight">
-                       "Jangan khawatir! <span className="underline">SLIP GAJI DIGITAL</span> Kakak tetap aktif selamanya dan bisa diunduh kapan saja sebagai bukti sah"
+                       "Jangan khawatir! <span className="underline">SLIP GAJI DIGITAL</span> tetap aktif selamanya dan bisa diunduh kapan saja sebagai bukti sah"
                     </p>
                  </div>
               </div>
