@@ -683,7 +683,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
                 {/* KOLOM KANAN: solusi + tombol */}
                 <div className="flex flex-col gap-4">
                   <div className="bg-slate-50 rounded-[1.5rem] p-5 flex-1">
-                    <p className="text-[11px] font-black text-slate-700 uppercase tracking-wide mb-4">Kakak bisa input setelah:</p>
+                    <p className="text-[11px] font-black text-slate-700 uppercase tracking-wide mb-4">Anda bisa input setelah:</p>
                     <div className="space-y-3">
                       <div className="flex items-start gap-2">
                         <Check size={14} className="text-emerald-500 shrink-0 mt-0.5"/>
