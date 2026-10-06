@@ -511,7 +511,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
                      <Info size={16} />
                   </div>
                   <p className="text-[9px] font-bold text-blue-800 uppercase italic leading-relaxed tracking-wide">
-                     "Jika nomor sesi tidak sesuai, mohon cek kembali: <span className="font-black underline">Mata Pelajaran</span>, <span className="font-black underline">Level Belajar</span>, <span className="font-black underline">Ruang Kelas</span>, <span className="font-black underline">Tipe Sesi</span>, dan <span className="font-black underline">Nama Siswa</span> (Khusus Private) agar sistem mendeteksi paket yang benar Kak! ✨"
+                     "Jika nomor sesi tidak sesuai, mohon cek kembali: <span className="font-black underline">Mata Pelajaran</span>, <span className="font-black underline">Level Belajar</span>, <span className="font-black underline">Ruang Kelas</span>, <span className="font-black underline">Tipe Sesi</span>, dan <span className="font-black underline">Nama Siswa</span> (Khusus Private) agar sistem mendeteksi paket yang benar ✨"
                   </p>
                </div>
             </div>
