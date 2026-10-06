@@ -417,7 +417,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
             </div>
 
             <div className="space-y-4">
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><Zap size={14} className="text-blue-500"/> Tipe Sesi <span className="px-2.5 py-0.5 bg-slate-100 text-slate-400 rounded-full text-[8px] tracking-widest">Otomatis</span></label>
+               <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><Zap size={14} className="text-blue-500"/> Tipe Sesi</label>
                <div className="flex gap-4 p-1.5 bg-slate-100 rounded-[2rem] h-[72px]" title={autoCategory ? 'Mengikuti ruang kelas yang dipilih' : undefined}>
                   <button type="button" disabled={!form.room || !!autoCategory} onClick={() => setForm({...form, category: 'REGULER', studentName: ''})} className={`flex-1 py-4 rounded-[1.5rem] text-[10px] font-black uppercase transition-all disabled:cursor-not-allowed ${shownCategory === 'REGULER' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-600'}`}>Reguler</button>
                   <button type="button" disabled={!form.room || !!autoCategory} onClick={() => setForm({...form, category: 'PRIVATE'})} className={`flex-1 py-4 rounded-[1.5rem] text-[10px] font-black uppercase transition-all disabled:cursor-not-allowed ${shownCategory === 'PRIVATE' ? 'bg-white text-orange-600 shadow-md' : 'text-slate-600'}`}>Private</button>
