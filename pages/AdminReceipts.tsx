@@ -377,7 +377,7 @@ const isFormValid = () => {
       const disclaimer = pdf.splitTextToSize(
         isIncome
           ? '"Kuitansi ini sah sebagai bukti pembayaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal."'
-          : '"Nota Pembayaran ini sah sebagai bukti pengeluaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal."',
+          : '"Nota pembayaran ini sah sebagai bukti pengeluaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal."',
         115
       );
       pdf.text(disclaimer, marginL, y);
