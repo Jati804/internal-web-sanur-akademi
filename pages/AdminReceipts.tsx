@@ -221,7 +221,7 @@ const isFormValid = () => {
       const slate400: [number, number, number] = [148, 163, 184];
       const slate200: [number, number, number] = [226, 232, 240];
       const slate100: [number, number, number] = [241, 245, 249];
-      // Warna aksen ikut jenis dokumen: biru buat Kuitansi, oranye buat Bon
+      // Warna aksen ikut jenis dokumen: biru buat Kuitansi, oranye buat Nota
       const accentDark: [number, number, number] = isIncome ? [29, 78, 216] : [234, 88, 12];   // blue-700 / orange-600
       const accentMid: [number, number, number] = isIncome ? [37, 99, 235] : [249, 115, 22];    // blue-600 / orange-500
       const accentBorder: [number, number, number] = isIncome ? [191, 219, 254] : [254, 215, 170]; // blue-200 / orange-200
@@ -246,7 +246,7 @@ const isFormValid = () => {
       pdf.setFont('helvetica', 'bold');
       pdf.setFontSize(15);
       pdf.setTextColor(...accentDark);
-      pdf.text(isIncome ? 'KUITANSI RESMI' : 'BON PENGELUARAN', marginR, y, { align: 'right' });
+      pdf.text(isIncome ? 'KUITANSI RESMI' : 'NOTA PEMBAYARAN', marginR, y, { align: 'right' });
       pdf.setFontSize(9);
       pdf.setTextColor(...slate800);
       pdf.text(`ID: ${generatedReceipt.id}`, marginR, y + 6, { align: 'right' });
@@ -377,7 +377,7 @@ const isFormValid = () => {
       const disclaimer = pdf.splitTextToSize(
         isIncome
           ? '"Kuitansi ini sah sebagai bukti pembayaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal."'
-          : '"Bon ini sah sebagai bukti pengeluaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal."',
+          : '"Nota Pembayaran ini sah sebagai bukti pengeluaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal."',
         115
       );
       pdf.text(disclaimer, marginL, y);
@@ -391,7 +391,7 @@ const isFormValid = () => {
       pdf.setTextColor(...slate400);
       pdf.text('OFFICIAL RECEIPT', marginR, y + 4, { align: 'right' });
 
-      const docType = isIncome ? 'KUITANSI' : 'BON';
+      const docType = isIncome ? 'KUITANSI' : 'NOTA';
       pdf.save(`${docType}_${generatedReceipt.id}_${generatedReceipt.receivedFrom.replace(/\s+/g, '_')}.pdf`);
     } catch (error) {
       console.error('Error generating PDF:', error);
@@ -471,7 +471,7 @@ const isFormValid = () => {
               <ClipboardList size={24} />
             </div>
             <h2 className="text-2xl font-black text-slate-800 uppercase italic">
-              Data {activeTab === 'income' ? 'Kuitansi' : 'Bon Pengeluaran'}
+              Data {activeTab === 'income' ? 'Kuitansi' : 'Nota Pembayaran'}
             </h2>
           </div>
 
@@ -653,7 +653,7 @@ const isFormValid = () => {
               }`}
             >
               <Sparkles size={20} />
-              Generate {activeTab === 'income' ? 'Kuitansi' : 'Bon'}
+              Generate {activeTab === 'income' ? 'Kuitansi' : 'Nota'}
             </button>
           </div>
         </div>
@@ -672,7 +672,7 @@ const isFormValid = () => {
                 </div>
                 <div>
                   <h2 className="text-2xl font-black text-slate-800 uppercase italic">
-                    Preview {generatedReceipt.type === 'income' ? 'Kuitansi' : 'Bon'}
+                    Preview {generatedReceipt.type === 'income' ? 'Kuitansi' : 'Nota'}
                   </h2>
                   <p className={`text-[10px] font-black uppercase tracking-widest mt-1 ${
                     generatedReceipt.type === 'income' ? 'text-emerald-600' : 'text-rose-600'
@@ -746,7 +746,7 @@ const isFormValid = () => {
                     <h2 className={`text-xl font-black uppercase leading-none ${
                       generatedReceipt.type === 'income' ? 'text-blue-700' : 'text-orange-600'
                     }`}>
-                      {generatedReceipt.type === 'income' ? 'KUITANSI RESMI' : 'BON PENGELUARAN'}
+                      {generatedReceipt.type === 'income' ? 'KUITANSI RESMI' : 'NOTA PEMBAYARAN'}
                     </h2>
                     <p className="text-[10px] font-black text-slate-800 uppercase tracking-widest mt-2 whitespace-nowrap">ID: {generatedReceipt.id}</p>
                   </div>
@@ -835,7 +835,7 @@ const isFormValid = () => {
                     <p className="text-[10px] font-bold text-slate-400 italic text-left">
                       {generatedReceipt.type === 'income' 
                         ? '"Kuitansi ini sah sebagai bukti pembayaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal."'
-                        : '"Bon ini sah sebagai bukti pengeluaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal."'
+                        : '"Nota pembayaran ini sah sebagai bukti pengeluaran resmi dari SANUR Akademi Inspirasi dan telah terverifikasi sistem internal."'
                       }
                     </p>
                   </div>
