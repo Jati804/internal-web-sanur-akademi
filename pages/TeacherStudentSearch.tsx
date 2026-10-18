@@ -365,10 +365,10 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
         <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Pantau progres sesi siswa, khusus untuk dilihat ✨</p>
       </header>
 
-      <div className="flex items-start gap-3 bg-blue-50 border border-blue-100 rounded-3xl px-6 py-4">
-        <Eye size={16} className="text-blue-500 shrink-0 mt-0.5" />
-        <p className="text-[10px] font-bold text-blue-700 leading-relaxed">
-          Progres di sini diambil dari absen mandiri siswa, jadi bisa tertinggal kalau siswa belum absen. Halaman ini hanya untuk dilihat dan tidak mengubah absen apa pun.
+      <div className="flex items-start gap-3 px-2">
+        <Eye size={16} className="text-slate-400 shrink-0 mt-0.5" />
+        <p className="text-[10px] font-bold text-slate-500 leading-relaxed">
+          Progres di sini diambil dari absen mandiri siswa, jadi bisa dipakai sebagai patokan kapan siswa masuk sesi evaluasi. Halaman ini hanya untuk dilihat dan tidak mengubah absen apa pun.
         </p>
       </div>
 
