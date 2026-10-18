@@ -362,7 +362,6 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
     <div className="max-w-5xl mx-auto space-y-10 pb-40 px-4">
       <header className="space-y-4 px-2">
         <h2 className="text-4xl font-black text-slate-800 tracking-tight leading-none uppercase italic">Cari <span className="text-orange-600">Siswa</span></h2>
-        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Pantau progres sesi siswa, khusus untuk dilihat ✨</p>
       </header>
 
       <div className="flex items-start gap-3 px-2">
