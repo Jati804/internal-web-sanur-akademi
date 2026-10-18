@@ -361,7 +361,7 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
   return (
     <div className="max-w-5xl mx-auto space-y-10 pb-40 px-4">
       <header className="space-y-4 px-2">
-        <h2 className="text-4xl font-black text-slate-800 tracking-tight leading-none uppercase italic">Cari <span className="text-orange-600">Siswa</span></h2>
+        <h2 className="text-4xl font-black text-slate-800 tracking-tight leading-none uppercase italic">Pantau <span className="text-orange-600">Siswa</span></h2>
       </header>
 
       <div className="flex items-start gap-3 px-2">
