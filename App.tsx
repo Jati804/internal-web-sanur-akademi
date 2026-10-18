@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Receipt, Menu, CreditCard, BookOpen, UserCog, 
   ClipboardCheck, Wallet, GraduationCap, Power, 
   Settings as SettingsIcon, Database, X,
-  Sparkles, HelpCircle, Info, RotateCw, Library
+  Sparkles, HelpCircle, Info, RotateCw, Library, UserSearch
 } from 'lucide-react';
 
 import { supabase, waitForActiveSession } from './services/supabase.ts';
@@ -24,6 +24,7 @@ import AdminMaintenance from './pages/AdminMaintenance.tsx';
 import TeacherDashboard from './pages/TeacherDashboard.tsx';
 import TeacherHonor from './pages/TeacherHonor.tsx';
 import TeacherReportsInbox from './pages/TeacherReportsInbox.tsx';
+import TeacherStudentSearch from './pages/TeacherStudentSearch.tsx';
 import StudentPortal from './pages/StudentPortal.tsx';
 import VerifyCertificate from './pages/VerifyCertificate.tsx';
 import MateriPage from './pages/MateriPage.tsx';
@@ -90,9 +91,11 @@ const GuideModal = ({ role, onClose }: {
         { title: 'Guru Pengganti', desc: 'Jika digantikan teman, gunakan tombol "Berhalangan". Honor akan otomatis beralih ke temanmu.' },
         { title: 'Pantau Honor', desc: 'Lihat status honor cair & unduh slip gaji digital resmi di menu "Honor Saya".' },
         { title: 'Materi', desc: 'Pantau & akses bahan ajar di menu "Materi".' },
+        { title: 'Cari Siswa', desc: 'Cari nama siswa lalu tekan "Pantau" untuk melihat progres sesinya, berguna untuk tahu kapan giliran eval sesi 6.' },
         { title: 'Proses Rapot', desc: 'Terima pengajuan rapot dan isi data rapot siswa.' }
       ],
       faqs: [
+        { q: 'Kenapa progres siswa di Cari Siswa kadang beda dengan yang saya ajar?', a: 'Progres di sana diambil dari absen mandiri siswa, bukan dari laporan presensimu, jadi bisa tertinggal kalau siswa belum absen. Halamannya hanya untuk dilihat.' },
         { q: 'Kenapa saya nggak absenin siswa?', a: 'Presensi siswa dilakukan mandiri oleh mereka sendiri di portal siswa — tugas pengajar cukup lapor sesi mengajar sendiri.' },
         { q: 'Antrean rapot ini dari mana asalnya?', a: 'Muncul otomatis begitu siswa klik "Klaim Rapot" di portal siswa, biasanya saat presensi siswa udah 6/6.' },
         { q: 'Kelas saya belum muncul, ini kenapa?', a: 'Mata Pelajaran & Peta Ruangan itu diatur Pengurus di portalnya lewat menu Pengaturan Akademik — bukan otomatis dari sistem, jadi jika matkulnya belum ada hubungi Pengurus yaa.' },
@@ -363,6 +366,7 @@ const pendingReportsCount = Array.isArray(reports) ?
                 <NavItem to="/teacher" icon={ClipboardCheck} label="Lapor Presensi" onClick={closeSidebar} />
                 <NavItem to="/teacher/honor" icon={Wallet} label="Honor Saya" activeColor="blue" onClick={closeSidebar} />
                 <NavItem to="/teacher/materi" icon={Library} label="Materi" activeColor="blue" onClick={closeSidebar} />
+                <NavItem to="/teacher/students" icon={UserSearch} label="Cari Siswa" activeColor="blue" onClick={closeSidebar} />
                 <NavItem to="/teacher/reports" icon={GraduationCap} label="Rapot Siswa" activeColor="blue" onClick={closeSidebar} badge={pendingReportsCount} />
               </>
             )}
@@ -412,6 +416,7 @@ const pendingReportsCount = Array.isArray(reports) ?
               <Route path="/admin/materi" element={<MateriPage user={user} subjects={subjects} levels={levels} attendanceLogs={attendanceLogs} studentPayments={studentPayments} />} />
               <Route path="/teacher" element={<TeacherDashboard user={user} logs={attendanceLogs} studentAccounts={studentAccounts} subjects={subjects} classes={classes} levels={levels} salaryConfig={salaryConfig} teachers={teachers} refreshAllData={refreshAllData} />} />
               <Route path="/teacher/honor" element={<TeacherHonor user={user} logs={attendanceLogs} refreshAllData={refreshAllData} />} />
+              <Route path="/teacher/students" element={<TeacherStudentSearch user={user} studentAccounts={studentAccounts} studentPayments={studentPayments} studentAttendanceLogs={studentAttendanceLogs} reports={reports} />} />
               <Route path="/teacher/reports" element={
   <TeacherReportsInbox 
     user={user} 
