@@ -40,6 +40,12 @@ export const fmtShortDate = (d?: string) => {
   return mon ? `${Number(m[3])} ${mon}` : '';
 };
 
+// 'YYYY-MM-DD' -> 'DD/MM/YYYY' (untuk keterangan saat kotak sesi di-hover)
+export const fmtFullDate = (d?: string) => {
+  const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : '';
+};
+
 const stripPelatihan = (s: string) => s.replace(/^PELATIHAN\s+/i, '');
 
 const LEVEL_ORDER = ['BASIC', 'INTERMEDIATE', 'ADVANCED'];
@@ -197,6 +203,7 @@ const SessionChips: React.FC<{ c: CourseInfo }> = ({ c }) => (
       return (
         <div
           key={n}
+          title={d ? `Sesi ${n}: ${fmtFullDate(d)}` : undefined}
           className={`w-11 h-10 rounded-xl flex items-center justify-center gap-0.5 text-[11px] font-black border ${d ? 'bg-blue-600 border-blue-600 text-white' : 'bg-slate-50 border-dashed border-slate-200 text-slate-300'}`}
         >
           {n}
