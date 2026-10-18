@@ -253,13 +253,16 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
                      </div>
                   </div>
 
-                  <div className="flex flex-col items-start gap-2">
-   <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest border bg-purple-100 border-purple-200 text-purple-700 shadow-sm">
-      <Rocket size={14} /> LANJUT KELAS
+                  <div className="flex items-center gap-3 px-6 py-3 rounded-full border bg-purple-100 border-purple-200 shadow-sm">
+   <Rocket size={14} className="text-purple-700 shrink-0" />
+   <div className="flex flex-col leading-tight">
+      <span className="text-[10px] font-black uppercase tracking-widest text-purple-700">
+         LANJUT KELAS
+      </span>
+      <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
+         Belum lapor bayar
+      </span>
    </div>
-   <p className="text-[9px] font-bold uppercase tracking-widest text-slate-400 pl-2">
-      Belum lapor bayar
-   </p>
 </div>
                </div>
             ) : (
