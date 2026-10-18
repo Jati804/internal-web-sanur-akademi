@@ -367,7 +367,7 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
       <div className="flex items-start gap-3 px-2">
         <Eye size={16} className="text-slate-400 shrink-0 mt-0.5" />
         <p className="text-[10px] font-bold text-slate-500 leading-relaxed">
-          Progres di sini diambil dari absen mandiri siswa, sebagai patokan kapan siswa masuk sesi evaluasi. Halaman ini hanya untuk dilihat dan tidak mengubah absen siswa.
+          Progres di sini diambil dari absen mandiri siswa, sebagai patokan kapan siswa masuk sesi evaluasi. Halaman ini hanya untuk dilihat dan tidak mengubah absen siswa. Cari nama siswa yang Anda ajar, lalu lalu tekan ikon pin 📌 di sebelah kanan kartu siswa untuk memantau progres mereka.
         </p>
       </div>
 
@@ -450,7 +450,6 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
         ) : pins.length === 0 ? (
           <div className="bg-white rounded-[2.5rem] border-2 border-dashed border-slate-100 p-12 text-center space-y-2">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Belum ada siswa yang dipantau</p>
-            <p className="text-[10px] font-bold text-slate-300">Cari nama siswa di atas, lalu tekan ikon pin 📌 pada kelas yang kamu ajar.</p>
           </div>
         ) : watch.total === 0 ? (
           <div className="bg-white rounded-[2.5rem] border-2 border-dashed border-slate-100 p-12 text-center space-y-2">
