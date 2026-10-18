@@ -407,7 +407,7 @@ const pendingReportsCount = Array.isArray(reports) ?
         <div ref={contentRef} id="app-scroll-container" className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-12">
           <div className="max-w-7xl mx-auto">
             <Routes>
-              <Route path="/admin" element={<AdminDashboard user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} setAttendanceLogs={setAttendanceLogs} teachers={teachers} transactions={transactions} />} />
+              <Route path="/admin" element={<AdminDashboard user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} setAttendanceLogs={setAttendanceLogs} teachers={teachers} transactions={transactions} reports={reports} studentPayments={studentPayments} />} />
               <Route path="/admin/finance" element={<AdminFinance attendanceLogs={attendanceLogs} transactions={transactions} studentPayments={studentPayments} teachers={teachers} refreshAllData={refreshAllData} />} />
               <Route path="/admin/receipts" element={<AdminReceipts />} />
               <Route path="/admin/staff" element={<AdminStaff user={user} teachers={teachers} setTeachers={setTeachers} studentAccounts={studentAccounts} setStudentAccounts={setStudentAccounts} refreshAllData={refreshAllData} />} />
