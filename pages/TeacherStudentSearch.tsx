@@ -162,10 +162,10 @@ type Tone = 'blue' | 'amber' | 'orange' | 'rose' | 'emerald';
 export const getStatus = (c: CourseInfo): { text: string; tone: Tone; bolt?: boolean } | null => {
   if (c.waitingRelease) return { text: 'Rapot siap, menunggu rilis', tone: 'amber' };
   if (c.processing) return { text: 'Rapot sedang diproses', tone: 'orange' };
-  if (c.requesting) return { text: 'Siswa sudah klaim', tone: 'orange' };
-  if (c.rejected) return { text: 'Klaim ditolak', tone: 'rose' };
-  if (c.displayDone >= 6) return { text: 'Selesai 6/6 · belum klaim', tone: 'emerald' };
-  if (c.displayDone === 5) return { text: 'Berikutnya: EVAL', tone: 'blue', bolt: true };
+  if (c.requesting) return { text: 'Sudah klaim rapot', tone: 'orange' };
+  if (c.rejected) return { text: 'Klaim rapot ditolak', tone: 'rose' };
+  if (c.displayDone >= 6) return { text: 'Selesai 6/6 · belum klaim rapot', tone: 'emerald' };
+  if (c.displayDone === 5) return { text: 'Berikutnya: EVALUASI', tone: 'blue', bolt: true };
   return null;
 };
 
