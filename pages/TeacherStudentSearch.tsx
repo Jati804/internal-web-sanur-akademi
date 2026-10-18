@@ -368,7 +368,7 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
       <div className="flex items-start gap-3 px-2">
         <Eye size={16} className="text-slate-400 shrink-0 mt-0.5" />
         <p className="text-[10px] font-bold text-slate-500 leading-relaxed">
-          Progres di sini diambil dari absen mandiri siswa, jadi bisa dipakai sebagai patokan kapan siswa masuk sesi evaluasi. Halaman ini hanya untuk dilihat dan tidak mengubah absen apa pun.
+          Progres di sini diambil dari absen mandiri siswa, sebagai patokan kapan siswa masuk sesi evaluasi. Halaman ini hanya untuk dilihat dan tidak mengubah absen siswa.
         </p>
       </div>
 
@@ -439,8 +439,8 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
       {/* DAFTAR PANTAUAN */}
       <section className="space-y-6">
         <div className="flex items-center gap-3 px-2">
-          <Pin size={18} className="text-orange-500 fill-current" />
           <h3 className="text-xl font-black text-slate-800 uppercase italic tracking-tight">Siswa yang saya pantau</h3>
+          <Pin size={18} className="text-orange-500 fill-current" />
           {watch.total > 0 && (
             <span className="px-3 py-1 bg-orange-100 text-orange-600 rounded-full text-[9px] font-black">{watch.total}</span>
           )}
