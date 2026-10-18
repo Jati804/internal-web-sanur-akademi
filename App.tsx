@@ -366,7 +366,7 @@ const pendingReportsCount = Array.isArray(reports) ?
                 <NavItem to="/teacher" icon={ClipboardCheck} label="Lapor Presensi" onClick={closeSidebar} />
                 <NavItem to="/teacher/honor" icon={Wallet} label="Honor Saya" activeColor="blue" onClick={closeSidebar} />
                 <NavItem to="/teacher/materi" icon={Library} label="Materi" activeColor="blue" onClick={closeSidebar} />
-                <NavItem to="/teacher/students" icon={UserSearch} label="Cari Siswa" activeColor="blue" onClick={closeSidebar} />
+                <NavItem to="/teacher/students" icon={UserSearch} label="Pantau Siswa" activeColor="blue" onClick={closeSidebar} />
                 <NavItem to="/teacher/reports" icon={GraduationCap} label="Rapot Siswa" activeColor="blue" onClick={closeSidebar} badge={pendingReportsCount} />
               </>
             )}
