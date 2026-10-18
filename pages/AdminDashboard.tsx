@@ -253,7 +253,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
                      </div>
                   </div>
 
-                  <div className="flex items-center gap-3 px-6 py-3 rounded-full border bg-purple-100 border-purple-200 shadow-sm">
+                  <div className="flex items-center gap-3 px-6 py-2 rounded-full border bg-purple-100 border-purple-200 shadow-sm">
    <Rocket size={14} className="text-purple-700 shrink-0" />
    <div className="flex flex-col gap-1">
       <span className="text-[10px] font-black uppercase tracking-widest text-purple-700">
