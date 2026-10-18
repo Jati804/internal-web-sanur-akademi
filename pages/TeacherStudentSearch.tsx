@@ -437,14 +437,6 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
 
       {/* DAFTAR PANTAUAN */}
       <section className="space-y-6">
-        <div className="flex items-center gap-3 px-2">
-          <h3 className="text-xl font-black text-slate-800 uppercase italic tracking-tight">Siswa yang saya pantau</h3>
-          <Pin size={18} className="text-orange-500 fill-current" />
-          {watch.total > 0 && (
-            <span className="px-3 py-1 bg-orange-100 text-orange-600 rounded-full text-[9px] font-black">{watch.total}</span>
-          )}
-        </div>
-
         {loadingPins ? (
           <div className="flex items-center justify-center gap-3 py-16 text-slate-300">
             <Loader2 size={20} className="animate-spin" />
