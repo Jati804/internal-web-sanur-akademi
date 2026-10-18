@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, TeacherStudentPin } from '../types';
 import { supabase, waitForActiveSession } from '../services/supabase.ts';
-import { Search, Pin, Zap, CheckCircle2, Loader2, Info, Eye } from 'lucide-react';
+import { Search, Pin, Zap, Check, CheckCircle2, Loader2, Info, Eye } from 'lucide-react';
 
 // ============================================================================
 // 🔍 CARI SISWA (khusus guru) — HANYA LIHAT, tidak mengubah absen apa pun.
@@ -31,10 +31,13 @@ export const parseClassName = (className: any) => {
     : { subject: raw, level: '', room: '' };
 };
 
-// 'YYYY-MM-DD' -> 'DD/MM'
-export const fmtDM = (d?: string) => {
+// 'YYYY-MM-DD' -> '5 Okt' (hari + nama bulan, supaya tidak ambigu seperti 05/10)
+const MONTHS_ID = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+export const fmtShortDate = (d?: string) => {
   const m = String(d || '').match(/^(\d{4})-(\d{2})-(\d{2})/);
-  return m ? `${m[3]}/${m[2]}` : '';
+  if (!m) return '';
+  const mon = MONTHS_ID[Number(m[2]) - 1];
+  return mon ? `${Number(m[3])} ${mon}` : '';
 };
 
 const stripPelatihan = (s: string) => s.replace(/^PELATIHAN\s+/i, '');
@@ -53,6 +56,7 @@ export type CourseInfo = {
   room: string;
   displayDone: number;            // 0..6 (sama seperti progres di portal siswa)
   dates: Record<number, string>;  // nomor sesi -> tanggal absen mandiri
+  lastDate?: string;              // tanggal absen mandiri TERBARU (untuk "terakhir absen")
   published: boolean;             // rapot sudah terkirim ke siswa
   waitingRelease: boolean;
   requesting: boolean;
@@ -142,6 +146,7 @@ export const getRunningCourses = (idx: Indexes, studentName: string): CourseInfo
       room: parsed.room,
       displayDone: Math.min(waitingRelease ? 6 : maxSess, 6),
       dates,
+      lastDate: Object.values(dates).sort().pop(),
       published,
       waitingRelease,
       requesting: courseReports.some(r => r.status === 'REQ'),
@@ -186,30 +191,42 @@ const StatusBadge: React.FC<{ c: CourseInfo }> = ({ c }) => {
 };
 
 const SessionChips: React.FC<{ c: CourseInfo }> = ({ c }) => (
-  <div className="flex flex-wrap gap-2">
+  <div className="flex flex-wrap xl:flex-nowrap xl:shrink-0 gap-2">
     {[1, 2, 3, 4, 5, 6].map(n => {
       const d = c.dates[n];
       return (
         <div
           key={n}
-          className={`w-[58px] rounded-2xl px-2 py-2 text-center border ${d ? 'bg-blue-600 border-blue-600 text-white' : 'bg-slate-50 border-dashed border-slate-200 text-slate-300'}`}
+          className={`w-11 h-10 rounded-xl flex items-center justify-center gap-0.5 text-[11px] font-black border ${d ? 'bg-blue-600 border-blue-600 text-white' : 'bg-slate-50 border-dashed border-slate-200 text-slate-300'}`}
         >
-          <p className="text-[8px] font-black uppercase tracking-widest">Sesi {n}</p>
-          <p className="text-[9px] font-black mt-0.5">{d ? fmtDM(d) : '—'}</p>
+          {n}
+          {d && <Check size={11} strokeWidth={3} />}
         </div>
       );
     })}
   </div>
 );
 
-const PinButton: React.FC<{ pinned: boolean; busy: boolean; labelOn: string; labelOff: string; onClick: () => void }> = ({ pinned, busy, labelOn, labelOff, onClick }) => (
+// "Sesi 3/6 · terakhir absen 15 Okt" + lencana status
+const ProgressLine: React.FC<{ c: CourseInfo }> = ({ c }) => (
+  <div className="flex items-center gap-x-3 gap-y-1 flex-wrap">
+    <span className="text-[10px] font-black text-blue-600">Sesi {c.displayDone}/6</span>
+    <span className="text-[10px] font-bold text-slate-400">
+      {c.lastDate ? `· terakhir absen ${fmtShortDate(c.lastDate)}` : '· belum ada absen'}
+    </span>
+    <StatusBadge c={c} />
+  </div>
+);
+
+const PinButton: React.FC<{ pinned: boolean; busy: boolean; onClick: () => void; className?: string }> = ({ pinned, busy, onClick, className = '' }) => (
   <button
     onClick={onClick}
     disabled={busy}
-    className={`shrink-0 flex items-center justify-center gap-2 px-5 py-3 rounded-full text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 disabled:opacity-50 ${pinned ? 'bg-orange-500 text-white shadow-md hover:bg-orange-600' : 'bg-slate-100 text-slate-500 hover:bg-orange-50 hover:text-orange-600'}`}
+    title={pinned ? 'Lepas pantauan' : 'Pantau siswa ini'}
+    aria-label={pinned ? 'Lepas pantauan' : 'Pantau siswa ini'}
+    className={`shrink-0 w-11 h-11 rounded-full flex items-center justify-center transition-all active:scale-95 disabled:opacity-50 ${pinned ? 'bg-orange-500 text-white shadow-md hover:bg-orange-600' : 'bg-slate-100 text-slate-400 hover:bg-orange-50 hover:text-orange-600'} ${className}`}
   >
-    {busy ? <Loader2 size={12} className="animate-spin" /> : <Pin size={12} className={pinned ? 'fill-current' : ''} />}
-    {pinned ? labelOn : labelOff}
+    {busy ? <Loader2 size={16} className="animate-spin" /> : <Pin size={16} className={pinned ? 'fill-current' : ''} />}
   </button>
 );
 
@@ -391,20 +408,17 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
                     {courses.map(c => {
                       const key = `${account.id}|${c.subject}`;
                       return (
-                        <div key={c.paymentId} className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-slate-50 border border-slate-100 rounded-[2rem] px-6 py-5">
-                          <div className="min-w-0 space-y-2">
+                        <div key={c.paymentId} className="relative flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-slate-50 border border-slate-100 rounded-[2rem] px-6 py-5">
+                          <div className="min-w-0 space-y-2 pr-14 xl:pr-0 xl:flex-1">
                             <p className="text-[11px] font-black text-slate-800 uppercase italic leading-tight">{stripPelatihan(c.className)}</p>
-                            <div className="flex items-center gap-3 flex-wrap">
-                              <span className="text-[10px] font-black text-blue-600">Sesi {c.displayDone}/6</span>
-                              <StatusBadge c={c} />
-                            </div>
+                            <ProgressLine c={c} />
                           </div>
                           <SessionChips c={c} />
                           <PinButton
                             pinned={isPinned(String(account.id), c.subject)}
                             busy={busyKey === key}
-                            labelOn="Dipantau" labelOff="Pantau"
                             onClick={() => togglePin(String(account.id), c.subject)}
+                            className="absolute top-4 right-4 xl:static"
                           />
                         </div>
                       );
@@ -445,7 +459,7 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
         ) : pins.length === 0 ? (
           <div className="bg-white rounded-[2.5rem] border-2 border-dashed border-slate-100 p-12 text-center space-y-2">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Belum ada siswa yang dipantau</p>
-            <p className="text-[10px] font-bold text-slate-300">Cari nama siswa di atas, lalu tekan "Pantau" pada kelas yang kamu ajar.</p>
+            <p className="text-[10px] font-bold text-slate-300">Cari nama siswa di atas, lalu tekan ikon pin 📌 pada kelas yang kamu ajar.</p>
           </div>
         ) : watch.total === 0 ? (
           <div className="bg-white rounded-[2.5rem] border-2 border-dashed border-slate-100 p-12 text-center space-y-2">
@@ -466,20 +480,17 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
                     {g.items.map(it => {
                       const key = `${it.studentId}|${it.course.subject}`;
                       return (
-                        <div key={`${it.studentId}|${it.course.paymentId}`} className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-white border-2 border-slate-100 shadow-sm rounded-[2rem] px-6 py-5">
-                          <div className="min-w-0 space-y-2">
+                        <div key={`${it.studentId}|${it.course.paymentId}`} className="relative flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white border-2 border-slate-100 shadow-sm rounded-[2rem] px-6 py-5">
+                          <div className="min-w-0 space-y-2 pr-14 xl:pr-0 xl:flex-1">
                             <p className="text-[12px] font-black text-slate-800 uppercase italic leading-tight">{it.studentName}</p>
-                            <div className="flex items-center gap-3 flex-wrap">
-                              <span className="text-[10px] font-black text-blue-600">Sesi {it.course.displayDone}/6</span>
-                              <StatusBadge c={it.course} />
-                            </div>
+                            <ProgressLine c={it.course} />
                           </div>
                           <SessionChips c={it.course} />
                           <PinButton
                             pinned
                             busy={busyKey === key}
-                            labelOn="Lepas" labelOff="Pantau"
                             onClick={() => togglePin(it.studentId, it.course.subject)}
+                            className="absolute top-4 right-4 xl:static"
                           />
                         </div>
                       );
