@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { User, Attendance, Transaction } from '../types';
 import { 
@@ -10,7 +9,8 @@ import {
   Wallet,
   CreditCard,
   ArrowRight,
-  Clock
+  Clock,
+  Rocket
 } from 'lucide-react';
 import * as ReactRouterDOM from 'react-router-dom';
 const { Link } = ReactRouterDOM as any;
@@ -22,9 +22,131 @@ interface AdminDashboardProps {
   setAttendanceLogs: React.Dispatch<React.SetStateAction<Attendance[]>>;
   teachers: User[];
   transactions: Transaction[];
+  reports?: any[];
+  studentPayments?: any[];
 }
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, studentAttendanceLogs }) => {
+// ============================================================================
+// 📋 LOGIKA FOLLOW-UP (fungsi murni, di luar komponen supaya gampang diuji)
+// Tiga jenis kartu:
+//  1) SESI_5     : paket TERBARU siswa baru sampai sesi 5 (sebentar lagi evaluasi / tagih kelas lanjutan)
+//  2) LULUS      : paket TERBARU sudah sesi 6, maksimal 7 hari sejak sesi 6 diabsen
+//  3) NEXT_CLASS : guru memutuskan "Lanjut Kelas" tapi belum ada laporan bayar paket baru
+//                  (admin sering lupa membuka kelas baru). Maksimal 30 hari dari tanggal klaim.
+// ============================================================================
+const norm = (s: any) => String(s ?? '').trim().toUpperCase();
+// ID pembayaran = "PAY-<waktu dibuat, ms>" -> angkanya dipakai untuk membandingkan mana yang lebih baru
+const pkgTime = (id: any) => Number(String(id ?? '').replace(/\D/g, '')) || 0;
+// "PELATIHAN MICROSOFT WORD (BASIC) - REGULER 2" -> "PELATIHAN MICROSOFT WORD"
+const subjectOf = (className: any) => {
+  const m = norm(className).match(/^(.*?)\s*\((.*?)\)\s*-\s*(.*)$/);
+  return m ? m[1].trim() : norm(className);
+};
+const daysBetween = (today: string, date: string) =>
+  (new Date(today).getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24);
+
+export type FollowUpItem = {
+  kind: 'NEXT_CLASS' | 'SESI_5' | 'LULUS';
+  student: string;
+  fullClass: string;
+  lastSess: number;
+  lastDate: string;
+};
+
+export const computeFollowUps = (
+  studentAttendanceLogs: any[],
+  reports: any[],
+  studentPayments: any[],
+  today: string
+): FollowUpItem[] => {
+  // Paket yang sudah diputuskan "Lanjut Kelas" diwakili kartu ungu, jadi tidak ikut kartu "LULUS"
+  const nextClassPkg = new Set<string>();
+  for (const r of reports || []) {
+    if (r.status !== 'NEXT_CLASS') continue;
+    const pkg = norm(r.packageId ?? r.packageid);
+    (Array.isArray(r.studentsAttended) ? r.studentsAttended : []).forEach((n: any) => nextClassPkg.add(`${pkg}|${norm(n)}`));
+  }
+
+  // ---- 1 & 2: kartu SESI_5 / LULUS ----
+  // Per siswa + nama kelas, ambil PAKET TERBARU (ID pembayaran terbesar). Kalau siswa sudah
+  // beli paket baru dengan nama kelas yang sama, paket lamanya tidak dihitung lagi.
+  // Status ditentukan oleh NOMOR SESI TERTINGGI di paket itu (bukan tanggal, karena tanggal
+  // dipilih siswa sendiri dan bisa acak). Tanggal hanya dipakai untuk menghitung "berapa hari lalu".
+  const groups = new Map<string, { student: string; fullClass: string; pkgs: Map<string, any[]> }>();
+  for (const log of studentAttendanceLogs || []) {
+    const student = norm(log.studentName || log.studentname);
+    const fullClass = String(log.className || log.classname || 'UMUM').toUpperCase();
+    const key = `${student}|||${fullClass}`;
+    const pkg = norm(log.packageId ?? log.packageid);
+    let g = groups.get(key);
+    if (!g) { g = { student, fullClass, pkgs: new Map() }; groups.set(key, g); }
+    const arr = g.pkgs.get(pkg);
+    if (arr) arr.push(log); else g.pkgs.set(pkg, [log]);
+  }
+
+  const progress: FollowUpItem[] = [];
+  groups.forEach(g => {
+    const maxDate = (logs: any[]) => logs.reduce((m, l) => (String(l.date) > m ? String(l.date) : m), '');
+    const [pkgId, logs] = Array.from(g.pkgs.entries()).sort(
+      (a, b) => pkgTime(b[0]) - pkgTime(a[0]) || maxDate(b[1]).localeCompare(maxDate(a[1]))
+    )[0];
+
+    const sessOf = (l: any) => Number(l.sessionNumber || l.sessionnumber || 0);
+    const lastSess = logs.reduce((m, l) => Math.max(m, sessOf(l)), 0);
+    const lastDate = maxDate(logs.filter(l => sessOf(l) === lastSess));
+
+    if (lastSess === 5) {
+      progress.push({ kind: 'SESI_5', student: g.student, fullClass: g.fullClass, lastSess, lastDate });
+    } else if (lastSess >= 6 && daysBetween(today, lastDate) <= 7 && !nextClassPkg.has(`${pkgId}|${g.student}`)) {
+      progress.push({ kind: 'LULUS', student: g.student, fullClass: g.fullClass, lastSess, lastDate });
+    }
+  });
+
+  // ---- 3: kartu NEXT_CLASS (Lanjut Kelas, belum lapor bayar paket baru) ----
+  const payById = new Map<string, any>();
+  const livePaymentsByStudent = new Map<string, any[]>(); // pembayaran yang BUKAN REJECTED
+  for (const p of studentPayments || []) {
+    payById.set(norm(p.id), p);
+    if (p.status === 'REJECTED') continue;
+    const key = norm(p.studentName ?? p.studentname);
+    const arr = livePaymentsByStudent.get(key);
+    if (arr) arr.push(p); else livePaymentsByStudent.set(key, [p]);
+  }
+
+  const next: FollowUpItem[] = [];
+  const seen = new Set<string>();
+  for (const r of reports || []) {
+    if (r.status !== 'NEXT_CLASS') continue;
+    const pkg = norm(r.packageId ?? r.packageid);
+    const pay = payById.get(pkg);
+    const className = norm(pay?.className ?? r.className ?? r.classname ?? '');
+    const subject = subjectOf(className);
+    const names = (Array.isArray(r.studentsAttended) && r.studentsAttended.length ? r.studentsAttended : [pay?.studentName]).filter(Boolean);
+
+    for (const n of names) {
+      const student = norm(n);
+      const dedup = `${pkg}|${student}`;
+      if (seen.has(dedup)) continue;
+      seen.add(dedup);
+
+      // Tanggal keputusan tidak disimpan sistem, jadi batas 30 hari dihitung dari tanggal klaim siswa
+      if (r.date && daysBetween(today, r.date) > 30) continue;
+
+      // Sudah dilapor bayar paket baru? = pembayaran lebih baru (ID lebih besar), mata pelajaran sama, bukan REJECTED
+      const hasNewPayment = (livePaymentsByStudent.get(student) || []).some(
+        p => subjectOf(p.className) === subject && pkgTime(p.id) > pkgTime(pkg)
+      );
+      if (hasNewPayment) continue;
+
+      next.push({ kind: 'NEXT_CLASS', student, fullClass: className || 'UMUM', lastSess: 6, lastDate: String(r.date || today) });
+    }
+  }
+  next.sort((a, b) => a.lastDate.localeCompare(b.lastDate)); // yang paling lama menunggu di atas
+
+  return [...next, ...progress]; // kartu "Lanjut Kelas" paling atas karena butuh tindakan admin
+};
+
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, studentAttendanceLogs, reports = [], studentPayments = [] }) => {
   const getWIBDate = () => new Intl.DateTimeFormat('en-CA', { 
     timeZone: 'Asia/Jakarta', 
     year: 'numeric', 
@@ -34,51 +156,10 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
 
   const currentToday = getWIBDate();
   
-  const followUpList = useMemo(() => {
-  const statusMap: Record<string, any> = {};
-  
-  // ✅ GANTI: Pakai studentAttendanceLogs!
-  // 🆕 FIX: sebelumnya nyimpen sesi TERTINGGI yang PERNAH dicapai siswa
-  // (pakai `currentSess > statusMap[key].lastSess`). Masalahnya, kalau
-  // siswa itu udah daftar paket baru & mulai sesi 1-2-3 lagi, sistem tetep
-  // "inget" dia pernah nyampe sesi 6 sebelumnya dan gak pernah bisa lepas
-  // dari daftar follow-up walau udah aktif lagi.
-  // Sekarang: karena log-nya udah di-sort ascending by date, tiap iterasi
-  // TIMPA aja statusnya (bukan cuma kalau lebih tinggi) — jadi yang
-  // kesimpen di akhir selalu record PALING BARU per siswa+kelas. Kalau
-  // siswa mulai paket baru, status terbarunya otomatis balik ke sesi
-  // rendah lagi, jadi otomatis lepas dari daftar follow-up.
-  [...studentAttendanceLogs]
-    .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
-    .forEach(log => {
-      const sName = (log.studentName || log.studentname || '').trim().toUpperCase();
-      const cName = (log.className || log.classname || 'UMUM').toUpperCase();
-      const key = `${sName}|||${cName}`;
-      
-      const currentSess = log.sessionNumber || log.sessionnumber || 0;
-      
-      statusMap[key] = { 
-        lastSess: currentSess, 
-        student: sName, 
-        lastDate: log.date, 
-        fullClass: cName 
-      };
-    });
-
-  return Object.values(statusMap).filter((s: any) => {
-    const isSess5 = s.lastSess === 5;
-    // 🆕 GANTI: sebelumnya cuma nongol PAS HARI ITU JUGA siswa nyampe sesi
-    // 6 (`lastDate === currentToday`) — kalau admin kelewat 1 hari aja,
-    // siswa langsung ilang dari daftar padahal belum di-follow-up.
-    // Sekarang dikasih jendela 7 hari, biar admin punya waktu lebih buat
-    // notice & follow-up, tapi tetep otomatis ilang kalau emang udah lama
-    // banget & gak di-follow-up (biar gak numpuk selamanya sama siswa yang
-    // udah beneran berhenti).
-    const daysSinceLulus = (new Date(currentToday).getTime() - new Date(s.lastDate).getTime()) / (1000 * 60 * 60 * 24);
-    const isSess6Recent = s.lastSess >= 6 && daysSinceLulus <= 7;
-    return isSess5 || isSess6Recent;
-  });
-}, [studentAttendanceLogs, currentToday]); // ✅ Ganti dependency!
+  const followUpList = useMemo(
+    () => computeFollowUps(studentAttendanceLogs, reports, studentPayments, currentToday),
+    [studentAttendanceLogs, reports, studentPayments, currentToday]
+  );
 
   return (
     <div className="max-w-6xl mx-auto space-y-10 pb-40 px-4 animate-in fade-in duration-500">
@@ -150,7 +231,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
                   Follow-Up Belajar
                </h3>
                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] italic">
-                  Siswa yang mencapai titik kritis (Sesi 5 atau Lulus)
+                  Siswa yang mencapai titik kritis (Sesi 5, Lulus, atau Lanjut Kelas)
                </p>
             </div>
             <div className="bg-orange-50 text-orange-600 px-8 py-3 rounded-full font-black text-[10px] uppercase border border-orange-100 shadow-sm">
@@ -159,7 +240,24 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
          </div>
 
          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 relative z-10">
-            {followUpList.length > 0 ? followUpList.map((s: any, i) => (
+            {followUpList.length > 0 ? followUpList.map((s: any, i) => s.kind === 'NEXT_CLASS' ? (
+               <div key={`next-${i}`} className="p-10 rounded-[3.5rem] border-2 border-purple-200 bg-purple-50 hover:border-purple-400 shadow-sm hover:shadow-xl transition-all flex flex-col justify-between min-h-[280px]">
+                  <div className="flex justify-between items-start mb-6">
+                     <div className="min-w-0">
+                        <h4 className="text-xl font-black uppercase italic leading-tight truncate mb-2 text-slate-800">
+                           {s.student}
+                        </h4>
+                        <p className="text-[10px] font-bold uppercase truncate tracking-widest text-slate-400">
+                           {s.fullClass.split(' - ')[0]}
+                        </p>
+                     </div>
+                  </div>
+
+                  <div className="inline-flex items-center gap-3 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest border bg-purple-100 border-purple-200 text-purple-700 shadow-sm">
+                     <Rocket size={14} /> LANJUT KELAS · BELUM LAPOR BAYAR
+                  </div>
+               </div>
+            ) : (
                <div key={i} className={`p-10 rounded-[3.5rem] border-2 transition-all group relative overflow-hidden flex flex-col justify-between min-h-[280px] ${s.lastSess >= 6 ? 'bg-slate-900 border-slate-800 text-white shadow-2xl' : 'bg-white border-orange-100 hover:border-orange-300 shadow-sm hover:shadow-xl'}`}>
                   {s.lastSess >= 6 && <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -mr-12 -mt-12"></div>}
                   
