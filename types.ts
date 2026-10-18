@@ -1,4 +1,3 @@
-
 export type Role = 'ADMIN' | 'TEACHER' | 'STUDENT';
 export type SessionCategory = 'REGULER' | 'PRIVATE';
 export type ReportStatus = 'PENDING' | 'COMPLETED' | 'REMEDIAL';
@@ -81,4 +80,13 @@ export interface AuditLog {
   adminName: string;
   action: string;
   detail: string;
+}
+
+// 📌 Pin "Cari Siswa" milik guru: menempel ke SISWA + MATA PELAJARAN (tabel teacher_student_pins)
+export interface TeacherStudentPin {
+  id?: number | string;
+  teacherid: string;   // id guru (teachers.id)
+  studentid: string;   // id akun siswa (student_accounts.id)
+  subject: string;     // mata pelajaran, huruf kapital (contoh: PELATIHAN MICROSOFT WORD)
+  created_at?: string;
 }
