@@ -1177,17 +1177,28 @@ const executePayTeacher = async () => {
             </div>
             {payrollQueue.map((it) => (
               <div key={it.id} className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl p-10 md:p-14 space-y-12 group hover:border-blue-200 transition-all duration-500">
-                <div className="flex flex-col md:flex-row justify-between items-start gap-8">
-                  <div className="flex items-center gap-6">
-                    <div className="space-y-2">
-                      <h4 className="text-2xl md:text-3xl font-black text-slate-800 uppercase italic leading-none">{it.className}</h4>
-                      <div className="flex flex-wrap gap-4 items-center"><span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest shadow-md ${it.category === 'PRIVATE' ? 'bg-orange-500 text-white' : 'bg-blue-600 text-white'}`}>{it.category}</span><div className="flex items-center gap-1.5 text-blue-600 font-black text-[9px] uppercase italic"><Users size={12}/> SISWA: {it.studentName}</div></div>
-                      <p className="text-[9px] font-bold text-slate-400 tracking-widest italic"><span className="uppercase">PENERIMA:</span> {it.teacherName}</p>
-                      <div className="flex items-center gap-2 pt-1"><Calendar size={12} className="text-slate-300"/><p className="text-[8px] font-black text-slate-300 uppercase tracking-widest">Update: {formatDate(it.lastUpdate)}</p></div>
+                <div className="flex flex-col lg:flex-row justify-between lg:items-stretch gap-6">
+                  <div className="flex-1 min-w-0 space-y-3">
+                    <h4 className="text-xl md:text-2xl font-black text-slate-800 uppercase italic leading-snug">{it.className}</h4>
+                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                      <span className="flex items-center gap-1.5 text-blue-600"><Users size={13}/> Siswa: {it.studentName}</span>
+                      <span className="flex items-center gap-1.5"><UserCheck size={13} className="text-slate-400"/> Penerima: {it.teacherName}</span>
+                      <span className="flex items-center gap-1.5"><Calendar size={13} className="text-slate-400"/> Update {formatDate(it.lastUpdate)}</span>
+                    </div>
+                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                      <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${it.category === 'PRIVATE' ? 'bg-orange-500 text-white' : 'bg-blue-600 text-white'}`}>{it.category}</span>
                     </div>
                   </div>
-                  <div className="bg-slate-50/80 backdrop-blur-sm p-8 rounded-[3rem] border border-slate-100 min-w-[240px] text-center space-y-6 shadow-sm"><div className="space-y-1"><p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.3em] italic">TOTAL CAIRKAN</p><h4 className="text-3xl font-black italic tracking-tighter text-blue-600 leading-none">Rp {formatRupiah(it.amount)}</h4>{String(it.className || '').toUpperCase().includes('HOME TUTORING') && (<p className="text-[8px] font-bold text-orange-500 italic mt-2 leading-snug">+ honor transport diisi saat pembayaran</p>)}</div><button onClick={() => setSelectedPayout(it)} className="w-full py-4 bg-[#0F172A] text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-3 group">BAYAR SEKARANG <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform"/></button></div>
+                  <div className="shrink-0 lg:min-w-[280px] px-8 py-6 rounded-[2rem] bg-gradient-to-br from-blue-50 to-white border border-blue-100 text-center flex flex-col justify-center gap-5">
+                    <div className="space-y-1">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">TOTAL CAIRKAN</p>
+                      <h4 className="text-3xl md:text-4xl font-black italic tracking-tighter text-blue-600 leading-none">Rp {formatRupiah(it.amount)}</h4>
+                      {String(it.className || '').toUpperCase().includes('HOME TUTORING') && (<p className="inline-block mt-2 px-3 py-1 rounded-full bg-orange-50 border border-orange-100 text-[8px] font-bold text-orange-500 italic leading-snug">+ honor transport diisi saat pembayaran</p>)}
+                    </div>
+                    <button onClick={() => setSelectedPayout(it)} className="w-full py-4 bg-[#0F172A] text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-3 group">BAYAR SEKARANG <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform"/></button>
+                  </div>
                 </div>
+                <div className="border-t border-slate-200"></div>
                 <div className="space-y-6">
                   <div className="flex items-center gap-6 px-2"><div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-blue-600"></div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Sesi Asli Guru Tersebut</p></div><div className="flex items-center gap-2"><div className="w-2.5 h-2.5 rounded-full bg-orange-600"></div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Guru Tersebut Menggantikan</p></div><div className={`px-4 py-1.5 rounded-full text-[8px] font-black uppercase tracking-widest border ml-auto animate-pulse ${it.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-blue-50 text-blue-600 border-blue-100'}`}>SIAP CAIR ({it.sessionCount} SESI)</div></div>
                   <div className="grid grid-cols-2 md:grid-cols-6 gap-3 md:gap-4 p-6 md:p-8 bg-slate-50/50 rounded-[3rem] border border-slate-50 shadow-inner">
