@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { User, TeacherStudentPin } from '../types';
 import { supabase, waitForActiveSession } from '../services/supabase.ts';
 import { Search, Pin, Zap, Check, CheckCircle2, Loader2, Info, Eye } from 'lucide-react';
@@ -163,6 +163,55 @@ export const getRunningCourses = (idx: Indexes, studentName: string): CourseInfo
   return result;
 };
 
+// Pin yang "tidur": siswa tidak punya kelas berjalan untuk mata pelajaran itu DAN aktivitas terakhirnya
+// (absen / rapot / pembayaran di mata pelajaran itu) sudah lebih dari 90 hari lalu.
+// Aman: pin hanya dianggap tidur kalau aktivitas lama BENAR-BENAR ditemukan. Akun tidak ketemu /
+// tidak ada riwayat sama sekali -> tidak dihapus (data mungkin belum lengkap termuat).
+export const findStalePins = (
+  pins: TeacherStudentPin[],
+  studentAccounts: any[],
+  studentPayments: any[],
+  studentAttendanceLogs: any[],
+  reports: any[],
+  nowMs: number,
+  staleDays = 90
+): TeacherStudentPin[] => {
+  const idx = buildIndexes(studentPayments, studentAttendanceLogs, reports);
+  const accounts = new Map<string, any>();
+  (studentAccounts || []).forEach((a: any) => accounts.set(String(a.id), a));
+  const limit = staleDays * 24 * 60 * 60 * 1000;
+  const toMs = (d: any) => { const t = new Date(d).getTime(); return isNaN(t) ? 0 : t; };
+
+  const stale: TeacherStudentPin[] = [];
+  for (const pin of pins || []) {
+    const acc = accounts.get(String(pin.studentid));
+    if (!acc) continue;
+    const subject = norm(pin.subject);
+    const name = norm(acc.name);
+    if (getRunningCourses(idx, acc.name).some(c => c.subject === subject)) continue; // masih ada kelas berjalan
+
+    let last = 0;
+    for (const l of studentAttendanceLogs || []) {
+      if (norm(l.studentName ?? l.studentname) !== name) continue;
+      if (parseClassName(l.className ?? l.classname).subject !== subject) continue;
+      last = Math.max(last, toMs(l.date));
+    }
+    for (const r of reports || []) {
+      if (!Array.isArray(r.studentsAttended) || !r.studentsAttended.some((n: any) => norm(n) === name)) continue;
+      if (parseClassName(r.className ?? r.classname).subject !== subject) continue;
+      last = Math.max(last, toMs(r.date));
+    }
+    for (const p of studentPayments || []) { // pembayaran apa pun, termasuk yang menunggu verifikasi
+      if (norm(p.studentName ?? p.studentname) !== name) continue;
+      if (parseClassName(p.className).subject !== subject) continue;
+      const created = Number(String(p.id ?? '').replace(/\D/g, '')); // ID = "PAY-<waktu dibuat, ms>"
+      last = Math.max(last, created > 1e12 ? created : toMs(p.date));
+    }
+    if (last > 0 && nowMs - last > limit) stale.push(pin);
+  }
+  return stale;
+};
+
 type Tone = 'blue' | 'amber' | 'orange' | 'rose' | 'emerald';
 
 export const getStatus = (c: CourseInfo): { text: string; tone: Tone; bolt?: boolean } | null => {
@@ -264,6 +313,29 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
     })();
     return () => { cancelled = true; };
   }, [user.id]);
+
+  // Bersihkan pin yang tidur > 90 hari (sekali per kunjungan, setelah pin & data lengkap termuat)
+  const cleanedRef = useRef(false);
+  useEffect(() => {
+    if (cleanedRef.current || loadingPins || loadError || pins.length === 0) return;
+    if (!studentAccounts?.length || !studentPayments?.length || !studentAttendanceLogs?.length) return; // data belum lengkap
+    cleanedRef.current = true;
+    const stale = findStalePins(pins, studentAccounts, studentPayments, studentAttendanceLogs, reports, Date.now());
+    if (stale.length === 0) return;
+    (async () => {
+      try {
+        for (const pin of stale) {
+          const { error } = await supabase
+            .from('teacher_student_pins').delete()
+            .eq('teacherid', user.id).eq('studentid', pin.studentid).eq('subject', pin.subject);
+          if (error) throw error;
+        }
+        setPins(prev => prev.filter(p => !stale.some(x => x.studentid === p.studentid && norm(x.subject) === norm(p.subject))));
+      } catch (e) {
+        console.error('Gagal membersihkan pin lama:', e); // tidak mengganggu guru; dicoba lagi saat halaman dibuka berikutnya
+      }
+    })();
+  }, [loadingPins, loadError, pins, studentAccounts, studentPayments, studentAttendanceLogs, reports]);
 
   const idx = useMemo(
     () => buildIndexes(studentPayments, studentAttendanceLogs, reports),
