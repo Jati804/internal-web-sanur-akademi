@@ -6,7 +6,7 @@ import {
   X, Search, Banknote, Loader2, ArrowUpCircle, ArrowDownCircle, Upload, CheckCircle2, 
   ChevronLeft, ChevronRight, History, Eye, Check, BadgeCheck,
   Trash2, Download, FileSpreadsheet, Edit3, AlertTriangle, 
-  Plus, Info, AlertCircle, Package, UserCheck, Repeat, Heart, Calendar, Clock, ImageIcon, FileText, Users, ClipboardList, Maximize2,
+  Plus, Info, AlertCircle, UserCheck, Repeat, Heart, Calendar, Clock, ImageIcon, FileText, Users, ClipboardList, Maximize2,
   Zap, ShieldCheck, AlertOctagon
 } from 'lucide-react';
 import * as ReactRouterDOM from 'react-router-dom';
@@ -1179,7 +1179,6 @@ const executePayTeacher = async () => {
               <div key={it.id} className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl p-10 md:p-14 space-y-12 group hover:border-blue-200 transition-all duration-500">
                 <div className="flex flex-col md:flex-row justify-between items-start gap-8">
                   <div className="flex items-center gap-6">
-                    <div className={`w-16 h-16 rounded-3xl flex items-center justify-center shadow-inner shrink-0 transition-all duration-700 ${it.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'} group-hover:bg-orange-600 group-hover:text-white`}><Package size={32}/></div>
                     <div className="space-y-2">
                       <h4 className="text-2xl md:text-3xl font-black text-slate-800 uppercase italic leading-none">{it.className}</h4>
                       <div className="flex flex-wrap gap-4 items-center"><span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest shadow-md ${it.category === 'PRIVATE' ? 'bg-orange-500 text-white' : 'bg-blue-600 text-white'}`}>{it.category}</span><div className="flex items-center gap-1.5 text-blue-600 font-black text-[9px] uppercase italic"><Users size={12}/> SISWA: {it.studentName}</div></div>
