@@ -78,11 +78,13 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
   }, [activeTab, teachers, studentAccounts]);
 
   const filteredData = useMemo(() => {
+    // Tab Pengurus tidak punya kolom cari, jadi abaikan sisa kata kunci dari tab lain
+    if (activeTab === 'ADMINS') return currentList;
     return currentList.filter(u => 
       u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
       u.username.toLowerCase().includes(searchTerm.toLowerCase())
     );
-  }, [currentList, searchTerm]);
+  }, [currentList, searchTerm, activeTab]);
 
   const handleOpenAdd = () => {
     const defaultPin = activeTab === 'STUDENTS' ? '051020' : '224488';
@@ -492,6 +494,7 @@ console.log('\n✅ BACKUP MILESTONE SELESAI');
 
       <div className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl overflow-hidden p-10 md:p-14 space-y-8">
          {/* TOOLBAR: CARI + TAMBAH (menyatu di dalam kotak list) */}
+         {activeTab !== 'ADMINS' && (
          <div className="relative">
             <Search size={20} className={`absolute left-7 top-1/2 -translate-y-1/2 ${roleTheme.text}`} />
             <input
@@ -512,6 +515,7 @@ console.log('\n✅ BACKUP MILESTONE SELESAI');
                </button>
             )}
          </div>
+         )}
 
          <div className="max-h-[600px] overflow-y-auto custom-scrollbar pr-2 space-y-4">
             {filteredData.map(u => (
