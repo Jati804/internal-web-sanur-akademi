@@ -274,6 +274,18 @@ const AppContent = ({
     };
   }, [location.pathname]);
 
+  // 🔒 Saat user berubah dari login -> null karena logout otomatis (sesi mati),
+  // arahkan URL ke '/' supaya login berikutnya (termasuk beda peran) tidak
+  // mendarat di URL halaman lama yang tidak cocok. Hook ini sengaja ditaruh
+  // SEBELUM early return di bawah (aturan hooks).
+  const prevUserRef = useRef(user);
+  useEffect(() => {
+    if (prevUserRef.current && !user) {
+      navigate('/', { replace: true });
+    }
+    prevUserRef.current = user;
+  }, [user, navigate]);
+
   // 🔥 KALO PORTRAIT -> TAMPILKAN BLOCKER (PRIORITAS TERTINGGI)
   if (isPortrait) {
     return <PortraitBlocker />;
@@ -282,7 +294,10 @@ const AppContent = ({
   const closeSidebar = () => setIsSidebarOpen(false);
 
   const executeLogout = () => {
-    supabase.auth.signOut();
+    // scope 'local': hanya browser ini yang keluar. Akun yang sama di perangkat
+    // lain (pengurus lain, teknisi, dll) tetap login. Bawaan Supabase 'global'
+    // akan mematikan sesi di SEMUA perangkat.
+    supabase.auth.signOut({ scope: 'local' });
     localStorage.removeItem('sanur_user');
     setUser(null);
     navigate('/', { replace: true });
@@ -459,7 +474,31 @@ const App = () => {
   const [isSyncing, setIsSyncing] = useState(false);
   const [connectionError, setConnectionError] = useState(false);
 
+  // 🔒 Logout diam-diam kalau sesi Auth ternyata sudah mati. Pakai scope 'local'
+  // supaya hanya browser ini yang dibersihkan (tidak menendang perangkat lain
+  // yang memakai akun yang sama). Hanya dipanggil saat aplikasi baru dibuka.
+  const forceLogout = useCallback(() => {
+    localStorage.removeItem('sanur_user');
+    setUser(null);
+    supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+  }, []);
+
   const refreshAllData = useCallback(async () => {
+    // 🛡️ Cek sesi Auth SEBELUM fetch. Tanpa sesi, RLS membalas array KOSONG
+    // (bukan error), dan hasil kosong itu akan menimpa semua data di layar jadi 0.
+    // Kalau sesi mati, fetch dibatalkan saja: data yang sudah tampil tetap aman dan
+    // user yang sedang mengetik tidak diganggu. Keputusan logout hanya diambil di
+    // awal (saat aplikasi baru dibuka), lihat useEffect pemulihan sesi di bawah.
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData.session) {
+        return;
+      }
+    } catch (e) {
+      console.warn('Gagal mengecek sesi, fetch dibatalkan:', e);
+      return;
+    }
+
     setIsSyncing(true);
     try {
       const [
@@ -563,12 +602,13 @@ if (reps) setReports(reps.map((r: any) => ({
     } finally {
       setIsSyncing(false);
     }
-  }, []);
+  }, [forceLogout]);
 
   useEffect(() => {
     const savedUser = localStorage.getItem('sanur_user');
     if (savedUser) setUser(JSON.parse(savedUser));
   }, []);
+
 
   // 🔧 FIX KEAMANAN: sebelumnya refreshAllData() jalan TANPA SYARAT di sini,
   // artinya SELURUH isi 10 tabel (termasuk teachers/student_accounts dengan
@@ -595,13 +635,21 @@ if (reps) setReports(reps.map((r: any) => ({
       const ready = await waitForActiveSession();
       if (cancelled) return;
       if (!ready) {
-        console.warn('⚠️ Sesi Auth belum kekonfirmasi, tetap coba fetch data...');
+        // 🔒 Sesi Auth tidak ada saat aplikasi baru dibuka (buka web / reload) ->
+        // logout diam-diam supaya user login ulang. Ini HANYA terjadi di awal,
+        // tidak pernah di tengah pemakaian. Kalau perangkat offline, jangan logout
+        // (sesi mungkin masih sehat, cuma belum bisa divalidasi).
+        if (navigator.onLine) {
+          forceLogout();
+          return;
+        }
+        console.warn('⚠️ Sesi Auth belum kekonfirmasi (offline), fetch dilewati.');
       }
       refreshAllData();
     })();
 
     return () => { cancelled = true; };
-  }, [user, refreshAllData]);
+  }, [user, refreshAllData, forceLogout]);
 
   // 🆕 FIX BUG "ANTREAN RAPOT KELIATAN 0 PADAHAL ADA 3": sebelumnya data
   // cuma di-fetch SEKALI pas login/restore sesi, abis itu gak pernah
