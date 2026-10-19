@@ -1189,10 +1189,10 @@ const executePayTeacher = async () => {
                       <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${it.category === 'PRIVATE' ? 'bg-orange-500 text-white' : 'bg-blue-600 text-white'}`}>{it.category}</span>
                     </div>
                   </div>
-                  <div className="shrink-0 lg:min-w-[280px] px-8 py-6 rounded-[2rem] bg-gradient-to-br from-blue-50 to-white border border-blue-100 text-center flex flex-col justify-center gap-5">
+                  <div className="shrink-0 lg:min-w-[230px] px-6 py-5 rounded-[2rem] bg-gradient-to-br from-blue-50 to-white border border-blue-100 text-center flex flex-col justify-center gap-4">
                     <div className="space-y-1">
                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">TOTAL CAIRKAN</p>
-                      <h4 className="text-3xl md:text-4xl font-black italic tracking-tighter text-blue-600 leading-none">Rp {formatRupiah(it.amount)}</h4>
+                      <h4 className="text-2xl font-black italic tracking-tighter text-blue-600 leading-none">Rp {formatRupiah(it.amount)}</h4>
                       {String(it.className || '').toUpperCase().includes('HOME TUTORING') && (<p className="inline-block mt-2 px-3 py-1 rounded-full bg-orange-50 border border-orange-100 text-[8px] font-bold text-orange-500 italic leading-snug">+ honor transport diisi saat pembayaran</p>)}
                     </div>
                     <button onClick={() => setSelectedPayout(it)} className="w-full py-4 bg-[#0F172A] text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-3 group">BAYAR SEKARANG <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform"/></button>
