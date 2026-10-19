@@ -1,4 +1,3 @@
-
 import React, { useState, useMemo, useEffect } from 'react';
 import { User, Attendance, StudentPayment } from '../types';
 import { supabase } from '../services/supabase.ts';
@@ -460,17 +459,6 @@ console.log('\n✅ BACKUP MILESTONE SELESAI');
            </div>
            <h2 className="text-5xl font-black text-slate-800 uppercase italic tracking-tighter leading-none">USER & <span className="text-blue-600">ACCOUNTS</span></h2>
         </div>
-        <div className="flex flex-col sm:flex-row gap-4">
-           <div className="relative">
-              <Search size={20} className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-300" />
-              <input type="text" placeholder="CARI..." value={searchTerm} onChange={e => setSearchTerm(e.target.value.toUpperCase())} className="w-full pl-14 pr-8 py-5 bg-white border border-slate-100 rounded-full text-[10px] font-black uppercase shadow-xl outline-none focus:border-blue-500" />
-           </div>
-           {activeTab !== 'ADMINS' && (
-             <button onClick={handleOpenAdd} className={`px-10 py-5 ${roleTheme.bg} text-white rounded-full text-[10px] font-black uppercase shadow-xl hover:opacity-90 flex items-center justify-center gap-3 transition-all active:scale-95`}>
-                <Plus size={18}/> TAMBAH {activeTab === 'TEACHERS' ? 'GURU' : 'SISWA'}
-             </button>
-           )}
-        </div>
       </div>
 
       <div className="flex bg-slate-100/50 backdrop-blur-md p-2 rounded-[2.5rem] w-full max-w-2xl mx-auto shadow-inner border border-slate-100">
@@ -503,6 +491,25 @@ console.log('\n✅ BACKUP MILESTONE SELESAI');
       </div>
 
       <div className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl overflow-hidden p-10 md:p-14 space-y-8">
+         {/* TOOLBAR: CARI + TAMBAH (menyatu di dalam kotak list) */}
+         <div className="flex flex-col md:flex-row gap-4 items-stretch">
+            <div className="relative flex-1">
+               <Search size={20} className={`absolute left-7 top-1/2 -translate-y-1/2 ${roleTheme.text}`} />
+               <input
+                  type="text"
+                  placeholder={`CARI ${roleTheme.label}...`}
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value.toUpperCase())}
+                  className="w-full h-full pl-16 pr-8 py-6 bg-slate-50 border-2 border-transparent rounded-full text-[11px] font-black uppercase tracking-widest text-slate-700 placeholder:text-slate-400 shadow-inner outline-none focus:bg-white focus:border-blue-500 transition-all"
+               />
+            </div>
+            {activeTab !== 'ADMINS' && (
+               <button onClick={handleOpenAdd} className={`px-10 py-6 ${roleTheme.bg} text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl hover:opacity-90 flex items-center justify-center gap-3 transition-all active:scale-95 shrink-0`}>
+                  <Plus size={18}/> TAMBAH {activeTab === 'TEACHERS' ? 'GURU' : 'SISWA'}
+               </button>
+            )}
+         </div>
+
          <div className="max-h-[600px] overflow-y-auto custom-scrollbar pr-2 space-y-4">
             {filteredData.map(u => (
               <div key={u.id} className="p-8 bg-white border border-slate-50 rounded-[2.5rem] hover:bg-slate-50 transition-all grid grid-cols-[280px_1fr_1fr_auto] gap-6 items-center group shadow-sm hover:shadow-xl mb-2">
