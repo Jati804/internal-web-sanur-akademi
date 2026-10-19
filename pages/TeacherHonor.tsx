@@ -605,18 +605,18 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                    </button>
                 )}
 
-                <div className="p-8 md:p-10 pr-16 flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-slate-100 mx-2">
+                <div className="px-10 pt-14 pb-8 pr-16 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
                    <div className="flex-1 min-w-0 space-y-3">
-                      <div className="flex flex-wrap items-center gap-2">
-                         <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${pkg.category === 'PRIVATE' ? 'bg-orange-500 text-white' : 'bg-blue-900 text-white'}`}>{pkg.category}</span>
-                         <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${pkg.status === 'LUNAS' ? 'bg-emerald-600 text-white' : 'bg-orange-50 text-orange-600 border border-orange-100'}`}>{pkg.status}</span>
-                      </div>
-
                       <h4 className="text-xl md:text-2xl font-black text-slate-800 uppercase italic leading-snug">{pkg.className}</h4>
 
                       <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[10px] font-black uppercase tracking-wider text-slate-500">
                          <span className="flex items-center gap-1.5 text-blue-600"><UserCheck size={13}/> Siswa: {pkg.studentName}</span>
                          <span className="flex items-center gap-1.5"><Calendar size={13} className="text-slate-400"/> Update {formatDate(pkg.lastUpdate)}</span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 pt-1">
+                         <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${pkg.category === 'PRIVATE' ? 'bg-orange-500 text-white' : 'bg-blue-900 text-white'}`}>{pkg.category}</span>
+                         <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${pkg.status === 'LUNAS' ? 'bg-emerald-600 text-white' : 'bg-orange-50 text-orange-600 border border-orange-100'}`}>{pkg.status}</span>
                       </div>
                    </div>
 
@@ -625,8 +625,10 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                       <p className="text-3xl font-black italic tracking-tighter text-blue-600 whitespace-nowrap">Rp {formatRupiah(pkg.myTotalPaid)}</p>
                    </div>
                 </div>
-                
-                <div className="px-10 pb-6">
+
+                <div className="mx-10 border-t border-slate-200"></div>
+
+                <div className="px-10 pt-8 pb-6">
                    <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
                      <div className="flex items-center gap-2"><div className="w-3 h-3 bg-blue-600 rounded-full"></div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Sesi Anda</p></div>
                      {!pkg.isHomeTutoring && (
