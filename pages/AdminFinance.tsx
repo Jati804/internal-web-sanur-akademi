@@ -1180,13 +1180,13 @@ const executePayTeacher = async () => {
                 <div className="flex flex-col lg:flex-row justify-between lg:items-stretch gap-6">
                   <div className="flex-1 min-w-0 space-y-3 flex flex-col justify-center">
                     <h4 className="text-xl md:text-2xl font-black text-slate-800 uppercase italic leading-snug">{it.className}</h4>
-                    <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[10px] font-black uppercase tracking-wider text-slate-500">
-                      <span className="flex items-center gap-1.5 text-blue-600"><Users size={13}/> Siswa: {it.studentName}</span>
-                      <span className="flex items-center gap-1.5"><UserCheck size={13} className="text-slate-400"/> Penerima: {it.teacherName}</span>
-                      <span className="flex items-center gap-1.5"><Calendar size={13} className="text-slate-400"/> Update {formatDate(it.lastUpdate)}</span>
+                    <div className="space-y-2 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                      <p className="flex items-center gap-1.5 text-blue-600"><Users size={13}/> Siswa: {it.studentName}</p>
+                      <p className="flex items-center gap-1.5"><UserCheck size={13} className="text-slate-400"/> Penerima: {it.teacherName}</p>
                     </div>
-                    <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 pt-1">
                       <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${it.category === 'PRIVATE' ? 'bg-orange-500 text-white' : 'bg-blue-600 text-white'}`}>{it.category}</span>
+                      <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-slate-500"><Calendar size={13} className="text-slate-400"/> Update {formatDate(it.lastUpdate)}</span>
                     </div>
                   </div>
                   <div className="shrink-0 lg:min-w-[220px] px-6 py-4 rounded-[2rem] bg-gradient-to-br from-blue-50 to-white border border-blue-100 text-center flex flex-col justify-center gap-3">
