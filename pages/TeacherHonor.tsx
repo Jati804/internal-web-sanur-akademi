@@ -605,7 +605,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                    </button>
                 )}
 
-                <div className="px-10 pt-14 pb-8 pr-16 flex flex-col lg:flex-row lg:items-center justify-between gap-6">
+                <div className="px-10 pt-14 pb-8 pr-16 flex flex-col lg:flex-row lg:items-stretch justify-between gap-6">
                    <div className="flex-1 min-w-0 space-y-3">
                       <h4 className="text-xl md:text-2xl font-black text-slate-800 uppercase italic leading-snug">{pkg.className}</h4>
 
@@ -620,9 +620,9 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                       </div>
                    </div>
 
-                   <div className="shrink-0 lg:min-w-[240px] px-8 py-6 rounded-[2rem] bg-gradient-to-br from-blue-50 to-white border border-blue-100 text-left lg:text-center">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] mb-1">{pkg.status === 'LUNAS' ? 'Diterima' : 'Belum Cair'}</p>
-                      <p className="text-3xl font-black italic tracking-tighter text-blue-600 whitespace-nowrap">Rp {formatRupiah(pkg.myTotalPaid)}</p>
+                   <div className="shrink-0 lg:min-w-[260px] px-8 py-6 rounded-[2rem] bg-gradient-to-br from-blue-50 to-white border border-blue-100 text-left lg:text-center flex flex-col justify-center">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] mb-2">{pkg.status === 'LUNAS' ? 'Diterima' : 'Belum Cair'}</p>
+                      <p className="text-3xl md:text-4xl font-black italic tracking-tighter text-blue-600 whitespace-nowrap">Rp {formatRupiah(pkg.myTotalPaid)}</p>
                    </div>
                 </div>
 
