@@ -91,15 +91,15 @@ const GuideModal = ({ role, onClose }: {
         { title: 'Guru Pengganti', desc: 'Jika digantikan teman, gunakan tombol "Berhalangan". Honor akan otomatis beralih ke temanmu.' },
         { title: 'Pantau Honor', desc: 'Lihat status honor cair & unduh slip gaji digital resmi di menu "Honor Saya".' },
         { title: 'Materi', desc: 'Pantau & akses bahan ajar di menu "Materi".' },
-        { title: 'Cari Siswa', desc: 'Cari nama siswa lalu tekan ikon pin 📌 untuk memantau progres sesinya, berguna untuk tahu kapan giliran eval sesi 6.' },
+        { title: 'Pantau Siswa', desc: 'Cari nama siswa lalu tekan ikon pin 📌 untuk memantau progres sesinya, berguna untuk tahu kapan giliran eval sesi 6.' },
         { title: 'Proses Rapot', desc: 'Terima pengajuan rapot dan isi data rapot siswa.' }
       ],
       faqs: [
-        { q: 'Kenapa progres siswa di Cari Siswa kadang beda dengan yang saya ajar?', a: 'Progres di sana diambil dari absen mandiri siswa, bukan dari laporan presensimu, jadi bisa tertinggal kalau siswa belum absen. Halamannya hanya untuk dilihat.' },
-        { q: 'Kenapa saya nggak absenin siswa?', a: 'Presensi siswa dilakukan mandiri oleh mereka sendiri di portal siswa — tugas pengajar cukup lapor sesi mengajar sendiri.' },
-        { q: 'Antrean rapot ini dari mana asalnya?', a: 'Muncul otomatis begitu siswa klik "Klaim Rapot" di portal siswa, biasanya saat presensi siswa udah 6/6.' },
         { q: 'Kelas saya belum muncul, ini kenapa?', a: 'Mata Pelajaran & Peta Ruangan itu diatur Pengurus di portalnya lewat menu Pengaturan Akademik — bukan otomatis dari sistem, jadi jika matkulnya belum ada hubungi Pengurus yaa.' },
-        { q: 'Kenapa honor saya kurang dari biasanya?', a: 'Bisa jadi ada sesi yang dipegang teman lewat "Berhalangan Mengajar" — cek tracker Honor Saya, sesi itu otomatis pindah honornya ke pengajar yang menggantikan.' }
+        { q: 'Kenapa honor saya kurang dari biasanya?', a: 'Bisa jadi ada sesi yang dipegang teman lewat "Berhalangan Mengajar" — cek tracker Honor Saya, sesi itu otomatis pindah honornya ke pengajar yang menggantikan.' },
+        { q: 'Kenapa saya nggak absenin siswa?', a: 'Presensi siswa dilakukan mandiri oleh mereka sendiri di portal siswa — tugas pengajar cukup lapor sesi mengajar sendiri.' },
+        { q: 'Kenapa progres siswa di Pantau Siswa kadang beda dengan yang saya ajar?', a: 'Progres di sana diambil dari absen mandiri siswa, bukan dari laporan presensimu.' },
+        { q: 'Antrean rapot ini dari mana asalnya?', a: 'Muncul otomatis begitu siswa klik "Klaim Rapot" di portal siswa, biasanya saat presensi siswa udah 6/6.' }
       ]
     },
     STUDENT: {
