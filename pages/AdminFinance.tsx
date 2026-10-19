@@ -1176,9 +1176,9 @@ const executePayTeacher = async () => {
                <input type="text" placeholder="CARI GURU, KELAS, ATAU SISWA..." value={payrollSearch} onChange={e => setPayrollSearch(e.target.value.toUpperCase())} className="flex-1 bg-transparent outline-none text-[11px] font-black uppercase tracking-widest placeholder:text-slate-300" />
             </div>
             {payrollQueue.map((it) => (
-              <div key={it.id} className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl p-10 md:p-14 space-y-12 group hover:border-blue-200 transition-all duration-500">
+              <div key={it.id} className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl p-10 md:p-14 space-y-8 group hover:border-blue-200 transition-all duration-500">
                 <div className="flex flex-col lg:flex-row justify-between lg:items-stretch gap-6">
-                  <div className="flex-1 min-w-0 space-y-3">
+                  <div className="flex-1 min-w-0 space-y-3 flex flex-col justify-center">
                     <h4 className="text-xl md:text-2xl font-black text-slate-800 uppercase italic leading-snug">{it.className}</h4>
                     <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[10px] font-black uppercase tracking-wider text-slate-500">
                       <span className="flex items-center gap-1.5 text-blue-600"><Users size={13}/> Siswa: {it.studentName}</span>
@@ -1189,13 +1189,13 @@ const executePayTeacher = async () => {
                       <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${it.category === 'PRIVATE' ? 'bg-orange-500 text-white' : 'bg-blue-600 text-white'}`}>{it.category}</span>
                     </div>
                   </div>
-                  <div className="shrink-0 lg:min-w-[230px] px-6 py-5 rounded-[2rem] bg-gradient-to-br from-blue-50 to-white border border-blue-100 text-center flex flex-col justify-center gap-4">
+                  <div className="shrink-0 lg:min-w-[220px] px-6 py-4 rounded-[2rem] bg-gradient-to-br from-blue-50 to-white border border-blue-100 text-center flex flex-col justify-center gap-3">
                     <div className="space-y-1">
                       <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em]">TOTAL CAIRKAN</p>
                       <h4 className="text-2xl font-black italic tracking-tighter text-blue-600 leading-none">Rp {formatRupiah(it.amount)}</h4>
                       {String(it.className || '').toUpperCase().includes('HOME TUTORING') && (<p className="inline-block mt-2 px-3 py-1 rounded-full bg-orange-50 border border-orange-100 text-[8px] font-bold text-orange-500 italic leading-snug">+ honor transport diisi saat pembayaran</p>)}
                     </div>
-                    <button onClick={() => setSelectedPayout(it)} className="w-full py-4 bg-[#0F172A] text-white rounded-2xl font-black text-[10px] uppercase tracking-[0.2em] shadow-lg hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-3 group">BAYAR SEKARANG <ChevronRight size={16} className="group-hover:translate-x-1 transition-transform"/></button>
+                    <button onClick={() => setSelectedPayout(it)} className="w-full py-2.5 bg-[#0F172A] text-white rounded-xl font-black text-[9px] uppercase tracking-[0.18em] hover:bg-emerald-600 transition-all active:scale-95 flex items-center justify-center gap-2 group">BAYAR SEKARANG <ChevronRight size={13} className="group-hover:translate-x-1 transition-transform"/></button>
                   </div>
                 </div>
                 <div className="border-t border-slate-200"></div>
