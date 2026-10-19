@@ -3,7 +3,7 @@ import { User, Attendance } from '../types';
 import ModalPortal from '../ModalPortal.tsx';
 import { supabase } from '../services/supabase.ts';
 import { 
-  Calendar, UserCheck, Package, ArrowRight,
+  Calendar, UserCheck, ArrowRight,
   ClipboardCheck, Wallet, Edit3, Repeat, Clock, Sparkles,
   ChevronDown, Filter, Search, X, FileDown, Eye, Loader2,
   Zap, Info, Trash2, AlertTriangle, Check, CheckCircle2, Maximize2
@@ -607,13 +607,12 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
 
                 <div className="p-10 flex flex-col lg:flex-row lg:items-center justify-between gap-10">
                    <div className="flex items-center gap-8 flex-1 min-w-0">
-                      <div className={`w-16 h-16 rounded-2xl flex items-center justify-center shadow-inner shrink-0 ${pkg.category === 'PRIVATE' ? 'bg-orange-50 text-orange-600' : 'bg-blue-50 text-blue-600'}`}><Package size={32} /></div>
                       <div className="min-w-0 flex-1">
-                         <div className="flex flex-wrap items-center gap-3">
-                            <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-tight">{pkg.className}</h4>
+                         <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-tight">{pkg.className}</h4>
+                         <div className="flex flex-wrap items-center gap-3 mt-2">
                             <span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${pkg.category === 'PRIVATE' ? 'bg-orange-500 text-white' : 'bg-blue-900 text-white'}`}>{pkg.category}</span>
+                            <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest italic">Siswa: {pkg.studentName}</p>
                          </div>
-                         <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest mt-2 italic">Siswa: {pkg.studentName}</p>
                          <div className="flex flex-wrap items-center gap-4 mt-2">
                             <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Calendar size={12}/> Update: {formatDate(pkg.lastUpdate)}</span>
                             <span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${pkg.status === 'LUNAS' ? 'bg-emerald-600 text-white' : 'bg-orange-50 text-orange-600 border border-orange-100'}`}>{pkg.status}</span>
