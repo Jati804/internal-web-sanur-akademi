@@ -30,9 +30,11 @@ interface AdminDashboardProps {
 // 📋 LOGIKA FOLLOW-UP (fungsi murni, di luar komponen supaya gampang diuji)
 // Tiga jenis kartu:
 //  1) SESI_5     : paket TERBARU siswa baru sampai sesi 5 (sebentar lagi evaluasi / tagih kelas lanjutan)
-//  2) LULUS      : paket TERBARU sudah sesi 6, maksimal 7 hari sejak sesi 6 diabsen
-//  3) NEXT_CLASS : guru memutuskan "Lanjut Kelas" tapi belum ada laporan bayar paket baru
-//                  (admin sering lupa membuka kelas baru). Maksimal 30 hari dari tanggal klaim.
+//  2) SELESAI    : paket TERBARU sudah sesi 6 (6/6), maksimal 14 hari sejak sesi 6 diabsen.
+//                  Hilang lebih cepat kalau kelas lanjutan sudah dibuka (pembayaran baru TERVERIFIKASI
+//                  untuk mata pelajaran yang sama) atau guru memutuskan "Lanjut Kelas".
+//  3) NEXT_CLASS : guru memutuskan "Lanjut Kelas" tapi kelas barunya belum dibuka (belum lapor bayar /
+//                  menunggu verifikasi). Hilang saat pembayaran baru TERVERIFIKASI. Maksimal 14 hari dari tanggal klaim.
 // ============================================================================
 const norm = (s: any) => String(s ?? '').trim().toUpperCase();
 // ID pembayaran = "PAY-<waktu dibuat, ms>" -> angkanya dipakai untuk membandingkan mana yang lebih baru
@@ -46,11 +48,12 @@ const daysBetween = (today: string, date: string) =>
   (new Date(today).getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24);
 
 export type FollowUpItem = {
-  kind: 'NEXT_CLASS' | 'SESI_5' | 'LULUS';
+  kind: 'NEXT_CLASS' | 'SESI_5' | 'SELESAI';
   student: string;
   fullClass: string;
   lastSess: number;
   lastDate: string;
+  pendingVerify?: boolean; // khusus NEXT_CLASS: sudah ada laporan bayar baru, tinggal diverifikasi
 };
 
 export const computeFollowUps = (
@@ -59,7 +62,7 @@ export const computeFollowUps = (
   studentPayments: any[],
   today: string
 ): FollowUpItem[] => {
-  // Paket yang sudah diputuskan "Lanjut Kelas" diwakili kartu ungu, jadi tidak ikut kartu "LULUS"
+  // Paket yang sudah diputuskan "Lanjut Kelas" diwakili kartu ungu, jadi tidak ikut kartu "SELESAI"
   const nextClassPkg = new Set<string>();
   for (const r of reports || []) {
     if (r.status !== 'NEXT_CLASS') continue;
@@ -67,7 +70,21 @@ export const computeFollowUps = (
     (Array.isArray(r.studentsAttended) ? r.studentsAttended : []).forEach((n: any) => nextClassPkg.add(`${pkg}|${norm(n)}`));
   }
 
-  // ---- 1 & 2: kartu SESI_5 / LULUS ----
+  // Pembayaran (selain REJECTED) per siswa, untuk mengecek "kelas lanjutan sudah dilaporkan / dibuka?"
+  const payById = new Map<string, any>();
+  const livePaymentsByStudent = new Map<string, any[]>();
+  for (const p of studentPayments || []) {
+    payById.set(norm(p.id), p);
+    if (p.status === 'REJECTED') continue;
+    const key = norm(p.studentName ?? p.studentname);
+    const arr = livePaymentsByStudent.get(key);
+    if (arr) arr.push(p); else livePaymentsByStudent.set(key, [p]);
+  }
+  // Pembayaran BARU = ID lebih besar dari paket yang bersangkutan (ID = waktu dibuat) dan mata pelajaran sama
+  const newerPayments = (student: string, subject: string, pkg: string) =>
+    (livePaymentsByStudent.get(student) || []).filter(p => subjectOf(p.className) === subject && pkgTime(p.id) > pkgTime(pkg));
+
+  // ---- 1 & 2: kartu SESI_5 / SELESAI ----
   // Per siswa + nama kelas, ambil PAKET TERBARU (ID pembayaran terbesar). Kalau siswa sudah
   // beli paket baru dengan nama kelas yang sama, paket lamanya tidak dihitung lagi.
   // Status ditentukan oleh NOMOR SESI TERTINGGI di paket itu (bukan tanggal, karena tanggal
@@ -97,22 +114,15 @@ export const computeFollowUps = (
 
     if (lastSess === 5) {
       progress.push({ kind: 'SESI_5', student: g.student, fullClass: g.fullClass, lastSess, lastDate });
-    } else if (lastSess >= 6 && daysBetween(today, lastDate) <= 7 && !nextClassPkg.has(`${pkgId}|${g.student}`)) {
-      progress.push({ kind: 'LULUS', student: g.student, fullClass: g.fullClass, lastSess, lastDate });
+    } else if (lastSess >= 6 && daysBetween(today, lastDate) <= 14 && !nextClassPkg.has(`${pkgId}|${g.student}`)) {
+      // Kelas lanjutan sudah dibuka (pembayaran baru TERVERIFIKASI, mata pelajaran sama) -> tidak perlu diingatkan lagi
+      const opened = pkgTime(pkgId) > 0 &&
+        newerPayments(g.student, subjectOf(g.fullClass), pkgId).some(p => p.status === 'VERIFIED');
+      if (!opened) progress.push({ kind: 'SELESAI', student: g.student, fullClass: g.fullClass, lastSess, lastDate });
     }
   });
 
-  // ---- 3: kartu NEXT_CLASS (Lanjut Kelas, belum lapor bayar paket baru) ----
-  const payById = new Map<string, any>();
-  const livePaymentsByStudent = new Map<string, any[]>(); // pembayaran yang BUKAN REJECTED
-  for (const p of studentPayments || []) {
-    payById.set(norm(p.id), p);
-    if (p.status === 'REJECTED') continue;
-    const key = norm(p.studentName ?? p.studentname);
-    const arr = livePaymentsByStudent.get(key);
-    if (arr) arr.push(p); else livePaymentsByStudent.set(key, [p]);
-  }
-
+  // ---- 3: kartu NEXT_CLASS (Lanjut Kelas, kelas baru belum dibuka) ----
   const next: FollowUpItem[] = [];
   const seen = new Set<string>();
   for (const r of reports || []) {
@@ -129,16 +139,15 @@ export const computeFollowUps = (
       if (seen.has(dedup)) continue;
       seen.add(dedup);
 
-      // Tanggal keputusan tidak disimpan sistem, jadi batas 30 hari dihitung dari tanggal klaim siswa
-      if (r.date && daysBetween(today, r.date) > 30) continue;
+      // Tanggal keputusan tidak disimpan sistem, jadi batas 14 hari dihitung dari tanggal klaim siswa
+      if (r.date && daysBetween(today, r.date) > 14) continue;
 
-      // Sudah dilapor bayar paket baru? = pembayaran lebih baru (ID lebih besar), mata pelajaran sama, bukan REJECTED
-      const hasNewPayment = (livePaymentsByStudent.get(student) || []).some(
-        p => subjectOf(p.className) === subject && pkgTime(p.id) > pkgTime(pkg)
-      );
-      if (hasNewPayment) continue;
+      // Kartu bertahan sampai kelas barunya TERVERIFIKASI. Kalau sudah ada laporan bayar tapi
+      // belum diverifikasi, kartu tetap tampil dengan keterangan "Menunggu verifikasi".
+      const newer = newerPayments(student, subject, pkg);
+      if (newer.some(p => p.status === 'VERIFIED')) continue;
 
-      next.push({ kind: 'NEXT_CLASS', student, fullClass: className || 'UMUM', lastSess: 6, lastDate: String(r.date || today) });
+      next.push({ kind: 'NEXT_CLASS', student, fullClass: className || 'UMUM', lastSess: 6, lastDate: String(r.date || today), pendingVerify: newer.length > 0 });
     }
   }
   next.sort((a, b) => a.lastDate.localeCompare(b.lastDate)); // yang paling lama menunggu di atas
@@ -231,7 +240,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
                   Follow-Up Belajar
                </h3>
                <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] italic">
-                  Siswa yang mencapai titik kritis (Sesi 5, Lulus, atau Lanjut Kelas)
+                  Siswa yang mencapai titik kritis (Sesi 5, Selesai 6/6, atau Lanjut Kelas)
                </p>
             </div>
             <div className="bg-orange-50 text-orange-600 px-8 py-3 rounded-full font-black text-[10px] uppercase border border-orange-100 shadow-sm">
@@ -260,7 +269,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
          LANJUT KELAS
       </span>
       <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
-         Belum lapor bayar
+         {s.pendingVerify ? 'Menunggu verifikasi' : 'Belum lapor bayar'}
       </span>
    </div>
 </div>
@@ -282,7 +291,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
 
                   <div className={`inline-flex items-center gap-3 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${s.lastSess >= 6 ? 'bg-white/10 border-white/20 text-white shadow-lg' : 'bg-orange-50 border-orange-100 text-orange-600 shadow-sm'}`}>
                      {s.lastSess >= 6 ? (
-                       <><Zap size={14} className="text-yellow-400 fill-yellow-400"/> SUDAH LULUS ✨</>
+                       <><Zap size={14} className="text-yellow-400 fill-yellow-400"/> SUDAH SELESAI: 6/6</>
                      ) : (
                        <><Clock size={14} /> PROGRES: SESI 5 / 6</>
                      )}
