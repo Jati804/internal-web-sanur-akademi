@@ -492,20 +492,23 @@ console.log('\n✅ BACKUP MILESTONE SELESAI');
 
       <div className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl overflow-hidden p-10 md:p-14 space-y-8">
          {/* TOOLBAR: CARI + TAMBAH (menyatu di dalam kotak list) */}
-         <div className="flex flex-col md:flex-row gap-4 items-stretch">
-            <div className="relative flex-1">
-               <Search size={20} className={`absolute left-7 top-1/2 -translate-y-1/2 ${roleTheme.text}`} />
-               <input
-                  type="text"
-                  placeholder={`CARI ${roleTheme.label}...`}
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value.toUpperCase())}
-                  className="w-full h-full pl-16 pr-8 py-6 bg-slate-50 border-2 border-transparent rounded-full text-[11px] font-black uppercase tracking-widest text-slate-700 placeholder:text-slate-400 shadow-inner outline-none focus:bg-white focus:border-blue-500 transition-all"
-               />
-            </div>
+         <div className="relative">
+            <Search size={20} className={`absolute left-7 top-1/2 -translate-y-1/2 ${roleTheme.text}`} />
+            <input
+               type="text"
+               placeholder={`CARI ${roleTheme.label}...`}
+               value={searchTerm}
+               onChange={e => setSearchTerm(e.target.value.toUpperCase())}
+               className={`w-full pl-16 py-6 bg-slate-50 border-2 border-transparent rounded-full text-[11px] font-black uppercase tracking-widest text-slate-700 placeholder:text-slate-400 shadow-inner outline-none focus:bg-white focus:border-blue-500 transition-all ${activeTab !== 'ADMINS' ? 'pr-20 sm:pr-56' : 'pr-8'}`}
+            />
             {activeTab !== 'ADMINS' && (
-               <button onClick={handleOpenAdd} className={`px-10 py-6 ${roleTheme.bg} text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl hover:opacity-90 flex items-center justify-center gap-3 transition-all active:scale-95 shrink-0`}>
-                  <Plus size={18}/> TAMBAH {activeTab === 'TEACHERS' ? 'GURU' : 'SISWA'}
+               <button
+                  onClick={handleOpenAdd}
+                  title={`Tambah ${activeTab === 'TEACHERS' ? 'Guru' : 'Siswa'}`}
+                  className={`absolute right-2.5 top-2.5 bottom-2.5 px-4 sm:px-7 ${roleTheme.bg} text-white rounded-full text-[10px] font-black uppercase tracking-widest shadow-md hover:opacity-90 flex items-center justify-center gap-2 transition-all active:scale-95`}
+               >
+                  <Plus size={18}/>
+                  <span className="hidden sm:inline">TAMBAH {activeTab === 'TEACHERS' ? 'GURU' : 'SISWA'}</span>
                </button>
             )}
          </div>
