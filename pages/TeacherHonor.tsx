@@ -605,23 +605,23 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                    </button>
                 )}
 
-                <div className="p-10 flex flex-col lg:flex-row lg:items-center justify-between gap-10">
-                   <div className="flex items-center gap-8 flex-1 min-w-0">
-                      <div className="min-w-0 flex-1">
-                         <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-tight">{pkg.className}</h4>
-                         <div className="flex flex-wrap items-center gap-3 mt-2">
-                            <span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${pkg.category === 'PRIVATE' ? 'bg-orange-500 text-white' : 'bg-blue-900 text-white'}`}>{pkg.category}</span>
-                            <p className="text-[10px] font-black text-blue-500 uppercase tracking-widest italic">Siswa: {pkg.studentName}</p>
-                         </div>
-                         <div className="flex flex-wrap items-center gap-4 mt-2">
-                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest flex items-center gap-1"><Calendar size={12}/> Update: {formatDate(pkg.lastUpdate)}</span>
-                            <span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${pkg.status === 'LUNAS' ? 'bg-emerald-600 text-white' : 'bg-orange-50 text-orange-600 border border-orange-100'}`}>{pkg.status}</span>
-                         </div>
+                <div className="p-8 md:p-10 pr-16 flex flex-col lg:flex-row lg:items-center justify-between gap-6 border-b border-slate-100 mx-2">
+                   <div className="flex-1 min-w-0 space-y-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                         <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${pkg.category === 'PRIVATE' ? 'bg-orange-500 text-white' : 'bg-blue-900 text-white'}`}>{pkg.category}</span>
+                         <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${pkg.status === 'LUNAS' ? 'bg-emerald-600 text-white' : 'bg-orange-50 text-orange-600 border border-orange-100'}`}>{pkg.status}</span>
+                      </div>
+
+                      <h4 className="text-xl md:text-2xl font-black text-slate-800 uppercase italic leading-snug">{pkg.className}</h4>
+
+                      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                         <span className="flex items-center gap-1.5 text-blue-600"><UserCheck size={13}/> Siswa: {pkg.studentName}</span>
+                         <span className="flex items-center gap-1.5"><Calendar size={13} className="text-slate-400"/> Update {formatDate(pkg.lastUpdate)}</span>
                       </div>
                    </div>
-                   
-                   <div className="bg-slate-50 p-8 rounded-[2.5rem] border border-slate-100 min-w-[200px] text-center shadow-inner">
-                      <p className="text-[10px] font-black text-slate-400 uppercase mb-1 italic">{pkg.status === 'LUNAS' ? 'Diterima' : 'Belum Cair'}</p>
+
+                   <div className="shrink-0 lg:min-w-[240px] px-8 py-6 rounded-[2rem] bg-gradient-to-br from-blue-50 to-white border border-blue-100 text-left lg:text-center">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] mb-1">{pkg.status === 'LUNAS' ? 'Diterima' : 'Belum Cair'}</p>
                       <p className="text-3xl font-black italic tracking-tighter text-blue-600 whitespace-nowrap">Rp {formatRupiah(pkg.myTotalPaid)}</p>
                    </div>
                 </div>
