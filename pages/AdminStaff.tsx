@@ -28,6 +28,23 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
   const [formData, setFormData] = useState({ name: '', username: '', pin: '224488' });
   const [isLocalSyncing, setIsLocalSyncing] = useState(false);
 
+  // 🔐 PIN disimpan di tabel terpisah `user_pins` (hanya admin yang boleh membaca/menulis,
+  // diatur lewat RLS). Dengan begitu PIN tidak ikut terkirim ke browser guru/siswa.
+  const [pins, setPins] = useState<Record<string, string>>({});
+  const loadPins = async () => {
+    const { data, error } = await supabase.from('user_pins').select('id, pin');
+    if (error) {
+      console.warn('Gagal memuat PIN:', error.message);
+      return;
+    }
+    const map: Record<string, string> = {};
+    (data || []).forEach((r: any) => { map[r.id] = r.pin; });
+    setPins(map);
+  };
+  useEffect(() => { loadPins(); }, []);
+  // Cadangan ke kolom lama (selama kolom `pin` di tabel lama belum dihapus)
+  const pinOf = (u: User) => pins[u.id] ?? (u as any).pin ?? '';
+
   // ✨ STATE & HANDLER UNTUK CUSTOM SCROLLBAR MODAL
   const [staffScrollThumb, setStaffScrollThumb] = useState({ top: 0, height: 100, visible: false });
   const handleModalScroll = (e: React.UIEvent<HTMLDivElement>) => {
@@ -97,7 +114,7 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
     setFormData({ 
       name: u.name, 
       username: u.username.toUpperCase(), 
-      pin: u.pin || (activeTab === 'STUDENTS' ? '051020' : '224488') 
+      pin: pinOf(u) || (activeTab === 'STUDENTS' ? '051020' : '224488') 
     });
     setShowModal('EDIT');
   };
@@ -169,7 +186,7 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
         // ✅ Khusus guru: simpan nama apa adanya (Title Case + gelar), tab lain tetap kapital semua
         name: isTeacherTab ? formData.name.trim() : formData.name.toUpperCase().trim(), 
         username: formData.username.toUpperCase().trim(), 
-        pin: formData.pin, 
+        // PIN sengaja TIDAK ditulis ke tabel ini lagi, disimpan di `user_pins` (lihat di bawah). 
         role: finalRole 
       };
       if (showModal === 'ADD') {
@@ -177,10 +194,13 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
         const { error } = await supabase.from(tableName).insert({ ...payload, id });
         if (error) throw error;
 
+        const { error: pinError } = await supabase.from('user_pins').upsert({ id, pin: formData.pin });
+        if (pinError) throw new Error('Akun tersimpan, tapi PIN gagal disimpan: ' + pinError.message);
+
         // 🔐 Titipkan akun ini ke Supabase Auth, biar nanti pas login
         // auth.uid() beneran keisi dan RLS bisa jalan bener.
         const { error: syncError } = await supabase.functions.invoke('sync-user-auth', {
-          body: { username: payload.username, pin: payload.pin, role: finalRole, appId: id }
+          body: { username: payload.username, pin: formData.pin, role: finalRole, appId: id }
         });
         if (syncError) throw new Error('Akun tersimpan, tapi gagal sinkron ke sistem keamanan: ' + syncError.message);
       } else if (editingUser) {
@@ -190,14 +210,18 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
         const { error } = await supabase.from(tableName).update(payload).eq('id', editingUser.id);
         if (error) throw error;
 
+        const { error: pinError } = await supabase.from('user_pins').upsert({ id: editingUser.id, pin: formData.pin });
+        if (pinError) throw new Error('Akun tersimpan, tapi PIN gagal disimpan: ' + pinError.message);
+
         // 🔐 Sinkron ulang ke Supabase Auth (PIN atau username mungkin berubah)
         const { error: syncError } = await supabase.functions.invoke('sync-user-auth', {
-          body: { username: payload.username, pin: payload.pin, role: finalRole, appId: editingUser.id }
+          body: { username: payload.username, pin: formData.pin, role: finalRole, appId: editingUser.id }
         });
         if (syncError) throw new Error('Akun tersimpan, tapi gagal sinkron ke sistem keamanan: ' + syncError.message);
       }
       if (refreshAllData) await refreshAllData();
       setShowModal(null);
+      await loadPins();
       alert("Akses & Histori Berhasil Disinkronkan! ✨");
     } catch (e: any) { alert("Terjadi Kendala: " + e.message); } finally { setIsLocalSyncing(false); }
   };
@@ -354,6 +378,10 @@ console.log('\n✅ BACKUP MILESTONE SELESAI');
     }
     
     console.log('✅ Akun siswa berhasil dihapus');
+
+    // Bersihkan PIN-nya juga (bukan error fatal kalau gagal)
+    const { error: pinDeleteError } = await supabase.from('user_pins').delete().eq('id', userId);
+    if (pinDeleteError) console.warn('⚠️ Gagal menghapus PIN dari user_pins:', pinDeleteError.message);
     
     // ========================================
     // STEP 4.5: Hapus akun Auth-nya juga
@@ -544,10 +572,10 @@ console.log('\n✅ BACKUP MILESTONE SELESAI');
 </div>
                     <div 
    className="bg-slate-50 px-4 py-1.5 rounded-xl border border-slate-100 flex items-center gap-2 max-w-[200px] cursor-help"
-   title={`PIN: ${u.pin || '******'}`}
+   title={`PIN: ${pinOf(u) || '******'}`}
 >
    <Key size={10} className="text-slate-400 shrink-0"/>
-   <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest truncate">PIN: <span className={roleTheme.text}>{u.pin || '******'}</span></span>
+   <span className="text-[10px] font-black uppercase text-slate-400 tracking-widest truncate">PIN: <span className={roleTheme.text}>{pinOf(u) || '******'}</span></span>
 </div>
                  </div>
                  <div className="flex justify-end gap-3">
