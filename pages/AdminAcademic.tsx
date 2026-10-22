@@ -1,30 +1,627 @@
-
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { 
-  BookOpen, 
-  Settings, 
-  Plus, 
-  Trash2, 
-  Home, 
-  Trash,
-  X,
+  BookOpen,
+  Settings,
+  Plus,
+  Trash2,
+  Home,
   Save,
-  Clock,
   Cloud,
   Edit3,
   Layers,
-  ArrowRight,
   Info,
   Banknote,
-  DollarSign,
-  Check,
   Loader2,
-  UserRound,
-  AlertTriangle
+  AlertTriangle,
+  Copy,
+  Download,
+  X,
+  Search
 } from 'lucide-react';
-import { supabase } from '../services/supabase.ts';
+import { supabase, waitForActiveSession } from '../services/supabase.ts';
 import ModalPortal from '../ModalPortal.tsx';
 import { User } from '../types';
+
+// ============================================================================
+// 🗓️ JADWAL KELAS
+// Pengurus mengisi formulir, sistem menyusunnya jadi daftar per hari, lalu bisa
+// diekspor ke Excel yang rapi. Disimpan di tabel `settings` (key: class_schedule)
+// sebagai satu daftar.
+// Pengajar & peserta disimpan sebagai ID, jadi kalau nama/gelar diubah di Admin
+// Staff, jadwal ikut berubah otomatis (nama yang tersimpan hanya cadangan kalau
+// akunnya sudah tidak ada).
+// ============================================================================
+
+export const DAYS = ['Senin', 'Selasa', 'Rabu', 'Kamis', 'Jumat', 'Sabtu', 'Minggu'] as const;
+export type Day = typeof DAYS[number];
+
+export type SchedulePerson = { id: string; name: string };
+export type ScheduleItem = {
+  id: string;
+  day: Day;
+  start: string; // 'HH:MM'
+  end: string;   // 'HH:MM'
+  subject: string;
+  teacherId: string;
+  teacherName: string; // cadangan
+  room: string;
+  participants: SchedulePerson[];
+  note: string;
+};
+
+const SETTINGS_KEY = 'class_schedule';
+
+// ---------- helper murni (di luar komponen supaya gampang diuji) ----------
+
+const MONTHS_ID = ['Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni', 'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'];
+export const formatDateID = (d: Date) => `${d.getDate()} ${MONTHS_ID[d.getMonth()]} ${d.getFullYear()}`;
+
+export const stripPelatihan = (s: string) => String(s || '').replace(/^PELATIHAN\s+/i, '');
+
+// '15:00','17:00' -> '15.00 - 17.00' (gaya yang sama dengan Excel jadwal)
+export const fmtRange = (start: string, end: string) => `${start.replace(':', '.')} - ${end.replace(':', '.')}`;
+
+export const sortSchedule = (items: ScheduleItem[]) =>
+  [...items].sort((a, b) =>
+    DAYS.indexOf(a.day) - DAYS.indexOf(b.day) ||
+    a.start.localeCompare(b.start) ||
+    a.room.localeCompare(b.room) ||
+    a.subject.localeCompare(b.subject)
+  );
+
+export type ExportRow = {
+  day: Day;
+  time: string;
+  subject: string;
+  teacher: string;
+  participants: string[];
+  room: string;
+  note: string;
+};
+
+export const toExportRows = (
+  items: ScheduleItem[],
+  teacherName: (it: ScheduleItem) => string,
+  personName: (p: SchedulePerson) => string
+): ExportRow[] =>
+  sortSchedule(items).map(it => ({
+    day: it.day,
+    time: fmtRange(it.start, it.end),
+    subject: stripPelatihan(it.subject),
+    teacher: teacherName(it),
+    participants: it.participants.map(personName),
+    room: it.room,
+    note: it.note || '',
+  }));
+
+// ---------- Excel (exceljs dimuat hanya saat tombol Ekspor ditekan) ----------
+
+const COL = { day: 2, time: 3, subject: 4, teacher: 5, participants: 6, room: 7, note: 8 }; // kolom B..H
+const WIDTH = { day: 12, time: 16, subject: 26, teacher: 38, participants: 34, room: 19, note: 30 };
+const FONT = { name: 'Arial', size: 10 };
+const BLACK = { argb: 'FF000000' };
+const thin = { style: 'thin', color: BLACK };
+const medium = { style: 'medium', color: BLACK };
+const ALL_THIN = { top: thin, left: thin, bottom: thin, right: thin };
+
+// perkiraan jumlah baris teks yang terbungkus di kolom selebar `width`
+const linesFor = (text: string, width: number) => Math.max(1, Math.ceil(String(text || '').length / (width * 1.1)));
+
+export const buildScheduleWorkbook = (ExcelJS: any, rows: ExportRow[], dateText: string) => {
+  const wb = new ExcelJS.Workbook();
+  wb.creator = 'Sanur Akademi';
+  wb.created = new Date();
+
+  const ws = wb.addWorksheet('Jadwal', { views: [{ showGridLines: false }] });
+  ws.pageSetup = {
+    orientation: 'landscape', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0,
+    horizontalCentered: true, printTitlesRow: '4:4',
+    margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 },
+  };
+
+  ws.getColumn(1).width = 2;
+  (Object.keys(COL) as (keyof typeof COL)[]).forEach(k => { ws.getColumn(COL[k]).width = WIDTH[k]; });
+
+  // Judul
+  ws.mergeCells(2, COL.day, 2, COL.note);
+  const title = ws.getCell(2, COL.day);
+  title.value = 'JADWAL PELATIHAN DI YAYASAN SANUR AKADEMI INSPIRASI';
+  title.font = { ...FONT, size: 12, bold: true };
+  title.alignment = { horizontal: 'center', vertical: 'middle' };
+  ws.getRow(2).height = 24;
+
+  // Header tabel
+  const HEADER_ROW = 4;
+  const headers = ['HARI', 'WAKTU', 'JENIS PELATIHAN', 'PENGAJAR', 'PESERTA', 'KELAS', 'CATATAN'];
+  headers.forEach((h, i) => {
+    const c = ws.getCell(HEADER_ROW, COL.day + i);
+    c.value = h;
+    c.font = { ...FONT, bold: true };
+    c.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
+    c.border = { top: medium, left: thin, bottom: medium, right: thin };
+  });
+  ws.getRow(HEADER_ROW).height = 24;
+
+  const centered = { horizontal: 'center', vertical: 'middle', wrapText: true };
+  const LINE = 13;
+  const PAD = 5;
+  const MIN_H = 18;
+
+  let r = HEADER_ROW + 1;
+  const dayStarts: number[] = [];
+
+  DAYS.filter(d => rows.some(x => x.day === d)).forEach(day => {
+    const dayStart = r;
+    dayStarts.push(dayStart);
+
+    rows.filter(x => x.day === day).forEach(row => {
+      const n = Math.max(1, row.participants.length);
+      const first = r;
+      const last = r + n - 1;
+      const partTexts = Array.from({ length: n }, (_, k) =>
+        row.participants.length > 1 ? `${k + 1}. ${row.participants[k]}` : (row.participants[k] || '')
+      );
+
+      // Tinggi baris: cukup untuk teks yang terbungkus, dibagi rata kalau sel gabungan lebih tinggi
+      const heights = partTexts.map(t => Math.max(MIN_H, LINE * linesFor(t, WIDTH.participants) + PAD));
+      const need = LINE * Math.max(
+        linesFor(row.subject, WIDTH.subject), linesFor(row.teacher, WIDTH.teacher),
+        linesFor(row.room, WIDTH.room), linesFor(row.note, WIDTH.note), linesFor(row.time, WIDTH.time)
+      ) + PAD;
+      const sum = heights.reduce((a, b) => a + b, 0);
+      const extra = sum < need ? (need - sum) / n : 0;
+      heights.forEach((h, k) => { ws.getRow(first + k).height = h + extra; });
+
+      // Peserta: satu baris per orang
+      partTexts.forEach((t, k) => {
+        const c = ws.getCell(first + k, COL.participants);
+        c.value = t;
+        c.font = FONT;
+        c.alignment = { horizontal: 'left', vertical: 'middle', wrapText: true, indent: 1 };
+        c.border = ALL_THIN;
+      });
+
+      // Kolom lain: satu sel, digabung sepanjang daftar peserta. Gaya diset SEBELUM digabung.
+      const merged: [number, string][] = [
+        [COL.time, row.time], [COL.subject, row.subject], [COL.teacher, row.teacher],
+        [COL.room, row.room], [COL.note, row.note],
+      ];
+      merged.forEach(([col, val]) => {
+        const c = ws.getCell(first, col);
+        c.value = val;
+        c.font = FONT;
+        c.alignment = col === COL.note ? { horizontal: 'left', vertical: 'middle', wrapText: true, indent: 1 } : centered;
+        c.border = ALL_THIN;
+        if (n > 1) ws.mergeCells(first, col, last, col);
+      });
+
+      r = last + 1;
+    });
+
+    // Kolom HARI digabung sepanjang blok hari itu
+    const dc = ws.getCell(dayStart, COL.day);
+    dc.value = day.toUpperCase();
+    dc.font = { ...FONT, bold: true };
+    dc.alignment = centered;
+    dc.border = ALL_THIN;
+    if (r - 1 > dayStart) ws.mergeCells(dayStart, COL.day, r - 1, COL.day);
+  });
+
+  const lastRow = r - 1;
+
+  // Garis tebal pemisah antar hari & penutup tabel
+  dayStarts.forEach(rowNo => {
+    for (let col = COL.day; col <= COL.note; col++) {
+      const c = ws.getCell(rowNo, col);
+      c.border = { ...(c.border || ALL_THIN), top: medium };
+    }
+  });
+  if (lastRow >= HEADER_ROW + 1) {
+    for (let col = COL.day; col <= COL.note; col++) {
+      const c = ws.getCell(lastRow, col);
+      c.border = { ...(c.border || ALL_THIN), bottom: medium };
+    }
+  }
+
+  // Tanda tangan
+  const signRow = lastRow + 2;
+  ws.mergeCells(signRow, COL.participants, signRow, COL.note);
+  const place = ws.getCell(signRow, COL.participants);
+  place.value = `Depok, ${dateText}`;
+  place.font = FONT;
+  place.alignment = { horizontal: 'center', vertical: 'middle' };
+  ws.mergeCells(signRow + 1, COL.participants, signRow + 1, COL.note);
+  const who = ws.getCell(signRow + 1, COL.participants);
+  who.value = 'Pengurus Yayasan Sanur Akademi Inspirasi';
+  who.font = FONT;
+  who.alignment = { horizontal: 'center', vertical: 'middle' };
+
+  return wb;
+};
+
+export const downloadScheduleExcel = async (rows: ExportRow[]) => {
+  const mod: any = await import('exceljs');
+  const ExcelJS = mod.default ?? mod;
+  const now = new Date();
+  const wb = buildScheduleWorkbook(ExcelJS, rows, formatDateID(now));
+  const buffer = await wb.xlsx.writeBuffer();
+  const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+  const url = URL.createObjectURL(blob);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `Jadwal_Pelatihan_Sanur_${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}.xlsx`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+};
+
+// ---------- komponen ----------
+
+interface ScheduleTabProps {
+  subjects: string[];
+  classes: string[];
+  teachers: User[];
+  studentAccounts: any[];
+}
+
+type FormState = {
+  day: Day;
+  start: string;
+  end: string;
+  subject: string;
+  teacherId: string;
+  room: string;
+  participants: SchedulePerson[];
+  note: string;
+};
+
+const emptyForm: FormState = { day: 'Senin', start: '', end: '', subject: '', teacherId: '', room: '', participants: [], note: '' };
+
+const fieldLabel = 'text-[9px] font-black uppercase tracking-widest text-slate-400 ml-2 mb-2 block';
+const fieldBox = 'w-full px-5 py-3.5 bg-slate-50 rounded-2xl font-bold text-sm text-slate-800 outline-none border-2 border-transparent focus:border-blue-500 focus:bg-white transition-all';
+
+export const ScheduleTab: React.FC<ScheduleTabProps> = ({ subjects, classes, teachers, studentAccounts }) => {
+  const [items, setItems] = useState<ScheduleItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [form, setForm] = useState<FormState | null>(null); // null = formulir tertutup
+  const [formMode, setFormMode] = useState<'ADD' | 'EDIT' | 'COPY'>('ADD');
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [studentQuery, setStudentQuery] = useState('');
+  const [confirmDelete, setConfirmDelete] = useState<ScheduleItem | null>(null);
+
+  // Muat jadwal tersimpan
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        await waitForActiveSession();
+        const { data, error } = await supabase.from('settings').select('value').eq('key', SETTINGS_KEY).maybeSingle();
+        if (error) throw error;
+        const v = (data as any)?.value;
+        if (!cancelled) setItems(Array.isArray(v) ? v : []);
+      } catch (e) {
+        console.error('Gagal memuat jadwal:', e);
+        if (!cancelled) setLoadError('Jadwal belum bisa dimuat. Coba muat ulang halaman ya.');
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Kunci scroll halaman selama jendela terbuka
+  useEffect(() => {
+    document.body.style.overflow = (form || confirmDelete) ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [form, confirmDelete]);
+
+  const teacherList = useMemo(
+    () => teachers.filter(t => t.role === 'TEACHER').sort((a, b) => a.name.localeCompare(b.name)),
+    [teachers]
+  );
+  const teacherById = useMemo(() => new Map(teachers.map(t => [t.id, t])), [teachers]);
+  const studentById = useMemo(() => new Map<string, any>((studentAccounts || []).map((s: any) => [String(s.id), s])), [studentAccounts]);
+
+  const teacherName = (it: ScheduleItem) => teacherById.get(it.teacherId)?.name || it.teacherName || '-';
+  const personName = (p: SchedulePerson) => studentById.get(p.id)?.name || p.name;
+
+  const grouped = useMemo(() => {
+    const sorted = sortSchedule(items);
+    return DAYS.map(day => ({ day, list: sorted.filter(i => i.day === day) })).filter(g => g.list.length > 0);
+  }, [items]);
+
+  const persist = async (next: ScheduleItem[]) => {
+    setSaving(true);
+    try {
+      await waitForActiveSession();
+      const { error } = await supabase.from('settings').upsert({ key: SETTINGS_KEY, value: next });
+      if (error) throw error;
+      setItems(next);
+      return true;
+    } catch (e) {
+      console.error('Gagal menyimpan jadwal:', e);
+      alert('Gagal menyimpan jadwal ke Cloud. Coba lagi ya.');
+      return false;
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const formFromItem = (it: ScheduleItem): FormState => ({
+    day: it.day, start: it.start, end: it.end, subject: it.subject, teacherId: it.teacherId, room: it.room,
+    participants: it.participants.map(p => ({ id: p.id, name: personName(p) })), note: it.note || '',
+  });
+
+  const openAdd = () => { setFormMode('ADD'); setEditingId(null); setStudentQuery(''); setForm({ ...emptyForm }); };
+  const openEdit = (it: ScheduleItem) => { setFormMode('EDIT'); setEditingId(it.id); setStudentQuery(''); setForm(formFromItem(it)); };
+  const openCopy = (it: ScheduleItem) => { setFormMode('COPY'); setEditingId(null); setStudentQuery(''); setForm(formFromItem(it)); };
+  const closeForm = () => { setForm(null); setEditingId(null); setStudentQuery(''); };
+
+  const patch = (p: Partial<FormState>) => setForm(prev => (prev ? { ...prev, ...p } : prev));
+
+  const handleSave = async () => {
+    if (!form) return;
+    if (!form.day || !form.start || !form.end || !form.subject || !form.teacherId || !form.room) {
+      return alert('Lengkapi dulu hari, jam mulai, jam selesai, jenis pelatihan, pengajar, dan kelas.');
+    }
+    if (form.end <= form.start) return alert('Jam selesai harus setelah jam mulai.');
+
+    const item: ScheduleItem = {
+      id: editingId || `SCH-${Date.now()}`,
+      day: form.day,
+      start: form.start,
+      end: form.end,
+      subject: form.subject,
+      teacherId: form.teacherId,
+      teacherName: teacherById.get(form.teacherId)?.name || '',
+      room: form.room,
+      participants: form.participants,
+      note: form.note.trim(),
+    };
+    const next = editingId ? items.map(i => (i.id === editingId ? item : i)) : [...items, item];
+    if (await persist(next)) closeForm();
+  };
+
+  const handleDelete = async () => {
+    if (!confirmDelete) return;
+    if (await persist(items.filter(i => i.id !== confirmDelete.id))) setConfirmDelete(null);
+  };
+
+  const handleExport = async () => {
+    if (items.length === 0) return alert('Belum ada jadwal untuk diekspor.');
+    setExporting(true);
+    try {
+      await downloadScheduleExcel(toExportRows(items, teacherName, personName));
+    } catch (e) {
+      console.error('Gagal membuat Excel:', e);
+      alert('Gagal membuat file Excel. Coba lagi ya.');
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const suggestions = useMemo(() => {
+    if (!form) return [];
+    const q = studentQuery.trim().toLowerCase();
+    if (!q) return [];
+    const taken = new Set(form.participants.map(p => p.id));
+    return (studentAccounts || [])
+      .filter((s: any) => !taken.has(String(s.id)) && String(s.name || '').toLowerCase().includes(q))
+      .sort((a: any, b: any) => String(a.name).localeCompare(String(b.name)))
+      .slice(0, 6);
+  }, [form, studentQuery, studentAccounts]);
+
+  // Pilihan yang sudah tersimpan tapi sudah tidak ada di daftar (dihapus) tetap ditampilkan agar tidak hilang diam-diam saat diubah
+  const subjectOptions = form && form.subject && !subjects.includes(form.subject) ? [form.subject, ...subjects] : subjects;
+  const roomOptions = form && form.room && !classes.includes(form.room) ? [form.room, ...classes] : classes;
+  const teacherMissing = !!form && !!form.teacherId && !teacherList.some(t => t.id === form.teacherId);
+
+  const isPrivateRoom = (room: string) => /PRIVATE|PRIVAT|HOME TUTORING/i.test(room);
+
+  return (
+    <div className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl overflow-hidden">
+      <div className="p-8 md:p-12 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-100">
+        <div className="space-y-2">
+          <h3 className="text-3xl font-black text-slate-800 uppercase italic tracking-tighter leading-none">Jadwal Kelas</h3>
+          <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Isi jadwal, lalu ekspor ke Excel untuk dibagikan</p>
+        </div>
+        <div className="flex flex-wrap gap-3">
+          <button
+            onClick={handleExport}
+            disabled={exporting || items.length === 0}
+            className="px-8 py-4 bg-slate-100 text-slate-700 rounded-full font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-slate-200 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} Ekspor Excel
+          </button>
+          <button
+            onClick={openAdd}
+            className="px-8 py-4 bg-blue-600 text-white rounded-full font-black text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-xl hover:bg-blue-700 transition-all active:scale-95"
+          >
+            <Plus size={16} /> Tambah Jadwal
+          </button>
+        </div>
+      </div>
+
+      <div className="p-6 md:p-12 space-y-10">
+        {loading ? (
+          <div className="flex items-center justify-center gap-3 py-20 text-slate-300">
+            <Loader2 size={20} className="animate-spin" />
+            <p className="text-[10px] font-black uppercase tracking-widest italic">Memuat jadwal...</p>
+          </div>
+        ) : loadError ? (
+          <p className="text-center text-[11px] font-bold text-rose-600 py-16">{loadError}</p>
+        ) : grouped.length === 0 ? (
+          <div className="py-20 text-center space-y-2">
+            <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">Belum ada jadwal</p>
+            <p className="text-[11px] font-bold text-slate-300">Tekan "Tambah Jadwal" untuk mulai mengisi.</p>
+          </div>
+        ) : (
+          grouped.map(g => (
+            <section key={g.day} className="space-y-4">
+              <h4 className="text-lg font-black text-slate-800 uppercase italic tracking-tight px-2">{g.day}</h4>
+              <div className="space-y-3">
+                {g.list.map(it => (
+                  <div key={it.id} className="flex flex-col md:flex-row md:items-start gap-4 bg-slate-50 border border-slate-100 rounded-[2rem] px-6 py-5">
+                    <p className="md:w-36 shrink-0 text-sm font-black text-slate-800">{fmtRange(it.start, it.end)}</p>
+                    <div className="min-w-0 flex-1 space-y-2">
+                      <div className="flex flex-wrap items-center gap-3">
+                        <p className="text-sm font-black text-slate-800 uppercase italic">{stripPelatihan(it.subject)}</p>
+                        <span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest text-white ${isPrivateRoom(it.room) ? 'bg-orange-500' : 'bg-blue-900'}`}>{it.room}</span>
+                      </div>
+                      <p className="text-xs font-bold text-slate-500">{teacherName(it)}</p>
+                      {it.participants.length > 0 && (
+                        <div className="text-xs font-bold text-slate-700 space-y-0.5">
+                          {it.participants.map((p, k) => (
+                            <p key={p.id + k}>{it.participants.length > 1 ? `${k + 1}. ` : ''}{personName(p)}</p>
+                          ))}
+                        </div>
+                      )}
+                      {it.note && <p className="text-[11px] font-bold text-slate-400 italic">{it.note}</p>}
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button onClick={() => openCopy(it)} title="Salin jadwal" aria-label="Salin jadwal" className="w-10 h-10 rounded-full bg-white text-slate-400 hover:text-blue-600 hover:bg-blue-50 flex items-center justify-center transition-all"><Copy size={16} /></button>
+                      <button onClick={() => openEdit(it)} title="Ubah jadwal" aria-label="Ubah jadwal" className="w-10 h-10 rounded-full bg-white text-slate-400 hover:text-blue-600 hover:bg-blue-50 flex items-center justify-center transition-all"><Edit3 size={16} /></button>
+                      <button onClick={() => setConfirmDelete(it)} title="Hapus jadwal" aria-label="Hapus jadwal" className="w-10 h-10 rounded-full bg-white text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-all"><Trash2 size={16} /></button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          ))
+        )}
+      </div>
+
+      {/* FORMULIR TAMBAH / UBAH / SALIN */}
+      {form && (
+        <ModalPortal>
+          <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] bg-slate-900/95 backdrop-blur-2xl flex items-center justify-center p-6" onClick={closeForm}>
+            <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[3rem] p-8 md:p-10 shadow-2xl relative" onClick={e => e.stopPropagation()}>
+              <button onClick={closeForm} aria-label="Tutup" className="absolute top-8 right-8 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22} /></button>
+              <h4 className="text-2xl font-black text-slate-800 uppercase italic tracking-tight mb-8 pr-10">
+                {formMode === 'EDIT' ? 'Ubah Jadwal' : formMode === 'COPY' ? 'Salin Jadwal' : 'Tambah Jadwal'}
+              </h4>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label htmlFor="sch-day" className={fieldLabel}>Hari</label>
+                  <select id="sch-day" value={form.day} onChange={e => patch({ day: e.target.value as Day })} className={fieldBox}>
+                    {DAYS.map(d => <option key={d} value={d}>{d}</option>)}
+                  </select>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label htmlFor="sch-start" className={fieldLabel}>Jam mulai</label>
+                    <input id="sch-start" type="time" value={form.start} onChange={e => patch({ start: e.target.value })} className={fieldBox} />
+                  </div>
+                  <div>
+                    <label htmlFor="sch-end" className={fieldLabel}>Jam selesai</label>
+                    <input id="sch-end" type="time" value={form.end} onChange={e => patch({ end: e.target.value })} className={fieldBox} />
+                  </div>
+                </div>
+
+                <div>
+                  <label htmlFor="sch-subject" className={fieldLabel}>Jenis pelatihan</label>
+                  <select id="sch-subject" value={form.subject} onChange={e => patch({ subject: e.target.value })} className={fieldBox}>
+                    <option value="">Pilih pelatihan</option>
+                    {subjectOptions.map(s => <option key={s} value={s}>{stripPelatihan(s)}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label htmlFor="sch-teacher" className={fieldLabel}>Pengajar</label>
+                  <select id="sch-teacher" value={form.teacherId} onChange={e => patch({ teacherId: e.target.value })} className={fieldBox}>
+                    <option value="">Pilih pengajar</option>
+                    {teacherMissing && <option value={form.teacherId}>{teacherById.get(form.teacherId)?.name || 'Pengajar tidak ditemukan'}</option>}
+                    {teacherList.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                  </select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label htmlFor="sch-room" className={fieldLabel}>Kelas</label>
+                  <select id="sch-room" value={form.room} onChange={e => patch({ room: e.target.value })} className={fieldBox}>
+                    <option value="">Pilih kelas</option>
+                    {roomOptions.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label htmlFor="sch-student-q" className={fieldLabel}>Peserta (boleh dikosongkan)</label>
+                  {form.participants.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {form.participants.map(p => (
+                        <span key={p.id} className="inline-flex items-center gap-2 pl-4 pr-2 py-1.5 bg-blue-50 text-blue-700 rounded-full text-xs font-bold">
+                          {personName(p)}
+                          <button type="button" aria-label={`Hapus ${personName(p)}`} onClick={() => patch({ participants: form.participants.filter(x => x.id !== p.id) })} className="w-5 h-5 rounded-full hover:bg-blue-100 flex items-center justify-center"><X size={12} /></button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+                  <div className="relative">
+                    <Search size={16} className="absolute left-5 top-1/2 -translate-y-1/2 text-slate-300" />
+                    <input id="sch-student-q" type="text" autoComplete="off" value={studentQuery} onChange={e => setStudentQuery(e.target.value)} placeholder="Ketik nama siswa lalu pilih" className={`${fieldBox} pl-12`} />
+                    {suggestions.length > 0 && (
+                      <ul className="absolute z-10 left-0 right-0 mt-2 bg-white border border-slate-100 rounded-2xl shadow-xl overflow-hidden">
+                        {suggestions.map((s: any) => (
+                          <li key={s.id}>
+                            <button
+                              type="button"
+                              onClick={() => { patch({ participants: [...form.participants, { id: String(s.id), name: String(s.name) }] }); setStudentQuery(''); }}
+                              className="w-full text-left px-5 py-3 text-sm font-bold text-slate-700 hover:bg-blue-50 transition-colors"
+                            >
+                              {s.name}
+                            </button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                </div>
+
+                <div className="md:col-span-2">
+                  <label htmlFor="sch-note" className={fieldLabel}>Catatan (boleh dikosongkan)</label>
+                  <input id="sch-note" type="text" value={form.note} onChange={e => patch({ note: e.target.value })} placeholder='Misalnya "Ke rumah"' className={fieldBox} />
+                </div>
+              </div>
+
+              <div className="flex gap-3 pt-8">
+                <button onClick={closeForm} className="flex-1 py-4 bg-slate-50 text-slate-600 rounded-2xl font-black text-[10px] uppercase tracking-widest">Batal</button>
+                <button onClick={handleSave} disabled={saving} className="flex-[2] py-4 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2 disabled:opacity-60">
+                  {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Simpan Jadwal
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
+      {/* KONFIRMASI HAPUS */}
+      {confirmDelete && (
+        <ModalPortal>
+          <div className="fixed inset-0 z-[120000] flex items-center justify-center p-6 bg-slate-900/90 backdrop-blur-xl" onClick={() => setConfirmDelete(null)}>
+            <div className="bg-white w-full max-w-md rounded-[2.5rem] p-8 shadow-2xl text-center space-y-6" onClick={e => e.stopPropagation()}>
+              <div className="w-14 h-14 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto"><AlertTriangle size={28} /></div>
+              <div className="space-y-2">
+                <h4 className="text-lg font-black text-slate-800 uppercase italic">Hapus jadwal ini?</h4>
+                <p className="text-sm font-bold text-slate-500">
+                  {confirmDelete.day}, {fmtRange(confirmDelete.start, confirmDelete.end)}<br />
+                  {stripPelatihan(confirmDelete.subject)} · {confirmDelete.room}
+                </p>
+              </div>
+              <div className="flex gap-3">
+                <button onClick={() => setConfirmDelete(null)} className="flex-1 py-4 bg-slate-50 text-slate-600 rounded-xl font-black text-[10px] uppercase">Batal</button>
+                <button onClick={handleDelete} disabled={saving} className="flex-1 py-4 bg-rose-600 text-white rounded-xl font-black text-[10px] uppercase disabled:opacity-60">Ya, Hapus</button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+    </div>
+  );
+};
 
 interface AdminAcademicProps {
   subjects: string[];
@@ -33,17 +630,16 @@ interface AdminAcademicProps {
   setClasses: React.Dispatch<React.SetStateAction<string[]>>;
   levels: string[];
   setLevels: React.Dispatch<React.SetStateAction<string[]>>;
-  scheduleData: Record<string, string>;
-  setScheduleData: React.Dispatch<React.SetStateAction<Record<string, string>>>;
   salaryConfig: { regulerRate: number, privateRate: number };
   setSalaryConfig: React.Dispatch<React.SetStateAction<{ regulerRate: number, privateRate: number }>>;
   teachers: User[];
+  studentAccounts: any[];
 }
 
 const AdminAcademic: React.FC<AdminAcademicProps> = ({ 
-  subjects, setSubjects, classes, setClasses, levels, setLevels, scheduleData, setScheduleData, salaryConfig, setSalaryConfig, teachers
+  subjects, setSubjects, classes, setClasses, levels, setLevels, salaryConfig, setSalaryConfig, teachers, studentAccounts
 }) => {
-  const [activeTab, setActiveTab] = useState<'CONFIG' | 'SCHEDULE' | 'SALARY'>('CONFIG');
+  const [activeTab, setActiveTab] = useState<'SCHEDULE' | 'CONFIG' | 'SALARY'>('SCHEDULE');
   const [newSubject, setNewSubject] = useState('');
   const [newClass, setNewClass] = useState('');
   const [newLevel, setNewLevel] = useState('');
@@ -55,85 +651,7 @@ const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
   // Salary Editing State
   const [tempSalary, setTempSalary] = useState(salaryConfig);
 
-  const [editingCell, setEditingCell] = useState<{ day: string, room: string } | null>(null);
-  const [editSessions, setEditSessions] = useState<{ matpel: string, jam: string, guru: string }[]>([]);
   const [confirmDeleteItem, setConfirmDeleteItem] = useState<{ type: 'SUBJECT' | 'LEVEL' | 'CLASS', value: string } | null>(null);
-
-  // ✨ Tombol "lompat ke hari" — klik hari, tabel otomatis scroll ke kolom itu
-  const tableScrollRef = useRef<HTMLDivElement>(null);
-  const dayColRefs = useRef<Record<string, HTMLTableCellElement | null>>({});
-  const [selectedDay, setSelectedDay] = useState<string | null>(null);
-
-  const scrollTableToDay = (day: string) => {
-    const el = dayColRefs.current[day];
-    const container = tableScrollRef.current;
-    if (el && container) {
-      const containerRect = container.getBoundingClientRect();
-      const elRect = el.getBoundingClientRect();
-      const stickyColWidth = 192; // lebar kolom "Ruangan" yang sticky di kiri
-      const targetScroll = container.scrollLeft + (elRect.left - containerRect.left) - stickyColWidth;
-      container.scrollTo({ left: Math.max(targetScroll, 0), behavior: 'smooth' });
-    }
-  };
-
-  const scrollToDay = (day: string) => {
-    setSelectedDay(day);
-    scrollTableToDay(day);
-  };
-
-  // ✅ Kalau tab browser sempat di-background lalu balik aktif, reset aja pilihan
-  // hari yang lagi aktif — konsisten sama perilaku pas pindah tab di dalam halaman.
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.visibilityState === 'visible') {
-        setSelectedDay(null);
-      }
-    };
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
-
-  // ✅ Tabel jadwal cuma dirender pas activeTab === 'SCHEDULE', jadi begitu pindah ke tab
-  // lain (Data Master / Gaji Guru) tabelnya kebongkar dan posisi scroll-nya nggak bisa
-  // dipertahankan. Daripada tombol hari tetap ke-highlight tapi nggak nyambung sama
-  // tampilannya, mending reset aja biar user pilih ulang saat balik ke tab ini.
-  useEffect(() => {
-    if (activeTab !== 'SCHEDULE') {
-      setSelectedDay(null);
-    }
-  }, [activeTab]);
-
-  const teacherNames = React.useMemo(() => {
-    return teachers
-      .filter(t => t.role === 'TEACHER')
-      .map(t => t.name)
-      .sort((a, b) => a.localeCompare(b));
-  }, [teachers]);
-
-  // ✨ Satu kotak (ruangan+hari) bisa berisi lebih dari 1 sesi, dipisah "@@@".
-  // Data lama (format lama tanpa "@@@") otomatis kebaca sebagai 1 sesi, jadi aman & backward compatible.
-  const parseSessions = (raw: string): { matpel: string, jam: string, guru: string }[] => {
-    if (!raw) return [];
-    return raw.split('@@@').map(part => {
-      const [matpel, jam, guru] = part.split('|');
-      return { matpel: matpel || '', jam: jam || '', guru: guru || '' };
-    }).filter(s => s.matpel.trim() !== '');
-  };
-
-  const serializeSessions = (sessions: { matpel: string, jam: string, guru: string }[]): string => {
-    return sessions
-      .filter(s => s.matpel.trim() !== '')
-      .map(s => `${s.matpel.toUpperCase()}|${s.jam}|${s.guru}`)
-      .join('@@@');
-  };
-
-  // ✅ Lock body scroll selagi modal terbuka
-  useEffect(() => {
-    document.body.style.overflow = editingCell ? 'hidden' : '';
-    return () => { document.body.style.overflow = ''; };
-  }, [editingCell]);
-
-  const days = ["Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu", "Minggu"];
 
   const syncConfigToCloud = async (newSubjects: string[], newLevels: string[], newClasses: string[]) => {
     setIsLoading(true);
@@ -145,22 +663,6 @@ const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
       if (error) throw error;
     } catch (e) {
       alert("Gagal sinkron konfigurasi ke Cloud.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const syncScheduleToCloud = async (newData: Record<string, string>) => {
-    setIsLoading(true);
-    try {
-      const { error } = await supabase.from('settings').upsert({
-        key: 'master_schedule',
-        value: newData
-      });
-      if (error) throw error;
-      setScheduleData(newData);
-    } catch (e) {
-      alert("Gagal sinkron jadwal ke Cloud.");
     } finally {
       setIsLoading(false);
     }
@@ -181,61 +683,6 @@ const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
     } finally {
       setIsLoading(false);
     }
-  };
-
-  const handleOpenEdit = (day: string, room: string) => {
-    const rawValue = scheduleData[`${day}-${room}`] || '';
-    const sessions = parseSessions(rawValue);
-    setEditingCell({ day, room });
-    setEditSessions(sessions.length > 0 ? sessions : [{ matpel: '', jam: '', guru: '' }]);
-  };
-
-  const handleSaveEdit = () => {
-    if (editingCell) {
-      const incomplete = editSessions.some(s => !s.matpel.trim() || !s.jam.trim() || !s.guru.trim());
-      if (editSessions.length > 0 && incomplete) {
-        alert('Lengkapi dulu Jam, Mata Pelajaran, dan Guru Pengajar untuk semua sesi sebelum disimpan. Kalau mau menghapus sesi, klik ikon tempat sampah di sesi tersebut.');
-        return;
-      }
-      const key = `${editingCell.day}-${editingCell.room}`;
-      const valueToSave = serializeSessions(editSessions);
-      const nextData = { ...scheduleData, [key]: valueToSave };
-      syncScheduleToCloud(nextData);
-      setEditingCell(null);
-    }
-  };
-
-  const updateSessionField = (idx: number, field: 'matpel' | 'jam' | 'guru', value: string) => {
-    setEditSessions(prev => prev.map((s, i) => i === idx ? { ...s, [field]: value } : s));
-  };
-
-  // ✨ Helper buat time-picker Jam Mulai / Jam Selesai, tetap disimpan sebagai 1 string "HH:MM - HH:MM"
-  const parseJamRange = (jam: string): { start: string, end: string } => {
-    if (!jam) return { start: '', end: '' };
-    const normalize = (t: string) => {
-      const m = t.trim().replace(/[.,]/g, ':').match(/^(\d{1,2}):(\d{2})$/);
-      return m ? `${m[1].padStart(2, '0')}:${m[2]}` : '';
-    };
-    const [rawStart, rawEnd] = jam.split('-');
-    return { start: normalize(rawStart || ''), end: normalize(rawEnd || '') };
-  };
-
-  const updateJamPart = (idx: number, part: 'start' | 'end', value: string) => {
-    setEditSessions(prev => prev.map((s, i) => {
-      if (i !== idx) return s;
-      const current = parseJamRange(s.jam);
-      const nextStart = part === 'start' ? value : current.start;
-      const nextEnd = part === 'end' ? value : current.end;
-      return { ...s, jam: (nextStart || nextEnd) ? `${nextStart} - ${nextEnd}` : '' };
-    }));
-  };
-
-  const addSessionRow = () => {
-    setEditSessions(prev => [...prev, { matpel: '', jam: '', guru: '' }]);
-  };
-
-  const removeSessionRow = (idx: number) => {
-    setEditSessions(prev => prev.filter((_, i) => i !== idx));
   };
 
   const handleAddSubject = () => {
@@ -350,11 +797,11 @@ const handleDragEnd = () => {
               <span className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Academic Central Management</span>
            </div>
            <h2 className="text-4xl font-black text-slate-800 uppercase italic tracking-tighter leading-none">Pengaturan <span className="text-blue-600">Akademik</span></h2>
-           <p className="text-slate-500 font-medium text-sm max-w-lg leading-relaxed italic">Kelola daftar program, peta ruang, dan tarif gaji guru secara dinamis.</p>
+           <p className="text-slate-500 font-medium text-sm max-w-lg leading-relaxed italic">Kelola jadwal kelas, daftar program, dan tarif gaji guru secara dinamis.</p>
         </div>
         <div className="flex bg-slate-100 p-2 rounded-[2rem] border border-slate-200 shadow-inner flex-wrap justify-center">
-           <button onClick={() => setActiveTab('CONFIG')} className={`px-8 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'CONFIG' ? 'bg-white text-blue-600 shadow-xl' : 'text-slate-400'}`}>1. Data Master</button>
-           <button onClick={() => setActiveTab('SCHEDULE')} className={`px-8 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'SCHEDULE' ? 'bg-white text-blue-600 shadow-xl' : 'text-slate-400'}`}>2. Peta Ruangan</button>
+           <button onClick={() => setActiveTab('SCHEDULE')} className={`px-8 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'SCHEDULE' ? 'bg-white text-blue-600 shadow-xl' : 'text-slate-400'}`}>1. Jadwal Kelas</button>
+           <button onClick={() => setActiveTab('CONFIG')} className={`px-8 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'CONFIG' ? 'bg-white text-blue-600 shadow-xl' : 'text-slate-400'}`}>2. Data Master</button>
            <button onClick={() => setActiveTab('SALARY')} className={`px-8 py-4 rounded-[1.5rem] text-[10px] font-black uppercase tracking-widest transition-all ${activeTab === 'SALARY' ? 'bg-white text-emerald-600 shadow-xl' : 'text-slate-400'}`}>3. Gaji Guru</button>
         </div>
       </div>
@@ -363,6 +810,10 @@ const handleDragEnd = () => {
          <Cloud size={18} className="text-blue-600 animate-pulse" />
          <span className="text-[10px] font-black uppercase tracking-widest text-blue-600">Sinkronisasi Cloud Aktif...</span>
       </div>
+
+      {activeTab === 'SCHEDULE' && (
+        <ScheduleTab subjects={subjects} classes={classes} teachers={teachers} studentAccounts={studentAccounts} />
+      )}
 
       {activeTab === 'CONFIG' && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
@@ -476,69 +927,6 @@ const handleDragEnd = () => {
         </div>
       )}
 
-      {activeTab === 'SCHEDULE' && (
-        <div className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl overflow-hidden animate-in slide-in-from-right-4 duration-700">
-           <div className="p-12 bg-slate-900 text-white flex flex-col md:flex-row justify-between items-center gap-8 relative overflow-hidden">
-              <div className="absolute top-0 right-0 w-64 h-64 bg-blue-600 rounded-full blur-[100px] opacity-20 -mr-20 -mt-20"></div>
-              <div className="relative z-10">
-                <h3 className="text-3xl font-black uppercase italic tracking-tighter leading-none">Peta Ruangan Cloud</h3>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em] mt-3 flex items-center gap-2">
-                  <Cloud size={14} className="text-blue-400" /> Sinkronisasi Real-time Aktif
-                </p>
-              </div>
-              <button onClick={() => { if(window.confirm("Kosongkan semua peta ruangan?")) syncScheduleToCloud({}); }} className="px-10 py-5 bg-white/10 text-white rounded-[1.5rem] font-black text-[10px] uppercase tracking-widest hover:bg-rose-600 transition-all flex items-center gap-3 backdrop-blur-md border border-white/10 shadow-xl active:scale-95"><Trash size={18}/> Reset Semua Jadwal</button>
-           </div>
-           
-           <div className="p-8 bg-blue-50/50 border-b border-blue-100 flex items-center gap-3 overflow-x-auto custom-scrollbar">
-              <span className="text-[10px] font-black text-blue-800 uppercase tracking-widest shrink-0">Lompat ke:</span>
-              {days.map(d => (
-                <button key={d} onClick={() => scrollToDay(d)} className={`px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest transition-all shrink-0 active:scale-95 shadow-sm border ${selectedDay === d ? 'bg-blue-600 text-white border-blue-600' : 'bg-white hover:bg-blue-600 hover:text-white text-blue-700 border-blue-100'}`}>{d}</button>
-              ))}
-           </div>
-
-           <div ref={tableScrollRef} className="overflow-x-auto custom-scrollbar">
-              <table className="w-full text-left border-collapse table-fixed min-w-[1400px]">
-                 <thead><tr className="bg-slate-50 border-b"><th className="p-8 text-[11px] font-black text-slate-500 uppercase tracking-widest border-r w-48 bg-slate-100 sticky left-0 z-20 shadow-sm italic">Ruangan \ Hari</th>{days.map(d => (<th key={d} ref={el => { dayColRefs.current[d] = el; }} className={`p-8 text-[11px] font-black uppercase tracking-widest text-center border-r bg-slate-50 transition-colors ${selectedDay === d ? 'text-blue-600' : 'text-slate-500'}`}>{d}</th>))}</tr></thead>
-                 <tbody className="divide-y divide-slate-100">
-                    {classes.map(room => (
-                       <tr key={room} className="group/row">
-                          <td className="p-8 font-black text-slate-800 text-[12px] uppercase italic bg-slate-50 border-r sticky left-0 z-10 shadow-sm group-hover/row:bg-blue-50 transition-colors">{room}</td>
-                          {days.map(day => {
-                             const rawValue = scheduleData[`${day}-${room}`] || '';
-                             const sessions = parseSessions(rawValue);
-                             return (
-                               <td key={day} className="p-3 border-r align-top">
-                                  {sessions.length > 0 ? (
-                                     <div className="w-full h-full min-h-[140px] bg-blue-600 rounded-[2rem] shadow-xl relative overflow-hidden group/card border-2 border-transparent hover:border-white transition-all flex flex-col justify-center">
-                                        <div className="absolute top-0 right-0 w-16 h-16 bg-white/10 rounded-full blur-xl -mr-8 -mt-8"></div>
-                                        <div className="relative divide-y divide-white/20">
-                                           {sessions.map((s, i) => {
-                                             const displayMatpel = s.matpel.replace(/^PELATIHAN\s+/i, '');
-                                             return (
-                                               <div key={i} className="p-4 text-center text-white">
-                                                  {s.jam && <div className="flex items-center justify-center gap-1.5 mb-1.5 opacity-75"><Clock size={11} /><span className="text-[9px] font-black uppercase tracking-wide">{s.jam}</span></div>}
-                                                  <p className="text-[11px] font-black uppercase italic tracking-tight leading-snug px-1">{displayMatpel}</p>
-                                                  {s.guru && <p className="text-[9px] font-bold tracking-wide leading-tight opacity-80 mt-1 px-1">{s.guru}</p>}
-                                               </div>
-                                             );
-                                           })}
-                                        </div>
-                                        <button onClick={() => handleOpenEdit(day, room)} className="absolute inset-0 bg-black/60 opacity-0 group-hover/card:opacity-100 transition-opacity flex flex-col items-center justify-center backdrop-blur-sm"><Edit3 size={28} className="text-white mb-2" /><span className="text-[9px] font-black uppercase text-white tracking-widest">UBAH JADWAL</span></button>
-                                     </div>
-                                  ) : (
-                                     <button onClick={() => handleOpenEdit(day, room)} className="w-full h-full min-h-[140px] flex flex-col items-center justify-center border-2 border-dashed border-slate-100 rounded-[2rem] hover:border-blue-300 hover:bg-blue-50/50 transition-all group/btn"><Plus size={24} className="text-slate-200 group-hover/btn:text-blue-500 mb-2 transition-all group-hover/btn:scale-125" /><span className="text-[9px] font-black text-slate-200 group-hover/btn:text-blue-400 uppercase tracking-widest">ISI JADWAL</span></button>
-                                  )}
-                               </td>
-                             );
-                          })}
-                       </tr>
-                    ))}
-                 </tbody>
-              </table>
-           </div>
-        </div>
-      )}
-
       {activeTab === 'SALARY' && (
         <div className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl p-10 md:p-14 animate-in slide-in-from-bottom-4 space-y-12">
            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-slate-50 pb-10">
@@ -603,72 +991,6 @@ const handleDragEnd = () => {
         </div>
       )}
 
-      {/* MODAL EDIT PER SEL (CELL) */}
-      {editingCell && (
-        <ModalPortal>
-        <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] bg-slate-900/95 backdrop-blur-2xl flex items-center justify-center p-6 animate-in zoom-in duration-300" onClick={() => setEditingCell(null)}>
-           <div className="bg-white w-full max-w-3xl rounded-[3.5rem] p-8 md:p-10 shadow-2xl relative border border-slate-50" onClick={e => e.stopPropagation()}>
-              <button onClick={() => setEditingCell(null)} className="absolute top-8 right-8 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22}/></button>
-              <div className="mb-6 text-center pr-6">
-                 <h4 className="text-2xl font-black text-slate-800 uppercase italic tracking-tight">Update Jadwal</h4>
-                 <div className="flex items-center justify-center gap-3 mt-3 text-slate-400 font-black text-[10px] uppercase tracking-widest">
-                   <span>{editingCell.room}</span>
-                   <ArrowRight size={12} className="text-blue-500" />
-                   <span>{editingCell.day}</span>
-                 </div>
-              </div>
-              <div className="space-y-5 max-h-[48vh] overflow-y-auto custom-scrollbar pr-1">
-                 {editSessions.map((session, idx) => (
-                   <div key={idx} className="p-6 bg-slate-50 rounded-[1.8rem] space-y-4 relative border-2 border-transparent">
-                      <button onClick={() => removeSessionRow(idx)} className="absolute top-4 right-4 p-1.5 text-slate-300 hover:text-rose-500 hover:bg-rose-50 rounded-lg transition-all" title="Hapus sesi ini"><Trash2 size={16}/></button>
-                      <span className="text-[9px] font-black text-blue-500 uppercase tracking-widest">Sesi {idx + 1}</span>
-                      <div className="grid md:grid-cols-[1.15fr_1fr] gap-4">
-                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase ml-4 flex items-center gap-2"><Clock size={14} className="text-blue-500" /> Jam Belajar</label>
-                            <div className="flex items-center gap-2">
-                               <input type="time" className="w-full min-w-0 px-4 py-4 bg-white rounded-[1.4rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner" value={parseJamRange(session.jam).start} onChange={e => updateJamPart(idx, 'start', e.target.value)} />
-                               <span className="text-slate-300 font-black shrink-0">–</span>
-                               <input type="time" className="w-full min-w-0 px-4 py-4 bg-white rounded-[1.4rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner" value={parseJamRange(session.jam).end} onChange={e => updateJamPart(idx, 'end', e.target.value)} />
-                            </div>
-                         </div>
-                         <div className="space-y-2">
-                            <label className="text-[10px] font-black text-slate-500 uppercase ml-4 flex items-center gap-2"><BookOpen size={14} className="text-blue-500" /> Mata Pelajaran</label>
-                            <select className="w-full px-6 py-4 bg-white rounded-[1.4rem] font-black text-sm uppercase outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner appearance-none" value={session.matpel} onChange={e => updateSessionField(idx, 'matpel', e.target.value)}>
-                               <option value="">— PILIH MATPEL —</option>
-                               {session.matpel && !subjects.includes(session.matpel) && (
-                                 <option value={session.matpel}>{session.matpel} (LAMA)</option>
-                               )}
-                               {subjects.map(s => (
-                                 <option key={s} value={s}>{s}</option>
-                               ))}
-                            </select>
-                         </div>
-                      </div>
-                      <div className="space-y-2">
-                         <label className="text-[10px] font-black text-slate-500 uppercase ml-4 flex items-center gap-2"><UserRound size={14} className="text-blue-500" /> Guru Pengajar</label>
-                         <select className="w-full px-6 py-4 bg-white rounded-[1.4rem] font-black text-sm outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner appearance-none" value={session.guru} onChange={e => updateSessionField(idx, 'guru', e.target.value)}>
-                            <option value="">— Belum Ditentukan —</option>
-                            {teacherNames.map(name => (
-                              <option key={name} value={name}>{name}</option>
-                            ))}
-                         </select>
-                      </div>
-                   </div>
-                 ))}
-                 <button onClick={addSessionRow} className="w-full py-4 border-2 border-dashed border-slate-200 rounded-[1.4rem] text-slate-400 hover:border-blue-300 hover:text-blue-500 hover:bg-blue-50/50 transition-all flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest">
-                    <Plus size={16}/> Tambah Sesi Lain
-                 </button>
-                 <div className="pt-4">
-                    <button onClick={handleSaveEdit} className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 transition-all flex items-center justify-center gap-2">
-                       {isLoading ? <Loader2 size={18} className="animate-spin" /> : <Save size={18} />} SIMPAN PERUBAHAN
-                    </button>
-                 </div>
-              </div>
-           </div>
-        </div>
-        </ModalPortal>
-      )}
-
       {/* MODAL KONFIRMASI HAPUS DATA MASTER (MATPEL / LEVEL / RUANG) */}
       {confirmDeleteItem && (
         <ModalPortal>
@@ -686,9 +1008,9 @@ const handleDragEnd = () => {
             </div>
             <div className="bg-amber-50 border border-amber-100 rounded-2xl p-5 text-left">
               <p className="text-[10px] font-bold text-amber-800 uppercase leading-relaxed">
-                {confirmDeleteItem.type === 'SUBJECT' && 'Data lama (materi, jadwal, riwayat siswa) yang sudah pakai matkul ini TIDAK ikut terhapus. Tapi matkul ini nggak akan muncul lagi sebagai pilihan baru di form Materi, Peta Ruangan, atau pendaftaran kelas.'}
-                {confirmDeleteItem.type === 'LEVEL' && 'Data lama (rapot, materi, jadwal) yang sudah pakai level ini TIDAK ikut terhapus. Tapi level ini nggak akan muncul lagi sebagai pilihan baru di form Materi, Peta Ruangan, atau pendaftaran kelas.'}
-                {confirmDeleteItem.type === 'CLASS' && 'Jadwal yang sudah terlanjur diatur di ruangan ini TIDAK ikut terhapus dari database, tapi ruangan ini akan hilang dari Peta Ruangan sehingga jadwal lamanya jadi susah dikelola lewat tampilan ini.'}
+                {confirmDeleteItem.type === 'SUBJECT' && 'Data lama (materi, jadwal, riwayat siswa) yang sudah pakai matkul ini TIDAK ikut terhapus. Tapi matkul ini nggak akan muncul lagi sebagai pilihan baru di form Materi, Jadwal Kelas, atau pendaftaran kelas.'}
+                {confirmDeleteItem.type === 'LEVEL' && 'Data lama (rapot, materi, jadwal) yang sudah pakai level ini TIDAK ikut terhapus. Tapi level ini nggak akan muncul lagi sebagai pilihan baru di form Materi, Jadwal Kelas, atau pendaftaran kelas.'}
+                {confirmDeleteItem.type === 'CLASS' && 'Jadwal yang sudah memakai ruangan ini TIDAK ikut terhapus dan tetap tampil di daftar Jadwal Kelas, tapi ruangan ini nggak akan muncul lagi sebagai pilihan baru.'}
               </p>
             </div>
             <div className="flex gap-3">
