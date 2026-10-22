@@ -223,7 +223,7 @@ const PortraitBlocker = () => {
 };
 
 const AppContent = ({ 
-  user, setUser, attendanceLogs, setAttendanceLogs, studentAttendanceLogs, setStudentAttendanceLogs, teachers, setTeachers, studentAccounts, setStudentAccounts, transactions, setTransactions, studentPayments, setStudentPayments, reports, setReports, subjects, setSubjects, classes, setClasses, levels, setLevels, masterSchedule, setMasterSchedule, salaryConfig, setSalaryConfig, isSidebarOpen, setIsSidebarOpen, isSyncing, connectionError, refreshAllData
+  user, setUser, attendanceLogs, setAttendanceLogs, studentAttendanceLogs, setStudentAttendanceLogs, teachers, setTeachers, studentAccounts, setStudentAccounts, transactions, setTransactions, studentPayments, setStudentPayments, reports, setReports, subjects, setSubjects, classes, setClasses, levels, setLevels, salaryConfig, setSalaryConfig, isSidebarOpen, setIsSidebarOpen, isSyncing, connectionError, refreshAllData
 }: any) => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -426,7 +426,7 @@ const pendingReportsCount = Array.isArray(reports) ?
               <Route path="/admin/finance" element={<AdminFinance attendanceLogs={attendanceLogs} transactions={transactions} studentPayments={studentPayments} teachers={teachers} refreshAllData={refreshAllData} />} />
               <Route path="/admin/receipts" element={<AdminReceipts />} />
               <Route path="/admin/staff" element={<AdminStaff user={user} teachers={teachers} setTeachers={setTeachers} studentAccounts={studentAccounts} setStudentAccounts={setStudentAccounts} refreshAllData={refreshAllData} />} />
-              <Route path="/admin/academic" element={<AdminAcademic subjects={subjects} setSubjects={setSubjects} classes={classes} setClasses={setClasses} levels={levels} setLevels={setLevels} scheduleData={masterSchedule} setScheduleData={setMasterSchedule} salaryConfig={salaryConfig} setSalaryConfig={setSalaryConfig} teachers={teachers} />} />
+              <Route path="/admin/academic" element={<AdminAcademic subjects={subjects} setSubjects={setSubjects} classes={classes} setClasses={setClasses} levels={levels} setLevels={setLevels} salaryConfig={salaryConfig} setSalaryConfig={setSalaryConfig} teachers={teachers} studentAccounts={studentAccounts} />} />
               <Route path="/admin/maintenance" element={<AdminMaintenance attendanceLogs={attendanceLogs} setAttendanceLogs={setAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} refreshAllData={refreshAllData} />} />
               <Route path="/admin/materi" element={<MateriPage user={user} subjects={subjects} levels={levels} attendanceLogs={attendanceLogs} studentPayments={studentPayments} />} />
               <Route path="/teacher" element={<TeacherDashboard user={user} logs={attendanceLogs} studentAccounts={studentAccounts} subjects={subjects} classes={classes} levels={levels} salaryConfig={salaryConfig} teachers={teachers} refreshAllData={refreshAllData} />} />
@@ -468,7 +468,6 @@ const App = () => {
   const [subjects, setSubjects] = useState<string[]>(INITIAL_SUBJECTS);
   const [classes, setClasses] = useState<string[]>(CLASS_ROOM_OPTIONS);
   const [levels, setLevels] = useState<string[]>(['BASIC', 'INTERMEDIATE', 'ADVANCED']);
-  const [masterSchedule, setMasterSchedule] = useState<Record<string, string>>({});
   const [salaryConfig, setSalaryConfig] = useState({ regulerRate: 15000, privateRate: 25000 });
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
@@ -590,8 +589,6 @@ if (reps) setReports(reps.map((r: any) => ({
           if (acad.value.levels) setLevels(acad.value.levels);
           if (acad.value.classes) setClasses(acad.value.classes);
         }
-        const sched = settings.find(s => s.key === 'master_schedule');
-        if (sched?.value) setMasterSchedule(sched.value);
         const sal = settings.find(s => s.key === 'salary_config');
         if (sal?.value) setSalaryConfig(sal.value);
       }
@@ -708,7 +705,6 @@ if (reps) setReports(reps.map((r: any) => ({
   subjects={subjects} setSubjects={setSubjects}
   classes={classes} setClasses={setClasses}
   levels={levels} setLevels={setLevels}
-  masterSchedule={masterSchedule} setMasterSchedule={setMasterSchedule}
   salaryConfig={salaryConfig} setSalaryConfig={setSalaryConfig}
   isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}
   isSyncing={isSyncing} connectionError={connectionError}
