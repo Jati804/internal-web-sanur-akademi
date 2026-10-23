@@ -26,6 +26,8 @@ const isPrivateRoom = (room: string) => /PRIVATE|PRIVAT|HOME TUTORING/i.test(roo
 const ScheduleModal: React.FC<ScheduleModalProps> = ({ user, schedule, teachers, studentAccounts, color, onClose }) => {
   const myId = String(user?.id ?? '');
   const isTeacher = user?.role === 'TEACHER';
+  // Warna teks aksen mengikuti warna peran (warna latar header modal)
+  const accentText = ({ 'bg-orange-500': 'text-orange-600', 'bg-emerald-600': 'text-emerald-600', 'bg-blue-600': 'text-blue-600' } as Record<string, string>)[color] || 'text-slate-600';
 
   const teacherById = useMemo(() => new Map((teachers || []).map((t: any) => [String(t.id), t])), [teachers]);
   const studentById = useMemo(() => new Map((studentAccounts || []).map((s: any) => [String(s.id), s])), [studentAccounts]);
@@ -84,7 +86,9 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ user, schedule, teachers,
                 <div className="flex items-center gap-3 px-1">
                   <h4 className="text-sm font-black text-slate-800 uppercase italic tracking-tight">{g.day}</h4>
                   {g.day === todayName && (
-                    <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest text-white ${color}`}>Hari ini</span>
+                    <span className={`inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest ${accentText}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full ${color}`} />Hari ini
+                    </span>
                   )}
                 </div>
                 <div className="space-y-2">
