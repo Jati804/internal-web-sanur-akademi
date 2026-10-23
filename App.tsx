@@ -395,8 +395,10 @@ const pendingReportsCount = Array.isArray(reports) ?
             )}
             {user.role === 'TEACHER' && (
               <>
+                <p className="px-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest">Utama</p>
                 <NavItem to="/teacher" icon={ClipboardCheck} label="Lapor Presensi" onClick={closeSidebar} />
                 <NavItem to="/teacher/honor" icon={Wallet} label="Honor Saya" activeColor="blue" onClick={closeSidebar} />
+                <p className="px-6 mt-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest">Pembelajaran</p>
                 <NavItem to="/teacher/materi" icon={Library} label="Materi" activeColor="blue" onClick={closeSidebar} />
                 <NavItem to="/teacher/students" icon={UserSearch} label="Pantau Siswa" activeColor="blue" onClick={closeSidebar} />
                 <NavItem to="/teacher/reports" icon={GraduationCap} label="Rapot Siswa" activeColor="blue" onClick={closeSidebar} badge={pendingReportsCount} />
