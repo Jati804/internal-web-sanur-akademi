@@ -415,8 +415,8 @@ const pendingReportsCount = Array.isArray(reports) ?
 
       <main className="flex-1 flex flex-col h-screen overflow-hidden bg-[#F8FAFC]">
         <header className="h-24 bg-white border-b border-slate-100 flex items-center px-6 lg:px-12 sticky top-0 z-[1000] shadow-sm shrink-0">
-          {/* Wadah dalam disamakan dengan wadah isi halaman (max-w-7xl, tengah) supaya nama & tombol sejajar dengan kartu */}
-          <div className="w-full max-w-7xl mx-auto flex items-center justify-between">
+          {/* Wadah dalam disamakan dengan isi halaman: max-w-7xl di tengah + px-4 (halaman-halaman punya padding dalam px-4 sendiri), supaya nama & tombol sejajar dengan kartu */}
+          <div className="w-full max-w-7xl mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-4">
             <button onClick={() => setIsSidebarOpen(true)} className="p-3 bg-slate-50 text-slate-400 rounded-xl lg:hidden"><Menu size={24}/></button>
 <div className="flex flex-col">
