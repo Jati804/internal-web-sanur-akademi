@@ -134,14 +134,17 @@ const GuideModal = ({ role, onClose }: {
   }, [activeTab]);
 
   return (
-    <div data-modal-container className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in">
-      <div className="bg-white w-full max-w-sm rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]">
+    <div data-modal-container className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in" onClick={onClose}>
+      <div className="bg-white w-full max-w-sm rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className={`p-8 ${content.color} text-white flex items-center shrink-0`}>
+        <div className={`p-8 ${content.color} text-white flex items-center justify-between shrink-0`}>
   <div className="flex items-center gap-3">
     <HelpCircle size={24} />
     <h3 className="text-lg font-black uppercase italic tracking-tighter">Panduan Sistem</h3>
   </div>
+  <button onClick={onClose} aria-label="Tutup" className="w-10 h-10 shrink-0 rounded-full bg-white/20 text-white hover:bg-white hover:text-rose-600 active:bg-white active:text-rose-600 flex items-center justify-center transition-colors">
+    <X size={20} />
+  </button>
 </div>
 
         {/* Tab Switcher */}
@@ -184,13 +187,6 @@ const GuideModal = ({ role, onClose }: {
               ))}
             </div>
           )}
-        </div>
-
-        {/* Footer Button */}
-        <div className="p-6 bg-white border-t border-slate-50 shrink-0">
-          <button onClick={onClose} className={`w-full py-4 ${content.color} text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all`}>
-            TUTUP PANDUAN
-          </button>
         </div>
       </div>
     </div>
@@ -341,11 +337,11 @@ const pendingReportsCount = Array.isArray(reports) ?
     STUDENT: 'bg-emerald-600'
   }[user.role as string] || 'bg-slate-600';
 
-  // Tombol jadwal dibuat versi lembut supaya beda dengan tombol (?) yang solid
+  // Tombol jadwal: isi pastel + border solid, supaya beda dari tombol (?) yang terisi penuh dan tidak nyaru dengan putih
   const roleScheduleBtn = {
-    TEACHER: 'bg-orange-50 text-orange-600 hover:bg-orange-100',
-    STUDENT: 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
-  }[user.role as string] || 'bg-slate-100 text-slate-600 hover:bg-slate-200';
+    TEACHER: 'bg-orange-50 text-orange-600 border-2 border-orange-500 hover:bg-orange-100',
+    STUDENT: 'bg-emerald-50 text-emerald-600 border-2 border-emerald-600 hover:bg-emerald-100'
+  }[user.role as string] || 'bg-slate-100 text-slate-600 border-2 border-slate-400 hover:bg-slate-200';
 
   return (
     <div className="min-h-screen bg-[#FDFDFF] flex overflow-hidden font-sans relative">
@@ -432,7 +428,7 @@ const pendingReportsCount = Array.isArray(reports) ?
           </div>
           <div className="flex items-center gap-3">
 {user.role !== 'ADMIN' && (
-<button onClick={() => setShowSchedule(true)} title="Jadwal saya" aria-label="Jadwal saya" className={`p-4 ${roleScheduleBtn} rounded-2xl shadow-xl active:scale-95 transition-all`}>
+<button onClick={() => setShowSchedule(true)} title="Jadwal saya" aria-label="Jadwal saya" className={`p-[14px] ${roleScheduleBtn} rounded-2xl shadow-xl active:scale-95 transition-all`}>
    <CalendarDays size={20} />
 </button>
 )}
