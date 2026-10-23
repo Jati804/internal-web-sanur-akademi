@@ -66,7 +66,7 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ user, schedule, teachers,
               </p>
             </div>
           </div>
-          <button onClick={onClose} aria-label="Tutup" className="p-2 rounded-full text-white/80 hover:text-white hover:bg-white/10 transition-colors">
+          <button onClick={onClose} aria-label="Tutup" className="w-10 h-10 shrink-0 rounded-full bg-white/20 text-white hover:bg-white hover:text-rose-600 active:bg-white active:text-rose-600 flex items-center justify-center transition-colors">
             <X size={20} />
           </button>
         </div>
@@ -122,12 +122,6 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ user, schedule, teachers,
           )}
         </div>
 
-        {/* Footer */}
-        <div className="p-6 bg-white border-t border-slate-50 shrink-0">
-          <button onClick={onClose} className={`w-full py-4 ${color} text-white rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl active:scale-95 transition-all`}>
-            TUTUP
-          </button>
-        </div>
       </div>
     </div>
   );
