@@ -46,8 +46,8 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ user, schedule, teachers,
     );
     const sorted = sortSchedule(mine);
     const byDay = DAYS.map(day => ({ day, list: sorted.filter(i => i.day === day) })).filter(g => g.list.length > 0);
-    // hari ini di paling atas, sisanya urut Senin-Minggu
-    return [...byDay.filter(g => g.day === todayName), ...byDay.filter(g => g.day !== todayName)];
+    // urut Senin-Minggu, hari ini cuma diberi penanda "Hari ini"
+    return byDay;
   }, [schedule, isTeacher, myId, todayName]);
 
   return (
