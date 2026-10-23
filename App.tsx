@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Receipt, Menu, CreditCard, BookOpen, UserCog, 
   ClipboardCheck, Wallet, GraduationCap, Power, 
   Settings as SettingsIcon, Database, X,
-  Sparkles, HelpCircle, Info, RotateCw, Library, UserSearch
+  Sparkles, HelpCircle, Info, RotateCw, Library, UserSearch, CalendarDays
 } from 'lucide-react';
 
 import { supabase, waitForActiveSession } from './services/supabase.ts';
@@ -20,6 +20,7 @@ import AdminFinance from './pages/AdminFinance.tsx';
 import AdminReceipts from './pages/AdminReceipts.tsx';
 import AdminStaff from './pages/AdminStaff.tsx';
 import AdminAcademic from './pages/AdminAcademic.tsx';
+import ScheduleModal from './ScheduleModal.tsx';
 import AdminMaintenance from './pages/AdminMaintenance.tsx';
 import TeacherDashboard from './pages/TeacherDashboard.tsx';
 import TeacherHonor from './pages/TeacherHonor.tsx';
@@ -91,6 +92,7 @@ const GuideModal = ({ role, onClose }: {
         { title: 'Guru Pengganti', desc: 'Jika digantikan teman, gunakan tombol "Berhalangan". Honor akan otomatis beralih ke temanmu.' },
         { title: 'Pantau Honor', desc: 'Lihat status honor cair & unduh slip gaji digital resmi di menu "Honor Saya".' },
         { title: 'Materi', desc: 'Pantau & akses bahan ajar di menu "Materi".' },
+        { title: 'Jadwal', desc: 'Tekan ikon kalender di pojok kanan atas untuk melihat jadwal mengajarmu.' },
         { title: 'Pantau Siswa', desc: 'Cari nama siswa lalu tekan ikon pin 📌 untuk memantau progres sesinya, berguna untuk tahu kapan giliran eval sesi 6.' },
         { title: 'Proses Rapot', desc: 'Terima pengajuan rapot dan isi data rapot siswa.' }
       ],
@@ -109,6 +111,7 @@ const GuideModal = ({ role, onClose }: {
         { title: 'Lapor Bayar', desc: 'Upload bukti transfer di menu "Pembayaran" agar Admin bisa mengaktifkan paket belajarmu.' },
         { title: 'Presensi Mandiri', desc: 'Presensi dilakukan secara mandiri, kamu bisa klik nomor sesi di "Kelas Saya" untuk lapor progres.' },
         { title: 'Materi', desc: 'Akses bahan ajar dari guru di menu "Materi".' },
+        { title: 'Jadwal', desc: 'Tekan ikon kalender di pojok kanan atas untuk melihat jadwal belajarmu.' },
         { title: 'Klaim Rapot', desc: 'Tombol Klaim muncul saat progres 6/6. Pilih guru pembimbingmu untuk meminta penilaian.' },
         { title: 'Unduh Rapot', desc: 'Sertifikat & Rapot PDF bisa diunduh di tab "Kelas Saya" setelah guru selesai menilai.' }
       ],
@@ -223,11 +226,12 @@ const PortraitBlocker = () => {
 };
 
 const AppContent = ({ 
-  user, setUser, attendanceLogs, setAttendanceLogs, studentAttendanceLogs, setStudentAttendanceLogs, teachers, setTeachers, studentAccounts, setStudentAccounts, transactions, setTransactions, studentPayments, setStudentPayments, reports, setReports, subjects, setSubjects, classes, setClasses, levels, setLevels, salaryConfig, setSalaryConfig, isSidebarOpen, setIsSidebarOpen, isSyncing, connectionError, refreshAllData
+  user, setUser, attendanceLogs, setAttendanceLogs, studentAttendanceLogs, setStudentAttendanceLogs, teachers, setTeachers, studentAccounts, setStudentAccounts, transactions, setTransactions, studentPayments, setStudentPayments, reports, setReports, subjects, setSubjects, classes, setClasses, levels, setLevels, salaryConfig, setSalaryConfig, isSidebarOpen, setIsSidebarOpen, isSyncing, connectionError, refreshAllData, schedule
 }: any) => {
   const navigate = useNavigate();
   const location = useLocation();
   const [showGuide, setShowGuide] = useState(false);
+  const [showSchedule, setShowSchedule] = useState(false);
 
   // 🔧 FIX SCROLL NEMPEL: div "flex-1 overflow-y-auto" di bawah nggak ke-remount
   // pas ganti menu (React Router cuma nge-swap konten <Routes> di dalamnya),
@@ -337,6 +341,12 @@ const pendingReportsCount = Array.isArray(reports) ?
     STUDENT: 'bg-emerald-600'
   }[user.role as string] || 'bg-slate-600';
 
+  // Tombol jadwal dibuat versi lembut supaya beda dengan tombol (?) yang solid
+  const roleScheduleBtn = {
+    TEACHER: 'bg-orange-50 text-orange-600 hover:bg-orange-100',
+    STUDENT: 'bg-emerald-50 text-emerald-600 hover:bg-emerald-100'
+  }[user.role as string] || 'bg-slate-100 text-slate-600 hover:bg-slate-200';
+
   return (
     <div className="min-h-screen bg-[#FDFDFF] flex overflow-hidden font-sans relative">
       {showGuide && (
@@ -345,6 +355,17 @@ const pendingReportsCount = Array.isArray(reports) ?
     onClose={() => setShowGuide(false)}
   />
 )}
+
+      {showSchedule && user.role !== 'ADMIN' && (
+        <ScheduleModal
+          user={user}
+          schedule={schedule}
+          teachers={teachers}
+          studentAccounts={studentAccounts}
+          color={roleGuideColor}
+          onClose={() => setShowSchedule(false)}
+        />
+      )}
       
       {isSidebarOpen && (
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80000] lg:hidden animate-in fade-in" onClick={closeSidebar} />
@@ -410,6 +431,11 @@ const pendingReportsCount = Array.isArray(reports) ?
 </div>
           </div>
           <div className="flex items-center gap-3">
+{user.role !== 'ADMIN' && (
+<button onClick={() => setShowSchedule(true)} title="Jadwal saya" aria-label="Jadwal saya" className={`p-4 ${roleScheduleBtn} rounded-2xl shadow-xl active:scale-95 transition-all`}>
+   <CalendarDays size={20} />
+</button>
+)}
 <button onClick={() => setShowGuide(true)} className={`p-4 ${roleGuideColor} text-white rounded-2xl shadow-xl hover:opacity-90 active:scale-95 transition-all`}>
    <HelpCircle size={20} />
 </button>
@@ -469,6 +495,7 @@ const App = () => {
   const [classes, setClasses] = useState<string[]>(CLASS_ROOM_OPTIONS);
   const [levels, setLevels] = useState<string[]>(['BASIC', 'INTERMEDIATE', 'ADVANCED']);
   const [salaryConfig, setSalaryConfig] = useState({ regulerRate: 15000, privateRate: 25000 });
+  const [schedule, setSchedule] = useState<any[]>([]);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
   const [connectionError, setConnectionError] = useState(false);
@@ -591,6 +618,8 @@ if (reps) setReports(reps.map((r: any) => ({
         }
         const sal = settings.find(s => s.key === 'salary_config');
         if (sal?.value) setSalaryConfig(sal.value);
+        const sch = settings.find(s => s.key === 'class_schedule');
+        if (Array.isArray(sch?.value)) setSchedule(sch.value);
       }
       setConnectionError(false);
     } catch (e) {
@@ -677,6 +706,7 @@ if (reps) setReports(reps.map((r: any) => ({
       .on('postgres_changes', { event: '*', schema: 'public', table: 'student_payments' }, scheduleRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance' }, scheduleRefresh)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'student_attendance' }, scheduleRefresh)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, scheduleRefresh)
       .subscribe();
 
     const handleVisibility = () => {
@@ -709,6 +739,7 @@ if (reps) setReports(reps.map((r: any) => ({
   isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}
   isSyncing={isSyncing} connectionError={connectionError}
   refreshAllData={refreshAllData}
+  schedule={schedule}
 />
     </Router>
   );
