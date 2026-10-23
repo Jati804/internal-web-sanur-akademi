@@ -337,11 +337,11 @@ const pendingReportsCount = Array.isArray(reports) ?
     STUDENT: 'bg-emerald-600'
   }[user.role as string] || 'bg-slate-600';
 
-  // Tombol jadwal: isi pastel + border solid, supaya beda dari tombol (?) yang terisi penuh dan tidak nyaru dengan putih
+  // Tombol jadwal: putih dengan garis tipis abu-abu dan ikon berwarna peran, lebih tenang dari tombol (?) yang solid
   const roleScheduleBtn = {
-    TEACHER: 'bg-orange-50 text-orange-600 border-2 border-orange-500 hover:bg-orange-100',
-    STUDENT: 'bg-emerald-50 text-emerald-600 border-2 border-emerald-600 hover:bg-emerald-100'
-  }[user.role as string] || 'bg-slate-100 text-slate-600 border-2 border-slate-400 hover:bg-slate-200';
+    TEACHER: 'bg-white text-orange-600 border-2 border-slate-200 hover:border-orange-300 hover:bg-orange-50',
+    STUDENT: 'bg-white text-emerald-600 border-2 border-slate-200 hover:border-emerald-300 hover:bg-emerald-50'
+  }[user.role as string] || 'bg-white text-slate-600 border-2 border-slate-200 hover:bg-slate-50';
 
   return (
     <div className="min-h-screen bg-[#FDFDFF] flex overflow-hidden font-sans relative">
