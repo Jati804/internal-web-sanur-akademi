@@ -294,6 +294,7 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
   const [loadingPins, setLoadingPins] = useState(true);
   const [loadError, setLoadError] = useState('');
   const [busyKey, setBusyKey] = useState<string | null>(null);
+  const [subjectFilter, setSubjectFilter] = useState('SEMUA');
 
   // Muat daftar pin milik guru ini
   useEffect(() => {
@@ -437,6 +438,10 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
     return { groups, total: items.length };
   }, [pins, accountsById, idx]);
 
+  // Kalau matkul yang sedang difilter sudah tidak ada (pin terakhirnya dilepas), otomatis balik ke "Semua"
+  const activeFilter = watch.groups.some(g => g.subject === subjectFilter) ? subjectFilter : 'SEMUA';
+  const visibleGroups = activeFilter === 'SEMUA' ? watch.groups : watch.groups.filter(g => g.subject === activeFilter);
+
   return (
     <div className="max-w-5xl mx-auto space-y-10 pb-40 px-4">
       <header className="space-y-4 px-2">
@@ -538,7 +543,22 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
           </div>
         ) : (
           <div className="space-y-10">
-            {watch.groups.map(sg => (
+            {watch.groups.length > 1 && (
+              <div className="flex gap-2 overflow-x-auto pb-1 px-2 -mx-2">
+                {['SEMUA', ...watch.groups.map(g => g.subject)].map(s => (
+                  <button
+                    key={s}
+                    onClick={() => setSubjectFilter(s)}
+                    className={`shrink-0 px-5 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 ${
+                      activeFilter === s ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
+                    }`}
+                  >
+                    {s === 'SEMUA' ? 'Semua' : stripPelatihan(s)}
+                  </button>
+                ))}
+              </div>
+            )}
+            {visibleGroups.map(sg => (
               <div key={sg.subject} className="space-y-5">
                 <h4 className="px-2 text-sm font-black text-slate-800 uppercase italic tracking-wide">{stripPelatihan(sg.subject)}</h4>
                 {sg.groups.map(g => (
