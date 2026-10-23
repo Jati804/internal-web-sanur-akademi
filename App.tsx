@@ -58,6 +58,12 @@ const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }
   );
 };
 
+const NavSection = ({ label, first }: { label: string, first?: boolean }) => (
+  <p className={`px-6 mb-2 text-[9px] font-black text-slate-300 uppercase tracking-widest ${first ? '' : 'mt-6'}`}>
+    {label}
+  </p>
+);
+
 const GuideModal = ({ role, onClose }: { 
   role: string, 
   onClose: () => void
@@ -378,27 +384,27 @@ const pendingReportsCount = Array.isArray(reports) ?
             </div>
             <button onClick={closeSidebar} className="lg:hidden p-2 text-slate-300 hover:text-rose-500"><X size={24} /></button>
           </div>
-          <nav className="flex-1 space-y-1 overflow-y-auto custom-scrollbar pr-2">
+          <nav className="flex-1 flex flex-col gap-1 overflow-y-auto custom-scrollbar pr-2">
             {user.role === 'ADMIN' && (
               <>
-                <p className="px-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest">Utama</p>
+                <NavSection first label="Utama" />
                 <NavItem to="/admin" icon={LayoutDashboard} label="Dashboard" onClick={closeSidebar} />
                 <NavItem to="/admin/finance" icon={Wallet} label="Keuangan" onClick={closeSidebar} />
                 <NavItem to="/admin/receipts" icon={Receipt} label="Kuitansi" onClick={closeSidebar} />
-                <p className="px-6 mt-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest">Manajemen</p>
+                <NavSection label="Manajemen" />
                 <NavItem to="/admin/staff" icon={UserCog} label="Akses User" onClick={closeSidebar} />
                 <NavItem to="/admin/academic" icon={SettingsIcon} label="Pengaturan" onClick={closeSidebar} />
                 <NavItem to="/admin/materi" icon={Library} label="Materi" onClick={closeSidebar} />
-                <p className="px-6 mt-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest">Pemeliharaan</p>
+                <NavSection label="Pemeliharaan" />
                 <NavItem to="/admin/maintenance" icon={Database} label="Sistem" onClick={closeSidebar} />
               </>
             )}
             {user.role === 'TEACHER' && (
               <>
-                <p className="px-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest">Utama</p>
+                <NavSection first label="Utama" />
                 <NavItem to="/teacher" icon={ClipboardCheck} label="Lapor Presensi" onClick={closeSidebar} />
                 <NavItem to="/teacher/honor" icon={Wallet} label="Honor Saya" activeColor="blue" onClick={closeSidebar} />
-                <p className="px-6 mt-6 mb-3 text-[9px] font-black text-slate-300 uppercase tracking-widest">Pembelajaran</p>
+                <NavSection label="Pembelajaran" />
                 <NavItem to="/teacher/materi" icon={Library} label="Materi" activeColor="blue" onClick={closeSidebar} />
                 <NavItem to="/teacher/students" icon={UserSearch} label="Pantau Siswa" activeColor="blue" onClick={closeSidebar} />
                 <NavItem to="/teacher/reports" icon={GraduationCap} label="Rapot Siswa" activeColor="blue" onClick={closeSidebar} badge={pendingReportsCount} />
