@@ -86,8 +86,9 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ user, schedule, teachers,
                 <div className="flex items-center gap-3 px-1">
                   <h4 className="text-sm font-black text-slate-800 uppercase italic tracking-tight">{g.day}</h4>
                   {g.day === todayName && (
-                    <span className={`inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest ${accentText}`}>
-                      <span className={`w-1.5 h-1.5 rounded-full ${color}`} />Hari ini
+                    <span className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest">
+                      <span className={`w-1.5 h-1.5 rounded-full ${color}`} /> 
+                      <span className="text-slate-400">Hari ini</span>
                     </span>
                   )}
                 </div>
