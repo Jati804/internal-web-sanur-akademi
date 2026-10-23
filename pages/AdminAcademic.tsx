@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { 
   BookOpen,
   Settings,
@@ -13,7 +13,6 @@ import {
   Banknote,
   Loader2,
   AlertTriangle,
-  Copy,
   Download,
   X,
   Search
@@ -96,16 +95,64 @@ export const toExportRows = (
 
 // ---------- Excel (exceljs dimuat hanya saat tombol Ekspor ditekan) ----------
 
-const COL = { day: 2, time: 3, subject: 4, teacher: 5, participants: 6, room: 7, note: 8 }; // kolom B..H
-const WIDTH = { day: 12, time: 16, subject: 26, teacher: 38, participants: 34, room: 19, note: 30 };
-const FONT = { name: 'Arial', size: 10 };
+const COL = { day: 1, time: 2, subject: 3, teacher: 4, participants: 5, room: 6, note: 7 }; // kolom A..G
+type ColKey = keyof typeof COL;
+
+// Lebar kolom menyesuaikan isi (nama panjang otomatis melebar), dengan batas bawah/atas supaya
+// seluruh tabel tetap muat di satu halaman A4 landscape.
+const COL_LIMITS: Record<ColKey, { min: number; max: number }> = {
+  day: { min: 9, max: 12 },
+  time: { min: 13, max: 16 },
+  subject: { min: 16, max: 32 },
+  teacher: { min: 22, max: 44 },
+  participants: { min: 24, max: 52 },
+  room: { min: 12, max: 20 },
+  note: { min: 14, max: 30 },
+};
+
+const FONT = { name: 'Arial', size: 9 };
+const FONT_FACTOR = 0.9; // Arial 9 pt lebih sempit daripada satuan lebar kolom Excel (acuan huruf 11 pt)
 const BLACK = { argb: 'FF000000' };
 const thin = { style: 'thin', color: BLACK };
 const medium = { style: 'medium', color: BLACK };
 const ALL_THIN = { top: thin, left: thin, bottom: thin, right: thin };
 
-// perkiraan jumlah baris teks yang terbungkus di kolom selebar `width`
-const linesFor = (text: string, width: number) => Math.max(1, Math.ceil(String(text || '').length / (width * 1.1)));
+// Perkiraan lebar teks dalam "satuan lebar kolom Excel". Huruf kapital dihitung lebih lebar daripada
+// huruf kecil, dan angkanya sengaja sedikit lega supaya teks tidak pernah terpotong.
+export const textUnits = (t: string) => {
+  let u = 0;
+  for (const ch of String(t || '')) u += /[A-Z0-9]/.test(ch) ? 1.12 : /[a-z]/.test(ch) ? 0.92 : ch === ' ' ? 0.55 : 0.65;
+  return u * FONT_FACTOR;
+};
+
+const HEADERS: Record<ColKey, string> = {
+  day: 'HARI', time: 'WAKTU', subject: 'JENIS PELATIHAN', teacher: 'PENGAJAR', participants: 'PESERTA', room: 'KELAS', note: 'CATATAN',
+};
+
+const participantText = (row: ExportRow, k: number) =>
+  row.participants.length > 1 ? `${k + 1}. ${row.participants[k]}` : (row.participants[k] || '');
+
+export const computeColumnWidths = (rows: ExportRow[]): Record<ColKey, number> => {
+  const need = {} as Record<ColKey, number>;
+  (Object.keys(COL) as ColKey[]).forEach(k => { need[k] = textUnits(HEADERS[k]) * 1.1; }); // header tebal
+  rows.forEach(r => {
+    need.day = Math.max(need.day, textUnits(r.day.toUpperCase()) * 1.1);
+    need.time = Math.max(need.time, textUnits(r.time));
+    need.subject = Math.max(need.subject, textUnits(r.subject));
+    need.teacher = Math.max(need.teacher, textUnits(r.teacher));
+    need.room = Math.max(need.room, textUnits(r.room));
+    need.note = Math.max(need.note, textUnits(r.note) + 1);
+    r.participants.forEach((_, k) => { need.participants = Math.max(need.participants, textUnits(participantText(r, k)) + 1); });
+  });
+  const w = {} as Record<ColKey, number>;
+  (Object.keys(COL) as ColKey[]).forEach(k => {
+    w[k] = Math.min(COL_LIMITS[k].max, Math.max(COL_LIMITS[k].min, Math.ceil(need[k] + 3)));
+  });
+  return w;
+};
+
+// jumlah baris teks yang terbungkus di kolom selebar `width` (hanya terjadi kalau melewati batas maksimal)
+const linesFor = (text: string, width: number) => Math.max(1, Math.ceil(textUnits(text) / Math.max(1, width - 2)));
 
 export const buildScheduleWorkbook = (ExcelJS: any, rows: ExportRow[], dateText: string) => {
   const wb = new ExcelJS.Workbook();
@@ -113,14 +160,20 @@ export const buildScheduleWorkbook = (ExcelJS: any, rows: ExportRow[], dateText:
   wb.created = new Date();
 
   const ws = wb.addWorksheet('Jadwal', { views: [{ showGridLines: false }] });
-  ws.pageSetup = {
-    orientation: 'landscape', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0,
-    horizontalCentered: true, printTitlesRow: '4:4',
-    margins: { left: 0.4, right: 0.4, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 },
-  };
 
-  ws.getColumn(1).width = 2;
-  (Object.keys(COL) as (keyof typeof COL)[]).forEach(k => { ws.getColumn(COL[k]).width = WIDTH[k]; });
+  const widths = computeColumnWidths(rows);
+  (Object.keys(COL) as ColKey[]).forEach(k => { ws.getColumn(COL[k]).width = widths[k]; });
+
+  // Cetak/PDF: A4 landscape, "muat satu lebar halaman". Sebagai cadangan untuk aplikasi yang mengabaikan
+  // pengaturan itu, skala juga dipatok dari lebar tabel (1 satuan lebar kolom ~ 7 px, 96 px per inci).
+  const totalWidthIn = (Object.values(widths).reduce((a, b) => a + b, 0) * 7 + 5 * Object.keys(COL).length) / 96;
+  const printableIn = 11.69 - 0.6; // lebar A4 landscape dikurangi margin kiri-kanan
+  const fallbackScale = Math.max(40, Math.min(100, Math.floor((printableIn / totalWidthIn) * 94))); // faktor 94% = pengaman, karena tiap aplikasi mengukur lebar kolom sedikit berbeda
+  ws.pageSetup = {
+    orientation: 'landscape', paperSize: 9, fitToPage: true, fitToWidth: 1, fitToHeight: 0, scale: fallbackScale,
+    horizontalCentered: true, printTitlesRow: '4:4',
+    margins: { left: 0.3, right: 0.3, top: 0.5, bottom: 0.5, header: 0.3, footer: 0.3 },
+  };
 
   // Judul
   ws.mergeCells(2, COL.day, 2, COL.note);
@@ -132,20 +185,19 @@ export const buildScheduleWorkbook = (ExcelJS: any, rows: ExportRow[], dateText:
 
   // Header tabel
   const HEADER_ROW = 4;
-  const headers = ['HARI', 'WAKTU', 'JENIS PELATIHAN', 'PENGAJAR', 'PESERTA', 'KELAS', 'CATATAN'];
-  headers.forEach((h, i) => {
-    const c = ws.getCell(HEADER_ROW, COL.day + i);
-    c.value = h;
+  (Object.keys(COL) as ColKey[]).forEach(k => {
+    const c = ws.getCell(HEADER_ROW, COL[k]);
+    c.value = HEADERS[k];
     c.font = { ...FONT, bold: true };
     c.alignment = { horizontal: 'center', vertical: 'middle', wrapText: true };
     c.border = { top: medium, left: thin, bottom: medium, right: thin };
   });
-  ws.getRow(HEADER_ROW).height = 24;
+  ws.getRow(HEADER_ROW).height = 22;
 
   const centered = { horizontal: 'center', vertical: 'middle', wrapText: true };
-  const LINE = 13;
+  const LINE = 12;
   const PAD = 5;
-  const MIN_H = 18;
+  const MIN_H = 17;
 
   let r = HEADER_ROW + 1;
   const dayStarts: number[] = [];
@@ -158,15 +210,13 @@ export const buildScheduleWorkbook = (ExcelJS: any, rows: ExportRow[], dateText:
       const n = Math.max(1, row.participants.length);
       const first = r;
       const last = r + n - 1;
-      const partTexts = Array.from({ length: n }, (_, k) =>
-        row.participants.length > 1 ? `${k + 1}. ${row.participants[k]}` : (row.participants[k] || '')
-      );
+      const partTexts = Array.from({ length: n }, (_, k) => participantText(row, k));
 
       // Tinggi baris: cukup untuk teks yang terbungkus, dibagi rata kalau sel gabungan lebih tinggi
-      const heights = partTexts.map(t => Math.max(MIN_H, LINE * linesFor(t, WIDTH.participants) + PAD));
+      const heights = partTexts.map(t => Math.max(MIN_H, LINE * linesFor(t, widths.participants) + PAD));
       const need = LINE * Math.max(
-        linesFor(row.subject, WIDTH.subject), linesFor(row.teacher, WIDTH.teacher),
-        linesFor(row.room, WIDTH.room), linesFor(row.note, WIDTH.note), linesFor(row.time, WIDTH.time)
+        linesFor(row.subject, widths.subject), linesFor(row.teacher, widths.teacher),
+        linesFor(row.room, widths.room), linesFor(row.note, widths.note), linesFor(row.time, widths.time)
       ) + PAD;
       const sum = heights.reduce((a, b) => a + b, 0);
       const extra = sum < need ? (need - sum) / n : 0;
@@ -236,6 +286,9 @@ export const buildScheduleWorkbook = (ExcelJS: any, rows: ExportRow[], dateText:
   who.font = FONT;
   who.alignment = { horizontal: 'center', vertical: 'middle' };
 
+  // Area cetak dipatok jelas (judul sampai tanda tangan) supaya tidak ada yang terpotong atau meluber
+  ws.pageSetup.printArea = `A1:G${signRow + 1}`;
+
   return wb;
 };
 
@@ -289,7 +342,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ subjects, classes, tea
   const [saving, setSaving] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [form, setForm] = useState<FormState | null>(null); // null = formulir tertutup
-  const [formMode, setFormMode] = useState<'ADD' | 'EDIT' | 'COPY'>('ADD');
+  const [formMode, setFormMode] = useState<'ADD' | 'EDIT'>('ADD');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [studentQuery, setStudentQuery] = useState('');
   const [confirmDelete, setConfirmDelete] = useState<ScheduleItem | null>(null);
@@ -359,10 +412,27 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ subjects, classes, tea
 
   const openAdd = () => { setFormMode('ADD'); setEditingId(null); setStudentQuery(''); setForm({ ...emptyForm }); };
   const openEdit = (it: ScheduleItem) => { setFormMode('EDIT'); setEditingId(it.id); setStudentQuery(''); setForm(formFromItem(it)); };
-  const openCopy = (it: ScheduleItem) => { setFormMode('COPY'); setEditingId(null); setStudentQuery(''); setForm(formFromItem(it)); };
   const closeForm = () => { setForm(null); setEditingId(null); setStudentQuery(''); };
 
   const patch = (p: Partial<FormState>) => setForm(prev => (prev ? { ...prev, ...p } : prev));
+
+  // Scrollbar biru yang menyatu dengan kotak formulir (pola yang sama dengan modal Admin Staff)
+  const formScrollRef = useRef<HTMLDivElement>(null);
+  const [thumb, setThumb] = useState({ top: 0, height: 100, visible: false });
+  const updateThumb = () => {
+    const el = formScrollRef.current;
+    if (!el) return;
+    const scrollable = el.scrollHeight - el.clientHeight;
+    if (scrollable <= 0) { setThumb(t => (t.visible ? { top: 0, height: 100, visible: false } : t)); return; }
+    const h = Math.max((el.clientHeight / el.scrollHeight) * 100, 8);
+    setThumb({ top: (el.scrollTop / scrollable) * (100 - h), height: h, visible: true });
+  };
+  useEffect(() => {
+    if (!form) { setThumb(t => (t.visible ? { top: 0, height: 100, visible: false } : t)); return; }
+    const id = window.requestAnimationFrame(updateThumb); // hitung ulang setiap isi formulir berubah (mis. peserta bertambah)
+    window.addEventListener('resize', updateThumb);
+    return () => { window.cancelAnimationFrame(id); window.removeEventListener('resize', updateThumb); };
+  }, [form]);
 
   const handleSave = async () => {
     if (!form) return;
@@ -475,16 +545,17 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ subjects, classes, tea
                       </div>
                       <p className="text-xs font-bold text-slate-500">{teacherName(it)}</p>
                       {it.participants.length > 0 && (
-                        <div className="text-xs font-bold text-slate-700 space-y-0.5">
+                        <div className={`text-[11px] font-semibold space-y-0.5 ${isPrivateRoom(it.room) ? 'text-orange-600' : 'text-blue-900/70'}`}>
                           {it.participants.map((p, k) => (
                             <p key={p.id + k}>{it.participants.length > 1 ? `${k + 1}. ` : ''}{personName(p)}</p>
                           ))}
                         </div>
                       )}
-                      {it.note && <p className="text-[11px] font-bold text-slate-400 italic">{it.note}</p>}
+                      {it.note && (
+                        <p className="inline-block mt-1 px-4 py-1.5 bg-white border border-slate-200 rounded-xl text-[11px] font-semibold italic text-slate-500">“{it.note}”</p>
+                      )}
                     </div>
                     <div className="flex gap-2 shrink-0">
-                      <button onClick={() => openCopy(it)} title="Salin jadwal" aria-label="Salin jadwal" className="w-10 h-10 rounded-full bg-white text-slate-400 hover:text-blue-600 hover:bg-blue-50 flex items-center justify-center transition-all"><Copy size={16} /></button>
                       <button onClick={() => openEdit(it)} title="Ubah jadwal" aria-label="Ubah jadwal" className="w-10 h-10 rounded-full bg-white text-slate-400 hover:text-blue-600 hover:bg-blue-50 flex items-center justify-center transition-all"><Edit3 size={16} /></button>
                       <button onClick={() => setConfirmDelete(it)} title="Hapus jadwal" aria-label="Hapus jadwal" className="w-10 h-10 rounded-full bg-white text-slate-400 hover:text-rose-600 hover:bg-rose-50 flex items-center justify-center transition-all"><Trash2 size={16} /></button>
                     </div>
@@ -500,10 +571,17 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ subjects, classes, tea
       {form && (
         <ModalPortal>
           <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] bg-slate-900/95 backdrop-blur-2xl flex items-center justify-center p-6" onClick={closeForm}>
-            <div className="bg-white w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-[3rem] p-8 md:p-10 shadow-2xl relative" onClick={e => e.stopPropagation()}>
+            <style>{`
+              .sch-seamless-scroll { scrollbar-width: none; -ms-overflow-style: none; }
+              .sch-seamless-scroll::-webkit-scrollbar { width: 0; height: 0; display: none; }
+              .sch-scroll-track { position: absolute; top: 0; bottom: 0; right: 0; width: 7px; background: transparent; pointer-events: none; z-index: 10; }
+              .sch-scroll-thumb { position: absolute; left: 0; right: 0; border-radius: 4px; background: #2563eb; transition: top 0.05s linear; }
+            `}</style>
+            <div className="bg-white w-full max-w-2xl rounded-[3rem] shadow-2xl relative overflow-hidden max-h-[90vh]" onClick={e => e.stopPropagation()}>
+              <div ref={formScrollRef} onScroll={updateThumb} className="sch-seamless-scroll max-h-[90vh] overflow-y-auto p-8 md:p-10 relative">
               <button onClick={closeForm} aria-label="Tutup" className="absolute top-8 right-8 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={22} /></button>
               <h4 className="text-2xl font-black text-slate-800 uppercase italic tracking-tight mb-8 pr-10">
-                {formMode === 'EDIT' ? 'Ubah Jadwal' : formMode === 'COPY' ? 'Salin Jadwal' : 'Tambah Jadwal'}
+                {formMode === 'EDIT' ? 'Ubah Jadwal' : 'Tambah Jadwal'}
               </h4>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -593,6 +671,12 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ subjects, classes, tea
                   {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />} Simpan Jadwal
                 </button>
               </div>
+              </div>
+              {thumb.visible && (
+                <div className="sch-scroll-track">
+                  <div className="sch-scroll-thumb" style={{ top: `${thumb.top}%`, height: `${thumb.height}%` }} />
+                </div>
+              )}
             </div>
           </div>
         </ModalPortal>
