@@ -430,19 +430,22 @@ const pendingReportsCount = Array.isArray(reports) ?
           <div className="flex items-center gap-4 min-w-0">
             <button onClick={() => setIsSidebarOpen(true)} className="p-3 bg-slate-50 text-slate-400 rounded-xl lg:hidden shrink-0"><Menu size={24}/></button>
 <div className="flex flex-col min-w-0">
-  <h1 className={`font-black italic text-slate-800 tracking-tighter text-lg md:text-xl leading-none truncate ${user?.role !== 'TEACHER' ? 'uppercase' : ''}`}>
+  {/* pr-2 + pb-0.5: huruf miring (italic) & turunan huruf nggak kepotong oleh overflow-hidden milik truncate */}
+  <h1 className={`font-black italic text-slate-800 tracking-tighter text-base md:text-lg leading-none truncate pr-2 pb-0.5 ${user?.role !== 'TEACHER' ? 'uppercase' : ''}`}>
     {user?.name || user?.username || 'USER'}
   </h1>
-  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 mt-1">
-    STATUS: {user?.role === 'ADMIN' ? 'ADMIN' : user?.role === 'TEACHER' ? 'GURU' : 'SISWA'}
-  </p>
+  <div className="flex items-center gap-3 mt-1.5">
+    <p className="text-xs font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">
+      STATUS: {user?.role === 'ADMIN' ? 'ADMIN' : user?.role === 'TEACHER' ? 'GURU' : 'SISWA'}
+    </p>
+    {user.role !== 'ADMIN' && (
+    <button onClick={() => setShowSchedule(true)} title="Jadwal saya" aria-label="Jadwal saya" className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 bg-slate-50 border border-slate-100 ${roleScheduleBtn} rounded-full active:scale-95 transition-all shrink-0`}>
+       <CalendarDays size={14} />
+       <span className="hidden sm:inline text-[9px] font-black uppercase tracking-widest text-slate-500">Jadwal</span>
+    </button>
+    )}
+  </div>
 </div>
-{user.role !== 'ADMIN' && (
-<button onClick={() => setShowSchedule(true)} title="Jadwal saya" aria-label="Jadwal saya" className={`flex items-center gap-2 px-3 sm:px-4 py-2.5 bg-slate-50 border border-slate-100 ${roleScheduleBtn} rounded-full active:scale-95 transition-all shrink-0`}>
-   <CalendarDays size={16} />
-   <span className="hidden sm:inline text-[10px] font-black uppercase tracking-widest text-slate-500">Jadwal</span>
-</button>
-)}
           </div>
           <div className="flex items-center gap-3 shrink-0 ml-4">
 <button onClick={() => setShowGuide(true)} className={`p-4 ${roleGuideColor} text-white rounded-2xl shadow-xl hover:opacity-90 active:scale-95 transition-all`}>
