@@ -343,13 +343,19 @@ const pendingReportsCount = Array.isArray(reports) ?
     STUDENT: 'bg-emerald-600'
   }[user.role as string] || 'bg-slate-600';
 
-  // Tombol jadwal (teks kecil di baris status): tanpa latar & garis, hanya ikon berwarna peran supaya menyatu dengan status
+  // Warna ikon kalender di pil jadwal mengikuti peran
   const roleScheduleBtn = {
     TEACHER: 'text-orange-600',
     STUDENT: 'text-emerald-600'
   }[user.role as string] || 'text-slate-600';
 
-  // Tulisan "Jadwal" awalnya gelap + bergaris bawah; saat di-hover berubah ke warna peran (garis bawah ikut)
+  // Pil jadwal: latar abu sangat muda + garis tipis; saat di-hover latar & garis berubah tipis ke warna peran
+  const roleSchedulePill = {
+    TEACHER: 'hover:bg-orange-50 hover:border-orange-200',
+    STUDENT: 'hover:bg-emerald-50 hover:border-emerald-200'
+  }[user.role as string] || 'hover:bg-slate-100';
+
+  // Tulisan "Jadwal" awalnya gelap; saat di-hover berubah ke warna peran
   const roleScheduleHover = {
     TEACHER: 'group-hover:text-orange-600',
     STUDENT: 'group-hover:text-emerald-600'
@@ -441,14 +447,14 @@ const pendingReportsCount = Array.isArray(reports) ?
     <h1 className={`font-black italic text-slate-800 tracking-tighter text-base md:text-lg leading-none truncate pr-2 pb-0.5 ${user?.role !== 'TEACHER' ? 'uppercase' : ''}`}>
       {user?.name || user?.username || 'USER'}
     </h1>
-    <span className="text-[13px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap shrink-0">
+    <span className={`font-bold tracking-tighter text-base md:text-lg leading-none text-slate-400 whitespace-nowrap shrink-0 pb-0.5 ${user?.role !== 'TEACHER' ? 'uppercase' : ''}`}>
       ({user?.role === 'ADMIN' ? 'Pengurus' : user?.role === 'TEACHER' ? 'Pengajar' : 'Siswa'})
     </span>
   </div>
   {user.role !== 'ADMIN' && (
-    <button onClick={() => setShowSchedule(true)} title="Jadwal saya" aria-label="Jadwal saya" className={`group self-start flex items-center gap-1.5 mt-1 -mb-1 py-1 ${roleScheduleBtn} active:scale-95 transition-all`}>
-       <CalendarDays size={16} />
-       <span className={`text-[13px] font-black uppercase tracking-widest text-slate-700 underline underline-offset-4 ${roleScheduleHover} transition-colors`}>Jadwal</span>
+    <button onClick={() => setShowSchedule(true)} title="Jadwal saya" aria-label="Jadwal saya" className={`group self-start flex items-center gap-1.5 mt-1.5 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-full ${roleScheduleBtn} ${roleSchedulePill} active:scale-95 transition-all`}>
+       <CalendarDays size={15} />
+       <span className={`text-xs font-black uppercase tracking-widest text-slate-700 ${roleScheduleHover} transition-colors`}>Jadwal</span>
     </button>
   )}
 </div>
