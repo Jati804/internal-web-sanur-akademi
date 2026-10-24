@@ -447,7 +447,7 @@ const pendingReportsCount = Array.isArray(reports) ?
     {user?.name || user?.username || 'USER'}
   </h1>
 
-  {/* Tombol Teks dengan Garis Bawah yang Sudah Dikasih Jarak */}
+  {/* Tombol Teks Dulu, Baru Ikon, dengan Underline Lebih Tipis */}
   {user.role !== 'ADMIN' && (
     <button 
       onClick={() => setShowSchedule(true)} 
@@ -455,16 +455,16 @@ const pendingReportsCount = Array.isArray(reports) ?
       aria-label="Jadwal saya" 
       className={`group relative flex items-center gap-1.5 pb-1 active:scale-95 transition-all cursor-pointer`}
     >
+      <span className={`text-[10px] font-black uppercase tracking-widest transition-colors ${user.role === 'TEACHER' ? 'text-orange-600 group-hover:text-orange-700' : 'text-emerald-700 group-hover:text-emerald-800'}`}>
+        {user.role === 'TEACHER' ? 'Jadwal Mengajar' : 'Jadwal Belajar'}
+      </span>
       <CalendarDays 
         size={13} 
         className={`transition-colors ${user.role === 'TEACHER' ? 'text-orange-500 group-hover:text-orange-600' : 'text-emerald-600 group-hover:text-emerald-700'}`} 
       />
-      <span className={`text-[10px] font-black uppercase tracking-widest transition-colors ${user.role === 'TEACHER' ? 'text-orange-600 group-hover:text-orange-700' : 'text-emerald-700 group-hover:text-emerald-800'}`}>
-        {user.role === 'TEACHER' ? 'Jadwal Mengajar' : 'Jadwal Belajar'}
-      </span>
 
-      {/* Garis Bawah dengan Posisi Sedikit ke Bawah (bottom-0) dari kontainer yang sudah di-padding */}
-      <span className={`absolute bottom-0 left-0 w-full h-[2px] rounded-full transition-all ${user.role === 'TEACHER' ? 'bg-orange-400 group-hover:bg-orange-500' : 'bg-emerald-500 group-hover:bg-emerald-600'}`} />
+      {/* Garis Bawah yang Lebih Tipis (h-[1.5px]) */}
+      <span className={`absolute bottom-0 left-0 w-full h-[1.5px] rounded-full transition-all ${user.role === 'TEACHER' ? 'bg-orange-400 group-hover:bg-orange-500' : 'bg-emerald-500 group-hover:bg-emerald-600'}`} />
     </button>
   )}
 </div>
