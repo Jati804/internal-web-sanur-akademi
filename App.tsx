@@ -447,11 +447,19 @@ const pendingReportsCount = Array.isArray(reports) ?
     {user?.name || user?.username || 'USER'}
   </h1>
 
-  {/* Tombol Jadwal dengan Teks Dinamis */}
+  {/* Tombol Jadwal dengan Teks Dinamis & Warna Berdasarkan Role */}
   {user.role !== 'ADMIN' && (
-    <button onClick={() => setShowSchedule(true)} title="Jadwal saya" aria-label="Jadwal saya" className={`group flex items-center gap-1.5 px-2.5 py-1 bg-white border-2 border-slate-200 rounded-lg shadow-sm shrink-0 ${roleScheduleBtn} ${roleSchedulePill} active:scale-95 transition-all`}>
-      <CalendarDays size={13} />
-      <span className={`text-[10px] font-black uppercase tracking-widest text-slate-400 ${roleScheduleHover} transition-colors`}>
+    <button 
+      onClick={() => setShowSchedule(true)} 
+      title="Jadwal saya" 
+      aria-label="Jadwal saya" 
+      className={`group flex items-center gap-1.5 px-2.5 py-1 bg-white border-2 border-slate-200 rounded-lg shadow-sm shrink-0 active:scale-95 transition-all hover:border-${user.role === 'TEACHER' ? 'orange' : 'emerald'}-300`}
+    >
+      <CalendarDays 
+        size={13} 
+        className={user.role === 'TEACHER' ? 'text-orange-500' : 'text-emerald-600'} 
+      />
+      <span className={`text-[10px] font-black uppercase tracking-widest transition-colors ${user.role === 'TEACHER' ? 'text-orange-600' : 'text-emerald-700'}`}>
         {user.role === 'TEACHER' ? 'Jadwal Mengajar' : 'Jadwal Belajar'}
       </span>
     </button>
