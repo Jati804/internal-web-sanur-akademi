@@ -1363,7 +1363,7 @@ const handleDownloadPDFReport = async (course: any) => {
   <button 
     onClick={() => handleDownloadSlipDirect(p)} 
     disabled={downloadingPaymentId === p.id} 
-    className="px-6 py-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-emerald-600 hover:text-white transition-all disabled:opacity-50 min-w-[120px] flex items-center justify-center"
+    className="px-6 py-4 bg-blue-50 text-blue-600 rounded-2xl active:bg-blue-100 active:scale-95 transition-all disabled:opacity-50 min-w-[120px] flex items-center justify-center"
     title={downloadingPaymentId === p.id ? "Memproses PDF..." : "Unduh Kuitansi"}
   >
     {downloadingPaymentId === p.id ? (
