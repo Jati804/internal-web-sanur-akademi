@@ -58,17 +58,17 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ user, schedule, teachers,
     >
       <div className="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className={`px-8 py-6 ${color} text-white flex items-center justify-between shrink-0`}>
+        <div className="px-8 py-6 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <CalendarDays size={24} />
+            <CalendarDays size={24} className={accentText} />
             <div>
-              <h3 className="text-lg font-black uppercase italic tracking-tighter leading-none">Jadwal Saya</h3>
-              <p className="text-[9px] font-black uppercase tracking-widest text-white/70 mt-1.5">
+              <h3 className={`text-lg font-black uppercase italic tracking-tighter leading-none ${accentText}`}>Jadwal Saya</h3>
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mt-1.5">
                 {isTeacher ? 'Jadwal mengajar' : 'Jadwal belajar'}
               </p>
             </div>
           </div>
-          <button onClick={onClose} aria-label="Tutup" className="w-10 h-10 shrink-0 rounded-full bg-white/20 text-white hover:bg-white hover:text-rose-600 active:bg-white active:text-rose-600 flex items-center justify-center transition-colors">
+          <button onClick={onClose} aria-label="Tutup" className="w-10 h-10 shrink-0 rounded-full bg-white border-[1.5px] border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-300 hover:bg-rose-50 active:text-rose-600 active:border-rose-300 active:bg-rose-50 flex items-center justify-center transition-colors">
             <X size={20} />
           </button>
         </div>
