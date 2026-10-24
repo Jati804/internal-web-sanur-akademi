@@ -98,7 +98,7 @@ const GuideModal = ({ role, onClose }: {
         { title: 'Guru Pengganti', desc: 'Jika digantikan teman, gunakan tombol "Berhalangan". Honor akan otomatis beralih ke temanmu.' },
         { title: 'Pantau Honor', desc: 'Lihat status honor cair & unduh slip gaji digital resmi di menu "Honor Saya".' },
         { title: 'Materi', desc: 'Pantau & akses bahan ajar di menu "Materi".' },
-        { title: 'Jadwal', desc: 'Tekan tombol Jadwal di bawah namamu untuk melihat jadwal mengajarmu.' },
+        { title: 'Jadwal', desc: 'Tekan tombol Jadwal di samping namamu untuk melihat jadwal mengajarmu.' },
         { title: 'Pantau Siswa', desc: 'Cari nama siswa lalu tekan ikon pin 📌 untuk memantau progres sesinya, berguna untuk tahu kapan giliran eval sesi 6.' },
         { title: 'Proses Rapot', desc: 'Terima pengajuan rapot dan isi data rapot siswa.' }
       ],
@@ -117,7 +117,7 @@ const GuideModal = ({ role, onClose }: {
         { title: 'Lapor Bayar', desc: 'Upload bukti transfer di menu "Pembayaran" agar Admin bisa mengaktifkan paket belajarmu.' },
         { title: 'Presensi Mandiri', desc: 'Presensi dilakukan secara mandiri, kamu bisa klik nomor sesi di "Kelas Saya" untuk lapor progres.' },
         { title: 'Materi', desc: 'Akses bahan ajar dari guru di menu "Materi".' },
-        { title: 'Jadwal', desc: 'Tekan tombol Jadwal di bawah namamu untuk melihat jadwal belajarmu.' },
+        { title: 'Jadwal', desc: 'Tekan tombol Jadwal di samping namamu untuk melihat jadwal belajarmu.' },
         { title: 'Klaim Rapot', desc: 'Tombol Klaim muncul saat progres 6/6. Pilih guru pembimbingmu untuk meminta penilaian.' },
         { title: 'Unduh Rapot', desc: 'Sertifikat & Rapot PDF bisa diunduh di tab "Kelas Saya" setelah guru selesai menilai.' }
       ],
@@ -349,11 +349,11 @@ const pendingReportsCount = Array.isArray(reports) ?
     STUDENT: 'text-emerald-600'
   }[user.role as string] || 'text-slate-600';
 
-  // Pil jadwal: latar abu sangat muda + garis tipis; saat di-hover latar & garis berubah tipis ke warna peran
+  // Kotak jadwal: latar putih + border abu-abu; saat di-hover border & latar berubah tipis ke warna peran
   const roleSchedulePill = {
-    TEACHER: 'hover:bg-orange-50 hover:border-orange-200',
-    STUDENT: 'hover:bg-emerald-50 hover:border-emerald-200'
-  }[user.role as string] || 'hover:bg-slate-100';
+    TEACHER: 'hover:border-orange-300 hover:bg-orange-50',
+    STUDENT: 'hover:border-emerald-300 hover:bg-emerald-50'
+  }[user.role as string] || 'hover:bg-slate-50';
 
   // Tulisan "Jadwal" awalnya gelap; saat di-hover berubah ke warna peran
   const roleScheduleHover = {
@@ -441,20 +441,15 @@ const pendingReportsCount = Array.isArray(reports) ?
           <div className="w-full max-w-7xl mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-4 min-w-0">
             <button onClick={() => setIsSidebarOpen(true)} className="p-3 bg-slate-50 text-slate-400 rounded-xl lg:hidden shrink-0"><Menu size={24}/></button>
-<div className="flex flex-col min-w-0">
-  <div className="flex items-center gap-1 min-w-0">
-    {/* pr-2 + pb-0.5: huruf miring (italic) & turunan huruf nggak kepotong oleh overflow-hidden milik truncate */}
-    <h1 className={`font-black italic text-slate-800 tracking-tighter text-base md:text-lg leading-none truncate pr-2 pb-0.5 ${user?.role !== 'TEACHER' ? 'uppercase' : ''}`}>
-      {user?.name || user?.username || 'USER'}
-    </h1>
-    <span className={`font-bold tracking-tighter text-base md:text-lg leading-none text-slate-400 whitespace-nowrap shrink-0 pb-0.5 ${user?.role !== 'TEACHER' ? 'uppercase' : ''}`}>
-      ({user?.role === 'ADMIN' ? 'Pengurus' : user?.role === 'TEACHER' ? 'Pengajar' : 'Siswa'})
-    </span>
-  </div>
+<div className="flex items-center gap-3 min-w-0">
+  {/* pr-2 + pb-0.5: huruf miring (italic) & turunan huruf nggak kepotong oleh overflow-hidden milik truncate */}
+  <h1 className={`font-black italic text-slate-800 tracking-tighter text-base md:text-lg leading-none truncate pr-2 pb-0.5 ${user?.role !== 'TEACHER' ? 'uppercase' : ''}`}>
+    {user?.name || user?.username || 'USER'}
+  </h1>
   {user.role !== 'ADMIN' && (
-    <button onClick={() => setShowSchedule(true)} title="Jadwal saya" aria-label="Jadwal saya" className={`group self-start flex items-center gap-1.5 mt-1.5 px-3 py-1.5 bg-slate-50 border border-slate-100 rounded-full ${roleScheduleBtn} ${roleSchedulePill} active:scale-95 transition-all`}>
-       <CalendarDays size={15} />
-       <span className={`text-xs font-black uppercase tracking-widest text-slate-700 ${roleScheduleHover} transition-colors`}>Jadwal</span>
+    <button onClick={() => setShowSchedule(true)} title="Jadwal saya" aria-label="Jadwal saya" className={`group flex items-center gap-2 px-3 sm:px-3.5 py-2 bg-white border-2 border-slate-200 rounded-xl shadow-sm shrink-0 ${roleScheduleBtn} ${roleSchedulePill} active:scale-95 transition-all`}>
+       <CalendarDays size={16} />
+       <span className={`hidden sm:inline text-xs font-black uppercase tracking-widest text-slate-700 ${roleScheduleHover} transition-colors`}>Jadwal</span>
     </button>
   )}
 </div>
