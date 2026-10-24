@@ -8,7 +8,7 @@ import {
   LayoutDashboard, Receipt, Menu, CreditCard, BookOpen, UserCog, 
   ClipboardCheck, Wallet, GraduationCap, Power, 
   Settings as SettingsIcon, Database, X,
-  Sparkles, HelpCircle, Info, RotateCw, Library, UserSearch, CalendarDays
+  Sparkles, HelpCircle, Info, RotateCw, Library, UserSearch, CalendarDays, ChevronDown
 } from 'lucide-react';
 
 import { supabase, waitForActiveSession } from './services/supabase.ts';
@@ -447,31 +447,27 @@ const pendingReportsCount = Array.isArray(reports) ?
     {user?.name || user?.username || 'USER'}
   </h1>
 
-  {/* Tombol dengan Teks Netral, Ikon Tetap Berwarna, dan Garis Aksen Halus */}
-  {user.role !== 'ADMIN' && (
-    <button 
-      onClick={() => setShowSchedule(true)} 
-      title="Jadwal saya" 
-      aria-label="Jadwal saya" 
-      className={`group relative flex items-center gap-1.5 pb-1 active:scale-95 transition-all cursor-pointer`}
-    >
-      <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-slate-700 transition-colors">
-        {user.role === 'TEACHER' ? 'Jadwal Mengajar' : 'Jadwal Belajar'}
-      </span>
-      
-      {/* Ikon Tetap Berwarna */}
-      <CalendarDays 
-        size={13} 
-        className={`transition-colors ${user.role === 'TEACHER' ? 'text-orange-500 group-hover:text-orange-600' : 'text-emerald-600 group-hover:text-emerald-700'}`} 
-      />
-
-      {/* Garis Bawah Aksen Lembut */}
-      <span className={`absolute bottom-0 left-0 w-full h-[1.5px] rounded-full transition-all ${user.role === 'TEACHER' ? 'bg-orange-300 group-hover:bg-orange-400' : 'bg-emerald-300 group-hover:bg-emerald-400'}`} />
-    </button>
-  )}
+  {/* Status peran, kecil di bawah nama */}
+  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 leading-none">
+    Status: {({ ADMIN: 'Pengurus', TEACHER: 'Pengajar', STUDENT: 'Siswa' } as Record<string, string>)[user.role as string] || user.role}
+  </p>
 </div>
           </div>
           <div className="flex items-center gap-3 shrink-0 ml-4">
+{user.role !== 'ADMIN' && (
+<button
+  onClick={() => setShowSchedule(true)}
+  title="Jadwal saya"
+  aria-label="Jadwal saya"
+  className={`group flex items-center gap-3 px-6 py-4 bg-white border border-slate-200 rounded-2xl active:scale-95 transition-all ${roleSchedulePill}`}
+>
+  <CalendarDays size={18} className={roleScheduleBtn} />
+  <span className={`text-sm font-black text-slate-700 transition-colors ${roleScheduleHover}`}>
+    {user.role === 'TEACHER' ? 'Jadwal Mengajar' : 'Jadwal Belajar'}
+  </span>
+  <ChevronDown size={16} className={roleScheduleBtn} />
+</button>
+)}
 <button onClick={() => setShowGuide(true)} className={`p-4 ${roleGuideColor} text-white rounded-2xl shadow-xl hover:opacity-90 active:scale-95 transition-all`}>
    <HelpCircle size={20} />
 </button>
