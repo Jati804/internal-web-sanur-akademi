@@ -59,7 +59,7 @@ const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }
 };
 
 const NavSection = ({ label, first }: { label: string, first?: boolean }) => (
-  <p className={`px-6 mb-2 text-[9px] font-black text-slate-300 uppercase tracking-widest ${first ? '' : 'mt-3'}`}>
+  <p className={`px-6 mb-2 text-[9px] font-black text-slate-500 uppercase tracking-widest ${first ? '' : 'mt-3'}`}>
     {label}
   </p>
 );
@@ -448,7 +448,7 @@ const pendingReportsCount = Array.isArray(reports) ?
   </h1>
 
   {/* Status peran, kecil di bawah nama */}
-  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none">
+  <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 leading-none">
     Status: {({ ADMIN: 'Pengurus', TEACHER: 'Pengajar', STUDENT: 'Siswa' } as Record<string, string>)[user.role as string] || user.role}
   </p>
 </div>
