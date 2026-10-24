@@ -447,13 +447,13 @@ const pendingReportsCount = Array.isArray(reports) ?
     {user?.name || user?.username || 'USER'}
   </h1>
 
-  {/* Tombol Teks dengan Garis Bawah (Underline Accent) */}
+  {/* Tombol Teks dengan Garis Bawah yang Sudah Dikasih Jarak */}
   {user.role !== 'ADMIN' && (
     <button 
       onClick={() => setShowSchedule(true)} 
       title="Jadwal saya" 
       aria-label="Jadwal saya" 
-      className={`group relative flex items-center gap-1.5 py-0.5 active:scale-95 transition-all cursor-pointer`}
+      className={`group relative flex items-center gap-1.5 pb-1 active:scale-95 transition-all cursor-pointer`}
     >
       <CalendarDays 
         size={13} 
@@ -463,7 +463,7 @@ const pendingReportsCount = Array.isArray(reports) ?
         {user.role === 'TEACHER' ? 'Jadwal Mengajar' : 'Jadwal Belajar'}
       </span>
 
-      {/* Garis Bawah yang Membentang */}
+      {/* Garis Bawah dengan Posisi Sedikit ke Bawah (bottom-0) dari kontainer yang sudah di-padding */}
       <span className={`absolute bottom-0 left-0 w-full h-[2px] rounded-full transition-all ${user.role === 'TEACHER' ? 'bg-orange-400 group-hover:bg-orange-500' : 'bg-emerald-500 group-hover:bg-emerald-600'}`} />
     </button>
   )}
