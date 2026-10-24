@@ -447,12 +447,12 @@ const pendingReportsCount = Array.isArray(reports) ?
     {user?.name || user?.username || 'USER'}
   </h1>
 
-  {/* Tombol Jadwal dengan ukuran yang lebih ringkas */}
+  {/* Tombol Jadwal dengan Teks Dinamis */}
   {user.role !== 'ADMIN' && (
     <button onClick={() => setShowSchedule(true)} title="Jadwal saya" aria-label="Jadwal saya" className={`group flex items-center gap-1.5 px-2.5 py-1 bg-white border-2 border-slate-200 rounded-lg shadow-sm shrink-0 ${roleScheduleBtn} ${roleSchedulePill} active:scale-95 transition-all`}>
       <CalendarDays size={13} />
       <span className={`text-[10px] font-black uppercase tracking-widest text-slate-400 ${roleScheduleHover} transition-colors`}>
-        Jadwal
+        {user.role === 'TEACHER' ? 'Jadwal Mengajar' : 'Jadwal Belajar'}
       </span>
     </button>
   )}
