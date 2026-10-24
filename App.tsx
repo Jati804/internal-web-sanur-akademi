@@ -441,15 +441,19 @@ const pendingReportsCount = Array.isArray(reports) ?
           <div className="w-full max-w-7xl mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-4 min-w-0">
             <button onClick={() => setIsSidebarOpen(true)} className="p-3 bg-slate-50 text-slate-400 rounded-xl lg:hidden shrink-0"><Menu size={24}/></button>
-<div className="flex items-center gap-3 min-w-0">
-  {/* pr-2 + pb-0.5: huruf miring (italic) & turunan huruf nggak kepotong oleh overflow-hidden milik truncate */}
+<div className="flex flex-col items-start gap-1.5 min-w-0">
+  {/* Nama Pengajar / Siswa */}
   <h1 className={`font-black italic text-slate-800 tracking-tighter text-base md:text-lg leading-none truncate pr-2 pb-0.5 ${user?.role !== 'TEACHER' ? 'uppercase' : ''}`}>
     {user?.name || user?.username || 'USER'}
   </h1>
+
+  {/* Tombol Jadwal dengan ukuran yang lebih ringkas */}
   {user.role !== 'ADMIN' && (
-    <button onClick={() => setShowSchedule(true)} title="Jadwal saya" aria-label="Jadwal saya" className={`group flex items-center gap-2 px-3 sm:px-3.5 py-2 bg-white border-2 border-slate-200 rounded-xl shadow-sm shrink-0 ${roleScheduleBtn} ${roleSchedulePill} active:scale-95 transition-all`}>
-       <CalendarDays size={16} />
-       <span className={`hidden sm:inline text-xs font-black uppercase tracking-widest text-slate-500 ${roleScheduleHover} transition-colors`}>Jadwal</span>
+    <button onClick={() => setShowSchedule(true)} title="Jadwal saya" aria-label="Jadwal saya" className={`group flex items-center gap-1.5 px-2.5 py-1 bg-white border-2 border-slate-200 rounded-lg shadow-sm shrink-0 ${roleScheduleBtn} ${roleSchedulePill} active:scale-95 transition-all`}>
+      <CalendarDays size={13} />
+      <span className={`text-[10px] font-black uppercase tracking-widest text-slate-400 ${roleScheduleHover} transition-colors`}>
+        Jadwal
+      </span>
     </button>
   )}
 </div>
