@@ -1106,7 +1106,7 @@ const handleDownloadPDFReport = async (course: any) => {
             </div>
             <div className="w-44 h-44 bg-white/10 backdrop-blur-xl rounded-[3.5rem] flex items-center justify-center shadow-2xl shrink-0 group/icon cursor-pointer active:scale-90 transition-all duration-300">
                {isPaymentView ? (
-                 <Rocket size={90} className="text-orange-400 group-hover/icon:-translate-y-4 group-hover/icon:translate-x-4 group-hover/icon:scale-125 group-hover/icon:rotate-12 transition-all duration-500" />
+                 <Rocket size={90} className="text-yellow-400 group-hover/icon:-translate-y-4 group-hover/icon:translate-x-4 group-hover/icon:scale-125 group-hover/icon:rotate-12 transition-all duration-500" />
                ) : (
                  <Trophy size={90} className="text-yellow-400 group-hover/icon:scale-125 group-hover/icon:rotate-[360deg] transition-all duration-1000" />
                )}
@@ -1132,7 +1132,7 @@ const handleDownloadPDFReport = async (course: any) => {
 
       {isPaymentView && (
         <div className="mx-2 bg-orange-50/60 backdrop-blur-sm border-2 border-dashed border-orange-200/60 rounded-[3rem] p-8 shadow-sm flex flex-col md:flex-row items-center gap-6 animate-in slide-in-from-top-4 group">
-           <div className="w-14 h-14 bg-white text-orange-500 rounded-full flex items-center justify-center shrink-0 shadow-sm border border-orange-100 animate-pulse transition-all">
+           <div className="w-14 h-14 bg-white text-blue-500 rounded-full flex items-center justify-center shrink-0 shadow-sm border border-blue-100 animate-pulse transition-all">
               <Zap size={28} />
            </div>
            <div className="text-center md:text-left flex-1">
@@ -1158,7 +1158,7 @@ const handleDownloadPDFReport = async (course: any) => {
 >
   <div className="absolute top-0 right-0 w-64 h-64 bg-orange-50 rounded-full blur-[100px] -mr-32 -mt-32 opacity-50"></div>
   
-  <div className="flex items-center gap-8 relative z-10"><div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-3xl flex items-center justify-center shadow-inner shrink-0"><Receipt size={36} /></div><div><h3 className={`text-3xl font-black uppercase italic leading-none ${isEditing ? 'text-orange-600' : 'text-slate-800'}`}>{isEditing ? 'Edit Laporan' : 'Lapor Bayar'}</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Pastikan bukti transfer jelas ya ✨</p></div>{isEditing && <button onClick={resetForm} className="ml-auto p-4 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>}</div>
+  <div className="flex items-center gap-8 relative z-10"><div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-3xl flex items-center justify-center shadow-inner shrink-0"><Receipt size={36} /></div><div><h3 className={`text-3xl font-black uppercase italic leading-none ${isEditing ? 'text-orange-600' : 'text-slate-800'}`}>{isEditing ? 'Edit Laporan' : 'Lapor Bayar'}</h3><p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Pastikan bukti transfer jelas ya ✨</p></div>{isEditing && <button onClick={resetForm} className="ml-auto p-4 bg-rose-50 text-rose-500 rounded-2xl hover:bg-rose-500 hover:text-white transition-all shadow-sm"><X size={20}/></button>}</div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
                 <div className="space-y-3">
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Mata Pelajaran</label>
@@ -1291,7 +1291,7 @@ const handleDownloadPDFReport = async (course: any) => {
            </div>
 
            <div id="riwayat-pembayaran" className="space-y-8">
-              <div className="flex items-center gap-4 px-6"><div className="p-3 bg-emerald-50 text-emerald-600 rounded-2xl"><History size={24}/></div><h3 className="text-2xl font-black text-slate-800 uppercase italic">Riwayat Pembayaran</h3></div>
+              <div className="flex items-center gap-4"><div className="p-3 bg-blue-50 text-blue-600 rounded-2xl"><History size={24}/></div><h3 className="text-2xl font-black text-slate-800 uppercase italic">Riwayat Pembayaran</h3></div>
               {uniquePaymentSubjects.length > 2 && (
                 <div className="flex flex-wrap gap-2 px-2">
                   {uniquePaymentSubjects.map(subject => (
