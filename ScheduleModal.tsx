@@ -58,7 +58,7 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ user, schedule, teachers,
     >
       <div className="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className="px-8 py-6 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
+        <div className="px-8 py-6 bg-white border-b-2 border-slate-200 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <CalendarDays size={24} className={accentText} />
             <div>
