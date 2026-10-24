@@ -59,7 +59,7 @@ const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }
 };
 
 const NavSection = ({ label, first }: { label: string, first?: boolean }) => (
-  <p className={`px-6 mb-2 text-[9px] font-black text-slate-400 uppercase tracking-widest ${first ? '' : 'mt-3'}`}>
+  <p className={`px-6 mb-2 text-[9px] font-black text-slate-300 uppercase tracking-widest ${first ? '' : 'mt-3'}`}>
     {label}
   </p>
 );
@@ -70,8 +70,6 @@ const GuideModal = ({ role, onClose }: {
 }) => {
   const content = {
     ADMIN: {
-      color: 'bg-blue-600',
-      text: 'text-blue-600',
       steps: [
         { title: 'Dashboard', desc: 'Lihat ringkasan data sekolah: statistik siswa, guru, dan keuangan dalam satu tampilan di menu "Dashboard".' },
         { title: 'Verifikasi SPP', desc: 'Cek bukti bayar siswa di tab "Keuangan" -> "Verif SPP". Klik konfirmasi agar paket aktif.' },
@@ -91,8 +89,6 @@ const GuideModal = ({ role, onClose }: {
       ]
     },
     TEACHER: {
-      color: 'bg-orange-500',
-      text: 'text-orange-600',
       steps: [
         { title: 'Lapor Presensi', desc: 'Lapor setiap selesai mengajar. Sistem otomatis mendeteksi sesi 1-6 dalam satu paket.' },
         { title: 'Guru Pengganti', desc: 'Jika digantikan teman, gunakan tombol "Berhalangan". Honor akan otomatis beralih ke temanmu.' },
@@ -111,8 +107,6 @@ const GuideModal = ({ role, onClose }: {
       ]
     },
     STUDENT: {
-      color: 'bg-emerald-600',
-      text: 'text-emerald-600',
       steps: [
         { title: 'Lapor Bayar', desc: 'Upload bukti transfer di menu "Pembayaran" agar Admin bisa mengaktifkan paket belajarmu.' },
         { title: 'Presensi Mandiri', desc: 'Presensi dilakukan secara mandiri, kamu bisa klik nomor sesi di "Kelas Saya" untuk lapor progres.' },
@@ -128,7 +122,7 @@ const GuideModal = ({ role, onClose }: {
         { q: 'Kapan tombol Klaim Rapot muncul?', a: 'Begitu progres sesimu sampai 6/6, tombolnya otomatis aktif — semangat menuju sana!' }
       ]
     }
-  }[role] || { color: 'bg-slate-600', text: 'text-slate-600', steps: [], faqs: [] };
+  }[role] || { steps: [], faqs: [] };
 
   const [activeTab, setActiveTab] = useState<'panduan' | 'faq'>('panduan');
   const guideContentRef = useRef<HTMLDivElement>(null);
@@ -143,22 +137,22 @@ const GuideModal = ({ role, onClose }: {
     <div data-modal-container className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in" onClick={onClose}>
       <div className="bg-white w-full max-w-sm rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className={`p-8 ${content.color} text-white flex items-center justify-between shrink-0`}>
+        <div className="p-8 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
   <div className="flex items-center gap-3">
-    <HelpCircle size={24} />
-    <h3 className="text-lg font-black uppercase italic tracking-tighter">Panduan Sistem</h3>
+    <HelpCircle size={24} className="text-blue-600" />
+    <h3 className="text-lg font-black uppercase italic tracking-tighter text-blue-600">Panduan Sistem</h3>
   </div>
-  <button onClick={onClose} aria-label="Tutup" className="w-10 h-10 shrink-0 rounded-full bg-white/20 text-white hover:bg-white hover:text-rose-600 active:bg-white active:text-rose-600 flex items-center justify-center transition-colors">
+  <button onClick={onClose} aria-label="Tutup" className="w-10 h-10 shrink-0 rounded-full bg-white border-[1.5px] border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-300 hover:bg-rose-50 active:text-rose-600 active:border-rose-300 active:bg-rose-50 flex items-center justify-center transition-colors">
     <X size={20} />
   </button>
 </div>
 
         {/* Tab Switcher */}
         <div className="flex gap-2 px-8 pt-6 shrink-0">
-          <button onClick={() => setActiveTab('panduan')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'panduan' ? `${content.color} text-white shadow-lg` : 'bg-slate-100 text-slate-400'}`}>
+          <button onClick={() => setActiveTab('panduan')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'panduan' ? 'bg-blue-50 border-[1.5px] border-blue-200 text-blue-600' : 'bg-slate-100 border-[1.5px] border-transparent text-slate-400'}`}>
             Panduan
           </button>
-          <button onClick={() => setActiveTab('faq')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'faq' ? `${content.color} text-white shadow-lg` : 'bg-slate-100 text-slate-400'}`}>
+          <button onClick={() => setActiveTab('faq')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'faq' ? 'bg-blue-50 border-[1.5px] border-blue-200 text-blue-600' : 'bg-slate-100 border-[1.5px] border-transparent text-slate-400'}`}>
             FAQ
           </button>
         </div>
@@ -169,9 +163,9 @@ const GuideModal = ({ role, onClose }: {
             <div className="space-y-6">
               {content.steps.map((s, i) => (
                 <div key={i} className="flex gap-4">
-                  <div className={`w-8 h-8 rounded-full ${content.color} text-white flex items-center justify-center font-black italic shrink-0 text-xs shadow-md`}>0{i+1}</div>
+                  <div className={`w-8 h-8 rounded-full bg-blue-50 border-[1.5px] border-blue-200 text-blue-600 flex items-center justify-center font-black italic shrink-0 text-xs`}>0{i+1}</div>
                   <div className="space-y-1">
-                    <h4 className={`text-xs font-black uppercase tracking-widest ${content.text}`}>{s.title}</h4>
+                    <h4 className={`text-xs font-black uppercase tracking-widest text-blue-600`}>{s.title}</h4>
                     <p className="text-[10px] font-bold text-slate-400 uppercase leading-relaxed">{s.desc}</p>
                   </div>
                 </div>
@@ -187,7 +181,7 @@ const GuideModal = ({ role, onClose }: {
             <div className="space-y-4">
               {content.faqs.map((f, i) => (
                 <div key={i} className="bg-slate-50 p-4 rounded-2xl space-y-1.5">
-                  <h4 className={`text-xs font-black tracking-tight ${content.text}`}>{f.q}</h4>
+                  <h4 className={`text-xs font-black tracking-tight text-blue-600`}>{f.q}</h4>
                   <p className="text-[10px] font-bold text-slate-400 leading-relaxed">{f.a}</p>
                 </div>
               ))}
