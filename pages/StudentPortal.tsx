@@ -1106,7 +1106,7 @@ const handleDownloadPDFReport = async (course: any) => {
             </div>
             <div className="w-44 h-44 bg-white/10 backdrop-blur-xl rounded-[3.5rem] flex items-center justify-center shadow-2xl shrink-0 group/icon cursor-pointer active:scale-90 transition-all duration-300">
                {isPaymentView ? (
-                 <Rocket size={90} className="text-yellow-400 group-hover/icon:-translate-y-4 group-hover/icon:translate-x-4 group-hover/icon:scale-125 group-hover/icon:rotate-12 transition-all duration-500" />
+                 <Rocket size={90} className="text-orange-400 group-hover/icon:-translate-y-4 group-hover/icon:translate-x-4 group-hover/icon:scale-125 group-hover/icon:rotate-12 transition-all duration-500" />
                ) : (
                  <Trophy size={90} className="text-yellow-400 group-hover/icon:scale-125 group-hover/icon:rotate-[360deg] transition-all duration-1000" />
                )}
@@ -1324,7 +1324,7 @@ const handleDownloadPDFReport = async (course: any) => {
                        {p.status === 'PENDING' && (
                          <button 
                            onClick={() => setConfirmDeletePayment(p)}
-                           className="absolute top-0 right-0 p-5 md:p-6 bg-rose-600 text-white rounded-bl-[2.5rem] hover:bg-rose-700 transition-all shadow-xl z-20 flex items-center justify-center group/del"
+                           className="absolute top-0 right-0 p-5 md:p-6 bg-orange-500 text-white rounded-bl-[2.5rem] hover:bg-orange-600 transition-all shadow-xl z-20 flex items-center justify-center group/del"
                            title="Hapus Laporan"
                          >
                            <X size={22} strokeWidth={4} className="group-hover/del:scale-125 transition-transform" />
@@ -1355,8 +1355,8 @@ const handleDownloadPDFReport = async (course: any) => {
                          <div className="flex gap-3">
                            {p.status === 'PENDING' ? (
                              <>
-                               <button onClick={() => handleFetchReceiptPreview(p.id)} className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-blue-600 hover:text-white transition-all"><Eye size={24}/></button>
-                               <button onClick={() => handleEditPending(p)} className="p-4 bg-slate-50 text-slate-400 rounded-2xl hover:bg-orange-500 hover:text-white transition-all"><Edit3 size={24}/></button>
+                               <button onClick={() => handleFetchReceiptPreview(p.id)} className="p-4 bg-blue-50 text-blue-600 rounded-2xl active:bg-blue-100 active:scale-95 transition-all"><Eye size={24}/></button>
+                               <button onClick={() => handleEditPending(p)} className="p-4 bg-blue-50 text-blue-600 rounded-2xl active:bg-blue-100 active:scale-95 transition-all"><Edit3 size={24}/></button>
                              </>
                            ) : (
                              <div className="flex gap-3">
