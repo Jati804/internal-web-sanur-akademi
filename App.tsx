@@ -435,13 +435,13 @@ const pendingReportsCount = Array.isArray(reports) ?
     {user?.name || user?.username || 'USER'}
   </h1>
   <div className="flex items-center gap-3 mt-1.5">
-    <p className="text-xs font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">
+    <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">
       STATUS: {user?.role === 'ADMIN' ? 'ADMIN' : user?.role === 'TEACHER' ? 'GURU' : 'SISWA'}
     </p>
     {user.role !== 'ADMIN' && (
     <button onClick={() => setShowSchedule(true)} title="Jadwal saya" aria-label="Jadwal saya" className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 bg-slate-50 border border-slate-100 ${roleScheduleBtn} rounded-full active:scale-95 transition-all shrink-0`}>
-       <CalendarDays size={14} />
-       <span className="hidden sm:inline text-[9px] font-black uppercase tracking-widest text-slate-500">Jadwal</span>
+       <CalendarDays size={15} />
+       <span className="hidden sm:inline text-[11px] font-black uppercase tracking-widest text-slate-500">Jadwal</span>
     </button>
     )}
   </div>
