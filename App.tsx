@@ -59,7 +59,7 @@ const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }
 };
 
 const NavSection = ({ label, first }: { label: string, first?: boolean }) => (
-  <p className={`px-6 mb-2 text-[9px] font-black text-slate-300 uppercase tracking-widest ${first ? '' : 'mt-6'}`}>
+  <p className={`px-6 mb-2 text-[9px] font-black text-slate-300 uppercase tracking-widest ${first ? '' : 'mt-3'}`}>
     {label}
   </p>
 );
