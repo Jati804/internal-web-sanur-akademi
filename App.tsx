@@ -343,11 +343,11 @@ const pendingReportsCount = Array.isArray(reports) ?
     STUDENT: 'bg-emerald-600'
   }[user.role as string] || 'bg-slate-600';
 
-  // Tombol jadwal (pil kecil di samping nama): latar abu sangat muda, hanya ikon yang berwarna peran, tanpa shadow supaya tenang
+  // Tombol jadwal (teks kecil di baris status): tanpa latar & garis, hanya ikon berwarna peran supaya menyatu dengan status
   const roleScheduleBtn = {
-    TEACHER: 'text-orange-600 hover:border-orange-200 hover:bg-orange-50',
-    STUDENT: 'text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50'
-  }[user.role as string] || 'text-slate-600 hover:bg-slate-100';
+    TEACHER: 'text-orange-600',
+    STUDENT: 'text-emerald-600'
+  }[user.role as string] || 'text-slate-600';
 
   return (
     <div className="min-h-screen bg-[#FDFDFF] flex overflow-hidden font-sans relative">
@@ -434,15 +434,18 @@ const pendingReportsCount = Array.isArray(reports) ?
   <h1 className={`font-black italic text-slate-800 tracking-tighter text-base md:text-lg leading-none truncate pr-2 pb-0.5 ${user?.role !== 'TEACHER' ? 'uppercase' : ''}`}>
     {user?.name || user?.username || 'USER'}
   </h1>
-  <div className="flex items-center gap-3 mt-1.5">
+  <div className="flex items-center gap-2.5 mt-1.5">
     <p className="text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap">
       STATUS: {user?.role === 'ADMIN' ? 'ADMIN' : user?.role === 'TEACHER' ? 'GURU' : 'SISWA'}
     </p>
     {user.role !== 'ADMIN' && (
-    <button onClick={() => setShowSchedule(true)} title="Jadwal saya" aria-label="Jadwal saya" className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1 bg-slate-50 border border-slate-100 ${roleScheduleBtn} rounded-full active:scale-95 transition-all shrink-0`}>
-       <CalendarDays size={15} />
-       <span className="hidden sm:inline text-[11px] font-black uppercase tracking-widest text-slate-500">Jadwal</span>
-    </button>
+    <>
+      <span className="text-slate-300 text-[11px] font-black" aria-hidden="true">·</span>
+      <button onClick={() => setShowSchedule(true)} title="Jadwal saya" aria-label="Jadwal saya" className={`group flex items-center gap-1.5 -my-1 py-1 ${roleScheduleBtn} active:scale-95 transition-all shrink-0`}>
+         <CalendarDays size={15} />
+         <span className="hidden sm:inline text-[11px] font-black uppercase tracking-widest text-slate-500 group-hover:text-slate-700 group-hover:underline underline-offset-4 transition-colors">Jadwal</span>
+      </button>
+    </>
     )}
   </div>
 </div>
