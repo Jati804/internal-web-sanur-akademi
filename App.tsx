@@ -137,7 +137,7 @@ const GuideModal = ({ role, onClose }: {
     <div data-modal-container className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in" onClick={onClose}>
       <div className="bg-white w-full max-w-sm rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className="p-8 bg-white border-b border-slate-100 flex items-center justify-between shrink-0">
+        <div className="p-8 bg-white border-b-2 border-slate-200 flex items-center justify-between shrink-0">
   <div className="flex items-center gap-3">
     <HelpCircle size={24} className="text-blue-600" />
     <h3 className="text-lg font-black uppercase italic tracking-tighter text-blue-600">Panduan Sistem</h3>
@@ -149,10 +149,10 @@ const GuideModal = ({ role, onClose }: {
 
         {/* Tab Switcher */}
         <div className="flex gap-2 px-8 pt-6 shrink-0">
-          <button onClick={() => setActiveTab('panduan')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'panduan' ? 'bg-blue-50 border-[1.5px] border-blue-200 text-blue-600' : 'bg-slate-100 border-[1.5px] border-transparent text-slate-400'}`}>
+          <button onClick={() => setActiveTab('panduan')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'panduan' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>
             Panduan
           </button>
-          <button onClick={() => setActiveTab('faq')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'faq' ? 'bg-blue-50 border-[1.5px] border-blue-200 text-blue-600' : 'bg-slate-100 border-[1.5px] border-transparent text-slate-400'}`}>
+          <button onClick={() => setActiveTab('faq')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'faq' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>
             FAQ
           </button>
         </div>
@@ -163,7 +163,7 @@ const GuideModal = ({ role, onClose }: {
             <div className="space-y-6">
               {content.steps.map((s, i) => (
                 <div key={i} className="flex gap-4">
-                  <div className={`w-8 h-8 rounded-full bg-blue-50 border-[1.5px] border-blue-200 text-blue-600 flex items-center justify-center font-black italic shrink-0 text-xs`}>0{i+1}</div>
+                  <div className={`w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-black italic shrink-0 text-xs shadow-md`}>0{i+1}</div>
                   <div className="space-y-1">
                     <h4 className={`text-xs font-black uppercase tracking-widest text-blue-600`}>{s.title}</h4>
                     <p className="text-[10px] font-bold text-slate-400 uppercase leading-relaxed">{s.desc}</p>
@@ -446,7 +446,7 @@ const pendingReportsCount = Array.isArray(reports) ?
   </h1>
 
   {/* Status peran, kecil di bawah nama */}
-  <p className="text-[9px] font-black uppercase tracking-widest text-slate-500 leading-none">
+  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none">
     Status: {({ ADMIN: 'Pengurus', TEACHER: 'Pengajar', STUDENT: 'Siswa' } as Record<string, string>)[user.role as string] || user.role}
   </p>
 </div>
