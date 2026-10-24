@@ -361,6 +361,10 @@ const pendingReportsCount = Array.isArray(reports) ?
     STUDENT: 'group-hover:text-emerald-600'
   }[user.role as string] || 'group-hover:text-slate-900';
 
+  // Tombol bantuan (outline): biru seragam untuk semua peran
+  const roleHelpIcon = 'text-blue-600';
+  const roleHelpHover = 'hover:border-blue-300 hover:bg-blue-50';
+
   return (
     <div className="min-h-screen bg-[#FDFDFF] flex overflow-hidden font-sans relative">
       {showGuide && (
@@ -468,10 +472,10 @@ const pendingReportsCount = Array.isArray(reports) ?
   <ChevronDown size={16} className={roleScheduleBtn} />
 </button>
 )}
-<button onClick={() => setShowGuide(true)} className={`p-4 ${roleGuideColor} text-white rounded-2xl shadow-xl hover:opacity-90 active:scale-95 transition-all`}>
+<button onClick={() => setShowGuide(true)} aria-label="Panduan" className={`p-4 bg-white border-[1.5px] border-slate-200 ${roleHelpIcon} rounded-2xl active:scale-95 transition-all ${roleHelpHover}`}>
    <HelpCircle size={20} />
 </button>
-<button onClick={executeLogout} className="p-4 bg-rose-600 text-white rounded-2xl shadow-xl hover:bg-rose-700 active:scale-95 transition-all">
+<button onClick={executeLogout} aria-label="Keluar" className="p-4 bg-white border-[1.5px] border-slate-200 text-rose-600 rounded-2xl active:scale-95 transition-all hover:border-rose-300 hover:bg-rose-50">
    <Power size={20} />
 </button>
           </div>
