@@ -441,14 +441,14 @@ const pendingReportsCount = Array.isArray(reports) ?
     <h1 className={`font-black italic text-slate-800 tracking-tighter text-base md:text-lg leading-none truncate pr-2 pb-0.5 ${user?.role !== 'TEACHER' ? 'uppercase' : ''}`}>
       {user?.name || user?.username || 'USER'}
     </h1>
-    <span className="text-[11px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap shrink-0">
+    <span className="text-[13px] font-black uppercase tracking-widest text-slate-400 whitespace-nowrap shrink-0">
       ({user?.role === 'ADMIN' ? 'Pengurus' : user?.role === 'TEACHER' ? 'Pengajar' : 'Siswa'})
     </span>
   </div>
   {user.role !== 'ADMIN' && (
     <button onClick={() => setShowSchedule(true)} title="Jadwal saya" aria-label="Jadwal saya" className={`group self-start flex items-center gap-1.5 mt-1 -mb-1 py-1 ${roleScheduleBtn} active:scale-95 transition-all`}>
-       <CalendarDays size={15} />
-       <span className={`text-[11px] font-black uppercase tracking-widest text-slate-700 underline underline-offset-4 ${roleScheduleHover} transition-colors`}>Jadwal</span>
+       <CalendarDays size={16} />
+       <span className={`text-[13px] font-black uppercase tracking-widest text-slate-700 underline underline-offset-4 ${roleScheduleHover} transition-colors`}>Jadwal</span>
     </button>
   )}
 </div>
