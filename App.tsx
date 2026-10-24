@@ -412,8 +412,10 @@ const pendingReportsCount = Array.isArray(reports) ?
             )}
             {user.role === 'STUDENT' && (
               <>
+                <NavSection first label="Pembelajaran" />
                 <NavItem to="/student" icon={GraduationCap} label="Kelas Saya" activeColor="blue" onClick={closeSidebar} />
                 <NavItem to="/student/materi" icon={Library} label="Materi" activeColor="blue" onClick={closeSidebar} />
+                <NavSection label="Kuitansi" />
                 <NavItem to="/student/payments" icon={CreditCard} label="Pembayaran" activeColor="blue" onClick={closeSidebar} />
               </>
             )}
