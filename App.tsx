@@ -447,7 +447,7 @@ const pendingReportsCount = Array.isArray(reports) ?
     {user?.name || user?.username || 'USER'}
   </h1>
 
-  {/* Tombol dengan Teks Netral & Garis Aksen Halus */}
+  {/* Tombol dengan Teks Netral, Ikon Tetap Berwarna, dan Garis Aksen Halus */}
   {user.role !== 'ADMIN' && (
     <button 
       onClick={() => setShowSchedule(true)} 
@@ -458,9 +458,14 @@ const pendingReportsCount = Array.isArray(reports) ?
       <span className="text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-slate-700 transition-colors">
         {user.role === 'TEACHER' ? 'Jadwal Mengajar' : 'Jadwal Belajar'}
       </span>
-      <CalendarDays size={13} className="text-slate-400 group-hover:text-slate-600 transition-colors" />
+      
+      {/* Ikon Tetap Berwarna */}
+      <CalendarDays 
+        size={13} 
+        className={`transition-colors ${user.role === 'TEACHER' ? 'text-orange-500 group-hover:text-orange-600' : 'text-emerald-600 group-hover:text-emerald-700'}`} 
+      />
 
-      {/* Garis Bawah Aksen (Orange lembut untuk guru, Emerald lembut untuk siswa) */}
+      {/* Garis Bawah Aksen Lembut */}
       <span className={`absolute bottom-0 left-0 w-full h-[1.5px] rounded-full transition-all ${user.role === 'TEACHER' ? 'bg-orange-300 group-hover:bg-orange-400' : 'bg-emerald-300 group-hover:bg-emerald-400'}`} />
     </button>
   )}
