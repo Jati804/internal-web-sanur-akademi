@@ -386,10 +386,10 @@ const pendingReportsCount = Array.isArray(reports) ?
         <div className="p-8 h-full flex flex-col">
           <div className="flex items-center justify-between mb-12 px-2">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl rotate-3 shrink-0"><BookOpen size={24} /></div>
+              <div className={`w-12 h-12 ${user.role === 'STUDENT' ? 'bg-emerald-600' : 'bg-blue-600'} rounded-2xl flex items-center justify-center text-white shadow-xl rotate-3 shrink-0`}><BookOpen size={24} /></div>
               <div>
                 <h1 className="font-black text-slate-800 text-xl tracking-tighter uppercase italic leading-none">SANUR</h1>
-                <p className="text-[8px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1.5">Sistem Internal</p>
+                <p className={`text-[8px] font-black ${user.role === 'STUDENT' ? 'text-emerald-600' : 'text-blue-600'} uppercase tracking-[0.4em] mt-1.5`}>Sistem Internal</p>
               </div>
             </div>
             <button onClick={closeSidebar} className="lg:hidden p-2 text-slate-300 hover:text-rose-500"><X size={24} /></button>
@@ -423,10 +423,10 @@ const pendingReportsCount = Array.isArray(reports) ?
             {user.role === 'STUDENT' && (
               <>
                 <NavSection first label="Pembelajaran" />
-                <NavItem to="/student" icon={GraduationCap} label="Kelas Saya" activeColor="blue" onClick={closeSidebar} />
-                <NavItem to="/student/materi" icon={Library} label="Materi" activeColor="blue" onClick={closeSidebar} />
+                <NavItem to="/student" icon={GraduationCap} label="Kelas Saya" activeColor="emerald" onClick={closeSidebar} />
+                <NavItem to="/student/materi" icon={Library} label="Materi" activeColor="emerald" onClick={closeSidebar} />
                 <NavSection label="Transaksi" />
-                <NavItem to="/student/payments" icon={CreditCard} label="Pembayaran" activeColor="blue" onClick={closeSidebar} />
+                <NavItem to="/student/payments" icon={CreditCard} label="Pembayaran" activeColor="emerald" onClick={closeSidebar} />
               </>
             )}
           </nav>
