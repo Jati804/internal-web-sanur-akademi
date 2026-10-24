@@ -1132,7 +1132,7 @@ const handleDownloadPDFReport = async (course: any) => {
 
       {isPaymentView && (
         <div className="mx-2 bg-orange-50/60 backdrop-blur-sm border-2 border-dashed border-orange-200/60 rounded-[3rem] p-8 shadow-sm flex flex-col md:flex-row items-center gap-6 animate-in slide-in-from-top-4 group">
-           <div className="w-14 h-14 bg-white text-blue-500 rounded-full flex items-center justify-center shrink-0 shadow-sm border border-blue-100 animate-pulse transition-all">
+           <div className="w-14 h-14 bg-white text-orange-500 rounded-full flex items-center justify-center shrink-0 shadow-sm border border-orange-100 animate-pulse transition-all">
               <Zap size={28} />
            </div>
            <div className="text-center md:text-left flex-1">
