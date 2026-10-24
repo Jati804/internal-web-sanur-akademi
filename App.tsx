@@ -449,7 +449,7 @@ const pendingReportsCount = Array.isArray(reports) ?
   {user.role !== 'ADMIN' && (
     <button onClick={() => setShowSchedule(true)} title="Jadwal saya" aria-label="Jadwal saya" className={`group flex items-center gap-2 px-3 sm:px-3.5 py-2 bg-white border-2 border-slate-200 rounded-xl shadow-sm shrink-0 ${roleScheduleBtn} ${roleSchedulePill} active:scale-95 transition-all`}>
        <CalendarDays size={16} />
-       <span className={`hidden sm:inline text-xs font-black uppercase tracking-widest text-slate-700 ${roleScheduleHover} transition-colors`}>Jadwal</span>
+       <span className={`hidden sm:inline text-xs font-black uppercase tracking-widest text-slate-500 ${roleScheduleHover} transition-colors`}>Jadwal</span>
     </button>
   )}
 </div>
