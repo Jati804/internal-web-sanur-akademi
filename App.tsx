@@ -448,7 +448,7 @@ const pendingReportsCount = Array.isArray(reports) ?
   </h1>
 
   {/* Status peran, kecil di bawah nama */}
-  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 leading-none">
+  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none">
     Status: {({ ADMIN: 'Pengurus', TEACHER: 'Pengajar', STUDENT: 'Siswa' } as Record<string, string>)[user.role as string] || user.role}
   </p>
 </div>
@@ -459,7 +459,7 @@ const pendingReportsCount = Array.isArray(reports) ?
   onClick={() => setShowSchedule(true)}
   title="Jadwal saya"
   aria-label="Jadwal saya"
-  className={`group flex items-center gap-3 px-6 py-4 bg-white border border-slate-200 rounded-2xl active:scale-95 transition-all ${roleSchedulePill}`}
+  className={`group flex items-center gap-3 px-6 py-4 bg-white border-[1.5px] border-slate-200 rounded-2xl active:scale-95 transition-all ${roleSchedulePill}`}
 >
   <CalendarDays size={18} className={roleScheduleBtn} />
   <span className={`text-sm font-black text-slate-700 transition-colors ${roleScheduleHover}`}>
