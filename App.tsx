@@ -349,6 +349,12 @@ const pendingReportsCount = Array.isArray(reports) ?
     STUDENT: 'text-emerald-600'
   }[user.role as string] || 'text-slate-600';
 
+  // Tulisan "Jadwal" awalnya gelap + bergaris bawah; saat di-hover berubah ke warna peran (garis bawah ikut)
+  const roleScheduleHover = {
+    TEACHER: 'group-hover:text-orange-600',
+    STUDENT: 'group-hover:text-emerald-600'
+  }[user.role as string] || 'group-hover:text-slate-900';
+
   return (
     <div className="min-h-screen bg-[#FDFDFF] flex overflow-hidden font-sans relative">
       {showGuide && (
@@ -440,10 +446,11 @@ const pendingReportsCount = Array.isArray(reports) ?
     </p>
     {user.role !== 'ADMIN' && (
     <>
-      <span className="text-slate-300 text-[11px] font-black" aria-hidden="true">·</span>
       <button onClick={() => setShowSchedule(true)} title="Jadwal saya" aria-label="Jadwal saya" className={`group flex items-center gap-1.5 -my-1 py-1 ${roleScheduleBtn} active:scale-95 transition-all shrink-0`}>
+         {/* titik pemisah ikut jadi bagian "Jadwal": warnanya sama dengan tulisan & ikut berubah saat hover */}
+         <span className={`mr-0.5 text-[11px] font-black text-slate-700 ${roleScheduleHover} transition-colors`} aria-hidden="true">·</span>
          <CalendarDays size={15} />
-         <span className="hidden sm:inline text-[11px] font-black uppercase tracking-widest text-slate-500 group-hover:text-slate-700 group-hover:underline underline-offset-4 transition-colors">Jadwal</span>
+         <span className={`hidden sm:inline text-[11px] font-black uppercase tracking-widest text-slate-700 underline underline-offset-4 ${roleScheduleHover} transition-colors`}>Jadwal</span>
       </button>
     </>
     )}
