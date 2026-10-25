@@ -9,7 +9,9 @@ import {
   Wallet,
   CreditCard,
   ArrowRight,
-  Clock
+  Clock,
+  Rocket,
+  Info
 } from 'lucide-react';
 import * as ReactRouterDOM from 'react-router-dom';
 const { Link } = ReactRouterDOM as any;
@@ -206,10 +208,10 @@ export const computeFollowUps = (
 };
 
 // Kelompok di daftar follow-up: judul + satu kalimat keterangan (ditulis sekali per kelompok, bukan per siswa)
-const FOLLOW_UP_SECTIONS: { kind: FollowUpItem['kind']; title: string; hint: string }[] = [
-  { kind: 'NEXT_CLASS', title: 'Guru memutuskan lanjut kelas', hint: 'Siswa bayar kalau bersedia lanjut. Admin tinggal menagih atau memverifikasi.' },
-  { kind: 'SELESAI', title: 'Selesai 6/6', hint: 'Rapot masih berjalan, atau guru belum memutuskan lanjut kelas.' },
-  { kind: 'SESI_5', title: 'Sesi 5 dari 6', hint: 'Tinggal 1 lagi, memasuki evaluasi.' }
+const FOLLOW_UP_SECTIONS: { kind: FollowUpItem['kind']; title: string; hint: string; Icon: React.ElementType; bar: string; iconBox: string }[] = [
+  { kind: 'NEXT_CLASS', title: 'Guru memutuskan lanjut kelas', hint: 'Siswa bayar kalau bersedia lanjut. Admin tinggal menagih atau memverifikasi.', Icon: Rocket, bar: 'bg-purple-400', iconBox: 'bg-purple-100 text-purple-700' },
+  { kind: 'SELESAI', title: 'Selesai 6/6', hint: 'Rapot masih berjalan, atau guru belum memutuskan lanjut kelas.', Icon: Zap, bar: 'bg-slate-800', iconBox: 'bg-slate-900 text-yellow-400' },
+  { kind: 'SESI_5', title: 'Sesi 5 dari 6', hint: 'Tinggal 1 lagi, memasuki evaluasi.', Icon: Clock, bar: 'bg-orange-400', iconBox: 'bg-orange-100 text-orange-600' }
 ];
 
 const agoText = (d: number) => (d <= 0 ? 'hari ini' : `${d} hari lalu`);
@@ -225,7 +227,7 @@ const rapotLine = (s: FollowUpItem): { text: string; warn: boolean } | null => {
     case 'DITOLAK': return { text: 'Rapot: ditolak guru, siswa belum klaim ulang', warn: true };
     case 'MENUNGGU_GURU': {
       const d = s.rapotDays ?? 0;
-      return { text: d > 0 ? `Rapot: menunggu guru, ${d} hari` : 'Rapot: menunggu guru, klaim hari ini', warn: d >= RAPOT_TELAT_HARI };
+      return { text: d > 0 ? `Rapot: menunggu guru mengisi, sudah ${d} hari` : 'Rapot: menunggu guru mengisi, klaim hari ini', warn: d >= RAPOT_TELAT_HARI };
     }
     case 'SIAP_KIRIM': return { text: 'Rapot: sudah diisi, belum dikirim guru', warn: false };
     case 'TERBIT': return { text: 'Rapot: sudah terbit', warn: false };
@@ -329,10 +331,13 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
          <div className="relative z-10">
             {followUpList.length > 0 ? (
                <>
-                  <p className="text-sm text-slate-500 leading-relaxed mb-10 max-w-3xl">
-                     Setelah siswa bayar kelas lanjutan dan terverifikasi, namanya hilang dari daftar ini.
-                     Kalau 30 hari tidak ada kelanjutan (belum bayar atau tidak ada sesi baru), dianggap berhenti dan ikut hilang.
-                  </p>
+                  <div className="flex items-start gap-4 rounded-2xl border border-blue-100 bg-blue-50/60 px-5 py-4 mb-10 max-w-3xl">
+                     <Info size={20} className="text-blue-500 shrink-0 mt-0.5" />
+                     <div className="text-sm text-slate-600 leading-relaxed space-y-1">
+                        <p>Setelah siswa <b className="text-slate-800">bayar kelas lanjutan dan terverifikasi</b>, namanya hilang dari daftar ini.</p>
+                        <p>Kalau <b className="text-slate-800">30 hari</b> tidak ada kelanjutan (belum bayar atau tidak ada sesi baru), dianggap berhenti dan ikut hilang.</p>
+                     </div>
+                  </div>
 
                   <div className="space-y-10">
                      {FOLLOW_UP_SECTIONS.map(sec => {
@@ -340,13 +345,19 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
                         if (rows.length === 0) return null;
                         return (
                            <section key={sec.kind}>
-                              <div className="flex items-baseline gap-3">
-                                 <h4 className="text-lg font-black text-slate-800">{sec.title}</h4>
-                                 <span className="text-sm font-semibold text-slate-400">{rows.length} siswa</span>
+                              <div className="relative overflow-hidden flex items-center gap-4 rounded-2xl bg-slate-50 border border-slate-100 pl-6 pr-5 py-4">
+                                 <span className={`absolute left-0 top-0 bottom-0 w-1.5 ${sec.bar}`} />
+                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${sec.iconBox}`}>
+                                    <sec.Icon size={20} />
+                                 </div>
+                                 <div className="min-w-0 flex-1">
+                                    <h4 className="text-lg font-black text-slate-800 leading-tight">{sec.title}</h4>
+                                    <p className="text-sm text-slate-500">{sec.hint}</p>
+                                 </div>
+                                 <span className="shrink-0 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-full px-3 py-1">{rows.length} siswa</span>
                               </div>
-                              <p className="text-sm text-slate-500 mt-0.5 mb-3">{sec.hint}</p>
 
-                              <ul className="divide-y divide-slate-100 border-y border-slate-100">
+                              <ul className="mt-1 px-2 divide-y divide-slate-100 border-b border-slate-100">
                                  {rows.map((s, i) => {
                                     const rapot = rapotLine(s);
                                     const soon = s.daysLeft <= EXPIRY_WARN_DAYS;
@@ -364,7 +375,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
                                           </div>
                                           <div className="text-right shrink-0">
                                              <p className="text-sm text-slate-800">{statusText}</p>
-                                             <p className={`text-sm ${soon ? 'text-amber-700' : 'text-slate-500'}`}>
+                                             <p className={`text-sm ${soon ? 'text-red-600' : 'text-slate-500'}`}>
                                                 {prefix}{agoText(s.daysAgo)}{soon ? ` · ${leftText(s.daysLeft)}` : ''}
                                              </p>
                                           </div>
