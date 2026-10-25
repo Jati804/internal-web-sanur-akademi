@@ -386,10 +386,10 @@ const pendingReportsCount = Array.isArray(reports) ?
         <div className="p-8 h-full flex flex-col">
           <div className="flex items-center justify-between mb-12 px-2">
             <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shrink-0"><BookOpen size={24} /></div>
-              <div>
-                <h1 className="font-black text-slate-800 text-xl tracking-tighter uppercase leading-none">SANUR</h1>
-                <p className="text-[8px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1.5">Sistem Internal</p>
+              <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-xl shrink-0"><BookOpen size={18} /></div>
+              <div className="flex flex-col items-start gap-1.5 min-w-0">
+                <h1 className="font-black text-slate-800 tracking-tight text-base md:text-lg uppercase leading-none pb-0.5">SANUR</h1>
+                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest leading-none">Sistem Internal</p>
               </div>
             </div>
             <button onClick={closeSidebar} className="lg:hidden p-2 text-slate-300 hover:text-rose-500"><X size={24} /></button>
@@ -459,9 +459,9 @@ const pendingReportsCount = Array.isArray(reports) ?
   aria-label="Jadwal saya"
   className={`group flex items-center gap-2 lg:gap-3 px-4 lg:px-6 py-4 bg-white border-[1.5px] border-slate-200 rounded-2xl active:scale-95 transition-all ${roleSchedulePill}`}
 >
-  <CalendarDays size={18} className={roleScheduleBtn} />
+  <CalendarDays size={20} className={roleScheduleBtn} />
   {/* Tulisan hanya tampil di desktop (lg ke atas); di tablet cukup ikon + panah dropdown */}
-  <span className={`hidden lg:inline text-sm font-black text-slate-700 transition-colors ${roleScheduleHover}`}>
+  <span className={`hidden lg:inline text-[10px] font-black uppercase tracking-widest text-slate-700 transition-colors ${roleScheduleHover}`}>
     {user.role === 'TEACHER' ? 'Jadwal Mengajar' : 'Jadwal Belajar'}
   </span>
   <ChevronDown size={16} className={roleScheduleBtn} />
