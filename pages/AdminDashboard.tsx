@@ -9,8 +9,7 @@ import {
   Wallet,
   CreditCard,
   ArrowRight,
-  Clock,
-  Rocket
+  Clock
 } from 'lucide-react';
 import * as ReactRouterDOM from 'react-router-dom';
 const { Link } = ReactRouterDOM as any;
@@ -29,12 +28,12 @@ interface AdminDashboardProps {
 // ============================================================================
 // 📋 LOGIKA FOLLOW-UP (fungsi murni, di luar komponen supaya gampang diuji)
 // Tiga jenis kartu:
-//  1) SESI_5     : paket TERBARU siswa baru sampai sesi 5 (sebentar lagi evaluasi / tagih kelas lanjutan)
-//  2) SELESAI    : paket TERBARU sudah sesi 6 (6/6), maksimal 14 hari sejak sesi 6 diabsen.
+//  1) SESI_5     : paket TERBARU siswa baru sampai sesi 5 (sebentar lagi evaluasi), maksimal 30 hari sejak sesi 5 diabsen.
+//  2) SELESAI    : paket TERBARU sudah sesi 6 (6/6), maksimal 30 hari sejak sesi 6 diabsen.
 //                  Hilang lebih cepat kalau kelas lanjutan sudah dibuka (pembayaran baru TERVERIFIKASI
 //                  untuk mata pelajaran yang sama) atau guru memutuskan "Lanjut Kelas".
 //  3) NEXT_CLASS : guru memutuskan "Lanjut Kelas" tapi kelas barunya belum dibuka (belum lapor bayar /
-//                  menunggu verifikasi). Hilang saat pembayaran baru TERVERIFIKASI. Maksimal 14 hari dari tanggal klaim.
+//                  menunggu verifikasi). Hilang saat pembayaran baru TERVERIFIKASI. Maksimal 30 hari dari tanggal klaim.
 // ============================================================================
 const norm = (s: any) => String(s ?? '').trim().toUpperCase();
 // ID pembayaran = "PAY-<waktu dibuat, ms>" -> angkanya dipakai untuk membandingkan mana yang lebih baru
@@ -47,13 +46,31 @@ const subjectOf = (className: any) => {
 const daysBetween = (today: string, date: string) =>
   (new Date(today).getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24);
 
+// Berapa lama siswa bertahan di daftar follow-up. Lewat ini dianggap berhenti dan hilang dari daftar.
+const FOLLOW_UP_WINDOW_DAYS = 30;
+// "hilang N hari lagi" baru ditampilkan di sekian hari terakhir
+const EXPIRY_WARN_DAYS = 7;
+// Rapot yang menunggu guru >= sekian hari diberi warna peringatan
+const RAPOT_TELAT_HARI = 3;
+// Umur dalam hari bulat (tanggal kosong / di masa depan dianggap 0)
+const ageOf = (today: string, date: string) => {
+  const d = Math.floor(daysBetween(today, date));
+  return Number.isFinite(d) ? Math.max(0, d) : 0;
+};
+
+export type RapotStatus = 'BELUM_KLAIM' | 'DITOLAK' | 'MENUNGGU_GURU' | 'SIAP_KIRIM' | 'TERBIT';
+
 export type FollowUpItem = {
   kind: 'NEXT_CLASS' | 'SESI_5' | 'SELESAI';
   student: string;
   fullClass: string;
   lastSess: number;
   lastDate: string;
+  daysAgo: number;         // umur data: sejak sesi terakhir (SESI_5/SELESAI) atau sejak tanggal klaim (NEXT_CLASS)
+  daysLeft: number;        // sisa hari sebelum hilang dari daftar
   pendingVerify?: boolean; // khusus NEXT_CLASS: sudah ada laporan bayar baru, tinggal diverifikasi
+  rapot?: RapotStatus;     // khusus SELESAI: posisi rapot siswa
+  rapotDays?: number;      // khusus MENUNGGU_GURU: sudah berapa hari sejak siswa klaim
 };
 
 export const computeFollowUps = (
@@ -84,7 +101,23 @@ export const computeFollowUps = (
   const newerPayments = (student: string, subject: string, pkg: string) =>
     (livePaymentsByStudent.get(student) || []).filter(p => subjectOf(p.className) === subject && pkgTime(p.id) > pkgTime(pkg));
 
-  // ---- 1 & 2: kartu SESI_5 / SELESAI ----
+  // Status rapot per paket+siswa (khusus baris SELESAI). NEXT_CLASS tidak dihitung: itu jalur tanpa rapot.
+  // Kalau ada beberapa baris untuk kunci yang sama, ambil yang paling maju.
+  const RAPOT_RANK: Record<string, number> = { REPORT_REJECTED: 1, REQ: 2, REPORT_READY: 3, SESSION_LOG: 4 };
+  const rapotByKey = new Map<string, any>();
+  for (const r of reports || []) {
+    const rank = RAPOT_RANK[r.status];
+    if (!rank) continue;
+    const pkg = norm(r.packageId ?? r.packageid);
+    const names = (Array.isArray(r.studentsAttended) && r.studentsAttended.length ? r.studentsAttended : [payById.get(pkg)?.studentName]).filter(Boolean);
+    for (const n of names) {
+      const k = `${pkg}|${norm(n)}`;
+      const cur = rapotByKey.get(k);
+      if (!cur || RAPOT_RANK[cur.status] < rank) rapotByKey.set(k, r);
+    }
+  }
+
+  // ---- 1 & 2: baris SESI_5 / SELESAI ----
   // Per siswa + nama kelas, ambil PAKET TERBARU (ID pembayaran terbesar). Kalau siswa sudah
   // beli paket baru dengan nama kelas yang sama, paket lamanya tidak dihitung lagi.
   // Status ditentukan oleh NOMOR SESI TERTINGGI di paket itu (bukan tanggal, karena tanggal
@@ -112,13 +145,27 @@ export const computeFollowUps = (
     const lastSess = logs.reduce((m, l) => Math.max(m, sessOf(l)), 0);
     const lastDate = maxDate(logs.filter(l => sessOf(l) === lastSess));
 
+    const daysAgo = ageOf(today, lastDate);
+    const daysLeft = FOLLOW_UP_WINDOW_DAYS - daysAgo;
+
     if (lastSess === 5) {
-      progress.push({ kind: 'SESI_5', student: g.student, fullClass: g.fullClass, lastSess, lastDate });
-    } else if (lastSess >= 6 && daysBetween(today, lastDate) <= 14 && !nextClassPkg.has(`${pkgId}|${g.student}`)) {
+      if (daysAgo <= FOLLOW_UP_WINDOW_DAYS) {
+        progress.push({ kind: 'SESI_5', student: g.student, fullClass: g.fullClass, lastSess, lastDate, daysAgo, daysLeft });
+      }
+    } else if (lastSess >= 6 && daysAgo <= FOLLOW_UP_WINDOW_DAYS && !nextClassPkg.has(`${pkgId}|${g.student}`)) {
       // Kelas lanjutan sudah dibuka (pembayaran baru TERVERIFIKASI, mata pelajaran sama) -> tidak perlu diingatkan lagi
       const opened = pkgTime(pkgId) > 0 &&
         newerPayments(g.student, subjectOf(g.fullClass), pkgId).some(p => p.status === 'VERIFIED');
-      if (!opened) progress.push({ kind: 'SELESAI', student: g.student, fullClass: g.fullClass, lastSess, lastDate });
+      if (!opened) {
+        const rep = rapotByKey.get(`${pkgId}|${g.student}`);
+        const rapot: RapotStatus = !rep ? 'BELUM_KLAIM'
+          : rep.status === 'SESSION_LOG' ? 'TERBIT'
+          : rep.status === 'REPORT_READY' ? 'SIAP_KIRIM'
+          : rep.status === 'REQ' ? 'MENUNGGU_GURU'
+          : 'DITOLAK';
+        const rapotDays = rep?.status === 'REQ' && rep.date ? ageOf(today, rep.date) : undefined;
+        progress.push({ kind: 'SELESAI', student: g.student, fullClass: g.fullClass, lastSess, lastDate, daysAgo, daysLeft, rapot, rapotDays });
+      }
     }
   });
 
@@ -139,20 +186,51 @@ export const computeFollowUps = (
       if (seen.has(dedup)) continue;
       seen.add(dedup);
 
-      // Tanggal keputusan tidak disimpan sistem, jadi batas 14 hari dihitung dari tanggal klaim siswa
-      if (r.date && daysBetween(today, r.date) > 14) continue;
+      // Tanggal keputusan tidak disimpan sistem, jadi batas 30 hari dihitung dari tanggal klaim siswa
+      const daysAgo = r.date ? ageOf(today, r.date) : 0;
+      if (daysAgo > FOLLOW_UP_WINDOW_DAYS) continue;
 
       // Kartu bertahan sampai kelas barunya TERVERIFIKASI. Kalau sudah ada laporan bayar tapi
       // belum diverifikasi, kartu tetap tampil dengan keterangan "Menunggu verifikasi".
       const newer = newerPayments(student, subject, pkg);
       if (newer.some(p => p.status === 'VERIFIED')) continue;
 
-      next.push({ kind: 'NEXT_CLASS', student, fullClass: className || 'UMUM', lastSess: 6, lastDate: String(r.date || today), pendingVerify: newer.length > 0 });
+      next.push({ kind: 'NEXT_CLASS', student, fullClass: className || 'UMUM', lastSess: 6, lastDate: String(r.date || today), daysAgo, daysLeft: FOLLOW_UP_WINDOW_DAYS - daysAgo, pendingVerify: newer.length > 0 });
     }
   }
   next.sort((a, b) => a.lastDate.localeCompare(b.lastDate)); // yang paling lama menunggu di atas
 
-  return [...next, ...progress]; // kartu "Lanjut Kelas" paling atas karena butuh tindakan admin
+  progress.sort((a, b) => a.lastDate.localeCompare(b.lastDate)); // paling lama di atas = paling dekat hilang
+
+  return [...next, ...progress]; // "Lanjut Kelas" paling atas karena butuh tindakan admin (tampilan memisahkan per kelompok)
+};
+
+// Kelompok di daftar follow-up: judul + satu kalimat keterangan (ditulis sekali per kelompok, bukan per siswa)
+const FOLLOW_UP_SECTIONS: { kind: FollowUpItem['kind']; title: string; hint: string }[] = [
+  { kind: 'NEXT_CLASS', title: 'Guru memutuskan lanjut kelas', hint: 'Siswa bayar kalau bersedia lanjut. Admin tinggal menagih atau memverifikasi.' },
+  { kind: 'SELESAI', title: 'Selesai 6/6', hint: 'Rapot masih berjalan, atau guru belum memutuskan lanjut kelas.' },
+  { kind: 'SESI_5', title: 'Sesi 5 dari 6', hint: 'Tinggal 1 lagi, memasuki evaluasi.' }
+];
+
+const agoText = (d: number) => (d <= 0 ? 'hari ini' : `${d} hari lalu`);
+const leftText = (d: number) => (d <= 0 ? 'hilang hari ini' : `hilang ${d} hari lagi`);
+const shortDate = (d: string) => {
+  const t = new Date(d);
+  return isNaN(t.getTime()) ? '-' : t.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+};
+
+const rapotLine = (s: FollowUpItem): { text: string; warn: boolean } | null => {
+  switch (s.rapot) {
+    case 'BELUM_KLAIM': return { text: 'Rapot: belum klaim', warn: false };
+    case 'DITOLAK': return { text: 'Rapot: ditolak guru, siswa belum klaim ulang', warn: true };
+    case 'MENUNGGU_GURU': {
+      const d = s.rapotDays ?? 0;
+      return { text: d > 0 ? `Rapot: menunggu guru, ${d} hari` : 'Rapot: menunggu guru, klaim hari ini', warn: d >= RAPOT_TELAT_HARI };
+    }
+    case 'SIAP_KIRIM': return { text: 'Rapot: sudah diisi, belum dikirim guru', warn: false };
+    case 'TERBIT': return { text: 'Rapot: sudah terbit', warn: false };
+    default: return null;
+  }
 };
 
 const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, studentAttendanceLogs, reports = [], studentPayments = [] }) => {
@@ -248,56 +326,58 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
             </div>
          </div>
 
-         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 relative z-10">
-            {followUpList.length > 0 ? followUpList.map((s: any, i) => s.kind === 'NEXT_CLASS' ? (
-               <div key={`next-${i}`} className="p-10 rounded-[3.5rem] border-2 border-purple-200 bg-purple-50 hover:border-purple-400 shadow-sm hover:shadow-xl transition-all flex flex-col justify-between min-h-[280px]">
-                  <div className="flex justify-between items-start mb-6">
-                     <div className="min-w-0">
-                        <h4 className="text-xl font-black uppercase italic leading-tight truncate mb-2 text-slate-800">
-                           {s.student}
-                        </h4>
-                        <p className="text-[10px] font-bold uppercase truncate tracking-widest text-slate-400">
-                           {s.fullClass.split(' - ')[0]}
-                        </p>
-                     </div>
-                  </div>
+         <div className="relative z-10">
+            {followUpList.length > 0 ? (
+               <>
+                  <p className="text-sm text-slate-500 leading-relaxed mb-10 max-w-3xl">
+                     Setelah siswa bayar kelas lanjutan dan terverifikasi, namanya hilang dari daftar ini.
+                     Kalau 30 hari tidak ada kelanjutan (belum bayar atau tidak ada sesi baru), dianggap berhenti dan ikut hilang.
+                  </p>
 
-                  <div className="flex items-center gap-3 px-6 py-2 rounded-full border bg-purple-100 border-purple-200 shadow-sm">
-   <Rocket size={14} className="text-purple-700 shrink-0" />
-   <div className="flex flex-col gap-0.5">
-      <span className="text-[10px] font-black uppercase tracking-widest text-purple-700">
-         LANJUT KELAS
-      </span>
-      <span className="text-[9px] font-bold uppercase tracking-widest text-slate-400">
-         {s.pendingVerify ? 'Menunggu verifikasi' : 'Belum lapor bayar'}
-      </span>
-   </div>
-</div>
-               </div>
+                  <div className="space-y-10">
+                     {FOLLOW_UP_SECTIONS.map(sec => {
+                        const rows = followUpList.filter(i => i.kind === sec.kind);
+                        if (rows.length === 0) return null;
+                        return (
+                           <section key={sec.kind}>
+                              <div className="flex items-baseline gap-3">
+                                 <h4 className="text-lg font-black text-slate-800">{sec.title}</h4>
+                                 <span className="text-sm font-semibold text-slate-400">{rows.length} siswa</span>
+                              </div>
+                              <p className="text-sm text-slate-500 mt-0.5 mb-3">{sec.hint}</p>
+
+                              <ul className="divide-y divide-slate-100 border-y border-slate-100">
+                                 {rows.map((s, i) => {
+                                    const rapot = rapotLine(s);
+                                    const soon = s.daysLeft <= EXPIRY_WARN_DAYS;
+                                    // NEXT_CLASS: tanggal keputusan guru tidak disimpan, jadi N hari dihitung dari tanggal siswa klaim rapot (selisihnya biasanya kecil)
+                                    const prefix = s.kind === 'NEXT_CLASS' ? 'Lanjut kelas ' : '';
+                                    const statusText = s.kind === 'NEXT_CLASS'
+                                       ? (s.pendingVerify ? 'Menunggu verifikasi' : 'Belum lapor bayar')
+                                       : `Sesi ${s.lastSess} pada ${shortDate(s.lastDate)}`;
+                                    return (
+                                       <li key={`${s.kind}-${s.student}-${s.fullClass}-${i}`} className="flex items-center justify-between gap-6 py-4">
+                                          <div className="min-w-0">
+                                             <p className="font-bold text-slate-800 truncate">{s.student}</p>
+                                             <p className="text-sm text-slate-500 truncate">{s.fullClass.split(' - ')[0]}</p>
+                                             {rapot && <p className={`text-sm ${rapot.warn ? 'text-amber-700' : 'text-slate-500'}`}>{rapot.text}</p>}
+                                          </div>
+                                          <div className="text-right shrink-0">
+                                             <p className="text-sm text-slate-800">{statusText}</p>
+                                             <p className={`text-sm ${soon ? 'text-amber-700' : 'text-slate-500'}`}>
+                                                {prefix}{agoText(s.daysAgo)}{soon ? ` · ${leftText(s.daysLeft)}` : ''}
+                                             </p>
+                                          </div>
+                                       </li>
+                                    );
+                                 })}
+                              </ul>
+                           </section>
+                        );
+                     })}
+                  </div>
+               </>
             ) : (
-               <div key={i} className={`p-10 rounded-[3.5rem] border-2 transition-all group relative overflow-hidden flex flex-col justify-between min-h-[280px] ${s.lastSess >= 6 ? 'bg-slate-900 border-slate-800 text-white shadow-2xl' : 'bg-white border-orange-100 hover:border-orange-300 shadow-sm hover:shadow-xl'}`}>
-                  {s.lastSess >= 6 && <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -mr-12 -mt-12"></div>}
-                  
-                  <div className="flex justify-between items-start mb-6">
-                     <div className="min-w-0">
-                        <h4 className={`text-xl font-black uppercase italic leading-tight truncate mb-2 ${s.lastSess >= 6 ? 'text-white' : 'text-slate-800'}`}>
-                           {s.student}
-                        </h4>
-                        <p className={`text-[10px] font-bold uppercase truncate tracking-widest ${s.lastSess >= 6 ? 'text-slate-400' : 'text-slate-400'}`}>
-                           {s.fullClass.split(' - ')[0]}
-                        </p>
-                     </div>
-                  </div>
-
-                  <div className={`inline-flex items-center gap-3 px-6 py-3 rounded-full text-[10px] font-black uppercase tracking-widest border transition-all ${s.lastSess >= 6 ? 'bg-white/10 border-white/20 text-white shadow-lg' : 'bg-orange-50 border-orange-100 text-orange-600 shadow-sm'}`}>
-                     {s.lastSess >= 6 ? (
-                       <><Zap size={14} className="text-yellow-400 fill-yellow-400"/> SUDAH SELESAI: 6/6</>
-                     ) : (
-                       <><Clock size={14} /> PROGRES: SESI 5 / 6</>
-                     )}
-                  </div>
-               </div>
-            )) : (
                <div className="col-span-full py-24 flex flex-col items-center justify-center opacity-20 text-center gap-6">
                   <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center">
                      <UserCheck size={64} className="text-slate-300" />
