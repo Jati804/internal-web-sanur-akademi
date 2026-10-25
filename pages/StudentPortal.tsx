@@ -1437,10 +1437,9 @@ const completedSessions = studentAttendanceLogs
               const isWaitingRelease = !!reportLog && reportLog.status === 'REPORT_READY';
               const courseLogs = myReports.filter(r => r.packageId === course.id);  // ✅ GANTI myLogs → myReports!
               const isRequesting = courseLogs.some(r => r.status === 'REQ');
-              const isProcessing = courseLogs.some(r => r.status === 'REPORT_PROCESSING');
               const isRejected = courseLogs.some(r => r.status === 'REPORT_REJECTED');
               const isNextClass = courseLogs.some(r => r.status === 'NEXT_CLASS');
-              const requestingLog = courseLogs.find(r => r.status === 'REQ' || r.status === 'REPORT_PROCESSING' || r.status === 'REPORT_REJECTED' || r.status === 'REPORT_READY');
+              const requestingLog = courseLogs.find(r => r.status === 'REQ' || r.status === 'REPORT_REJECTED' || r.status === 'REPORT_READY');
               const teacherDisplay = requestingLog ? (teachers.find(t => t.id === (requestingLog.teacherId || requestingLog.teacherid))?.name || requestingLog.teachername || null) : null;
               const displayMaxSess = (isReportPublished || isWaitingRelease) ? 6 : maxSess;
               const progressPercent = Math.min((displayMaxSess / 6) * 100, 100);
@@ -1449,7 +1448,6 @@ const completedSessions = studentAttendanceLogs
               const themeColorClass = isReportPublished 
                 ? (isPass ? 'bg-blue-600' : 'bg-orange-600')
                 : isWaitingRelease ? 'bg-amber-500' 
-                : isProcessing ? 'bg-orange-500' 
                 : isRequesting ? 'bg-amber-500' 
                 : isNextClass ? 'bg-purple-600'
                 : isRejected ? 'bg-rose-500' 
@@ -1458,19 +1456,18 @@ const completedSessions = studentAttendanceLogs
               const badgeText = isReportPublished 
                 ? (isPass ? 'LULUS 🎓' : 'REMEDIAL 📜') 
                 : isWaitingRelease ? 'SIAP TERBIT' 
-                : isProcessing ? 'SEDANG DI PROSES' 
-                : isRequesting ? 'MENUNGGU PERSETUJUAN' 
+                : isRequesting ? 'MENUNGGU PENILAIAN' 
                 : isNextClass ? 'LANJUT KELAS BERIKUTNYA 🚀'
                 : isRejected ? 'DI TOLAK' 
                 : 'PAKET AKTIF ✨';
 
               return (
-                <div key={course.id || idx} className={`bg-white rounded-[3rem] border-2 border-slate-50 shadow-2xl transition-all duration-500 overflow-hidden ${isReportPublished ? (isPass ? 'hover:border-blue-500' : 'hover:border-orange-500') : isNextClass ? 'hover:border-purple-500' : (isRequesting || isWaitingRelease || isProcessing) ? 'hover:border-amber-400' : 'hover:border-emerald-500'}`}>
+                <div key={course.id || idx} className={`bg-white rounded-[3rem] border-2 border-slate-50 shadow-2xl transition-all duration-500 overflow-hidden ${isReportPublished ? (isPass ? 'hover:border-blue-500' : 'hover:border-orange-500') : isNextClass ? 'hover:border-purple-500' : (isRequesting || isWaitingRelease) ? 'hover:border-amber-400' : 'hover:border-emerald-500'}`}>
                    <div className="p-8 md:p-12 flex flex-col lg:flex-row items-center gap-10">
                       <div className="flex-1 space-y-6 text-center lg:text-left w-full lg:w-auto">
                         <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                            <div className={`w-16 h-16 mx-auto lg:mx-0 ${themeColorClass} text-white rounded-2xl flex items-center justify-center shadow-lg transition-colors`}>
-                              {isReportPublished ? (isPass ? <BadgeCheck size={32} /> : <AlertTriangle size={32} />) : isWaitingRelease ? <Clock size={32} /> : isRequesting ? <Clock size={32} /> : isProcessing ? <Edit3 size={32} /> : isNextClass ? <ArrowRight size={32} /> : isRejected ? <AlertTriangle size={32} /> : <BookOpen size={32} />}
+                              {isReportPublished ? (isPass ? <BadgeCheck size={32} /> : <AlertTriangle size={32} />) : isWaitingRelease ? <Clock size={32} /> : isRequesting ? <Clock size={32} /> : isNextClass ? <ArrowRight size={32} /> : isRejected ? <AlertTriangle size={32} /> : <BookOpen size={32} />}
                            </div>
                            <span className={`inline-flex px-5 py-1.5 mx-auto lg:mx-0 ${themeColorClass} text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-md transition-colors`}>
                               {badgeText}
@@ -1482,7 +1479,7 @@ const completedSessions = studentAttendanceLogs
                         </div>
                         <div className="space-y-2">
                            <div className="h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 shadow-inner">
-                              <div className={`h-full rounded-full transition-all duration-1000 ${isReportPublished ? (isPass ? 'bg-blue-500 shadow-[0_0_10px_rgba(37,99,235,0.4)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]') : isNextClass ? 'bg-purple-600 shadow-[0_0_10px_rgba(147,51,234,0.4)]' : (isRequesting || isWaitingRelease || isProcessing) ? 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.4)]' : 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]'}`} style={{ width: `${progressPercent}%` }}></div>
+                              <div className={`h-full rounded-full transition-all duration-1000 ${isReportPublished ? (isPass ? 'bg-blue-500 shadow-[0_0_10px_rgba(37,99,235,0.4)]' : 'bg-orange-500 shadow-[0_0_10px_rgba(249,115,22,0.4)]') : isNextClass ? 'bg-purple-600 shadow-[0_0_10px_rgba(147,51,234,0.4)]' : (isRequesting || isWaitingRelease) ? 'bg-amber-400 shadow-[0_0_10px_rgba(251,191,36,0.4)]' : 'bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.4)]'}`} style={{ width: `${progressPercent}%` }}></div>
                            </div>
                            <p className="text-[9px] font-black uppercase text-slate-400 text-center lg:text-left">{displayMaxSess}/6 SESI</p>
                         </div>
@@ -1563,25 +1560,7 @@ const completedSessions = studentAttendanceLogs
     </div>
     <div className="bg-amber-50 p-6 rounded-[2rem] border border-amber-100 flex items-center gap-4">
       <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-amber-600 shrink-0"><Clock size={20}/></div>
-      <div><p className="text-[10px] font-black text-amber-800 uppercase italic leading-none">Sedang Meminta Persetujuan Guru Untuk Rapot</p>{teacherDisplay && <p className="text-[9px] font-black text-amber-700 mt-0.5">Guru: {teacherDisplay}</p>}<p className="text-[9px] font-bold text-amber-600 uppercase mt-1">Tunggu Guru Menerima Permintaanmu Ya ✨</p></div>
-    </div>
-  </div>
-) : isProcessing ? (
-  <div className="space-y-4">
-    <div className="grid grid-cols-6 gap-2">
-      {[1, 2, 3, 4, 5, 6].map(sNum => {
-        const doneLog = completedSessions.find(s => s.num === sNum);
-        return (
-          <div key={sNum} className={`w-full p-2 h-20 md:h-24 rounded-2xl font-black border-2 flex flex-col items-center justify-center gap-1.5 ${doneLog ? 'bg-white border-orange-400 text-orange-600' : 'bg-slate-50 border-transparent text-slate-200 opacity-40'}`}>
-            {doneLog ? (<><p className="text-[8px] font-black mb-1 leading-none text-orange-500">{formatDateToDMY(doneLog.date)}</p><Check size={16} strokeWidth={4}/></>) : (<span className="text-xl">{sNum}</span>)}
-            <p className="text-[6px] md:text-[7px] font-black uppercase">{doneLog ? 'DONE' : `SESI ${sNum}`}</p>
-          </div>
-        );
-      })}
-    </div>
-    <div className="bg-orange-50 p-6 rounded-[2rem] border border-orange-100 flex items-center gap-4">
-      <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center text-orange-600 shrink-0"><Edit3 size={20}/></div>
-      <div><p className="text-[10px] font-black text-orange-800 uppercase italic leading-none">Sedang Di Proses</p>{teacherDisplay && <p className="text-[9px] font-black text-orange-700 mt-0.5">Guru: {teacherDisplay}</p>}<p className="text-[9px] font-bold text-orange-600 uppercase mt-1">Sertifikat & Rapotmu Sedang Diisi Oleh Guru ✨</p></div>
+      <div><p className="text-[10px] font-black text-amber-800 uppercase italic leading-none">Permintaan Rapotmu Sudah Masuk Ke Guru</p>{teacherDisplay && <p className="text-[9px] font-black text-amber-700 mt-0.5">Guru: {teacherDisplay}</p>}<p className="text-[9px] font-bold text-amber-600 uppercase mt-1">Tunggu Guru Mengisi Rapotmu Ya ✨</p></div>
     </div>
   </div>
 ) : isRejected ? (
@@ -1628,7 +1607,7 @@ const completedSessions = studentAttendanceLogs
                                           )}
                                           <p className="text-[6px] md:text-[7px] font-black uppercase">{doneLog ? 'DONE' : `SESI ${sNum}`}</p>
                                        </button>
-                                       {!!doneLog && !isRequesting && !isProcessing && !isNextClass && !isRejected && !isWaitingRelease && (
+                                       {!!doneLog && !isRequesting && !isNextClass && !isRejected && !isWaitingRelease && (
                                           <button 
                                             onClick={(e) => { 
                                               e.stopPropagation(); 
