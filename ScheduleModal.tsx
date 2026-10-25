@@ -1,780 +1,135 @@
-// FORCE REBUILD - CLEAR CACHE v3.1 - ANTI PORTRAIT MODE
-import React, { useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
-import * as ReactRouterDOM from 'react-router-dom';
-const { BrowserRouter, Routes, Route, Navigate, Link, useLocation, useNavigate } = ReactRouterDOM as any;
-const Router = BrowserRouter;
+import React, { useMemo } from 'react';
+import { CalendarDays, X } from 'lucide-react';
+import { DAYS, sortSchedule, fmtRange, stripPelatihan } from './pages/AdminAcademic.tsx';
+import type { ScheduleItem } from './pages/AdminAcademic.tsx';
 
-import { 
-  LayoutDashboard, Receipt, Menu, CreditCard, BookOpen, UserCog, 
-  ClipboardCheck, Wallet, GraduationCap, Power, 
-  Settings as SettingsIcon, Database, X,
-  Sparkles, HelpCircle, Info, RotateCw, Library, UserSearch, CalendarDays, ChevronDown
-} from 'lucide-react';
+// ============================================================================
+// 🗓️ JADWAL SAYA (read-only)
+// Muncul dari tombol kalender di header (guru & siswa). Jadwal diambil dari
+// `settings` (key: class_schedule) yang sudah di-fetch App, lalu DISARING:
+//   - Guru  -> hanya jadwal yang teacherId-nya = akun yang login
+//   - Siswa -> hanya jadwal yang daftar pesertanya memuat akun yang login
+// Siswa tidak melihat nama teman sekelas. Guru melihat siswanya sendiri.
+// ============================================================================
 
-import { supabase, waitForActiveSession } from './services/supabase.ts';
-import { useAutoRefreshOnDeploy } from './hooks/useAutoRefreshOnDeploy.ts';
+interface ScheduleModalProps {
+  user: any;
+  schedule: ScheduleItem[];
+  teachers: any[];
+  studentAccounts: any[];
+  color: string; // kelas warna peran, mis. 'bg-orange-500'
+  onClose: () => void;
+}
 
-import LoginPage from './pages/LoginPage.tsx';
-import AdminDashboard from './pages/AdminDashboard.tsx';
-import AdminFinance from './pages/AdminFinance.tsx';
-import AdminReceipts from './pages/AdminReceipts.tsx';
-import AdminStaff from './pages/AdminStaff.tsx';
-import AdminAcademic from './pages/AdminAcademic.tsx';
-import ScheduleModal from './ScheduleModal.tsx';
-import AdminMaintenance from './pages/AdminMaintenance.tsx';
-import TeacherDashboard from './pages/TeacherDashboard.tsx';
-import TeacherHonor from './pages/TeacherHonor.tsx';
-import TeacherReportsInbox from './pages/TeacherReportsInbox.tsx';
-import TeacherStudentSearch from './pages/TeacherStudentSearch.tsx';
-import StudentPortal from './pages/StudentPortal.tsx';
-import VerifyCertificate from './pages/VerifyCertificate.tsx';
-import MateriPage from './pages/MateriPage.tsx';
+const isPrivateRoom = (room: string) => /PRIVATE|PRIVAT|HOME TUTORING/i.test(room || '');
 
-import { User, Attendance, Transaction, StudentPayment } from './types.ts';
-import { INITIAL_SUBJECTS, CLASS_ROOM_OPTIONS } from './constants.tsx';
+const ScheduleModal: React.FC<ScheduleModalProps> = ({ user, schedule, teachers, studentAccounts, color, onClose }) => {
+  const myId = String(user?.id ?? '');
+  const isTeacher = user?.role === 'TEACHER';
+  // Warna teks aksen mengikuti warna peran (warna latar header modal)
+  const accentText = ({ 'bg-orange-500': 'text-orange-600', 'bg-emerald-600': 'text-emerald-600', 'bg-blue-600': 'text-blue-600' } as Record<string, string>)[color] || 'text-slate-600';
 
-const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }: { to: string, icon: any, label: string, activeColor?: string, onClick?: () => void, badge?: number }) => {
-  const location = useLocation();
-  const isActive = location.pathname === to;
-  const colors: any = {
-    blue: isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-blue-600',
-    emerald: isActive ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:text-emerald-600',
-    orange: isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-blue-600',
-  };
+  const teacherById = useMemo(() => new Map((teachers || []).map((t: any) => [String(t.id), t])), [teachers]);
+  const studentById = useMemo(() => new Map((studentAccounts || []).map((s: any) => [String(s.id), s])), [studentAccounts]);
+
+  const teacherName = (it: ScheduleItem) => teacherById.get(String(it.teacherId))?.name || it.teacherName || '-';
+  const personName = (p: { id: string; name: string }) => studentById.get(String(p.id))?.name || p.name;
+
+  // Hari ini (JS: 0 = Minggu) -> indeks DAYS (0 = Senin)
+  const todayName = DAYS[(new Date().getDay() + 6) % 7];
+
+  const groups = useMemo(() => {
+    const mine = (Array.isArray(schedule) ? schedule : []).filter(it =>
+      isTeacher
+        ? String(it.teacherId) === myId
+        : (it.participants || []).some(p => String(p.id) === myId)
+    );
+    const sorted = sortSchedule(mine);
+    const byDay = DAYS.map(day => ({ day, list: sorted.filter(i => i.day === day) })).filter(g => g.list.length > 0);
+    // urut Senin-Minggu, hari ini cuma diberi penanda "Hari ini"
+    return byDay;
+  }, [schedule, isTeacher, myId, todayName]);
+
   return (
-    <Link 
-      to={to} 
-      onClick={onClick}
-      className={`flex items-center justify-between gap-3 px-6 py-4 font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all ${colors[activeColor]}`}
+    <div
+      data-modal-container
+      className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in"
+      onClick={onClose}
     >
-      <div className="flex items-center gap-3">
-        <Icon size={18} />
-        {label}
-      </div>
-{badge && badge > 0 ? (
-  <span className="bg-rose-500 text-white text-[9px] px-2 py-1 min-w-[20px] text-center rounded-full animate-pulse shadow-lg shadow-rose-200">{badge}</span>
-) : null}
-    </Link>
-  );
-};
-
-const NavSection = ({ label, first }: { label: string, first?: boolean }) => (
-  <p className={`px-6 mb-2 text-[9px] font-black text-slate-300 uppercase tracking-widest ${first ? '' : 'mt-3'}`}>
-    {label}
-  </p>
-);
-
-const GuideModal = ({ role, onClose }: { 
-  role: string, 
-  onClose: () => void
-}) => {
-  const content = {
-    ADMIN: {
-      steps: [
-        { title: 'Dashboard', desc: 'Lihat ringkasan data sekolah: statistik siswa, guru, dan keuangan dalam satu tampilan di menu "Dashboard".' },
-        { title: 'Verifikasi SPP', desc: 'Cek bukti bayar siswa di tab "Keuangan" -> "Verif SPP". Klik konfirmasi agar paket aktif.' },
-        { title: 'Bayar Honor', desc: 'Cairkan gaji guru di tab "Keuangan" -> "Gaji Guru" & upload bukti transfer untuk mengurangi saldo kas.' },
-        { title: 'Kuitansi', desc: 'Buat & cetak kuitansi pemasukan dan pembayaran di menu "Kuitansi".' },
-        { title: 'Buku Induk', desc: 'Daftarkan siswa baru atau update data kontak orang tua di menu "Buku Induk".' },
-        { title: 'Akses User', desc: 'Kelola akun login guru & siswa — buat, edit, atau reset password di menu "Akses User".' },
-        { title: 'Pengaturan', desc: 'Atur mata pelajaran, kelas, level, jadwal master, dan tarif honor guru di menu "Pengaturan".' },
-        { title: 'Materi', desc: 'Upload & kelola bahan ajar yang bisa diakses guru maupun siswa di menu "Materi".' },
-        { title: 'Maintenance', desc: 'Hapus gambar bukti pembayaran dan aktifkan mode maintenance saat sedang perbaikan.' }
-      ],
-      faqs: [
-        { q: 'Guru komplain honornya kurang padahal ngajar 6x?', a: 'Cek riwayat "Berhalangan Mengajar" di paket itu — kemungkinan sebagian sesi didelegasikan, honornya otomatis pindah ke guru pengganti.' },
-        { q: 'Siswa nggak bisa akses kelasnya?', a: 'Cek status di Verif SPP (mungkin belum dikonfirmasi).' },
-        { q: 'Guru dan siswa nggak bisa login?', a: 'Cek Akses User — mungkin siswa dan guru akunnya belum dibuat, atau username dan sandinya keliru.' },
-        { q: 'Guru bilang kelasnya belum ada?', a: 'Tambahkan lewat Data Master di menu Pengaturan Akademik — ini murni tugas Pengurus, sistem nggak bikin otomatis.' }
-      ]
-    },
-    TEACHER: {
-      steps: [
-        { title: 'Lapor Presensi', desc: 'Lapor setiap selesai mengajar. Sistem otomatis mendeteksi sesi 1-6 dalam satu paket.' },
-        { title: 'Guru Pengganti', desc: 'Jika digantikan teman, gunakan tombol "Berhalangan". Honor akan otomatis beralih ke temanmu.' },
-        { title: 'Pantau Honor', desc: 'Lihat status honor cair & unduh slip gaji digital resmi di menu "Honor Saya".' },
-        { title: 'Materi', desc: 'Pantau & akses bahan ajar di menu "Materi".' },
-        { title: 'Jadwal', desc: 'Tekan tombol Jadwal di samping namamu untuk melihat jadwal mengajarmu.' },
-        { title: 'Pantau Siswa', desc: 'Cari nama siswa lalu tekan ikon pin 📌 untuk memantau progres sesinya, berguna untuk tahu kapan giliran eval sesi 6.' },
-        { title: 'Proses Rapot', desc: 'Terima pengajuan rapot dan isi data rapot siswa.' }
-      ],
-      faqs: [
-        { q: 'Kelas saya belum muncul, ini kenapa?', a: 'Mata Pelajaran & Peta Ruangan itu diatur Pengurus di portalnya lewat menu Pengaturan Akademik — bukan otomatis dari sistem, jadi jika matkulnya belum ada hubungi Pengurus yaa.' },
-        { q: 'Kenapa honor saya kurang dari biasanya?', a: 'Bisa jadi ada sesi yang dipegang teman lewat "Berhalangan Mengajar" — cek tracker Honor Saya, sesi itu otomatis pindah honornya ke pengajar yang menggantikan.' },
-        { q: 'Kenapa saya nggak absenin siswa?', a: 'Presensi siswa dilakukan mandiri oleh mereka sendiri di portal siswa — tugas pengajar cukup lapor sesi mengajar sendiri.' },
-        { q: 'Kenapa progres siswa di Pantau Siswa kadang beda dengan yang saya ajar?', a: 'Progres di sana diambil dari absen mandiri siswa, bukan dari laporan presensimu.' },
-        { q: 'Antrean rapot ini dari mana asalnya?', a: 'Muncul otomatis begitu siswa klik "Klaim Rapot" di portal siswa, biasanya saat presensi siswa udah 6/6.' }
-      ]
-    },
-    STUDENT: {
-      steps: [
-        { title: 'Lapor Bayar', desc: 'Upload bukti transfer di menu "Pembayaran" agar Admin bisa mengaktifkan paket belajarmu.' },
-        { title: 'Presensi Mandiri', desc: 'Presensi dilakukan secara mandiri, kamu bisa klik nomor sesi di "Kelas Saya" untuk lapor progres.' },
-        { title: 'Materi', desc: 'Akses bahan ajar dari guru di menu "Materi".' },
-        { title: 'Jadwal', desc: 'Tekan tombol Jadwal di samping namamu untuk melihat jadwal belajarmu.' },
-        { title: 'Klaim Rapot', desc: 'Tombol Klaim muncul saat progres 6/6. Pilih guru pembimbingmu untuk meminta penilaian.' },
-        { title: 'Unduh Rapot', desc: 'Sertifikat & Rapot PDF bisa diunduh di tab "Kelas Saya" setelah guru selesai menilai.' }
-      ],
-      faqs: [
-        { q: 'Kenapa paket belajar saya belum aktif?', a: 'Pengurus masih perlu verifikasi bukti bayar kamu dulu, mohon ditunggu yaa, setelah pengurus memverifikasi pembayaranmu, paket belajar akan otomatis aktif.' },
-        { q: 'Kenapa saya harus presensi mandiri?', a: 'Karena itu syarat untuk bisa ajukan Klaim Rapot — tanpa presensi lengkap, progresmu tidak full 6 kali pertemuan dan hasil belajarmu (rapot & sertifikat) nggak bisa diproses.' },
-        { q: 'Kenapa pas Klaim Rapot saya harus pilih guru?', a: 'Itu kolom "Guru Pembimbing" — pilih guru yang paling sering ngajar kamu di kelas tersebut, karena dialah yang bakal isi & nilai rapotmu.' },
-        { q: 'Kapan tombol Klaim Rapot muncul?', a: 'Begitu progres sesimu sampai 6/6, tombolnya otomatis aktif — semangat menuju sana!' }
-      ]
-    }
-  }[role] || { steps: [], faqs: [] };
-
-  const [activeTab, setActiveTab] = useState<'panduan' | 'faq'>('panduan');
-  const guideContentRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (guideContentRef.current) {
-      guideContentRef.current.scrollTop = 0;
-    }
-  }, [activeTab]);
-
-  return (
-    <div data-modal-container className="fixed inset-0 z-[100000] flex items-center justify-center p-6 bg-slate-900/60 backdrop-blur-md animate-in fade-in" onClick={onClose}>
-      <div className="bg-white w-full max-w-sm rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
+      <div className="bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden flex flex-col max-h-[85vh]" onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div className="p-8 bg-white border-b-2 border-slate-200 flex items-center justify-between shrink-0">
-  <div className="flex items-center gap-3">
-    <HelpCircle size={24} className="text-blue-600" />
-    <h3 className="text-lg font-black uppercase italic tracking-tighter text-blue-600">Panduan Sistem</h3>
-  </div>
-  <button onClick={onClose} aria-label="Tutup" className="w-10 h-10 shrink-0 rounded-full bg-white border-[1.5px] border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-300 hover:bg-rose-50 active:text-rose-600 active:border-rose-300 active:bg-rose-50 flex items-center justify-center transition-colors">
-    <X size={20} />
-  </button>
-</div>
-
-        {/* Tab Switcher */}
-        <div className="flex gap-2 px-8 pt-6 shrink-0">
-          <button onClick={() => setActiveTab('panduan')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'panduan' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>
-            Panduan
-          </button>
-          <button onClick={() => setActiveTab('faq')} className={`flex-1 py-3 rounded-xl font-black text-[10px] uppercase tracking-widest transition-all ${activeTab === 'faq' ? 'bg-blue-600 text-white shadow-lg' : 'bg-slate-100 text-slate-400'}`}>
-            FAQ
+        <div className="px-8 py-6 bg-white border-b-2 border-slate-200 flex items-center justify-between shrink-0">
+          <div className="flex items-center gap-3">
+            <CalendarDays size={24} className={accentText} />
+            <div>
+              <h3 className={`text-lg font-black uppercase italic tracking-tighter leading-none ${accentText}`}>Jadwal Saya</h3>
+              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 mt-1.5">
+                {isTeacher ? 'Jadwal mengajar' : 'Jadwal belajar'}
+              </p>
+            </div>
+          </div>
+          <button onClick={onClose} aria-label="Tutup" className="w-10 h-10 shrink-0 rounded-full bg-white border-[1.5px] border-slate-200 text-slate-400 hover:text-rose-600 hover:border-rose-300 hover:bg-rose-50 active:text-rose-600 active:border-rose-300 active:bg-rose-50 flex items-center justify-center transition-colors">
+            <X size={20} />
           </button>
         </div>
 
-        {/* Content Area */}
-        <div ref={guideContentRef} className="flex-1 overflow-y-auto custom-scrollbar p-8">
-          {activeTab === 'panduan' ? (
-            <div className="space-y-6">
-              {content.steps.map((s, i) => (
-                <div key={i} className="flex gap-4">
-                  <div className={`w-8 h-8 rounded-full bg-blue-600 text-white flex items-center justify-center font-black italic shrink-0 text-xs shadow-md`}>0{i+1}</div>
-                  <div className="space-y-1">
-                    <h4 className={`text-xs font-black uppercase tracking-widest text-blue-600`}>{s.title}</h4>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase leading-relaxed">{s.desc}</p>
-                  </div>
-                </div>
-              ))}
-              <div className="pt-4 border-t border-slate-50">
-                <div className="bg-slate-50 p-4 rounded-2xl flex items-center gap-3">
-                  <Info size={16} className="text-slate-400 shrink-0" />
-                  <p className="text-[9px] font-black text-slate-400 uppercase leading-tight italic">Hubungi Admin jika ada kendala teknis lebih lanjut ya! ✨</p>
-                </div>
-              </div>
+        {/* Isi */}
+        <div className="flex-1 overflow-y-auto custom-scrollbar p-8 space-y-7">
+          {groups.length === 0 ? (
+            <div className="py-10 text-center space-y-2">
+              <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">Belum ada jadwal untukmu</p>
+              <p className="text-[11px] font-bold text-slate-300">Hubungi Pengurus kalau jadwalmu belum terdaftar ya.</p>
             </div>
           ) : (
-            <div className="space-y-4">
-              {content.faqs.map((f, i) => (
-                <div key={i} className="bg-slate-50 p-4 rounded-2xl space-y-1.5">
-                  <h4 className={`text-xs font-black tracking-tight text-blue-600`}>{f.q}</h4>
-                  <p className="text-[10px] font-bold text-slate-400 leading-relaxed">{f.a}</p>
+            groups.map(g => (
+              <section key={g.day} className="space-y-3">
+                <div className="flex items-center gap-3 px-1">
+                  <h4 className="text-sm font-black text-slate-800 uppercase italic tracking-tight">{g.day}</h4>
+                  {g.day === todayName && (
+                    <span className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest">
+                      <span className={`w-1.5 h-1.5 rounded-full ${color}`} /> 
+                      <span className="text-slate-400">Hari ini</span>
+                    </span>
+                  )}
                 </div>
-              ))}
-            </div>
+                <div className="space-y-2">
+                  {g.list.map(it => {
+                    const priv = isPrivateRoom(it.room);
+                    const people = it.participants || [];
+                    return (
+                      <div key={it.id} className="flex gap-4 bg-slate-50 border border-slate-100 rounded-[1.5rem] px-5 py-4">
+                        <p className="w-[5.5rem] shrink-0 text-xs font-black text-slate-800 leading-snug">{fmtRange(it.start, it.end)}</p>
+                        <div className="min-w-0 flex-1 space-y-1.5">
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-xs font-black text-slate-800 uppercase italic">{stripPelatihan(it.subject)}</p>
+                            <span className={`px-3 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest text-white ${priv ? 'bg-orange-500' : 'bg-blue-900'}`}>{it.room}</span>
+                          </div>
+                          {!isTeacher && (
+                            <p className="text-[11px] font-bold text-slate-500">{teacherName(it)}</p>
+                          )}
+                          {isTeacher && people.length > 0 && (
+                            <div className={`text-[11px] font-semibold space-y-0.5 ${priv ? 'text-orange-600' : 'text-blue-900/70'}`}>
+                              {people.map((p, k) => (
+                                <p key={p.id + k}>{people.length > 1 ? `${k + 1}. ` : ''}{personName(p)}</p>
+                              ))}
+                            </div>
+                          )}
+                          {it.note && (
+                            <p className="inline-block px-3 py-1 bg-white border border-slate-200 rounded-xl text-[10px] font-semibold italic text-slate-500">“{it.note}”</p>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </section>
+            ))
           )}
         </div>
+
       </div>
     </div>
   );
 };
 
-// 🔥 MODAL ANTI PORTRAIT - NUTUPIN LAYAR KALO PORTRAIT
-const PortraitBlocker = () => {
-  return (
-    <div className="fixed inset-0 z-[999999] bg-white flex items-center justify-center p-8">
-      <div className="text-center space-y-8 max-w-sm animate-in fade-in">
-        <div className="relative flex items-center justify-center w-24 h-24 bg-slate-50 rounded-[2rem] mx-auto shadow-sm">
-          <div className="text-5xl">📱</div>
-          <RotateCw size={20} className="absolute -bottom-2 -right-2 text-blue-600 animate-spin bg-white rounded-full p-1 shadow-md" style={{ animationDuration: '3s' }} />
-        </div>
-        <div className="space-y-3">
-          <h1 className="text-2xl font-black uppercase tracking-tight text-slate-800 leading-tight">Putar Layar<br/>ke Horizontal</h1>
-          <div className="h-0.5 w-16 bg-slate-200 rounded-full mx-auto"></div>
-          <p className="text-sm font-semibold text-slate-400 leading-relaxed">
-            Untuk pengalaman terbaik di HP,<br/>
-            gunakan mode <span className="font-black text-blue-600">LANDSCAPE</span> ya!
-          </p>
-        </div>
-        <div className="bg-slate-50 rounded-2xl p-5 border border-slate-100">
-          <p className="text-xs font-bold text-slate-400 uppercase tracking-wide leading-relaxed">
-            📲 Tablet & HP: Horizontal / Landscape<br/>
-            💻 Laptop & Komputer: Otomatis OK
-          </p>
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const AppContent = ({ 
-  user, setUser, attendanceLogs, setAttendanceLogs, studentAttendanceLogs, setStudentAttendanceLogs, teachers, setTeachers, studentAccounts, setStudentAccounts, transactions, setTransactions, studentPayments, setStudentPayments, reports, setReports, subjects, setSubjects, classes, setClasses, levels, setLevels, salaryConfig, setSalaryConfig, isSidebarOpen, setIsSidebarOpen, isSyncing, connectionError, refreshAllData, schedule
-}: any) => {
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [showGuide, setShowGuide] = useState(false);
-  const [showSchedule, setShowSchedule] = useState(false);
-
-  // 🔧 FIX SCROLL NEMPEL: div "flex-1 overflow-y-auto" di bawah nggak ke-remount
-  // pas ganti menu (React Router cuma nge-swap konten <Routes> di dalamnya),
-  // jadi posisi scroll lama kebawa ke halaman baru. Reset ke atas tiap pindah route.
-  const contentRef = useRef<HTMLDivElement>(null);
-  useLayoutEffect(() => {
-    contentRef.current?.scrollTo({ top: 0, left: 0, behavior: 'auto' });
-  }, [location.pathname]);
-
-  // 🎯 DETEKSI DOMAIN - FUTURE PROOF!
-  // Vercel domain (.vercel.app) = verify only
-  // Domain lain apapun = full feature
-  const isVercelDomain = window.location.hostname.includes('vercel.app');
-  
-  // 🔥 STATE DETEKSI PORTRAIT
-  const [isPortrait, setIsPortrait] = useState(false);
-
-  // 🔥 DETEKSI ORIENTASI LAYAR
-  useEffect(() => {
-    const checkOrientation = () => {
-      const width = window.innerWidth;
-      const height = window.innerHeight;
-      
-      // 🎯 KHUSUS HALAMAN VERIFY: BOLEH PORTRAIT & LANDSCAPE
-      if (location.pathname === '/verify') {
-        setIsPortrait(false); // Gak tampilkan blocker
-        return;
-      }
-      
-      // Halaman lain: Tetep wajib landscape (horizontal)
-      const isMobileTablet = width <= 1024;
-      const isPortraitMode = height > width;
-      
-      setIsPortrait(isMobileTablet && isPortraitMode);
-    };
-    
-    checkOrientation();
-    window.addEventListener('resize', checkOrientation);
-    window.addEventListener('orientationchange', checkOrientation);
-    
-    return () => {
-      window.removeEventListener('resize', checkOrientation);
-      window.removeEventListener('orientationchange', checkOrientation);
-    };
-  }, [location.pathname]);
-
-  // 🔒 Saat user berubah dari login -> null karena logout otomatis (sesi mati),
-  // arahkan URL ke '/' supaya login berikutnya (termasuk beda peran) tidak
-  // mendarat di URL halaman lama yang tidak cocok. Hook ini sengaja ditaruh
-  // SEBELUM early return di bawah (aturan hooks).
-  const prevUserRef = useRef(user);
-  useEffect(() => {
-    if (prevUserRef.current && !user) {
-      navigate('/', { replace: true });
-    }
-    prevUserRef.current = user;
-  }, [user, navigate]);
-
-  // 🔥 KALO PORTRAIT -> TAMPILKAN BLOCKER (PRIORITAS TERTINGGI)
-  if (isPortrait) {
-    return <PortraitBlocker />;
-  }
-  
-  const closeSidebar = () => setIsSidebarOpen(false);
-
-  const executeLogout = () => {
-    // scope 'local': hanya browser ini yang keluar. Akun yang sama di perangkat
-    // lain (pengurus lain, teknisi, dll) tetap login. Bawaan Supabase 'global'
-    // akan mematikan sesi di SEMUA perangkat.
-    supabase.auth.signOut({ scope: 'local' });
-    localStorage.removeItem('sanur_user');
-    setUser(null);
-    navigate('/', { replace: true });
-  };
-
-const pendingReportsCount = Array.isArray(reports) ? 
-  reports.filter((r: any) => 
-    (r.status === 'REQ' || r.status === 'REPORT_PROCESSING') && 
-    r.teacherId === user?.id
-  ).length : 0;
-
-  // 🎯 VERCEL DOMAIN: Hanya tampilkan verify page, block semua yang lain
-  if (isVercelDomain) {
-    if (location.pathname === '/verify') {
-      return <VerifyCertificate />;
-    }
-    // Kalau bukan /verify di Vercel domain, paksa redirect ke /verify
-    return <Navigate to="/verify" replace />;
-  }
-  
-  // 🎯 DOMAIN UTAMA Handle /verify secara normal
-  if (location.pathname === '/verify') return <VerifyCertificate />;
-  
-  if (!user) return (
-    <LoginPage 
-      onLogin={(u: User) => { setUser(u); localStorage.setItem('sanur_user', JSON.stringify(u)); }} 
-      teachers={teachers} 
-      studentAccounts={studentAccounts}
-      connectionError={connectionError}
-      isSyncing={isSyncing}
-    />
-  );
-
-  const roleGuideColor = {
-    ADMIN: 'bg-blue-600',
-    TEACHER: 'bg-orange-500',
-    STUDENT: 'bg-emerald-600'
-  }[user.role as string] || 'bg-slate-600';
-
-  // Warna ikon kalender di pil jadwal mengikuti peran
-  const roleScheduleBtn = {
-    TEACHER: 'text-orange-600',
-    STUDENT: 'text-emerald-600'
-  }[user.role as string] || 'text-slate-600';
-
-  // Kotak jadwal: latar putih + border abu-abu; saat di-hover border & latar berubah tipis ke warna peran
-  const roleSchedulePill = {
-    TEACHER: 'hover:border-orange-300 hover:bg-orange-50',
-    STUDENT: 'hover:border-emerald-300 hover:bg-emerald-50'
-  }[user.role as string] || 'hover:bg-slate-50';
-
-  // Tulisan "Jadwal" awalnya gelap; saat di-hover berubah ke warna peran
-  const roleScheduleHover = {
-    TEACHER: 'group-hover:text-orange-600',
-    STUDENT: 'group-hover:text-emerald-600'
-  }[user.role as string] || 'group-hover:text-slate-900';
-
-  // Tombol bantuan (outline): biru seragam untuk semua peran
-  const roleHelpIcon = 'text-blue-600';
-  const roleHelpHover = 'hover:border-blue-300 hover:bg-blue-50';
-
-  return (
-    <div className="min-h-screen bg-[#FDFDFF] flex overflow-hidden font-sans relative">
-      {showGuide && (
-  <GuideModal 
-    role={user.role} 
-    onClose={() => setShowGuide(false)}
-  />
-)}
-
-      {showSchedule && user.role !== 'ADMIN' && (
-        <ScheduleModal
-          user={user}
-          schedule={schedule}
-          teachers={teachers}
-          studentAccounts={studentAccounts}
-          color={roleGuideColor}
-          onClose={() => setShowSchedule(false)}
-        />
-      )}
-      
-      {isSidebarOpen && (
-        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80000] lg:hidden animate-in fade-in" onClick={closeSidebar} />
-      )}
-      <aside className={`fixed lg:static lg:sticky lg:top-0 inset-y-0 left-0 w-72 h-screen bg-white border-r border-slate-100 z-[81000] transform transition-transform duration-500 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-8 h-full flex flex-col">
-          <div className="flex items-center justify-between mb-12 px-2">
-            <div className="flex items-center gap-3">
-              <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl rotate-3 shrink-0"><BookOpen size={24} /></div>
-              <div>
-                <h1 className="font-black text-slate-800 text-xl tracking-tighter uppercase italic leading-none">SANUR</h1>
-                <p className="text-[8px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1.5">Sistem Internal</p>
-              </div>
-            </div>
-            <button onClick={closeSidebar} className="lg:hidden p-2 text-slate-300 hover:text-rose-500"><X size={24} /></button>
-          </div>
-          <nav className="flex-1 flex flex-col gap-1 overflow-y-auto custom-scrollbar pr-2">
-            {user.role === 'ADMIN' && (
-              <>
-                <NavSection first label="Utama" />
-                <NavItem to="/admin" icon={LayoutDashboard} label="Dashboard" onClick={closeSidebar} />
-                <NavItem to="/admin/finance" icon={Wallet} label="Keuangan" onClick={closeSidebar} />
-                <NavItem to="/admin/receipts" icon={Receipt} label="Kuitansi" onClick={closeSidebar} />
-                <NavSection label="Manajemen" />
-                <NavItem to="/admin/staff" icon={UserCog} label="Akses User" onClick={closeSidebar} />
-                <NavItem to="/admin/academic" icon={SettingsIcon} label="Pengaturan" onClick={closeSidebar} />
-                <NavItem to="/admin/materi" icon={Library} label="Materi" onClick={closeSidebar} />
-                <NavSection label="Pemeliharaan" />
-                <NavItem to="/admin/maintenance" icon={Database} label="Sistem" onClick={closeSidebar} />
-              </>
-            )}
-            {user.role === 'TEACHER' && (
-              <>
-                <NavSection first label="Utama" />
-                <NavItem to="/teacher" icon={ClipboardCheck} label="Lapor Presensi" onClick={closeSidebar} />
-                <NavItem to="/teacher/honor" icon={Wallet} label="Honor Saya" activeColor="blue" onClick={closeSidebar} />
-                <NavSection label="Pembelajaran" />
-                <NavItem to="/teacher/materi" icon={Library} label="Materi" activeColor="blue" onClick={closeSidebar} />
-                <NavItem to="/teacher/students" icon={UserSearch} label="Pantau Siswa" activeColor="blue" onClick={closeSidebar} />
-                <NavItem to="/teacher/reports" icon={GraduationCap} label="Rapot Siswa" activeColor="blue" onClick={closeSidebar} badge={pendingReportsCount} />
-              </>
-            )}
-            {user.role === 'STUDENT' && (
-              <>
-                <NavSection first label="Pembelajaran" />
-                <NavItem to="/student" icon={GraduationCap} label="Kelas Saya" activeColor="blue" onClick={closeSidebar} />
-                <NavItem to="/student/materi" icon={Library} label="Materi" activeColor="blue" onClick={closeSidebar} />
-                <NavSection label="Transaksi" />
-                <NavItem to="/student/payments" icon={CreditCard} label="Pembayaran" activeColor="blue" onClick={closeSidebar} />
-              </>
-            )}
-          </nav>
-        </div>
-      </aside>
-
-      <main className="flex-1 flex flex-col h-screen overflow-hidden bg-[#F8FAFC]">
-        <header className="h-24 bg-white border-b border-slate-100 flex items-center px-6 lg:px-12 sticky top-0 z-[1000] shadow-sm shrink-0">
-          {/* Wadah dalam disamakan dengan isi halaman: max-w-7xl di tengah + px-4 (halaman-halaman punya padding dalam px-4 sendiri), supaya nama & tombol sejajar dengan kartu */}
-          <div className="w-full max-w-7xl mx-auto px-4 flex items-center justify-between">
-          <div className="flex items-center gap-4 min-w-0">
-            <button onClick={() => setIsSidebarOpen(true)} className="p-3 bg-slate-50 text-slate-400 rounded-xl lg:hidden shrink-0"><Menu size={24}/></button>
-<div className="flex flex-col items-start gap-1.5 min-w-0">
-  {/* Nama Pengajar / Siswa */}
-  <h1 className={`font-black italic text-slate-800 tracking-tighter text-base md:text-lg leading-none truncate pr-2 pb-0.5 ${user?.role !== 'TEACHER' ? 'uppercase' : ''}`}>
-    {user?.name || user?.username || 'USER'}
-  </h1>
-
-  {/* Status peran, kecil di bawah nama */}
-  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none">
-    Status: {({ ADMIN: 'Pengurus', TEACHER: 'Pengajar', STUDENT: 'Siswa' } as Record<string, string>)[user.role as string] || user.role}
-  </p>
-</div>
-          </div>
-          <div className="flex items-center gap-3 shrink-0 ml-4">
-{user.role !== 'ADMIN' && (
-<button
-  onClick={() => setShowSchedule(true)}
-  title="Jadwal saya"
-  aria-label="Jadwal saya"
-  className={`group flex items-center gap-2 lg:gap-3 px-4 lg:px-6 py-4 bg-white border-[1.5px] border-slate-200 rounded-2xl active:scale-95 transition-all ${roleSchedulePill}`}
->
-  <CalendarDays size={18} className={roleScheduleBtn} />
-  {/* Tulisan hanya tampil di desktop (lg ke atas); di tablet cukup ikon + panah dropdown */}
-  <span className={`hidden lg:inline text-sm font-black text-slate-700 transition-colors ${roleScheduleHover}`}>
-    {user.role === 'TEACHER' ? 'Jadwal Mengajar' : 'Jadwal Belajar'}
-  </span>
-  <ChevronDown size={16} className={roleScheduleBtn} />
-</button>
-)}
-<button onClick={() => setShowGuide(true)} aria-label="Panduan" className={`p-4 bg-white border-[1.5px] border-slate-200 ${roleHelpIcon} rounded-2xl active:scale-95 transition-all ${roleHelpHover}`}>
-   <HelpCircle size={20} />
-</button>
-<button onClick={executeLogout} aria-label="Keluar" className="p-4 bg-white border-[1.5px] border-slate-200 text-rose-600 rounded-2xl active:scale-95 transition-all hover:border-rose-300 hover:bg-rose-50">
-   <Power size={20} />
-</button>
-          </div>
-        </div>
-        </header>
-        
-        <div ref={contentRef} id="app-scroll-container" className="flex-1 overflow-y-auto custom-scrollbar p-6 lg:p-12">
-          <div className="max-w-7xl mx-auto">
-            <Routes>
-              <Route path="/admin" element={<AdminDashboard user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} setAttendanceLogs={setAttendanceLogs} teachers={teachers} transactions={transactions} reports={reports} studentPayments={studentPayments} />} />
-              <Route path="/admin/finance" element={<AdminFinance attendanceLogs={attendanceLogs} transactions={transactions} studentPayments={studentPayments} teachers={teachers} refreshAllData={refreshAllData} />} />
-              <Route path="/admin/receipts" element={<AdminReceipts />} />
-              <Route path="/admin/staff" element={<AdminStaff user={user} teachers={teachers} setTeachers={setTeachers} studentAccounts={studentAccounts} setStudentAccounts={setStudentAccounts} refreshAllData={refreshAllData} />} />
-              <Route path="/admin/academic" element={<AdminAcademic subjects={subjects} setSubjects={setSubjects} classes={classes} setClasses={setClasses} levels={levels} setLevels={setLevels} salaryConfig={salaryConfig} setSalaryConfig={setSalaryConfig} teachers={teachers} studentAccounts={studentAccounts} />} />
-              <Route path="/admin/maintenance" element={<AdminMaintenance attendanceLogs={attendanceLogs} setAttendanceLogs={setAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} refreshAllData={refreshAllData} />} />
-              <Route path="/admin/materi" element={<MateriPage user={user} subjects={subjects} levels={levels} attendanceLogs={attendanceLogs} studentPayments={studentPayments} />} />
-              <Route path="/teacher" element={<TeacherDashboard user={user} logs={attendanceLogs} studentAccounts={studentAccounts} subjects={subjects} classes={classes} levels={levels} salaryConfig={salaryConfig} teachers={teachers} refreshAllData={refreshAllData} />} />
-              <Route path="/teacher/honor" element={<TeacherHonor user={user} logs={attendanceLogs} refreshAllData={refreshAllData} />} />
-              <Route path="/teacher/students" element={<TeacherStudentSearch user={user} studentAccounts={studentAccounts} studentPayments={studentPayments} studentAttendanceLogs={studentAttendanceLogs} reports={reports} />} />
-              <Route path="/teacher/reports" element={
-  <TeacherReportsInbox 
-    user={user} 
-    logs={attendanceLogs}
-    reports={reports}
-    studentAttendanceLogs={studentAttendanceLogs} 
-    studentAccounts={studentAccounts} 
-    refreshAllData={refreshAllData} 
-  />
-} />
-              <Route path="/student" element={<StudentPortal user={user} attendanceLogs={attendanceLogs} reports={reports} studentAttendanceLogs={studentAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} subjects={subjects} levels={levels} classes={classes} teachers={teachers} initialView="PROGRESS" refreshAllData={refreshAllData} />} />
-              <Route path="/student/payments" element={<StudentPortal user={user} attendanceLogs={attendanceLogs} studentAttendanceLogs={studentAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} subjects={subjects} levels={levels} classes={classes} teachers={teachers} initialView="PAYMENTS" refreshAllData={refreshAllData} />} />
-              <Route path="/teacher/materi" element={<MateriPage user={user} subjects={subjects} levels={levels} attendanceLogs={attendanceLogs} />} />
-              <Route path="/student/materi" element={<MateriPage user={user} subjects={subjects} levels={levels} studentPayments={studentPayments} />} />
-              <Route path="/" element={<Navigate to={user.role === 'ADMIN' ? '/admin' : user.role === 'TEACHER' ? '/teacher' : '/student'} replace />} />
-            </Routes>
-          </div>
-        </div>
-      </main>
-    </div>
-  );
-};
-
-const App = () => {
-  useAutoRefreshOnDeploy();
-  const [user, setUser] = useState<User | null>(null);
-  const [attendanceLogs, setAttendanceLogs] = useState<Attendance[]>([]);
-  const [teachers, setTeachers] = useState<User[]>([]);
-  const [studentAccounts, setStudentAccounts] = useState<User[]>([]);
-  const [studentAttendanceLogs, setStudentAttendanceLogs] = useState<any[]>([]);
-  const [transactions, setTransactions] = useState<Transaction[]>([]);
-  const [studentPayments, setStudentPayments] = useState<StudentPayment[]>([]);
-  const [reports, setReports] = useState<any[]>([]);
-  const [subjects, setSubjects] = useState<string[]>(INITIAL_SUBJECTS);
-  const [classes, setClasses] = useState<string[]>(CLASS_ROOM_OPTIONS);
-  const [levels, setLevels] = useState<string[]>(['BASIC', 'INTERMEDIATE', 'ADVANCED']);
-  const [salaryConfig, setSalaryConfig] = useState({ regulerRate: 15000, privateRate: 25000 });
-  const [schedule, setSchedule] = useState<any[]>([]);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
-  const [connectionError, setConnectionError] = useState(false);
-
-  // 🔒 Logout diam-diam kalau sesi Auth ternyata sudah mati. Pakai scope 'local'
-  // supaya hanya browser ini yang dibersihkan (tidak menendang perangkat lain
-  // yang memakai akun yang sama). Hanya dipanggil saat aplikasi baru dibuka.
-  const forceLogout = useCallback(() => {
-    localStorage.removeItem('sanur_user');
-    setUser(null);
-    supabase.auth.signOut({ scope: 'local' }).catch(() => {});
-  }, []);
-
-  const refreshAllData = useCallback(async () => {
-    // 🛡️ Cek sesi Auth SEBELUM fetch. Tanpa sesi, RLS membalas array KOSONG
-    // (bukan error), dan hasil kosong itu akan menimpa semua data di layar jadi 0.
-    // Kalau sesi mati, fetch dibatalkan saja: data yang sudah tampil tetap aman dan
-    // user yang sedang mengetik tidak diganggu. Keputusan logout hanya diambil di
-    // awal (saat aplikasi baru dibuka), lihat useEffect pemulihan sesi di bawah.
-    try {
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData.session) {
-        return;
-      }
-    } catch (e) {
-      console.warn('Gagal mengecek sesi, fetch dibatalkan:', e);
-      return;
-    }
-
-    setIsSyncing(true);
-    try {
-      const [
-  { data: att },
-  { data: stuAtt },
-  { data: teach },
-  { data: stuAcc },
-  { data: trans },
-  { data: stuPay },
-  { data: reps },
-  { data: settings }
-] = await Promise.all([
-  supabase.from('attendance').select('*'),
-  supabase.from('student_attendance').select('*'),
-  supabase.from('teachers').select('*'),
-  supabase.from('student_accounts').select('*'),
-  supabase.from('transactions').select('*'),
-  supabase.from('student_payments').select('*'),
-  supabase.from('reports').select('*'),
-  supabase.from('settings').select('*')
-]);
-
-      if (att) setAttendanceLogs(att.map((a: any) => ({
-        ...a,
-        teacherId: a.teacherid,
-        teacherName: a.teachername,
-        clockIn: a.clockin,
-        className: a.classname,
-        level: a.level,
-        sessionCategory: a.sessioncategory,
-        packageId: a.packageid,
-        sessionNumber: a.sessionnumber,
-        studentsAttended: a.studentsattended,
-        studentSessions: a.studentsessions,
-        studentScores: a.studentscores,
-        studentTopics: a.studenttopics,
-        studentNarratives: a.studentnarratives,
-        paymentStatus: a.paymentstatus,
-        receiptData: a.receiptdata,
-        paidDate: a.paiddate,
-        reportNarrative: a.reportnarrative,
-        substituteFor: a.substitutefor,
-        originalTeacherId: a.originalteacherid
-      })));
-
-if (stuAtt) setStudentAttendanceLogs(stuAtt.map((s: any) => ({
-  ...s,
-  packageId: s.packageid,
-  studentName: s.studentname,
-  sessionNumber: s.sessionnumber,
-  clockIn: s.clockin,
-  className: s.classname,
-  sessionCategory: s.sessioncategory,
-  studentScores: s.studentscores,
-  studentTopics: s.studenttopics,
-  studentNarratives: s.studentnarratives,
-  reportNarrative: s.reportnarrative
-})));
-      
-      if (teach) setTeachers(teach);
-      if (stuAcc) setStudentAccounts(stuAcc);
-      if (trans) setTransactions(trans);
-      if (stuPay) setStudentPayments(stuPay.map((p: any) => ({
-        ...p,
-        studentName: p.studentname,
-        className: p.classname,
-        receiptData: p.receiptdata
-      })));
-if (reps) setReports(reps.map((r: any) => ({
-  ...r,
-  teacherId: r.teacherid,
-  teacherName: r.teachername,
-  className: r.classname,
-  sessionCategory: r.sessioncategory,
-  packageId: r.packageid,
-  sessionNumber: r.sessionnumber,
-  studentsAttended: r.studentsattended,
-  studentScores: r.studentscores,
-  studentTopics: r.studenttopics,
-  studentNarratives: r.studentnarratives,
-  reportNarrative: r.reportnarrative,
-  periode: r.periode
-})));
-
-      if (settings) {
-        const acad = settings.find(s => s.key === 'academic_config');
-        if (acad?.value) {
-          if (acad.value.subjects) setSubjects(acad.value.subjects);
-          if (acad.value.levels) setLevels(acad.value.levels);
-          if (acad.value.classes) setClasses(acad.value.classes);
-        }
-        const sal = settings.find(s => s.key === 'salary_config');
-        if (sal?.value) setSalaryConfig(sal.value);
-        const sch = settings.find(s => s.key === 'class_schedule');
-        if (Array.isArray(sch?.value)) setSchedule(sch.value);
-      }
-      setConnectionError(false);
-    } catch (e) {
-    console.error('❌ FETCH ERROR:', e);
-    setConnectionError(true);
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [forceLogout]);
-
-  useEffect(() => {
-    const savedUser = localStorage.getItem('sanur_user');
-    if (savedUser) setUser(JSON.parse(savedUser));
-  }, []);
-
-
-  // 🔧 FIX KEAMANAN: sebelumnya refreshAllData() jalan TANPA SYARAT di sini,
-  // artinya SELURUH isi 10 tabel (termasuk teachers/student_accounts dengan
-  // kolom PIN, data keuangan, kontak sales) ke-fetch ke browser SIAPA PUN
-  // yang buka halaman ini, bahkan sebelum login. Sekarang cuma jalan
-  // begitu `user` beneran ada (abis login, atau sesi lama ke-restore dari
-  // localStorage) — dan ini juga jadi prasyarat biar RLS bisa dikunci ke
-  // "authenticated-only" tanpa mematahkan halaman Login.
-  //
-  // 🆕 FIX BUG "PAKET SISWA HILANG ABIS LOGIN": sebelumnya refreshAllData()
-  // langsung ditembak begitu `user` ke-set. Race condition-nya: sesi Auth
-  // yang baru aja kebentuk (abis signInWithPassword di LoginPage) belum
-  // tentu langsung aktif dipakai request pertama. RLS pun nganggep request
-  // itu anonim -> hasilnya array KOSONG (bukan error) buat tabel yang
-  // di-RLS-in (student_payments dkk). Reload manual "nyembuhin" karena sesi
-  // udah lebih dulu kesimpen sebelum query jalan. Sekarang: tunggu
-  // waitForActiveSession() beneran konfirmasi sesi aktif dulu (retry
-  // singkat), baru refreshAllData() ditembak.
-  useEffect(() => {
-    if (!user) return;
-    let cancelled = false;
-
-    (async () => {
-      const ready = await waitForActiveSession();
-      if (cancelled) return;
-      if (!ready) {
-        // 🔒 Sesi Auth tidak ada saat aplikasi baru dibuka (buka web / reload) ->
-        // logout diam-diam supaya user login ulang. Ini HANYA terjadi di awal,
-        // tidak pernah di tengah pemakaian. Kalau perangkat offline, jangan logout
-        // (sesi mungkin masih sehat, cuma belum bisa divalidasi).
-        if (navigator.onLine) {
-          forceLogout();
-          return;
-        }
-        console.warn('⚠️ Sesi Auth belum kekonfirmasi (offline), fetch dilewati.');
-      }
-      refreshAllData();
-    })();
-
-    return () => { cancelled = true; };
-  }, [user, refreshAllData, forceLogout]);
-
-  // 🆕 FIX BUG "ANTREAN RAPOT KELIATAN 0 PADAHAL ADA 3": sebelumnya data
-  // cuma di-fetch SEKALI pas login/restore sesi, abis itu gak pernah
-  // di-refresh otomatis. Jadi kalau ADMIN nambah/ubah data (misal bikin
-  // entri rapot baru) di komputer lain, GURU yang udah lebih dulu buka
-  // halaman "Antrean Rapot" gak bakal lihat perubahan itu sampai dia
-  // reload manual / logout-login ulang. Ini BUKAN soal "1 akun gak bisa
-  // dibuka di 2 device bersamaan" — itu emang didukung normal sama
-  // Supabase Auth. ini soal data di browser yang gak pernah disegerakan
-  // ulang. Fix: subscribe Realtime ke tabel yang paling sering berubah,
-  // jadi semua sesi yang lagi kebuka otomatis refetch begitu ada
-  // perubahan dari device manapun (di-debounce biar gak spam query kalau
-  // ada beberapa perubahan beruntun). Ditambah jaring pengaman: refetch
-  // paksa begitu tab kembali aktif (misal abis laptop di-sleep & realtime
-  // socket-nya putus tanpa reconnect mulus).
-  useEffect(() => {
-    if (!user) return;
-
-    let debounceTimer: ReturnType<typeof setTimeout> | null = null;
-    const scheduleRefresh = () => {
-      if (debounceTimer) clearTimeout(debounceTimer);
-      debounceTimer = setTimeout(() => refreshAllData(), 600);
-    };
-
-    const channel = supabase
-      .channel('sanur-realtime-sync')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'reports' }, scheduleRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'student_payments' }, scheduleRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'attendance' }, scheduleRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'student_attendance' }, scheduleRefresh)
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'settings' }, scheduleRefresh)
-      .subscribe();
-
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') refreshAllData();
-    };
-    document.addEventListener('visibilitychange', handleVisibility);
-
-    return () => {
-      if (debounceTimer) clearTimeout(debounceTimer);
-      supabase.removeChannel(channel);
-      document.removeEventListener('visibilitychange', handleVisibility);
-    };
-  }, [user, refreshAllData]);
-
-  return (
-    <Router>
-      <AppContent 
-  user={user} setUser={setUser}
-  attendanceLogs={attendanceLogs} setAttendanceLogs={setAttendanceLogs}
-  studentAttendanceLogs={studentAttendanceLogs} setStudentAttendanceLogs={setStudentAttendanceLogs}
-  teachers={teachers} setTeachers={setTeachers}
-  studentAccounts={studentAccounts} setStudentAccounts={setStudentAccounts}
-  transactions={transactions} setTransactions={setTransactions}
-  studentPayments={studentPayments} setStudentPayments={setStudentPayments}
-  reports={reports} setReports={setReports}
-  subjects={subjects} setSubjects={setSubjects}
-  classes={classes} setClasses={setClasses}
-  levels={levels} setLevels={setLevels}
-  salaryConfig={salaryConfig} setSalaryConfig={setSalaryConfig}
-  isSidebarOpen={isSidebarOpen} setIsSidebarOpen={setIsSidebarOpen}
-  isSyncing={isSyncing} connectionError={connectionError}
-  refreshAllData={refreshAllData}
-  schedule={schedule}
-/>
-    </Router>
-  );
-};
-
-export default App;
+export default ScheduleModal;
