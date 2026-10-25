@@ -385,9 +385,9 @@ const pendingReportsCount = Array.isArray(reports) ?
       <aside className={`fixed lg:static lg:sticky lg:top-0 inset-y-0 left-0 w-72 h-screen bg-white border-r border-slate-100 z-[81000] transform transition-transform duration-500 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
         <div className="px-8 pb-8 h-full flex flex-col">
           {/* Tinggi baris logo = tinggi header (h-24) supaya SANUR/Sistem Internal sejajar dengan nama/status */}
-          <div className="flex items-center justify-between h-24 shrink-0 mb-5 px-2">
+          <div className="flex items-center justify-between h-24 shrink-0 mb-6 px-2">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shrink-0"><BookOpen size={22} /></div>
+              <div className="w-11 h-11 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shrink-0 translate-y-1"><BookOpen size={22} /></div>
               <div className="flex flex-col items-start gap-1.5 min-w-0">
                 <h1 className="font-black text-slate-800 tracking-tight text-base md:text-lg uppercase leading-none pb-0.5">SANUR</h1>
                 <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest leading-none">Sistem Internal</p>
@@ -462,7 +462,7 @@ const pendingReportsCount = Array.isArray(reports) ?
 >
   <CalendarDays size={22} className={`${roleScheduleBtn} translate-y-px`} />
   {/* Tulisan hanya tampil di desktop (lg ke atas); di tablet cukup ikon + panah dropdown */}
-  <span className={`hidden lg:inline text-[10px] font-black uppercase tracking-widest text-slate-700 transition-colors ${roleScheduleHover}`}>
+  <span className={`hidden lg:inline translate-y-0.5 text-[10px] font-black uppercase tracking-widest text-slate-700 transition-colors ${roleScheduleHover}`}>
     {user.role === 'TEACHER' ? 'Jadwal Mengajar' : 'Jadwal Belajar'}
   </span>
   <ChevronDown size={20} className={`${roleScheduleBtn} translate-y-px`} />
