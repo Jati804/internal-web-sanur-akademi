@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Receipt, ClipboardList, Loader2, Download, AlertCircle, CheckCircle2, Sparkles, Plus, Trash2, X, TrendingUp, TrendingDown, Database, Menu } from 'lucide-react';
+import { FileText, ClipboardList, Loader2, Download, AlertCircle, CheckCircle2, Sparkles, Plus, Trash2, X, TrendingUp, TrendingDown, Database, Menu } from 'lucide-react';
 import { jsPDF } from 'jspdf';
 import { supabase } from '../services/supabase.ts';
 import * as ReactRouterDOM from 'react-router-dom';
@@ -423,8 +423,8 @@ const isFormValid = () => {
       {/* Header */}
       <div className="max-w-6xl mx-auto mb-12">
         <div className="flex items-center gap-6 mb-4">
-          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-[2rem] flex items-center justify-center shadow-xl rotate-3">
-            <Receipt size={32} />
+          <div className="w-16 h-16 bg-gradient-to-br from-blue-600 to-purple-600 text-white rounded-[2rem] flex items-center justify-center shadow-xl">
+            <FileText size={32} />
           </div>
           <div>
             <h1 className="text-4xl font-black text-slate-800 uppercase italic leading-none">Workspace Kuitansi</h1>
