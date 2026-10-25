@@ -388,7 +388,7 @@ const pendingReportsCount = Array.isArray(reports) ?
             <div className="flex items-center gap-3">
               <div className="w-12 h-12 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl rotate-3 shrink-0"><BookOpen size={24} /></div>
               <div>
-                <h1 className="font-black text-slate-800 text-xl tracking-tighter uppercase italic leading-none">SANUR</h1>
+                <h1 className="font-black text-slate-800 text-xl tracking-tighter uppercase leading-none">SANUR</h1>
                 <p className="text-[8px] font-black text-blue-600 uppercase tracking-[0.4em] mt-1.5">Sistem Internal</p>
               </div>
             </div>
@@ -441,7 +441,7 @@ const pendingReportsCount = Array.isArray(reports) ?
             <button onClick={() => setIsSidebarOpen(true)} className="p-3 bg-slate-50 text-slate-400 rounded-xl lg:hidden shrink-0"><Menu size={24}/></button>
 <div className="flex flex-col items-start gap-1.5 min-w-0">
   {/* Nama Pengajar / Siswa */}
-  <h1 className={`font-black italic text-slate-800 tracking-tighter text-base md:text-lg leading-none truncate pr-2 pb-0.5 ${user?.role !== 'TEACHER' ? 'uppercase' : ''}`}>
+  <h1 className={`font-black text-slate-800 tracking-tight text-base md:text-lg leading-none truncate pr-2 pb-0.5 ${user?.role !== 'TEACHER' ? 'uppercase' : ''}`}>
     {user?.name || user?.username || 'USER'}
   </h1>
 
