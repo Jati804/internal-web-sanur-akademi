@@ -5,7 +5,7 @@ const { BrowserRouter, Routes, Route, Navigate, Link, useLocation, useNavigate }
 const Router = BrowserRouter;
 
 import { 
-  LayoutDashboard, Receipt, Menu, CreditCard, BookOpen, UserCog, 
+  LayoutDashboard, FileText, Menu, CreditCard, BookOpen, UserCog, 
   ClipboardCheck, Wallet, GraduationCap, Power, 
   Settings as SettingsIcon, Database, X,
   Sparkles, HelpCircle, Info, RotateCw, Library, UserSearch, CalendarDays, ChevronDown
@@ -400,7 +400,7 @@ const pendingReportsCount = Array.isArray(reports) ?
                 <NavSection first label="Utama" />
                 <NavItem to="/admin" icon={LayoutDashboard} label="Dashboard" onClick={closeSidebar} />
                 <NavItem to="/admin/finance" icon={Wallet} label="Keuangan" onClick={closeSidebar} />
-                <NavItem to="/admin/receipts" icon={Receipt} label="Kuitansi" onClick={closeSidebar} />
+                <NavItem to="/admin/receipts" icon={FileText} label="Kuitansi" onClick={closeSidebar} />
                 <NavSection label="Manajemen" />
                 <NavItem to="/admin/staff" icon={UserCog} label="Akses User" onClick={closeSidebar} />
                 <NavItem to="/admin/academic" icon={SettingsIcon} label="Pengaturan" onClick={closeSidebar} />
