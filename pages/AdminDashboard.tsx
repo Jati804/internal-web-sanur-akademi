@@ -350,7 +350,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
                                  <span className="shrink-0 bg-white border border-slate-100 text-slate-500 text-[10px] font-black uppercase tracking-widest rounded-full px-4 py-2 shadow-sm">{rows.length} siswa</span>
                               </div>
 
-                              <ul className="mt-3 space-y-3">
+                              <ul className="mt-3 rounded-[2rem] bg-white border border-slate-100 shadow-sm divide-y divide-slate-100 overflow-hidden">
                                  {rows.map((s, i) => {
                                     const rapot = rapotLine(s);
                                     const soon = s.daysLeft <= EXPIRY_WARN_DAYS;
@@ -360,7 +360,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
                                        ? (s.pendingVerify ? 'Menunggu verifikasi' : 'Belum lapor bayar')
                                        : `Sesi ${s.lastSess} pada ${shortDate(s.lastDate)}`;
                                     return (
-                                       <li key={`${s.kind}-${s.student}-${s.fullClass}-${i}`} className="flex items-center justify-between gap-6 rounded-[1.75rem] bg-white border border-slate-100 px-6 py-4 shadow-sm hover:border-blue-200 hover:shadow-md transition-all">
+                                       <li key={`${s.kind}-${s.student}-${s.fullClass}-${i}`} className="flex items-center justify-between gap-6 px-6 py-4">
                                           <div className="min-w-0">
                                              <p className="font-black italic uppercase text-slate-800 truncate">{s.student}</p>
                                              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 truncate mt-0.5">{s.fullClass.split(' - ')[0]}</p>
