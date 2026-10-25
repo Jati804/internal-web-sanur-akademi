@@ -73,14 +73,24 @@ export type FollowUpItem = {
   pendingVerify?: boolean; // khusus NEXT_CLASS: sudah ada laporan bayar baru, tinggal diverifikasi
   rapot?: RapotStatus;     // khusus SELESAI: posisi rapot siswa
   rapotDays?: number;      // khusus MENUNGGU_GURU: sudah berapa hari sejak siswa klaim
+  rapotTeacher?: string;   // khusus MENUNGGU_GURU / SIAP_KIRIM: nama depan guru yang ditunggu (ditampilkan "Kak <nama>")
+};
+
+// Nama depan guru, dipakai di baris rapot ("Kak Dewi"). Kosong kalau guru tidak ditemukan.
+const firstName = (full: any) => {
+  const w = String(full ?? '').trim().split(/\s+/)[0] || '';
+  return w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : '';
 };
 
 export const computeFollowUps = (
   studentAttendanceLogs: any[],
   reports: any[],
   studentPayments: any[],
-  today: string
+  today: string,
+  teachers: any[] = []
 ): FollowUpItem[] => {
+  const teacherById = new Map<string, any>();
+  for (const t of teachers || []) teacherById.set(String(t.id), t);
   // Paket yang sudah diputuskan "Lanjut Kelas" diwakili kartu ungu, jadi tidak ikut kartu "SELESAI"
   const nextClassPkg = new Set<string>();
   for (const r of reports || []) {
@@ -166,7 +176,11 @@ export const computeFollowUps = (
           : rep.status === 'REQ' ? 'MENUNGGU_GURU'
           : 'DITOLAK';
         const rapotDays = rep?.status === 'REQ' && rep.date ? ageOf(today, rep.date) : undefined;
-        progress.push({ kind: 'SELESAI', student: g.student, fullClass: g.fullClass, lastSess, lastDate, daysAgo, daysLeft, rapot, rapotDays });
+        // Nama guru hanya relevan kalau bola ada di guru (menunggu diisi / sudah diisi tapi belum dikirim)
+        const rapotTeacher = rapot === 'MENUNGGU_GURU' || rapot === 'SIAP_KIRIM'
+          ? firstName(teacherById.get(String(rep?.teacherid ?? rep?.teacherId))?.name ?? rep?.teacherName ?? rep?.teachername) || undefined
+          : undefined;
+        progress.push({ kind: 'SELESAI', student: g.student, fullClass: g.fullClass, lastSess, lastDate, daysAgo, daysLeft, rapot, rapotDays, rapotTeacher });
       }
     }
   });
@@ -227,15 +241,16 @@ const rapotLine = (s: FollowUpItem): { text: string; warn: boolean } | null => {
     case 'DITOLAK': return { text: 'Rapot: ditolak guru, siswa belum klaim ulang', warn: true };
     case 'MENUNGGU_GURU': {
       const d = s.rapotDays ?? 0;
-      return { text: d > 0 ? `Rapot: menunggu guru mengisi, sudah ${d} hari` : 'Rapot: menunggu guru mengisi, klaim hari ini', warn: d >= RAPOT_TELAT_HARI };
+      const who = s.rapotTeacher ? `Kak ${s.rapotTeacher}` : 'guru';
+      return { text: d > 0 ? `Rapot: menunggu ${who} mengisi, sudah ${d} hari` : `Rapot: menunggu ${who} mengisi, klaim hari ini`, warn: d >= RAPOT_TELAT_HARI };
     }
-    case 'SIAP_KIRIM': return { text: 'Rapot: sudah diisi, belum dikirim guru', warn: false };
+    case 'SIAP_KIRIM': return { text: s.rapotTeacher ? `Rapot: sudah diisi, belum dikirim Kak ${s.rapotTeacher}` : 'Rapot: sudah diisi, belum dikirim guru', warn: false };
     case 'TERBIT': return { text: 'Rapot: sudah terbit', warn: false };
     default: return null;
   }
 };
 
-const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, studentAttendanceLogs, reports = [], studentPayments = [] }) => {
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, studentAttendanceLogs, reports = [], studentPayments = [], teachers = [] }) => {
   const getWIBDate = () => new Intl.DateTimeFormat('en-CA', { 
     timeZone: 'Asia/Jakarta', 
     year: 'numeric', 
@@ -246,8 +261,8 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
   const currentToday = getWIBDate();
   
   const followUpList = useMemo(
-    () => computeFollowUps(studentAttendanceLogs, reports, studentPayments, currentToday),
-    [studentAttendanceLogs, reports, studentPayments, currentToday]
+    () => computeFollowUps(studentAttendanceLogs, reports, studentPayments, currentToday, teachers),
+    [studentAttendanceLogs, reports, studentPayments, currentToday, teachers]
   );
 
   return (
