@@ -383,10 +383,11 @@ const pendingReportsCount = Array.isArray(reports) ?
         <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[80000] lg:hidden animate-in fade-in" onClick={closeSidebar} />
       )}
       <aside className={`fixed lg:static lg:sticky lg:top-0 inset-y-0 left-0 w-72 h-screen bg-white border-r border-slate-100 z-[81000] transform transition-transform duration-500 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'}`}>
-        <div className="p-8 h-full flex flex-col">
-          <div className="flex items-center justify-between mb-12 px-2">
+        <div className="px-8 pb-8 h-full flex flex-col">
+          {/* Tinggi baris logo = tinggi header (h-24) supaya SANUR/Sistem Internal sejajar dengan nama/status */}
+          <div className="flex items-center justify-between h-24 shrink-0 mb-5 px-2">
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-xl shrink-0"><BookOpen size={20} /></div>
+              <div className="w-9 h-9 bg-blue-600 rounded-xl flex items-center justify-center text-white shadow-xl shrink-0"><BookOpen size={18} /></div>
               <div className="flex flex-col items-start gap-1.5 min-w-0">
                 <h1 className="font-black text-slate-800 tracking-tight text-base md:text-lg uppercase leading-none pb-0.5">SANUR</h1>
                 <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest leading-none">Sistem Internal</p>
@@ -457,14 +458,14 @@ const pendingReportsCount = Array.isArray(reports) ?
   onClick={() => setShowSchedule(true)}
   title="Jadwal saya"
   aria-label="Jadwal saya"
-  className={`group flex items-center gap-2 lg:gap-3 px-4 lg:px-6 py-4 bg-white border-[1.5px] border-slate-200 rounded-2xl active:scale-95 transition-all ${roleSchedulePill}`}
+  className={`group flex items-center gap-2 lg:gap-3 px-4 lg:px-6 py-[15px] bg-white border-[1.5px] border-slate-200 rounded-2xl active:scale-95 transition-all ${roleSchedulePill}`}
 >
-  <CalendarDays size={20} className={roleScheduleBtn} />
+  <CalendarDays size={22} className={`${roleScheduleBtn} translate-y-px`} />
   {/* Tulisan hanya tampil di desktop (lg ke atas); di tablet cukup ikon + panah dropdown */}
   <span className={`hidden lg:inline text-[10px] font-black uppercase tracking-widest text-slate-700 transition-colors ${roleScheduleHover}`}>
     {user.role === 'TEACHER' ? 'Jadwal Mengajar' : 'Jadwal Belajar'}
   </span>
-  <ChevronDown size={16} className={roleScheduleBtn} />
+  <ChevronDown size={20} className={`${roleScheduleBtn} translate-y-px`} />
 </button>
 )}
 <button onClick={() => setShowGuide(true)} aria-label="Panduan" className={`p-4 bg-white border-[1.5px] border-slate-200 ${roleHelpIcon} rounded-2xl active:scale-95 transition-all ${roleHelpHover}`}>
