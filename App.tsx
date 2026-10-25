@@ -390,7 +390,7 @@ const pendingReportsCount = Array.isArray(reports) ?
               <div className="w-11 h-11 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shrink-0 translate-y-1"><BookOpen size={22} /></div>
               <div className="flex flex-col items-start gap-1.5 min-w-0">
                 <h1 className="font-black text-slate-800 tracking-tight text-base md:text-lg uppercase leading-none pb-0.5">SANUR</h1>
-                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest leading-none">Sistem Internal</p>
+                <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest leading-none -translate-y-0.5">Sistem Internal</p>
               </div>
             </div>
             <button onClick={closeSidebar} className="lg:hidden p-2 text-slate-300 hover:text-rose-500"><X size={24} /></button>
@@ -437,7 +437,7 @@ const pendingReportsCount = Array.isArray(reports) ?
       <main className="flex-1 flex flex-col h-screen overflow-hidden bg-[#F8FAFC]">
         <header className="h-24 bg-white border-b border-slate-100 flex items-center px-6 lg:px-12 sticky top-0 z-[1000] shadow-sm shrink-0">
           {/* Wadah dalam disamakan dengan isi halaman: max-w-7xl di tengah + px-4 (halaman-halaman punya padding dalam px-4 sendiri), supaya nama & tombol sejajar dengan kartu */}
-          <div className="w-full max-w-7xl mx-auto px-4 pt-0.5 flex items-center justify-between">
+          <div className="w-full max-w-7xl mx-auto px-4 flex items-center justify-between">
           <div className="flex items-center gap-4 min-w-0">
             <button onClick={() => setIsSidebarOpen(true)} className="p-3 bg-slate-50 text-slate-400 rounded-xl lg:hidden shrink-0"><Menu size={24}/></button>
 <div className="flex flex-col items-start gap-1.5 min-w-0">
