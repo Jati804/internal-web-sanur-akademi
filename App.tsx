@@ -387,7 +387,7 @@ const pendingReportsCount = Array.isArray(reports) ?
           {/* Tinggi baris logo = tinggi header (h-24) supaya SANUR/Sistem Internal sejajar dengan nama/status */}
           <div className="flex items-center justify-between h-24 shrink-0 mb-6 px-2">
             <div className="flex items-center gap-3">
-              <div className="w-11 h-11 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shrink-0 translate-y-1"><BookOpen size={22} /></div>
+              <div className="w-11 h-11 bg-blue-600 rounded-2xl flex items-center justify-center text-white shadow-xl shrink-0 translate-y-[3px]"><BookOpen size={22} /></div>
               <div className="flex flex-col items-start gap-1.5 min-w-0">
                 <h1 className="font-black text-slate-800 tracking-tight text-base md:text-lg uppercase leading-none pb-0.5">SANUR</h1>
                 <p className="text-[10px] font-black text-blue-600 uppercase tracking-widest leading-none -translate-y-0.5">Sistem Internal</p>
