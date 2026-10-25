@@ -208,10 +208,10 @@ export const computeFollowUps = (
 };
 
 // Kelompok di daftar follow-up: judul + satu kalimat keterangan (ditulis sekali per kelompok, bukan per siswa)
-const FOLLOW_UP_SECTIONS: { kind: FollowUpItem['kind']; title: string; hint: string; Icon: React.ElementType; bar: string; iconBox: string }[] = [
-  { kind: 'NEXT_CLASS', title: 'Guru memutuskan lanjut kelas', hint: 'Siswa bayar kalau bersedia lanjut. Admin tinggal menagih atau memverifikasi.', Icon: Rocket, bar: 'bg-purple-400', iconBox: 'bg-purple-100 text-purple-700' },
-  { kind: 'SELESAI', title: 'Selesai 6/6', hint: 'Rapot masih berjalan, atau guru belum memutuskan lanjut kelas.', Icon: Zap, bar: 'bg-slate-800', iconBox: 'bg-slate-900 text-yellow-400' },
-  { kind: 'SESI_5', title: 'Sesi 5 dari 6', hint: 'Tinggal 1 lagi, memasuki evaluasi.', Icon: Clock, bar: 'bg-orange-400', iconBox: 'bg-orange-100 text-orange-600' }
+const FOLLOW_UP_SECTIONS: { kind: FollowUpItem['kind']; title: string; hint: string; Icon: React.ElementType; iconBox: string }[] = [
+  { kind: 'NEXT_CLASS', title: 'Guru memutuskan lanjut kelas', hint: 'Siswa bayar kalau bersedia lanjut. Admin tinggal menagih atau memverifikasi.', Icon: Rocket, iconBox: 'bg-purple-600 text-white shadow-purple-600/30' },
+  { kind: 'SELESAI', title: 'Selesai 6/6', hint: 'Rapot masih berjalan, atau guru belum memutuskan lanjut kelas.', Icon: Zap, iconBox: 'bg-blue-600 text-white shadow-blue-600/30' },
+  { kind: 'SESI_5', title: 'Sesi 5 dari 6', hint: 'Tinggal 1 lagi, memasuki evaluasi.', Icon: Clock, iconBox: 'bg-orange-500 text-white shadow-orange-500/30' }
 ];
 
 const agoText = (d: number) => (d <= 0 ? 'hari ini' : `${d} hari lalu`);
@@ -311,27 +311,21 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
 
       {/* FOLLOW-UP SECTION (MAIN CONTENT) */}
       <div className="bg-white p-10 md:p-14 rounded-[4rem] border border-slate-100 shadow-2xl flex flex-col min-h-[450px] relative overflow-hidden">
-         <div className="absolute top-0 right-0 w-80 h-80 bg-orange-50 rounded-full blur-[100px] -mr-40 -mt-40 opacity-40"></div>
+         <div className="absolute top-0 right-0 w-80 h-80 bg-blue-50 rounded-full blur-[100px] -mr-40 -mt-40 opacity-40"></div>
          
          <div className="flex justify-between items-center mb-10 relative z-10">
             <div className="space-y-2">
                <h3 className="font-black text-slate-800 flex items-center gap-3 italic uppercase text-2xl">
-                  <PhoneForwarded size={28} className="text-orange-500 animate-bounce" /> 
+                  <PhoneForwarded size={28} className="text-blue-600 animate-bounce" /> 
                   Follow-Up Belajar
                </h3>
-               <p className="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em] italic">
-                  Siswa yang mencapai titik kritis (Sesi 5, Selesai 6/6, atau Lanjut Kelas)
-               </p>
-            </div>
-            <div className="bg-orange-50 text-orange-600 px-8 py-3 rounded-full font-black text-[10px] uppercase border border-orange-100 shadow-sm">
-               {followUpList.length} DATA ANTREAN
             </div>
          </div>
 
          <div className="relative z-10">
             {followUpList.length > 0 ? (
                <>
-                  <div className="flex items-start gap-4 rounded-2xl border border-blue-100 bg-blue-50/60 px-5 py-4 mb-10 max-w-3xl">
+                  <div className="flex items-start gap-4 rounded-[2rem] border border-blue-100 bg-blue-50/60 px-6 py-5 mb-10 max-w-3xl">
                      <Info size={20} className="text-blue-500 shrink-0 mt-0.5" />
                      <div className="text-sm text-slate-600 leading-relaxed space-y-1">
                         <p>Setelah siswa <b className="text-slate-800">bayar kelas lanjutan dan terverifikasi</b>, namanya hilang dari daftar ini.</p>
@@ -345,19 +339,18 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
                         if (rows.length === 0) return null;
                         return (
                            <section key={sec.kind}>
-                              <div className="relative overflow-hidden flex items-center gap-4 rounded-2xl bg-slate-50 border border-slate-100 pl-6 pr-5 py-4">
-                                 <span className={`absolute left-0 top-0 bottom-0 w-1.5 ${sec.bar}`} />
-                                 <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${sec.iconBox}`}>
-                                    <sec.Icon size={20} />
+                              <div className="flex items-center gap-5 rounded-[2rem] bg-slate-50 border border-slate-100 px-6 py-5">
+                                 <div className={`w-12 h-12 rounded-[1.25rem] flex items-center justify-center shrink-0 shadow-lg ${sec.iconBox}`}>
+                                    <sec.Icon size={24} />
                                  </div>
                                  <div className="min-w-0 flex-1">
-                                    <h4 className="text-lg font-black text-slate-800 leading-tight">{sec.title}</h4>
-                                    <p className="text-sm text-slate-500">{sec.hint}</p>
+                                    <h4 className="font-black text-slate-800 uppercase italic text-lg leading-tight">{sec.title}</h4>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">{sec.hint}</p>
                                  </div>
-                                 <span className="shrink-0 bg-white border border-slate-200 text-slate-600 text-xs font-bold rounded-full px-3 py-1">{rows.length} siswa</span>
+                                 <span className="shrink-0 bg-white border border-slate-100 text-slate-500 text-[10px] font-black uppercase tracking-widest rounded-full px-4 py-2 shadow-sm">{rows.length} siswa</span>
                               </div>
 
-                              <ul className="mt-1 px-2 divide-y divide-slate-100 border-b border-slate-100">
+                              <ul className="mt-3 space-y-3">
                                  {rows.map((s, i) => {
                                     const rapot = rapotLine(s);
                                     const soon = s.daysLeft <= EXPIRY_WARN_DAYS;
@@ -367,15 +360,15 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
                                        ? (s.pendingVerify ? 'Menunggu verifikasi' : 'Belum lapor bayar')
                                        : `Sesi ${s.lastSess} pada ${shortDate(s.lastDate)}`;
                                     return (
-                                       <li key={`${s.kind}-${s.student}-${s.fullClass}-${i}`} className="flex items-center justify-between gap-6 py-4">
+                                       <li key={`${s.kind}-${s.student}-${s.fullClass}-${i}`} className="flex items-center justify-between gap-6 rounded-[1.75rem] bg-white border border-slate-100 px-6 py-4 shadow-sm hover:border-blue-200 hover:shadow-md transition-all">
                                           <div className="min-w-0">
-                                             <p className="font-bold text-slate-800 truncate">{s.student}</p>
-                                             <p className="text-sm text-slate-500 truncate">{s.fullClass.split(' - ')[0]}</p>
-                                             {rapot && <p className={`text-sm ${rapot.warn ? 'text-amber-700' : 'text-slate-500'}`}>{rapot.text}</p>}
+                                             <p className="font-black italic uppercase text-slate-800 truncate">{s.student}</p>
+                                             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 truncate mt-0.5">{s.fullClass.split(' - ')[0]}</p>
+                                             {rapot && <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${rapot.warn ? 'text-amber-700' : 'text-slate-400'}`}>{rapot.text}</p>}
                                           </div>
                                           <div className="text-right shrink-0">
-                                             <p className="text-sm text-slate-800">{statusText}</p>
-                                             <p className={`text-sm ${soon ? 'text-red-600' : 'text-slate-500'}`}>
+                                             <p className="text-xs font-black uppercase tracking-wider text-slate-700">{statusText}</p>
+                                             <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${soon ? 'text-red-600' : 'text-slate-400'}`}>
                                                 {prefix}{agoText(s.daysAgo)}{soon ? ` · ${leftText(s.daysLeft)}` : ''}
                                              </p>
                                           </div>
