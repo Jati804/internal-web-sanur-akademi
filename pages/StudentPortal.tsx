@@ -1324,7 +1324,7 @@ const handleDownloadPDFReport = async (course: any) => {
                        {p.status === 'PENDING' && (
                          <button 
                            onClick={() => setConfirmDeletePayment(p)}
-                           className="absolute top-0 right-0 p-5 md:p-6 bg-orange-500 text-white rounded-bl-[2.5rem] hover:bg-orange-600 transition-all shadow-xl z-20 flex items-center justify-center group/del"
+                           className="absolute top-0 right-0 p-5 md:p-6 bg-[#FF4500] text-white rounded-bl-[2.5rem] hover:bg-[#E03E00] transition-all shadow-xl z-20 flex items-center justify-center group/del"
                            title="Hapus Laporan"
                          >
                            <X size={22} strokeWidth={4} className="group-hover/del:scale-125 transition-transform" />
@@ -1355,8 +1355,8 @@ const handleDownloadPDFReport = async (course: any) => {
                          <div className="flex gap-3">
                            {p.status === 'PENDING' ? (
                              <>
-                               <button onClick={() => handleFetchReceiptPreview(p.id)} className="p-4 bg-blue-50 text-blue-600 rounded-2xl active:bg-blue-100 active:scale-95 transition-all"><Eye size={24}/></button>
-                               <button onClick={() => handleEditPending(p)} className="p-4 bg-blue-50 text-blue-600 rounded-2xl active:bg-blue-100 active:scale-95 transition-all"><Edit3 size={24}/></button>
+                               <button onClick={() => handleFetchReceiptPreview(p.id)} className="p-4 bg-slate-50 text-slate-500 rounded-2xl active:bg-slate-100 active:scale-95 transition-all"><Eye size={24}/></button>
+                               <button onClick={() => handleEditPending(p)} className="p-4 bg-slate-50 text-slate-500 rounded-2xl active:bg-slate-100 active:scale-95 transition-all"><Edit3 size={24}/></button>
                              </>
                            ) : (
                              <div className="flex gap-3">
