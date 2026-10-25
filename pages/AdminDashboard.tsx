@@ -267,7 +267,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
          </div>
          <div className="relative z-10 flex gap-4">
             <div className="bg-white/5 backdrop-blur-md p-8 rounded-[3rem] border border-white/10 text-center min-w-[160px] shadow-inner">
-               <p className="text-[9px] font-black uppercase text-orange-400 mb-2 tracking-widest flex items-center justify-center gap-2 animate-pulse"><Clock size={12}/> Butuh Follow-Up</p>
+               <p className="text-[9px] font-black uppercase text-blue-400 mb-2 tracking-widest flex items-center justify-center gap-2 animate-pulse"><Clock size={12}/> Butuh Follow-Up</p>
                <h4 className="text-4xl font-black italic">{followUpList.length} <span className="text-sm font-bold text-slate-500">SISWA</span></h4>
             </div>
          </div>
