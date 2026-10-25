@@ -66,7 +66,6 @@ export type CourseInfo = {
   published: boolean;             // rapot sudah terkirim ke siswa
   waitingRelease: boolean;
   requesting: boolean;
-  processing: boolean;
   rejected: boolean;
 };
 
@@ -156,7 +155,6 @@ export const getRunningCourses = (idx: Indexes, studentName: string): CourseInfo
       published,
       waitingRelease,
       requesting: courseReports.some(r => r.status === 'REQ'),
-      processing: courseReports.some(r => r.status === 'REPORT_PROCESSING'),
       rejected: courseReports.some(r => r.status === 'REPORT_REJECTED'),
     });
   }
@@ -216,7 +214,6 @@ type Tone = 'blue' | 'amber' | 'orange' | 'rose' | 'emerald';
 
 export const getStatus = (c: CourseInfo): { text: string; tone: Tone; bolt?: boolean } | null => {
   if (c.waitingRelease) return { text: 'Rapot siap, menunggu rilis', tone: 'amber' };
-  if (c.processing) return { text: 'Rapot sedang diproses', tone: 'orange' };
   if (c.requesting) return { text: 'Sudah klaim rapot', tone: 'orange' };
   if (c.rejected) return { text: 'Klaim rapot ditolak', tone: 'rose' };
   if (c.displayDone >= 6) return { text: 'Selesai 6/6 · belum klaim rapot', tone: 'emerald' };
