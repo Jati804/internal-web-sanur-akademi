@@ -103,7 +103,7 @@ const TeacherReportsInbox: React.FC<TeacherReportsInboxProps> = ({ user, logs, r
 
   const reportRequests = useMemo(() => {
   const requests = reports.filter(r =>
-    (r.status === 'REQ' || r.status === 'REPORT_PROCESSING') &&
+    r.status === 'REQ' &&
     r.teacherid === user.id &&
     r.teacherid !== 'SISWA_MANDIRI' // ✅ FILTER ABSEN SISWA MANDIRI
   );
@@ -170,14 +170,10 @@ setReportForm({
     setTimeout(() => document.getElementById('app-scroll-container')?.scrollTo(0, 0), 50);
   };
 
-  const handleAcceptRequest = async (req: any) => {
-    setActionLoadingId(req.id);
-    try {
-      const { error } = await supabase.from('reports').update({ status: 'REPORT_PROCESSING' }).eq('id', req.id);
-      if (error) throw error;
-      await refreshAllData();
-      handleOpenWorkspace(req, false);
-    } catch (e: any) { console.error('❌ Gagal terima permintaan rapot:', e); alert("Gagal memproses permintaan rapot ini. Coba lagi ya 🙏"); } finally { setActionLoadingId(null); }
+  // Buka workspace saja, TIDAK menulis ke DB. Status tetap 'REQ' sampai guru benar-benar
+  // menyimpan penilaian (-> 'REPORT_READY'), supaya siswa tidak lihat "diproses" padahal belum diisi.
+  const handleAcceptRequest = (req: any) => {
+    handleOpenWorkspace(req, false);
   };
 
 const handleRejectRequest = async () => {
@@ -602,7 +598,7 @@ const handleDownloadPDF = async (req: any) => {
                       disabled={!!actionLoadingId}
                       className="w-full py-6 bg-slate-900 text-white rounded-[2rem] font-black text-[12px] uppercase tracking-widest shadow-xl active:scale-95 transition-all hover:bg-black flex items-center justify-center gap-3"
                     >
-                      {actionLoadingId === req.id ? <Loader2 className="animate-spin" size={20} /> : 'TERIMA & ISI RAPOT ✍️'}
+                      ISI RAPOT ✍️
                     </button>
                     <div className="grid grid-cols-2 gap-3">
                       <button 
