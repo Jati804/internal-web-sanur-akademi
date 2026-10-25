@@ -52,8 +52,6 @@ const daysBetween = (today: string, date: string) =>
 const FOLLOW_UP_WINDOW_DAYS = 30;
 // "hilang N hari lagi" baru ditampilkan di sekian hari terakhir
 const EXPIRY_WARN_DAYS = 7;
-// Rapot yang menunggu guru >= sekian hari diberi warna peringatan
-const RAPOT_TELAT_HARI = 3;
 // Umur dalam hari bulat (tanggal kosong / di masa depan dianggap 0)
 const ageOf = (today: string, date: string) => {
   const d = Math.floor(daysBetween(today, date));
@@ -73,7 +71,7 @@ export type FollowUpItem = {
   pendingVerify?: boolean; // khusus NEXT_CLASS: sudah ada laporan bayar baru, tinggal diverifikasi
   rapot?: RapotStatus;     // khusus SELESAI: posisi rapot siswa
   rapotDays?: number;      // khusus MENUNGGU_GURU: sudah berapa hari sejak siswa klaim
-  rapotTeacher?: string;   // khusus MENUNGGU_GURU / SIAP_KIRIM: nama depan guru yang ditunggu (ditampilkan "Kak <nama>")
+  rapotTeacher?: string;   // khusus MENUNGGU_GURU / SIAP_KIRIM / DITOLAK: nama depan guru terkait (ditampilkan "Kak <nama>")
 };
 
 // Nama depan guru, dipakai di baris rapot ("Kak Dewi"). Kosong kalau guru tidak ditemukan.
@@ -176,8 +174,8 @@ export const computeFollowUps = (
           : rep.status === 'REQ' ? 'MENUNGGU_GURU'
           : 'DITOLAK';
         const rapotDays = rep?.status === 'REQ' && rep.date ? ageOf(today, rep.date) : undefined;
-        // Nama guru hanya relevan kalau bola ada di guru (menunggu diisi / sudah diisi tapi belum dikirim)
-        const rapotTeacher = rapot === 'MENUNGGU_GURU' || rapot === 'SIAP_KIRIM'
+        // Nama guru ditampilkan kalau rapotnya menyangkut guru itu: menunggu diisi, sudah diisi tapi belum dikirim, atau ditolak olehnya
+        const rapotTeacher = rapot === 'MENUNGGU_GURU' || rapot === 'SIAP_KIRIM' || rapot === 'DITOLAK'
           ? firstName(teacherById.get(String(rep?.teacherid ?? rep?.teacherId))?.name ?? rep?.teacherName ?? rep?.teachername) || undefined
           : undefined;
         progress.push({ kind: 'SELESAI', student: g.student, fullClass: g.fullClass, lastSess, lastDate, daysAgo, daysLeft, rapot, rapotDays, rapotTeacher });
@@ -235,17 +233,26 @@ const shortDate = (d: string) => {
   return isNaN(t.getTime()) ? '-' : t.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'UTC' });
 };
 
-const rapotLine = (s: FollowUpItem): { text: string; warn: boolean } | null => {
+// Warna baris rapot: amber = bola di guru (menunggu diisi, siap kirim),
+// hijau = bola di siswa, tinggal diingatkan (belum klaim, ditolak dan belum klaim ulang), abu = sudah beres
+type RapotTone = 'muted' | 'amber' | 'emerald';
+const RAPOT_TONE_CLASS: Record<RapotTone, string> = {
+  muted: 'text-slate-400',
+  amber: 'text-amber-700',
+  emerald: 'text-emerald-600'
+};
+
+const rapotLine = (s: FollowUpItem): { text: string; tone: RapotTone } | null => {
   switch (s.rapot) {
-    case 'BELUM_KLAIM': return { text: 'Rapot: belum klaim', warn: false };
-    case 'DITOLAK': return { text: 'Rapot: ditolak guru, siswa belum klaim ulang', warn: true };
+    case 'BELUM_KLAIM': return { text: 'Rapot: belum klaim', tone: 'emerald' };
+    case 'DITOLAK': return { text: `Rapot: ditolak ${s.rapotTeacher ? `Kak ${s.rapotTeacher}` : 'guru'}, belum klaim ulang`, tone: 'emerald' };
     case 'MENUNGGU_GURU': {
       const d = s.rapotDays ?? 0;
       const who = s.rapotTeacher ? `Kak ${s.rapotTeacher}` : 'guru';
-      return { text: d > 0 ? `Rapot: menunggu ${who} mengisi, sudah ${d} hari` : `Rapot: menunggu ${who} mengisi, klaim hari ini`, warn: d >= RAPOT_TELAT_HARI };
+      return { text: d > 0 ? `Rapot: menunggu ${who} mengisi, sudah ${d} hari` : `Rapot: menunggu ${who} mengisi, klaim hari ini`, tone: 'amber' };
     }
-    case 'SIAP_KIRIM': return { text: s.rapotTeacher ? `Rapot: sudah diisi, belum dikirim Kak ${s.rapotTeacher}` : 'Rapot: sudah diisi, belum dikirim guru', warn: false };
-    case 'TERBIT': return { text: 'Rapot: sudah terbit', warn: false };
+    case 'SIAP_KIRIM': return { text: s.rapotTeacher ? `Rapot: sudah diisi, belum dikirim Kak ${s.rapotTeacher}` : 'Rapot: sudah diisi, belum dikirim guru', tone: 'amber' };
+    case 'TERBIT': return { text: 'Rapot: sudah terbit', tone: 'muted' };
     default: return null;
   }
 };
@@ -379,7 +386,7 @@ const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, student
                                           <div className="min-w-0">
                                              <p className="font-black italic uppercase text-slate-800 truncate">{s.student}</p>
                                              <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 truncate mt-0.5">{s.fullClass.split(' - ')[0]}</p>
-                                             {rapot && <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${rapot.warn ? 'text-amber-700' : 'text-slate-400'}`}>{rapot.text}</p>}
+                                             {rapot && <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${RAPOT_TONE_CLASS[rapot.tone]}`}>{rapot.text}</p>}
                                           </div>
                                           <div className="text-right shrink-0">
                                              <p className="text-xs font-black uppercase tracking-wider text-slate-700">{statusText}</p>
