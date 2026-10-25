@@ -239,7 +239,7 @@ type RapotTone = 'muted' | 'amber' | 'emerald';
 const RAPOT_TONE_CLASS: Record<RapotTone, string> = {
   muted: 'text-slate-400',
   amber: 'text-amber-700',
-  emerald: 'text-emerald-600'
+  emerald: 'text-emerald-700'
 };
 
 const rapotLine = (s: FollowUpItem): { text: string; tone: RapotTone } | null => {
