@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Attendance, StudentPayment } from '../types';
 import { supabase } from '../services/supabase.ts';
 import ModalPortal from '../ModalPortal.tsx';
@@ -31,9 +31,7 @@ interface AdminMaintenanceProps {
   refreshAllData?: () => Promise<void>;
 }
 
-const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({ 
-  attendanceLogs, 
-  studentPayments,
+const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
   refreshAllData
 }) => {
   // Security Gate State (Halaman Utama)
@@ -46,7 +44,6 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
   const [successText, setSuccessText] = useState('');
   
   const [showPreviewList, setShowPreviewList] = useState(false);
-  const [importProgress, setImportProgress] = useState(0);
   const [isMaintMode, setIsMaintMode] = useState(false);
 
   const [confirmDeleteMedia, setConfirmDeleteMedia] = useState<any | null>(null);
@@ -128,6 +125,7 @@ useEffect(() => {
       if (err2) throw err2;
 
       fetchMediaCount();
+      if (showPreviewList) await fetchGalleryMedia();
       if (refreshAllData) await refreshAllData();
       setConfirmPurge(false);
       triggerSuccessOverlay("SELURUH MEDIA LAMA BERSIH! 🧹✨");
@@ -250,10 +248,6 @@ useEffect(() => {
               </div>
               <div className="text-center space-y-4 w-full">
                   <p className="text-[12px] font-black uppercase tracking-[0.4em] italic text-blue-600">{loadingText}</p>
-                  <div className="w-full h-3 bg-slate-100 rounded-full overflow-hidden p-0.5 border">
-                      <div className="h-full bg-blue-500 rounded-full transition-all duration-300" style={{ width: `${importProgress}%` }}></div>
-                  </div>
-                  <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">{importProgress}% PROGRESS</p>
               </div>
            </div>
      ) : (
@@ -375,7 +369,7 @@ useEffect(() => {
         <div className="bg-white w-full max-w-[340px] rounded-[2.5rem] p-8 text-center space-y-6 shadow-2xl relative border-t-8 border-rose-500">
               <button onClick={() => setConfirmDeleteMedia(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
               <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-[1.5rem] flex items-center justify-center mx-auto shadow-sm"><Trash2 size={32} /></div>
-              <div className="space-y-1"><h4 className="text-xl font-black text-slate-800 uppercase italic leading-none text-rose-600">HAPUS FOTO?</h4><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4">Bukti milik <span className="text-slate-800 font-black">{confirmDeleteMedia.name}</span> akan dihapus from memory cloud. ✨</p></div>
+              <div className="space-y-1"><h4 className="text-xl font-black text-slate-800 uppercase italic leading-none text-rose-600">HAPUS FOTO?</h4><p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4">Bukti milik <span className="text-slate-800 font-black">{confirmDeleteMedia.name}</span> akan dihapus dari memori Supabase. ✨</p></div>
               <div className="flex gap-3"><button onClick={() => setConfirmDeleteMedia(null)} className="flex-1 py-4 bg-slate-50 text-slate-400 rounded-xl font-black text-[9px] uppercase">BATAL</button><button onClick={executeDeleteMedia} className="flex-[1.5] py-4 bg-rose-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg flex items-center justify-center gap-2"><Check size={16}/> IYA, HAPUS</button></div>
            </div>
     </div>
