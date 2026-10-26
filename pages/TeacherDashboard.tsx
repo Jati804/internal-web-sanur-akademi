@@ -156,7 +156,44 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
     return Math.round(hourlyRate * form.duration);
   }, [form.category, form.duration, salaryConfig]);
 
-  // LOGIKA DETEKSI SESI OTOMATIS (FIXED: ENTRY TIME BASED)
+  // 🔎 Cari paket aktif (siklus yang belum penuh) untuk kombinasi kelas yang sedang dipilih di form.
+  // excludeId dipakai saat edit/pindah: sesi yang lagi dipindah jangan ikut dihitung.
+  // Nomor sesi berikutnya = nomor TERTINGGI di paket itu + 1 (bukan sekadar log terbaru),
+  // supaya tetap benar walau ada sesi yang disisipkan berdasarkan tanggal.
+  const findActivePackage = (excludeId?: string) => {
+    const fullClassName = `${form.subject} (${form.level}) - ${form.room}`.toUpperCase().trim();
+    const relevantLogs = logs.filter(l => {
+      const dbClass = (l.className || '').toUpperCase().trim();
+      const dbLevel = (l.level || '').toUpperCase().trim();
+      const dbCategory = (l.sessionCategory || 'REGULER');
+
+      const isSameClass = dbClass === fullClassName;
+      const isSameLevel = dbLevel === form.level.toUpperCase();
+      const isSameCategory = dbCategory === form.category;
+      const isSameGrouping = form.category === 'PRIVATE'
+        ? (l.studentsAttended?.[0] || '').toUpperCase().trim() === form.studentName.toUpperCase().trim()
+        : true;
+
+      return isSameClass && isSameLevel && isSameCategory && isSameGrouping &&
+             (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG') &&
+             l.id !== excludeId;
+    });
+
+    // Aktivitas input terbaru (ID = timestamp) menentukan paket mana yang sedang berjalan
+    const latestAction = [...relevantLogs].sort((a, b) => b.id.localeCompare(a.id))[0];
+    if (!latestAction) return null;
+
+    const pkgLogs = relevantLogs.filter(l => l.packageId === latestAction.packageId);
+    const maxNum = pkgLogs.reduce((max, l) => Math.max(max, Number(l.sessionNumber) || 0), 0);
+
+    return {
+      packageId: latestAction.packageId || null,
+      originalTeacherId: latestAction.originalTeacherId || null,
+      maxNum
+    };
+  };
+
+  // LOGIKA DETEKSI SESI OTOMATIS
   useEffect(() => {
     // Pencarian yang lagi jalan dibatalin oleh cleanup di bawah (clearTimeout), jadi flag
     // "lagi mencari" harus dimatiin di setiap jalur keluar. Kalau nggak, overlay loading nyangkut.
@@ -164,7 +201,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
       setIsDetecting(false);
       return;
     }
-    
+
     if (form.category === 'PRIVATE' && !form.studentName) {
       setForm(prev => ({ ...prev, sessionNumber: 1 }));
       setActivePackageId(null);
@@ -174,51 +211,17 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
     }
 
     setIsDetecting(true);
-    
-    const fullClassName = `${form.subject} (${form.level}) - ${form.room}`.toUpperCase().trim();
-    
+
     const timer = setTimeout(() => {
-      // 1. Ambil semua riwayat pengajaran kelas ini
-      const relevantLogs = logs.filter(l => {
-        const dbClass = (l.className || '').toUpperCase().trim();
-        const dbLevel = (l.level || '').toUpperCase().trim();
-        const dbCategory = (l.sessionCategory || 'REGULER');
-        
-        const isSameClass = dbClass === fullClassName;
-        const isSameLevel = dbLevel === form.level.toUpperCase();
-        const isSameCategory = dbCategory === form.category;
-        
-        const isSameGrouping = form.category === 'PRIVATE' 
-          ? (l.studentsAttended?.[0] || '').toUpperCase().trim() === form.studentName.toUpperCase().trim()
-          : true;
+      const active = findActivePackage();
 
-        return isSameClass && isSameLevel && isSameCategory && isSameGrouping && 
-               (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG');
-      });
-
-      // 2. URUTKAN BERDASARKAN ID (TIMESTAMP) TERBARU
-      // Ini kunci utamanya: Sesi 1 yang baru diinput di siklus baru akan punya ID lebih besar 
-      // dibanding Sesi 6 di siklus lama, meskipun nomor sesinya lebih kecil.
-      const sortedByEntry = [...relevantLogs].sort((a, b) => b.id.localeCompare(a.id));
-      
-      const latestAction = sortedByEntry[0];
-      
-      if (latestAction) {
-        const lastSessNum = Number(latestAction.sessionNumber) || 0;
-        
-        // Jika aktivitas terakhir belum mencapai 6, lanjutkan paket tersebut
-        if (lastSessNum < 6) {
-          setForm(prev => ({ ...prev, sessionNumber: lastSessNum + 1 }));
-          setActivePackageId(latestAction.packageId || null);
-          setActiveOriginalTeacherId(latestAction.originalTeacherId || null);
-        } else {
-          // Jika aktivitas terakhir adalah Sesi 6, maka siklus selesai, buka paket baru (Sesi 1)
-          setForm(prev => ({ ...prev, sessionNumber: 1 }));
-          setActivePackageId(null);
-          setActiveOriginalTeacherId(null);
-        }
+      if (active && active.maxNum < 6) {
+        // Paket belum penuh -> lanjutkan
+        setForm(prev => ({ ...prev, sessionNumber: active.maxNum + 1 }));
+        setActivePackageId(active.packageId);
+        setActiveOriginalTeacherId(active.originalTeacherId);
       } else {
-        // Jika tidak ada riwayat sama sekali
+        // Belum ada riwayat, atau paket terakhir sudah 6 sesi -> buka paket baru (Sesi 1)
         setForm(prev => ({ ...prev, sessionNumber: 1 }));
         setActivePackageId(null);
         setActiveOriginalTeacherId(null);
@@ -229,12 +232,160 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
     return () => clearTimeout(timer);
   }, [logs, form.subject, form.level, form.room, form.category, form.studentName, editData]);
 
+  // ✏️ Apakah identitas kelas berubah saat edit? (matpel / level / ruang / tipe / nama siswa)
+  const isIdentityChanged = () => {
+    if (!editData) return false;
+    const newClass = `${form.subject} (${form.level}) - ${form.room}`.toUpperCase().trim();
+    const oldClass = (editData.className || '').toUpperCase().trim();
+    const oldCategory = editData.sessionCategory || 'REGULER';
+    const oldStudent = (editData.studentsAttended?.[0] || 'REGULER').toUpperCase().trim();
+    const newStudent = form.category === 'PRIVATE' ? form.studentName.toUpperCase().trim() : 'REGULER';
+    return newClass !== oldClass || form.category !== oldCategory || newStudent !== oldStudent;
+  };
+
+  // 🔀 Pindahkan sesi ke paket lain: disisipkan sesuai tanggal, nomor sesi yang terdampak digeser.
+  const handleMoveSession = async (delegating: boolean) => {
+    if (!editData) return;
+    setLoading(true);
+    try {
+      const fullClassName = `${form.subject} (${form.level}) - ${form.room}`.toUpperCase();
+      const targetTeacher = teachers.find(t => t.id === form.targetTeacherId);
+      const srcPkgId = editData.packageId;
+
+      const found = findActivePackage(editData.id);
+      const destPkg = found && found.packageId && found.packageId !== srcPkgId ? found : null;
+
+      // Ambil data TERBARU dari DB (bukan cuma state lokal) buat jaga-jaga ada perubahan yang belum ke-refresh
+      const pkgIds = [srcPkgId, destPkg?.packageId].filter(Boolean) as string[];
+      const { data: freshRows, error: freshErr } = await supabase
+        .from('attendance')
+        .select('id, packageid, sessionnumber, date, paymentstatus, status, teacherid, originalteacherid')
+        .in('packageid', pkgIds)
+        .in('status', ['SESSION_LOG', 'SUB_LOG']);
+      if (freshErr) throw freshErr;
+
+      const rows = (freshRows || []) as any[];
+      const srcRows = rows.filter(r => r.packageid === srcPkgId && r.id !== editData.id);
+      const destRows = destPkg
+        ? rows.filter(r => r.packageid === destPkg.packageId).sort((a, b) => a.sessionnumber - b.sessionnumber)
+        : [];
+
+      // Paket tujuan sudah penuh
+      if (destPkg && destRows.length >= 6) {
+        alert(`Paket tujuan (${fullClassName}) sudah terisi 6 sesi, jadi sesi ini tidak bisa disisipkan. Silakan hubungi Admin ya Kak! 🙏`);
+        return;
+      }
+
+      // Validasi ownership paket tujuan (sama seperti saat lapor presensi biasa)
+      if (destPkg) {
+        const ownerId = destPkg.originalTeacherId || destRows[0]?.originalteacherid;
+        if (ownerId && ownerId !== user.id) {
+          const hasSub = destRows.some(r => r.teacherid === user.id && r.status === 'SUB_LOG');
+          if (!hasSub) {
+            const owner = teachers.find(t => t.id === ownerId);
+            setBlockModal({
+              ownerName: owner?.name || 'Guru Lain',
+              className: `${form.subject} (${form.level}) - ${form.room}`,
+              currentSession: destRows.length
+            });
+            return;
+          }
+        }
+      }
+
+      // Tentukan nomor sesi baru berdasarkan tanggal (kalau tanggal sama, urutkan pakai ID)
+      let newNumber = 1;
+      if (destRows.length > 0) {
+        const firstLater = destRows.find(r => r.date > form.date || (r.date === form.date && r.id > editData.id));
+        newNumber = firstLater
+          ? firstLater.sessionnumber
+          : Math.max(...destRows.map(r => r.sessionnumber)) + 1;
+      }
+
+      const toShiftUp = destRows.filter(r => r.sessionnumber >= newNumber);
+      const toShiftDown = srcRows.filter(r => r.sessionnumber > editData.sessionNumber);
+
+      // Sesi yang nomornya ikut bergeser harus masih UNPAID
+      const paidInDest = toShiftUp.some(r => r.paymentstatus !== 'UNPAID');
+      const paidInSrc = toShiftDown.some(r => r.paymentstatus !== 'UNPAID');
+      if (paidInDest) {
+        alert(`Sesi tidak bisa dipindah ke kotak ${fullClassName}.\n\nSesi tanggal ${form.date.split('-').reverse().join('/')} harus disisipkan sebelum sesi lain di kotak itu yang sudah LUNAS (sudah dibayar), dan sesi LUNAS tidak boleh berubah nomornya.\n\nSilakan hubungi Admin ya Kak! 🙏`);
+        return;
+      }
+      if (paidInSrc) {
+        alert(`Sesi tidak bisa dipindah dari kotak lama.\n\nAda sesi setelahnya di kotak itu yang sudah LUNAS (sudah dibayar), jadi nomornya tidak bisa dirapatkan setelah sesi ini keluar.\n\nSilakan hubungi Admin ya Kak! 🙏`);
+        return;
+      }
+
+      const groupSuffix = form.category === 'PRIVATE' ? `-${form.studentName.replace(/\s+/g, '-')}` : '-GROUP';
+      const finalPackageId = destPkg?.packageId
+        || `PKG-${form.category}-${fullClassName.replace(/\s+/g, '-')}${groupSuffix}-${Date.now()}`;
+      const finalOriginalTeacherId = destPkg?.originalTeacherId || destRows[0]?.originalteacherid || user.id;
+
+      const payload: any = {
+        id: editData.id,
+        teacherid: delegating ? (targetTeacher?.id || user.id) : user.id,
+        teachername: delegating ? (targetTeacher?.name || user.name) : user.name,
+        date: form.date,
+        clockin: editData.clockIn,
+        status: delegating ? 'SUB_LOG' : 'SESSION_LOG',
+        classname: fullClassName,
+        level: form.level,
+        sessioncategory: form.category,
+        packageid: finalPackageId,
+        sessionnumber: newNumber,
+        studentsattended: form.category === 'PRIVATE' ? [form.studentName.toUpperCase()] : ['REGULER'],
+        earnings: estimatedHonor,
+        paymentstatus: 'UNPAID',
+        duration: form.duration,
+        substitutefor: delegating ? user.name : (editData.substituteFor || null),
+        originalteacherid: finalOriginalTeacherId
+      };
+
+      // Semua perubahan dijalankan di database dalam SATU transaksi (fungsi move_attendance_session):
+      // kalau ada satu langkah gagal, semuanya dibatalkan dan data tetap seperti semula.
+      const { error: rpcErr } = await supabase.rpc('move_attendance_session', {
+        p_up: [...toShiftUp]
+          .sort((x, y) => y.sessionnumber - x.sessionnumber)
+          .map(r => ({ id: r.id, sessionnumber: r.sessionnumber + 1 })),
+        p_moved: payload,
+        p_down: [...toShiftDown]
+          .sort((x, y) => x.sessionnumber - y.sessionnumber)
+          .map(r => ({ id: r.id, sessionnumber: r.sessionnumber - 1 }))
+      });
+      if (rpcErr) throw rpcErr;
+
+      if (refreshAllData) await refreshAllData();
+      navigate('/teacher/honor', { replace: true, state: { highlightId: finalPackageId } });
+    } catch (e: any) {
+      const raw = String(e?.message || '');
+      const low = raw.toLowerCase();
+      let reason = raw || 'Terjadi kendala yang tidak diketahui.';
+      if (low.includes('failed to fetch') || low.includes('network')) reason = 'Koneksi internet terputus.';
+      else if (low.includes('jwt') || low.includes('expired')) reason = 'Sesi login sudah habis, silakan login ulang.';
+      else if (low.includes('row-level security') || low.includes('permission denied')) reason = 'Akun Kakak tidak punya izin untuk mengubah data ini.';
+      else if (low.includes('duplicate key')) reason = 'Nomor sesi bentrok dengan sesi lain.';
+      else if (low.includes('sesi_lunas')) reason = 'Ada sesi LUNAS yang nomornya ikut bergeser.';
+      else if (low.includes('sesi_tidak_ditemukan')) reason = 'Data sesi tidak ditemukan, mungkin sudah dihapus.';
+      else if (low.includes('could not find the function')) reason = 'Fitur pindah sesi belum aktif di database.';
+      alert("Gagal memindahkan sesi: " + reason + "\n\nTidak ada data yang berubah. Silakan coba lagi, atau hubungi Admin kalau masih gagal ya Kak! 🙏");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleLaporPresensi = async () => {
     if (isDetecting) return;
     const delegating = isDelegating && !isHomeTutoring; // Home Tutoring: tidak boleh digantikan
     if (!form.subject || !form.level || !form.room) return alert("Pilih Matpel, Level & Ruangan dulu ya! ✨");
     if (form.category === 'PRIVATE' && !form.studentName) return alert("Pilih Nama Siswa dulu untuk kelas Private! ✨");
     if (delegating && !form.targetTeacherId) return alert("Pilih Nama Teman yang menggantikan dulu ya! ✨");
+
+    // ✏️ Mode edit + identitas kelas berubah -> pindahkan sesi ke paket yang benar
+    if (editData && isIdentityChanged()) {
+      await handleMoveSession(delegating);
+      return;
+    }
     
     // ⭐ VALIDASI OWNERSHIP SEBELUM SUBMIT!
     if (activePackageId && activeOriginalTeacherId && activeOriginalTeacherId !== user.id) {
