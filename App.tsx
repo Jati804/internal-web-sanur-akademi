@@ -45,10 +45,10 @@ const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }
     <Link 
       to={to} 
       onClick={onClick}
-      className={`flex items-center justify-between gap-3 px-6 py-4 font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all ${colors[activeColor]}`}
+      className={`group flex items-center justify-between gap-3 px-6 py-4 font-extrabold text-[10px] uppercase tracking-widest rounded-2xl transition-all ${colors[activeColor]}`}
     >
       <div className="flex items-center gap-3">
-        <Icon size={18} />
+        <Icon size={18} className={isActive ? '' : 'opacity-60 group-hover:opacity-100 transition-opacity'} />
         {label}
       </div>
 {badge && badge > 0 ? (
@@ -59,7 +59,7 @@ const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }
 };
 
 const NavSection = ({ label, first }: { label: string, first?: boolean }) => (
-  <p className={`px-6 mb-2 text-[9px] font-black text-slate-400 uppercase tracking-widest ${first ? '' : 'mt-3'}`}>
+  <p className={`px-6 mb-2 text-[9px] font-extrabold text-slate-400 uppercase tracking-widest ${first ? '' : 'mt-3'}`}>
     {label}
   </p>
 );
@@ -447,7 +447,7 @@ const pendingReportsCount = Array.isArray(reports) ?
   </h1>
 
   {/* Status peran, kecil di bawah nama */}
-  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 leading-none">
+  <p className="text-[10px] font-extrabold uppercase tracking-widest text-slate-500 leading-none">
     Status: {({ ADMIN: 'Pengurus', TEACHER: 'Pengajar', STUDENT: 'Siswa' } as Record<string, string>)[user.role as string] || user.role}
   </p>
 </div>
@@ -462,7 +462,7 @@ const pendingReportsCount = Array.isArray(reports) ?
 >
   <CalendarDays size={22} className={`${roleScheduleBtn} translate-y-px`} />
   {/* Tulisan hanya tampil di desktop (lg ke atas); di tablet cukup ikon + panah dropdown */}
-  <span className={`hidden lg:inline translate-y-0.5 text-[10px] font-black uppercase tracking-widest text-slate-500 transition-colors ${roleScheduleHover}`}>
+  <span className={`hidden lg:inline translate-y-0.5 text-[10px] font-extrabold uppercase tracking-widest text-slate-500 transition-colors ${roleScheduleHover}`}>
     {user.role === 'TEACHER' ? 'Jadwal Mengajar' : 'Jadwal Belajar'}
   </span>
   <ChevronDown size={20} className={`${roleScheduleBtn} translate-y-px`} />
