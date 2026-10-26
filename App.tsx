@@ -462,7 +462,7 @@ const pendingReportsCount = Array.isArray(reports) ?
 >
   <CalendarDays size={22} className={`${roleScheduleBtn} translate-y-px`} />
   {/* Tulisan hanya tampil di desktop (lg ke atas); di tablet cukup ikon + panah dropdown */}
-  <span className={`hidden lg:inline translate-y-0.5 text-[10px] font-black uppercase tracking-widest text-slate-400 transition-colors ${roleScheduleHover}`}>
+  <span className={`hidden lg:inline translate-y-0.5 text-[10px] font-black uppercase tracking-widest text-slate-500 transition-colors ${roleScheduleHover}`}>
     {user.role === 'TEACHER' ? 'Jadwal Mengajar' : 'Jadwal Belajar'}
   </span>
   <ChevronDown size={20} className={`${roleScheduleBtn} translate-y-px`} />
