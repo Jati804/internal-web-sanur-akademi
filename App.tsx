@@ -447,7 +447,7 @@ const pendingReportsCount = Array.isArray(reports) ?
   </h1>
 
   {/* Status peran, kecil di bawah nama */}
-  <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 leading-none">
+  <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 leading-none">
     Status: {({ ADMIN: 'Pengurus', TEACHER: 'Pengajar', STUDENT: 'Siswa' } as Record<string, string>)[user.role as string] || user.role}
   </p>
 </div>
