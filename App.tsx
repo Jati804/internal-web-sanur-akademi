@@ -37,9 +37,9 @@ const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }
   const location = useLocation();
   const isActive = location.pathname === to;
   const colors: any = {
-    blue: isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-blue-600',
-    emerald: isActive ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-400 hover:text-emerald-600',
-    orange: isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-blue-600',
+    blue: isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-blue-600',
+    emerald: isActive ? 'bg-emerald-600 text-white shadow-lg' : 'text-slate-500 hover:text-emerald-600',
+    orange: isActive ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-500 hover:text-blue-600',
   };
   return (
     <Link 
@@ -59,7 +59,7 @@ const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }
 };
 
 const NavSection = ({ label, first }: { label: string, first?: boolean }) => (
-  <p className={`px-6 mb-2 text-[9px] font-black text-slate-300 uppercase tracking-widest ${first ? '' : 'mt-3'}`}>
+  <p className={`px-6 mb-2 text-[9px] font-black text-slate-400 uppercase tracking-widest ${first ? '' : 'mt-3'}`}>
     {label}
   </p>
 );
