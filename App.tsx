@@ -75,7 +75,6 @@ const GuideModal = ({ role, onClose }: {
         { title: 'Verifikasi SPP', desc: 'Cek bukti bayar siswa di tab "Keuangan" -> "Verif SPP". Klik konfirmasi agar paket aktif.' },
         { title: 'Bayar Honor', desc: 'Cairkan gaji guru di tab "Keuangan" -> "Gaji Guru" & upload bukti transfer untuk mengurangi saldo kas.' },
         { title: 'Kuitansi', desc: 'Buat & cetak kuitansi pemasukan dan pembayaran di menu "Kuitansi".' },
-        { title: 'Buku Induk', desc: 'Daftarkan siswa baru atau update data kontak orang tua di menu "Buku Induk".' },
         { title: 'Akses User', desc: 'Kelola akun login guru & siswa — buat, edit, atau reset password di menu "Akses User".' },
         { title: 'Pengaturan', desc: 'Atur mata pelajaran, kelas, level, jadwal master, dan tarif honor guru di menu "Pengaturan".' },
         { title: 'Materi', desc: 'Upload & kelola bahan ajar yang bisa diakses guru maupun siswa di menu "Materi".' },
