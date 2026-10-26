@@ -76,7 +76,7 @@ const GuideModal = ({ role, onClose }: {
         { title: 'Bayar Honor', desc: 'Cairkan gaji guru di tab "Keuangan" -> "Gaji Guru" & upload bukti transfer untuk mengurangi saldo kas.' },
         { title: 'Kuitansi', desc: 'Buat & cetak kuitansi pemasukan dan pembayaran di menu "Kuitansi".' },
         { title: 'Akses User', desc: 'Kelola akun login guru & siswa — buat, edit, atau reset password di menu "Akses User".' },
-        { title: 'Pengaturan', desc: 'Atur mata pelajaran, kelas, level, jadwal master, dan tarif honor guru di menu "Pengaturan".' },
+        { title: 'Pengaturan', desc: 'Atur jadwal kelas, mata pelajaran, jenis kelas, level, dan tarif honor guru di menu "Pengaturan".' },
         { title: 'Materi', desc: 'Upload & kelola bahan ajar yang bisa diakses guru maupun siswa di menu "Materi".' },
         { title: 'Maintenance', desc: 'Hapus gambar bukti pembayaran dan aktifkan mode maintenance saat sedang perbaikan.' }
       ],
