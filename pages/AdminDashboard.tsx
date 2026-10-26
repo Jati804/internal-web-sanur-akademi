@@ -1,873 +1,423 @@
-import React, { useState, useMemo, useEffect, useRef } from 'react';
-import { User, Attendance } from '../types';
-import ModalPortal from '../ModalPortal.tsx';
-import { supabase } from '../services/supabase.ts';
+import React, { useMemo } from 'react';
+import { User, Attendance, Transaction } from '../types';
 import { 
-  ClipboardCheck, Loader2, Clock, Send, Zap, HeartPulse,
-  UserPlus, BookOpen, Home, Layers, Wallet, Hash,
-  Timer, RotateCcw, Save, Sparkles, Users, Info, AlertTriangle, X, Check
+  PhoneForwarded, 
+  Zap, 
+  Calendar,
+  UserCheck,
+  Receipt,
+  Wallet,
+  CreditCard,
+  ArrowRight,
+  Clock,
+  Rocket,
+  Info
 } from 'lucide-react';
 import * as ReactRouterDOM from 'react-router-dom';
-const { Link, useLocation, useNavigate } = ReactRouterDOM as any;
+const { Link } = ReactRouterDOM as any;
 
-interface TeacherDashboardProps { 
-  user: User; 
-  logs: Attendance[];
-  studentAccounts: User[];
-  subjects: string[];
-  levels: string[];
-  classes: string[];
-  salaryConfig: { regulerRate: number, privateRate: number };
+interface AdminDashboardProps {
+  user: User;
+  attendanceLogs: Attendance[];
+  studentAttendanceLogs: any[];
+  setAttendanceLogs: React.Dispatch<React.SetStateAction<Attendance[]>>;
   teachers: User[];
-  refreshAllData: () => Promise<void>;
+  transactions: Transaction[];
+  reports?: any[];
+  studentPayments?: any[];
 }
 
-const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ 
-  user, logs, studentAccounts, subjects, classes, levels, salaryConfig, teachers, refreshAllData
-}) => {
-  const [loading, setLoading] = useState(false);
-  const [isDetecting, setIsDetecting] = useState(false);
-  const [isDelegating, setIsDelegating] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
-  
-  const editData = location.state?.editLog as Attendance | undefined;
-  const formCardRef = useRef<HTMLDivElement>(null);
+// ============================================================================
+// 📋 LOGIKA FOLLOW-UP (fungsi murni, di luar komponen supaya gampang diuji)
+// Tiga jenis kartu:
+//  1) SESI_5     : paket TERBARU siswa baru sampai sesi 5 (sebentar lagi evaluasi), maksimal 30 hari sejak sesi 5 diabsen.
+//  2) SELESAI    : paket TERBARU sudah sesi 6 (6/6), maksimal 30 hari sejak sesi 6 diabsen.
+//                  Hilang lebih cepat kalau kelas lanjutan sudah dibuka (pembayaran baru TERVERIFIKASI
+//                  untuk mata pelajaran yang sama) atau guru memutuskan "Lanjut Kelas".
+//  3) NEXT_CLASS : guru memutuskan "Lanjut Kelas" tapi kelas barunya belum dibuka (belum lapor bayar /
+//                  menunggu verifikasi). Hilang saat pembayaran baru TERVERIFIKASI. Maksimal 30 hari dari tanggal klaim.
+// ============================================================================
+const norm = (s: any) => String(s ?? '').trim().toUpperCase();
+// ID pembayaran = "PAY-<waktu dibuat, ms>" -> angkanya dipakai untuk membandingkan mana yang lebih baru
+const pkgTime = (id: any) => Number(String(id ?? '').replace(/\D/g, '')) || 0;
+// "PELATIHAN MICROSOFT WORD (BASIC) - REGULER 2" -> "PELATIHAN MICROSOFT WORD"
+const subjectOf = (className: any) => {
+  const m = norm(className).match(/^(.*?)\s*\((.*?)\)\s*-\s*(.*)$/);
+  return m ? m[1].trim() : norm(className);
+};
+const daysBetween = (today: string, date: string) =>
+  (new Date(today).getTime() - new Date(date).getTime()) / (1000 * 60 * 60 * 24);
 
-  // AUTO-SCROLL KE KOTAK FORM (BUKAN KE ATAS HALAMAN) KHUSUS MODE EDIT
-  useEffect(() => {
-    if (editData) {
-      const timer = setTimeout(() => {
-        formCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 300);
-      return () => clearTimeout(timer);
+// Berapa lama siswa bertahan di daftar follow-up. Lewat ini dianggap berhenti dan hilang dari daftar.
+const FOLLOW_UP_WINDOW_DAYS = 30;
+// "hilang N hari lagi" baru ditampilkan di sekian hari terakhir
+const EXPIRY_WARN_DAYS = 7;
+// Umur dalam hari bulat (tanggal kosong / di masa depan dianggap 0)
+const ageOf = (today: string, date: string) => {
+  const d = Math.floor(daysBetween(today, date));
+  return Number.isFinite(d) ? Math.max(0, d) : 0;
+};
+
+export type RapotStatus = 'BELUM_KLAIM' | 'DITOLAK' | 'MENUNGGU_GURU' | 'SIAP_KIRIM' | 'TERBIT';
+
+export type FollowUpItem = {
+  kind: 'NEXT_CLASS' | 'SESI_5' | 'SELESAI';
+  student: string;
+  fullClass: string;
+  lastSess: number;
+  lastDate: string;
+  daysAgo: number;         // umur data: sejak sesi terakhir (SESI_5/SELESAI) atau sejak tanggal klaim (NEXT_CLASS)
+  daysLeft: number;        // sisa hari sebelum hilang dari daftar
+  pendingVerify?: boolean; // khusus NEXT_CLASS: sudah ada laporan bayar baru, tinggal diverifikasi
+  rapot?: RapotStatus;     // khusus SELESAI: posisi rapot siswa
+  rapotDays?: number;      // khusus MENUNGGU_GURU: sudah berapa hari sejak siswa klaim
+  rapotTeacher?: string;   // khusus MENUNGGU_GURU / SIAP_KIRIM / DITOLAK: nama depan guru terkait (ditampilkan "Kak <nama>")
+};
+
+// Nama depan guru, dipakai di baris rapot ("Kak Dewi"). Kosong kalau guru tidak ditemukan.
+const firstName = (full: any) => {
+  const w = String(full ?? '').trim().split(/\s+/)[0] || '';
+  return w ? w.charAt(0).toUpperCase() + w.slice(1).toLowerCase() : '';
+};
+
+export const computeFollowUps = (
+  studentAttendanceLogs: any[],
+  reports: any[],
+  studentPayments: any[],
+  today: string,
+  teachers: any[] = []
+): FollowUpItem[] => {
+  const teacherById = new Map<string, any>();
+  for (const t of teachers || []) teacherById.set(String(t.id), t);
+  // Paket yang sudah diputuskan "Lanjut Kelas" diwakili kartu ungu, jadi tidak ikut kartu "SELESAI"
+  const nextClassPkg = new Set<string>();
+  for (const r of reports || []) {
+    if (r.status !== 'NEXT_CLASS') continue;
+    const pkg = norm(r.packageId ?? r.packageid);
+    (Array.isArray(r.studentsAttended) ? r.studentsAttended : []).forEach((n: any) => nextClassPkg.add(`${pkg}|${norm(n)}`));
+  }
+
+  // Pembayaran (selain REJECTED) per siswa, untuk mengecek "kelas lanjutan sudah dilaporkan / dibuka?"
+  const payById = new Map<string, any>();
+  const livePaymentsByStudent = new Map<string, any[]>();
+  for (const p of studentPayments || []) {
+    payById.set(norm(p.id), p);
+    if (p.status === 'REJECTED') continue;
+    const key = norm(p.studentName ?? p.studentname);
+    const arr = livePaymentsByStudent.get(key);
+    if (arr) arr.push(p); else livePaymentsByStudent.set(key, [p]);
+  }
+  // Pembayaran BARU = ID lebih besar dari paket yang bersangkutan (ID = waktu dibuat) dan mata pelajaran sama
+  const newerPayments = (student: string, subject: string, pkg: string) =>
+    (livePaymentsByStudent.get(student) || []).filter(p => subjectOf(p.className) === subject && pkgTime(p.id) > pkgTime(pkg));
+
+  // Status rapot per paket+siswa (khusus baris SELESAI). NEXT_CLASS tidak dihitung: itu jalur tanpa rapot.
+  // Kalau ada beberapa baris untuk kunci yang sama, ambil yang paling maju.
+  const RAPOT_RANK: Record<string, number> = { REPORT_REJECTED: 1, REQ: 2, REPORT_READY: 3, SESSION_LOG: 4 };
+  const rapotByKey = new Map<string, any>();
+  for (const r of reports || []) {
+    const rank = RAPOT_RANK[r.status];
+    if (!rank) continue;
+    const pkg = norm(r.packageId ?? r.packageid);
+    const names = (Array.isArray(r.studentsAttended) && r.studentsAttended.length ? r.studentsAttended : [payById.get(pkg)?.studentName]).filter(Boolean);
+    for (const n of names) {
+      const k = `${pkg}|${norm(n)}`;
+      const cur = rapotByKey.get(k);
+      if (!cur || RAPOT_RANK[cur.status] < rank) rapotByKey.set(k, r);
     }
-  }, [editData]);
+  }
 
-  const [form, setForm] = useState({
-    subject: '',
-    level: '',
-    room: '',
-    category: 'REGULER' as 'REGULER' | 'PRIVATE',
-    studentName: '',
-    targetTeacherId: '', 
-    sessionNumber: 1, 
-    duration: 2, 
-    date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date())
+  // ---- 1 & 2: baris SESI_5 / SELESAI ----
+  // Per siswa + nama kelas, ambil PAKET TERBARU (ID pembayaran terbesar). Kalau siswa sudah
+  // beli paket baru dengan nama kelas yang sama, paket lamanya tidak dihitung lagi.
+  // Status ditentukan oleh NOMOR SESI TERTINGGI di paket itu (bukan tanggal, karena tanggal
+  // dipilih siswa sendiri dan bisa acak). Tanggal hanya dipakai untuk menghitung "berapa hari lalu".
+  const groups = new Map<string, { student: string; fullClass: string; pkgs: Map<string, any[]> }>();
+  for (const log of studentAttendanceLogs || []) {
+    const student = norm(log.studentName || log.studentname);
+    const fullClass = String(log.className || log.classname || 'UMUM').toUpperCase();
+    const key = `${student}|||${fullClass}`;
+    const pkg = norm(log.packageId ?? log.packageid);
+    let g = groups.get(key);
+    if (!g) { g = { student, fullClass, pkgs: new Map() }; groups.set(key, g); }
+    const arr = g.pkgs.get(pkg);
+    if (arr) arr.push(log); else g.pkgs.set(pkg, [log]);
+  }
+
+  const progress: FollowUpItem[] = [];
+  groups.forEach(g => {
+    const maxDate = (logs: any[]) => logs.reduce((m, l) => (String(l.date) > m ? String(l.date) : m), '');
+    const [pkgId, logs] = Array.from(g.pkgs.entries()).sort(
+      (a, b) => pkgTime(b[0]) - pkgTime(a[0]) || maxDate(b[1]).localeCompare(maxDate(a[1]))
+    )[0];
+
+    const sessOf = (l: any) => Number(l.sessionNumber || l.sessionnumber || 0);
+    const lastSess = logs.reduce((m, l) => Math.max(m, sessOf(l)), 0);
+    const lastDate = maxDate(logs.filter(l => sessOf(l) === lastSess));
+
+    const daysAgo = ageOf(today, lastDate);
+    const daysLeft = FOLLOW_UP_WINDOW_DAYS - daysAgo;
+
+    if (lastSess === 5) {
+      if (daysAgo <= FOLLOW_UP_WINDOW_DAYS) {
+        progress.push({ kind: 'SESI_5', student: g.student, fullClass: g.fullClass, lastSess, lastDate, daysAgo, daysLeft });
+      }
+    } else if (lastSess >= 6 && daysAgo <= FOLLOW_UP_WINDOW_DAYS && !nextClassPkg.has(`${pkgId}|${g.student}`)) {
+      // Kelas lanjutan sudah dibuka (pembayaran baru TERVERIFIKASI, mata pelajaran sama) -> tidak perlu diingatkan lagi
+      const opened = pkgTime(pkgId) > 0 &&
+        newerPayments(g.student, subjectOf(g.fullClass), pkgId).some(p => p.status === 'VERIFIED');
+      if (!opened) {
+        const rep = rapotByKey.get(`${pkgId}|${g.student}`);
+        const rapot: RapotStatus = !rep ? 'BELUM_KLAIM'
+          : rep.status === 'SESSION_LOG' ? 'TERBIT'
+          : rep.status === 'REPORT_READY' ? 'SIAP_KIRIM'
+          : rep.status === 'REQ' ? 'MENUNGGU_GURU'
+          : 'DITOLAK';
+        const rapotDays = rep?.status === 'REQ' && rep.date ? ageOf(today, rep.date) : undefined;
+        // Nama guru ditampilkan kalau rapotnya menyangkut guru itu: menunggu diisi, sudah diisi tapi belum dikirim, atau ditolak olehnya
+        const rapotTeacher = rapot === 'MENUNGGU_GURU' || rapot === 'SIAP_KIRIM' || rapot === 'DITOLAK'
+          ? firstName(teacherById.get(String(rep?.teacherid ?? rep?.teacherId))?.name ?? rep?.teacherName ?? rep?.teachername) || undefined
+          : undefined;
+        progress.push({ kind: 'SELESAI', student: g.student, fullClass: g.fullClass, lastSess, lastDate, daysAgo, daysLeft, rapot, rapotDays, rapotTeacher });
+      }
+    }
   });
 
-  // 🏠 Home Tutoring: guru wajib datang sendiri selama 6 pertemuan -> tidak ada opsi "digantikan teman"
-  const isHomeTutoring = (form.room || '').toUpperCase().includes('HOME TUTORING');
+  // ---- 3: kartu NEXT_CLASS (Lanjut Kelas, kelas baru belum dibuka) ----
+  const next: FollowUpItem[] = [];
+  const seen = new Set<string>();
+  for (const r of reports || []) {
+    if (r.status !== 'NEXT_CLASS') continue;
+    const pkg = norm(r.packageId ?? r.packageid);
+    const pay = payById.get(pkg);
+    const className = norm(pay?.className ?? r.className ?? r.classname ?? '');
+    const subject = subjectOf(className);
+    const names = (Array.isArray(r.studentsAttended) && r.studentsAttended.length ? r.studentsAttended : [pay?.studentName]).filter(Boolean);
 
-  // 🏷️ Tipe sesi otomatis ngikutin ruang kelas:
-  // REGULER n -> REGULER | PRIVATE n & HOME TUTORING -> PRIVATE (Home Tutoring pasti private).
-  // Kalau nama ruang belum dikenali (misal ada nama ruang baru), pilihan manual tetap bisa dipakai.
-  const autoCategory: 'REGULER' | 'PRIVATE' | null = (() => {
-    const r = (form.room || '').toUpperCase().trim();
-    if (r.includes('HOME TUTORING') || r.startsWith('PRIVATE')) return 'PRIVATE';
-    if (r.startsWith('REGULER')) return 'REGULER';
-    return null;
-  })();
-  const shownCategory = form.room ? (autoCategory ?? form.category) : null;
+    for (const n of names) {
+      const student = norm(n);
+      const dedup = `${pkg}|${student}`;
+      if (seen.has(dedup)) continue;
+      seen.add(dedup);
 
-  const [activePackageId, setActivePackageId] = useState<string | null>(null);
-  const [activeOriginalTeacherId, setActiveOriginalTeacherId] = useState<string | null>(null);
+      // Tanggal keputusan tidak disimpan sistem, jadi batas 30 hari dihitung dari tanggal klaim siswa
+      const daysAgo = r.date ? ageOf(today, r.date) : 0;
+      if (daysAgo > FOLLOW_UP_WINDOW_DAYS) continue;
+
+      // Kartu bertahan sampai kelas barunya TERVERIFIKASI. Kalau sudah ada laporan bayar tapi
+      // belum diverifikasi, kartu tetap tampil dengan keterangan "Menunggu verifikasi".
+      const newer = newerPayments(student, subject, pkg);
+      if (newer.some(p => p.status === 'VERIFIED')) continue;
+
+      next.push({ kind: 'NEXT_CLASS', student, fullClass: className || 'UMUM', lastSess: 6, lastDate: String(r.date || today), daysAgo, daysLeft: FOLLOW_UP_WINDOW_DAYS - daysAgo, pendingVerify: newer.length > 0 });
+    }
+  }
+  next.sort((a, b) => a.lastDate.localeCompare(b.lastDate)); // yang paling lama menunggu di atas
+
+  progress.sort((a, b) => a.lastDate.localeCompare(b.lastDate)); // paling lama di atas = paling dekat hilang
+
+  return [...next, ...progress]; // "Lanjut Kelas" paling atas karena butuh tindakan admin (tampilan memisahkan per kelompok)
+};
+
+// Kelompok di daftar follow-up: judul + satu kalimat keterangan (ditulis sekali per kelompok, bukan per siswa)
+const FOLLOW_UP_SECTIONS: { kind: FollowUpItem['kind']; title: string; hint: string; Icon: React.ElementType; iconBox: string }[] = [
+  { kind: 'NEXT_CLASS', title: 'Guru memutuskan lanjut kelas', hint: 'Siswa bayar kalau bersedia lanjut. Admin tinggal menagih atau memverifikasi.', Icon: Rocket, iconBox: 'bg-purple-600 text-white shadow-purple-600/30' },
+  { kind: 'SELESAI', title: 'Selesai 6/6', hint: 'Rapot masih berjalan, atau guru belum memutuskan lanjut kelas.', Icon: Zap, iconBox: 'bg-blue-600 text-white shadow-blue-600/30' },
+  { kind: 'SESI_5', title: 'Sesi 5 dari 6', hint: 'Tinggal 1 lagi, memasuki evaluasi.', Icon: Clock, iconBox: 'bg-orange-500 text-white shadow-orange-500/30' }
+];
+
+const agoText = (d: number) => (d <= 0 ? 'hari ini' : `${d} hari lalu`);
+const leftText = (d: number) => (d <= 0 ? 'hilang hari ini' : `hilang ${d} hari lagi`);
+const shortDate = (d: string) => {
+  const t = new Date(d);
+  return isNaN(t.getTime()) ? '-' : t.toLocaleDateString('id-ID', { day: 'numeric', month: 'short', timeZone: 'UTC' });
+};
+
+// Warna baris rapot: amber = bola di guru (menunggu diisi, siap kirim),
+// hijau = bola di siswa, tinggal diingatkan (belum klaim, ditolak dan belum klaim ulang), abu = sudah beres
+type RapotTone = 'muted' | 'amber' | 'emerald';
+const RAPOT_TONE_CLASS: Record<RapotTone, string> = {
+  muted: 'text-slate-400',
+  amber: 'text-amber-700',
+  emerald: 'text-emerald-700'
+};
+
+const rapotLine = (s: FollowUpItem): { text: string; tone: RapotTone } | null => {
+  switch (s.rapot) {
+    case 'BELUM_KLAIM': return { text: 'Rapot: belum klaim', tone: 'emerald' };
+    case 'DITOLAK': return { text: `Rapot: ditolak ${s.rapotTeacher ? `Kak ${s.rapotTeacher}` : 'guru'}, belum klaim ulang`, tone: 'emerald' };
+    case 'MENUNGGU_GURU': {
+      const d = s.rapotDays ?? 0;
+      const who = s.rapotTeacher ? `Kak ${s.rapotTeacher}` : 'guru';
+      return { text: d > 0 ? `Rapot: menunggu ${who} mengisi, sudah ${d} hari` : `Rapot: menunggu ${who} mengisi, klaim hari ini`, tone: 'amber' };
+    }
+    case 'SIAP_KIRIM': return { text: s.rapotTeacher ? `Rapot: sudah diisi, belum dikirim Kak ${s.rapotTeacher}` : 'Rapot: sudah diisi, belum dikirim guru', tone: 'amber' };
+    case 'TERBIT': return { text: 'Rapot: sudah terbit', tone: 'muted' };
+    default: return null;
+  }
+};
+
+const AdminDashboard: React.FC<AdminDashboardProps> = ({ attendanceLogs, studentAttendanceLogs, reports = [], studentPayments = [], teachers = [] }) => {
+  const getWIBDate = () => new Intl.DateTimeFormat('en-CA', { 
+    timeZone: 'Asia/Jakarta', 
+    year: 'numeric', 
+    month: '2-digit', 
+    day: '2-digit' 
+  }).format(new Date());
+
+  const currentToday = getWIBDate();
   
-  // STATE BARU: Modal blocking untuk slot yang sedang dipakai
-  const [blockModal, setBlockModal] = useState<{
-    ownerName: string;
-    className: string;
-    currentSession: number;
-  } | null>(null);
-
-  // State untuk autocomplete
-const [showStudentSuggestions, setShowStudentSuggestions] = useState(false);
-const [showTeacherSuggestions, setShowTeacherSuggestions] = useState(false);
-const [studentInputValue, setStudentInputValue] = useState('');
-const [teacherInputValue, setTeacherInputValue] = useState('');
-
-  useEffect(() => {
-    if (editData) {
-      const match = editData.className?.match(/(.*) \((.*)\) - (.*)/);
-      setForm({
-        subject: match ? match[1] : (editData.className || ''),
-        level: editData.level || (match ? match[2] : 'BASIC'),
-        room: match ? match[3] : '',
-        category: editData.sessionCategory || 'REGULER',
-        studentName: editData.studentsAttended?.[0] === 'REGULER' ? '' : (editData.studentsAttended?.[0] || ''),
-        targetTeacherId: editData.teacherId !== user.id ? editData.teacherId : '',
-        sessionNumber: editData.sessionNumber || 1,
-        duration: editData.duration || 2,
-        date: editData.date
-      });
-      setIsDelegating(editData.teacherId !== user.id);
-      setActivePackageId(editData.packageId || null);
-      setActiveOriginalTeacherId(editData.originalTeacherId || null);
-      // Isi input autocomplete juga
-setStudentInputValue(editData.studentsAttended?.[0] === 'REGULER' ? '' : (editData.studentsAttended?.[0] || ''));
-setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id === editData.teacherId)?.name || '') : '');
-    }
-  }, [editData, user.id]);
-
-  // Nutup mode edit: balikin form ke kosong & bersihin location.state
-  // (biar editData balik jadi undefined, otomatis balik ke mode "Lapor Presensi" biasa)
-  const handleCloseEdit = () => {
-    setForm({
-      subject: '',
-      level: '',
-      room: '',
-      category: 'REGULER',
-      studentName: '',
-      targetTeacherId: '',
-      sessionNumber: 1,
-      duration: 2,
-      date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date())
-    });
-    setIsDelegating(false);
-    setActivePackageId(null);
-    setActiveOriginalTeacherId(null);
-    setStudentInputValue('');
-    setTeacherInputValue('');
-    navigate(location.pathname, { replace: true, state: {} });
-  };
-
-  // Kalau ruang diganti ke Home Tutoring, status "berhalangan" & guru penggantinya ikut direset
-  useEffect(() => {
-    if (isHomeTutoring && isDelegating) {
-      setIsDelegating(false);
-      setForm(prev => ({ ...prev, targetTeacherId: '' }));
-      setTeacherInputValue('');
-      setShowTeacherSuggestions(false);
-    }
-  }, [isHomeTutoring, isDelegating]);
-
-  // Ruang kelas dipilih/diganti -> tipe sesi ikut berubah otomatis
-  useEffect(() => {
-    if (!autoCategory || autoCategory === form.category) return;
-    setForm(prev => ({ ...prev, category: autoCategory, studentName: autoCategory === 'REGULER' ? '' : prev.studentName }));
-    if (autoCategory === 'REGULER') {
-      setStudentInputValue('');
-      setShowStudentSuggestions(false);
-    }
-  }, [autoCategory, form.category]);
-
-  const estimatedHonor = useMemo(() => {
-    const hourlyRate = form.category === 'PRIVATE' ? (salaryConfig?.privateRate || 25000) : (salaryConfig?.regulerRate || 15000);
-    return Math.round(hourlyRate * form.duration);
-  }, [form.category, form.duration, salaryConfig]);
-
-  // 🔎 Cari paket aktif (siklus yang belum penuh) untuk kombinasi kelas yang sedang dipilih di form.
-  // excludeId dipakai saat edit/pindah: sesi yang lagi dipindah jangan ikut dihitung.
-  // Nomor sesi berikutnya = nomor TERTINGGI di paket itu + 1 (bukan sekadar log terbaru),
-  // supaya tetap benar walau ada sesi yang disisipkan berdasarkan tanggal.
-  const findActivePackage = (excludeId?: string) => {
-    const fullClassName = `${form.subject} (${form.level}) - ${form.room}`.toUpperCase().trim();
-    const relevantLogs = logs.filter(l => {
-      const dbClass = (l.className || '').toUpperCase().trim();
-      const dbLevel = (l.level || '').toUpperCase().trim();
-      const dbCategory = (l.sessionCategory || 'REGULER');
-
-      const isSameClass = dbClass === fullClassName;
-      const isSameLevel = dbLevel === form.level.toUpperCase();
-      const isSameCategory = dbCategory === form.category;
-      const isSameGrouping = form.category === 'PRIVATE'
-        ? (l.studentsAttended?.[0] || '').toUpperCase().trim() === form.studentName.toUpperCase().trim()
-        : true;
-
-      return isSameClass && isSameLevel && isSameCategory && isSameGrouping &&
-             (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG') &&
-             l.id !== excludeId;
-    });
-
-    // Aktivitas input terbaru (ID = timestamp) menentukan paket mana yang sedang berjalan
-    const latestAction = [...relevantLogs].sort((a, b) => b.id.localeCompare(a.id))[0];
-    if (!latestAction) return null;
-
-    const pkgLogs = relevantLogs.filter(l => l.packageId === latestAction.packageId);
-    const maxNum = pkgLogs.reduce((max, l) => Math.max(max, Number(l.sessionNumber) || 0), 0);
-
-    return {
-      packageId: latestAction.packageId || null,
-      originalTeacherId: latestAction.originalTeacherId || null,
-      maxNum
-    };
-  };
-
-  // LOGIKA DETEKSI SESI OTOMATIS
-  useEffect(() => {
-    // Pencarian yang lagi jalan dibatalin oleh cleanup di bawah (clearTimeout), jadi flag
-    // "lagi mencari" harus dimatiin di setiap jalur keluar. Kalau nggak, overlay loading nyangkut.
-    if (editData || !form.subject || !form.level || !form.room || !Array.isArray(logs)) {
-      setIsDetecting(false);
-      return;
-    }
-
-    if (form.category === 'PRIVATE' && !form.studentName) {
-      setForm(prev => ({ ...prev, sessionNumber: 1 }));
-      setActivePackageId(null);
-      setActiveOriginalTeacherId(null);
-      setIsDetecting(false);
-      return;
-    }
-
-    setIsDetecting(true);
-
-    const timer = setTimeout(() => {
-      const active = findActivePackage();
-
-      if (active && active.maxNum < 6) {
-        // Paket belum penuh -> lanjutkan
-        setForm(prev => ({ ...prev, sessionNumber: active.maxNum + 1 }));
-        setActivePackageId(active.packageId);
-        setActiveOriginalTeacherId(active.originalTeacherId);
-      } else {
-        // Belum ada riwayat, atau paket terakhir sudah 6 sesi -> buka paket baru (Sesi 1)
-        setForm(prev => ({ ...prev, sessionNumber: 1 }));
-        setActivePackageId(null);
-        setActiveOriginalTeacherId(null);
-      }
-      setIsDetecting(false);
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [logs, form.subject, form.level, form.room, form.category, form.studentName, editData]);
-
-  // ✏️ Apakah identitas kelas berubah saat edit? (matpel / level / ruang / tipe / nama siswa)
-  const isIdentityChanged = () => {
-    if (!editData) return false;
-    const newClass = `${form.subject} (${form.level}) - ${form.room}`.toUpperCase().trim();
-    const oldClass = (editData.className || '').toUpperCase().trim();
-    const oldCategory = editData.sessionCategory || 'REGULER';
-    const oldStudent = (editData.studentsAttended?.[0] || 'REGULER').toUpperCase().trim();
-    const newStudent = form.category === 'PRIVATE' ? form.studentName.toUpperCase().trim() : 'REGULER';
-    return newClass !== oldClass || form.category !== oldCategory || newStudent !== oldStudent;
-  };
-
-  // 🔀 Pindahkan sesi ke paket lain: disisipkan sesuai tanggal, nomor sesi yang terdampak digeser.
-  const handleMoveSession = async (delegating: boolean) => {
-    if (!editData) return;
-    setLoading(true);
-    try {
-      const fullClassName = `${form.subject} (${form.level}) - ${form.room}`.toUpperCase();
-      const targetTeacher = teachers.find(t => t.id === form.targetTeacherId);
-      const srcPkgId = editData.packageId;
-
-      const found = findActivePackage(editData.id);
-      const destPkg = found && found.packageId && found.packageId !== srcPkgId ? found : null;
-
-      // Ambil data TERBARU dari DB (bukan cuma state lokal) buat jaga-jaga ada perubahan yang belum ke-refresh
-      const pkgIds = [srcPkgId, destPkg?.packageId].filter(Boolean) as string[];
-      const { data: freshRows, error: freshErr } = await supabase
-        .from('attendance')
-        .select('id, packageid, sessionnumber, date, paymentstatus, status, teacherid, originalteacherid')
-        .in('packageid', pkgIds)
-        .in('status', ['SESSION_LOG', 'SUB_LOG']);
-      if (freshErr) throw freshErr;
-
-      const rows = (freshRows || []) as any[];
-      const srcRows = rows.filter(r => r.packageid === srcPkgId && r.id !== editData.id);
-      const destRows = destPkg
-        ? rows.filter(r => r.packageid === destPkg.packageId).sort((a, b) => a.sessionnumber - b.sessionnumber)
-        : [];
-
-      // Paket tujuan sudah penuh
-      if (destPkg && destRows.length >= 6) {
-        alert(`Paket tujuan (${fullClassName}) sudah terisi 6 sesi, jadi sesi ini tidak bisa disisipkan. Silakan hubungi Admin ya Kak! 🙏`);
-        return;
-      }
-
-      // Validasi ownership paket tujuan (sama seperti saat lapor presensi biasa)
-      if (destPkg) {
-        const ownerId = destPkg.originalTeacherId || destRows[0]?.originalteacherid;
-        if (ownerId && ownerId !== user.id) {
-          const hasSub = destRows.some(r => r.teacherid === user.id && r.status === 'SUB_LOG');
-          if (!hasSub) {
-            const owner = teachers.find(t => t.id === ownerId);
-            setBlockModal({
-              ownerName: owner?.name || 'Guru Lain',
-              className: `${form.subject} (${form.level}) - ${form.room}`,
-              currentSession: destRows.length
-            });
-            return;
-          }
-        }
-      }
-
-      // Tentukan nomor sesi baru berdasarkan tanggal (kalau tanggal sama, urutkan pakai ID)
-      let newNumber = 1;
-      if (destRows.length > 0) {
-        const firstLater = destRows.find(r => r.date > form.date || (r.date === form.date && r.id > editData.id));
-        newNumber = firstLater
-          ? firstLater.sessionnumber
-          : Math.max(...destRows.map(r => r.sessionnumber)) + 1;
-      }
-
-      const toShiftUp = destRows.filter(r => r.sessionnumber >= newNumber);
-      const toShiftDown = srcRows.filter(r => r.sessionnumber > editData.sessionNumber);
-
-      // Sesi yang nomornya ikut bergeser harus masih UNPAID
-      const paidInDest = toShiftUp.some(r => r.paymentstatus !== 'UNPAID');
-      const paidInSrc = toShiftDown.some(r => r.paymentstatus !== 'UNPAID');
-      if (paidInDest) {
-        alert(`Sesi tidak bisa dipindah ke kotak ${fullClassName}.\n\nSesi tanggal ${form.date.split('-').reverse().join('/')} harus disisipkan sebelum sesi lain di kotak itu yang sudah LUNAS (sudah dibayar), dan sesi LUNAS tidak boleh berubah nomornya.\n\nSilakan hubungi Admin ya Kak! 🙏`);
-        return;
-      }
-      if (paidInSrc) {
-        alert(`Sesi tidak bisa dipindah dari kotak lama.\n\nAda sesi setelahnya di kotak itu yang sudah LUNAS (sudah dibayar), jadi nomornya tidak bisa dirapatkan setelah sesi ini keluar.\n\nSilakan hubungi Admin ya Kak! 🙏`);
-        return;
-      }
-
-      const groupSuffix = form.category === 'PRIVATE' ? `-${form.studentName.replace(/\s+/g, '-')}` : '-GROUP';
-      const finalPackageId = destPkg?.packageId
-        || `PKG-${form.category}-${fullClassName.replace(/\s+/g, '-')}${groupSuffix}-${Date.now()}`;
-      const finalOriginalTeacherId = destPkg?.originalTeacherId || destRows[0]?.originalteacherid || user.id;
-
-      const payload: any = {
-        id: editData.id,
-        teacherid: delegating ? (targetTeacher?.id || user.id) : user.id,
-        teachername: delegating ? (targetTeacher?.name || user.name) : user.name,
-        date: form.date,
-        clockin: editData.clockIn,
-        status: delegating ? 'SUB_LOG' : 'SESSION_LOG',
-        classname: fullClassName,
-        level: form.level,
-        sessioncategory: form.category,
-        packageid: finalPackageId,
-        sessionnumber: newNumber,
-        studentsattended: form.category === 'PRIVATE' ? [form.studentName.toUpperCase()] : ['REGULER'],
-        earnings: estimatedHonor,
-        paymentstatus: 'UNPAID',
-        duration: form.duration,
-        substitutefor: delegating ? user.name : (editData.substituteFor || null),
-        originalteacherid: finalOriginalTeacherId
-      };
-
-      // Semua perubahan dijalankan di database dalam SATU transaksi (fungsi move_attendance_session):
-      // kalau ada satu langkah gagal, semuanya dibatalkan dan data tetap seperti semula.
-      const { error: rpcErr } = await supabase.rpc('move_attendance_session', {
-        p_up: [...toShiftUp]
-          .sort((x, y) => y.sessionnumber - x.sessionnumber)
-          .map(r => ({ id: r.id, sessionnumber: r.sessionnumber + 1 })),
-        p_moved: payload,
-        p_down: [...toShiftDown]
-          .sort((x, y) => x.sessionnumber - y.sessionnumber)
-          .map(r => ({ id: r.id, sessionnumber: r.sessionnumber - 1 }))
-      });
-      if (rpcErr) throw rpcErr;
-
-      if (refreshAllData) await refreshAllData();
-      navigate('/teacher/honor', { replace: true, state: { highlightId: finalPackageId } });
-    } catch (e: any) {
-      const raw = String(e?.message || '');
-      const low = raw.toLowerCase();
-      let reason = raw || 'Terjadi kendala yang tidak diketahui.';
-      if (low.includes('failed to fetch') || low.includes('network')) reason = 'Koneksi internet terputus.';
-      else if (low.includes('jwt') || low.includes('expired')) reason = 'Sesi login sudah habis, silakan login ulang.';
-      else if (low.includes('row-level security') || low.includes('permission denied')) reason = 'Akun Kakak tidak punya izin untuk mengubah data ini.';
-      else if (low.includes('duplicate key')) reason = 'Nomor sesi bentrok dengan sesi lain.';
-      else if (low.includes('sesi_lunas')) reason = 'Ada sesi LUNAS yang nomornya ikut bergeser.';
-      else if (low.includes('sesi_tidak_ditemukan')) reason = 'Data sesi tidak ditemukan, mungkin sudah dihapus.';
-      else if (low.includes('could not find the function')) reason = 'Fitur pindah sesi belum aktif di database.';
-      alert("Gagal memindahkan sesi: " + reason + "\n\nTidak ada data yang berubah. Silakan coba lagi, atau hubungi Admin kalau masih gagal ya Kak! 🙏");
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLaporPresensi = async () => {
-    if (isDetecting) return;
-    const delegating = isDelegating && !isHomeTutoring; // Home Tutoring: tidak boleh digantikan
-    if (!form.subject || !form.level || !form.room) return alert("Pilih Matpel, Level & Ruangan dulu ya! ✨");
-    if (form.category === 'PRIVATE' && !form.studentName) return alert("Pilih Nama Siswa dulu untuk kelas Private! ✨");
-    if (delegating && !form.targetTeacherId) return alert("Pilih Nama Teman yang menggantikan dulu ya! ✨");
-
-    // ✏️ Mode edit + identitas kelas berubah -> pindahkan sesi ke paket yang benar
-    if (editData && isIdentityChanged()) {
-      await handleMoveSession(delegating);
-      return;
-    }
-    
-    // ⭐ VALIDASI OWNERSHIP SEBELUM SUBMIT!
-    if (activePackageId && activeOriginalTeacherId && activeOriginalTeacherId !== user.id) {
-      // Ini bukan siklus saya, cek apakah saya pernah substitusi di paket ini
-      const mySubLogs = logs.filter(l => 
-        l.packageId === activePackageId && 
-        l.teacherId === user.id && 
-        l.status === 'SUB_LOG'
-      );
-      
-      if (mySubLogs.length === 0) {
-        // BLOCK! Saya tidak punya akses ke siklus ini
-        const owner = teachers.find(t => t.id === activeOriginalTeacherId);
-        const fullClassName = `${form.subject} (${form.level}) - ${form.room}`;
-        
-        setBlockModal({
-          ownerName: owner?.name || 'Guru Lain',
-          className: fullClassName,
-          currentSession: form.sessionNumber
-        });
-        return; // STOP SUBMIT!
-      }
-    }
-    
-    setLoading(true);
-    try {
-      const fullClassName = `${form.subject} (${form.level}) - ${form.room}`.toUpperCase();
-      const targetTeacher = teachers.find(t => t.id === form.targetTeacherId);
-      
-      const groupSuffix = form.category === 'PRIVATE' ? `-${form.studentName.replace(/\s+/g, '-')}` : '-GROUP';
-      // ID Paket ditentukan di sini: kalau Sesi 1 buat baru, kalau 2-6 pakai yang lama
-      const finalPackageId = activePackageId || `PKG-${form.category}-${fullClassName.replace(/\s+/g, '-')}${groupSuffix}-${Date.now()}`;
-      const finalOriginalTeacherId = activeOriginalTeacherId || user.id;
-
-      const payload: any = {
-        id: editData ? editData.id : `ATT-${Date.now()}`, // ID berisi timestamp untuk sorting
-        teacherid: delegating ? (targetTeacher?.id || user.id) : user.id,
-        teachername: delegating ? (targetTeacher?.name || user.name) : user.name,
-        date: form.date,
-        clockin: editData ? editData.clockIn : new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' }).format(new Date()),
-        status: delegating ? 'SUB_LOG' : 'SESSION_LOG',
-        classname: fullClassName,
-        level: form.level,
-        sessioncategory: form.category,
-        packageid: finalPackageId,
-        sessionnumber: form.sessionNumber, 
-        studentsattended: form.category === 'PRIVATE' ? [form.studentName.toUpperCase()] : ['REGULER'],
-        earnings: estimatedHonor,
-        paymentstatus: 'UNPAID',
-        duration: form.duration,
-        substitutefor: delegating ? user.name : (editData?.substituteFor || null),
-        originalteacherid: finalOriginalTeacherId 
-      };
-
-      const { error } = await supabase.from('attendance').upsert([payload]);
-      if (error) throw error;
-
-      if (refreshAllData) await refreshAllData();
-      setLoading(false);
-      navigate('/teacher/honor', { replace: true, state: { highlightId: finalPackageId } }); 
-
-    } catch (e: any) {
-      alert("Gagal: " + e.message);
-      setLoading(false);
-    }
-  };
+  const followUpList = useMemo(
+    () => computeFollowUps(studentAttendanceLogs, reports, studentPayments, currentToday, teachers),
+    [studentAttendanceLogs, reports, studentPayments, currentToday, teachers]
+  );
 
   return (
-    <>
-      <style>{`
-        @keyframes modalFadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
-        }
-
-        @keyframes modalZoomIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
-        }
-
-        @keyframes editHighlightPulse {
-          0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.45); }
-          50% { box-shadow: 0 0 0 18px rgba(249, 115, 22, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
-        }
-      `}</style>
-
-      <div className="max-w-4xl mx-auto space-y-12 pb-40 px-4">
-      {(loading || isDetecting) && (
-        <div className="fixed inset-0 z-[200000] bg-slate-900/80 backdrop-blur-xl flex flex-col items-center justify-center text-white animate-in fade-in">
-           <div className="w-24 h-24 bg-blue-600 rounded-[2.5rem] flex items-center justify-center shadow-xl mb-8 animate-bounce">
-              <Loader2 className="animate-spin" size={48} />
-           </div>
-           <p className="text-[12px] font-black uppercase tracking-[0.4em] italic animate-pulse">
-             {isDetecting ? 'Mencari Riwayat Sesi...' : 'Memproses Data Sanur...'}
-           </p>
-        </div>
-      )}
-
-      <header className="relative py-14 px-10 bg-slate-900 rounded-[4rem] text-white shadow-2xl overflow-hidden group">
-         <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600 rounded-full blur-[100px] opacity-20 -mr-40 -mt-40"></div>
-         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-8">
-            <div className="space-y-4 text-center md:text-left">
-               <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
-                  <Sparkles size={14} className="text-yellow-400" />
-                  <span className="text-[9px] font-black uppercase tracking-widest">{editData ? 'Mode KOREKSI DATA' : 'SANUR PRESENCE CORE'}</span>
-               </div>
-               <h2 className="text-4xl font-black uppercase italic leading-none">{editData ? 'Edit' : 'Lapor'} <span className="text-blue-500">Presensi</span></h2>
-               <p className="text-slate-400 font-bold text-xs uppercase tracking-widest italic">Halo Kak {user.name.split(' ')[0]}! Semangat mengajar ✨</p>
+    <div className="max-w-6xl mx-auto space-y-10 pb-40 px-4 animate-in fade-in duration-500">
+      {/* HEADER SECTION */}
+      <div className="bg-slate-900 p-10 md:p-14 rounded-[4rem] text-white shadow-2xl relative overflow-hidden flex flex-col md:flex-row justify-between items-center gap-8">
+         <div className="absolute top-0 right-0 w-80 h-80 bg-blue-600 rounded-full blur-[120px] opacity-20"></div>
+         <div className="relative z-10 space-y-3">
+            <div className="flex items-center gap-3 mb-2">
+               <div className="p-2 bg-blue-500 rounded-lg shadow-lg shadow-blue-500/20"><Zap size={14} className="text-white" /></div>
+               <span className="text-[10px] font-black uppercase tracking-[0.4em] text-blue-400 italic">Central Command Sanur</span>
             </div>
-            <div className="w-24 h-24 bg-white/5 backdrop-blur-xl rounded-3xl flex items-center justify-center shadow-inner border border-white/10 rotate-3 group-hover:rotate-6 transition-all duration-500">
-               {editData ? <RotateCcw size={48} className="text-orange-500" /> : <ClipboardCheck size={48} className="text-blue-500" />}
+            <h2 className="text-4xl md:text-5xl font-black uppercase italic tracking-tighter leading-none">Dashboard <span className="text-blue-500">Admin</span></h2>
+            <p className="text-slate-400 font-bold text-[10px] uppercase tracking-widest flex items-center gap-2">
+              <Calendar size={12} /> {new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+            </p>
+         </div>
+         <div className="relative z-10 flex gap-4">
+            <div className="bg-white/5 backdrop-blur-md p-8 rounded-[3rem] border border-white/10 text-center min-w-[160px] shadow-inner">
+               <p className="text-[9px] font-black uppercase text-blue-400 mb-2 tracking-widest flex items-center justify-center gap-2 animate-pulse"><Clock size={12}/> Butuh Follow-Up</p>
+               <h4 className="text-4xl font-black italic">{followUpList.length} <span className="text-sm font-bold text-slate-500">SISWA</span></h4>
             </div>
          </div>
-      </header>
+      </div>
 
-      <div className="flex bg-white p-2 rounded-[2.5rem] border border-slate-100 shadow-xl max-w-sm mx-auto">
-         <Link to="/teacher" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase transition-all text-center flex items-center justify-center gap-3 bg-blue-600 text-white shadow-lg shadow-blue-200">
-            <ClipboardCheck size={16}/> Presensi
+      {/* SHORTCUT GRID (3 COLUMNS) */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+         <Link to="/admin/finance" state={{ tab: 'LEDGER' }} className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-xl flex flex-col justify-between group hover:border-blue-500 hover:shadow-2xl transition-all h-[180px]">
+            <div className="flex items-center justify-between">
+               <div className="w-16 h-16 bg-blue-50 text-blue-600 rounded-[1.5rem] flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition-all shadow-inner"><Receipt size={32} /></div>
+               <ArrowRight size={24} className="text-slate-200 group-hover:text-blue-600 group-hover:translate-x-1 transition-all" />
+            </div>
+            <div>
+               <h4 className="font-black text-slate-800 uppercase italic text-sm">Keuangan</h4>
+               <p className="text-[10px] font-black text-slate-400 uppercase mt-1 tracking-widest">Buku Kas & Ledger</p>
+            </div>
          </Link>
-         <Link to="/teacher/honor" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase transition-all text-center flex items-center justify-center gap-3 text-slate-400 hover:text-orange-600">
-            <Wallet size={16}/> Honor
+
+         <Link to="/admin/finance" state={{ tab: 'PAYROLL' }} className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-xl flex flex-col justify-between group hover:border-orange-500 hover:shadow-2xl transition-all h-[180px]">
+            <div className="flex items-center justify-between">
+               <div className="w-16 h-16 bg-orange-50 text-orange-600 rounded-[1.5rem] flex items-center justify-center group-hover:bg-orange-600 group-hover:text-white transition-all shadow-inner"><Wallet size={32} /></div>
+               <ArrowRight size={24} className="text-slate-200 group-hover:text-orange-600 group-hover:translate-x-1 transition-all" />
+            </div>
+            <div>
+               <h4 className="font-black text-slate-800 uppercase italic text-sm">Gaji & Honor</h4>
+               <p className="text-[10px] font-black text-slate-400 uppercase mt-1 tracking-widest">Pembayaran Guru</p>
+            </div>
+         </Link>
+
+         <Link to="/admin/finance" state={{ tab: 'STUDENT_ACC' }} className="bg-white p-8 rounded-[3rem] border border-slate-100 shadow-xl flex flex-col justify-between group hover:border-emerald-500 hover:shadow-2xl transition-all h-[180px]">
+            <div className="flex items-center justify-between">
+               <div className="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-[1.5rem] flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition-all shadow-inner"><CreditCard size={32} /></div>
+               <ArrowRight size={24} className="text-slate-200 group-hover:text-emerald-600 group-hover:translate-x-1 transition-all" />
+            </div>
+            <div>
+               <h4 className="font-black text-slate-800 uppercase italic text-sm">Verifikasi SPP</h4>
+               <p className="text-[10px] font-black text-slate-400 uppercase mt-1 tracking-widest">Aktivasi Paket Siswa</p>
+            </div>
          </Link>
       </div>
 
-      <div 
-        ref={formCardRef}
-        className={`bg-white p-10 md:p-14 rounded-[4rem] shadow-2xl border space-y-12 relative overflow-hidden scroll-mt-32 transition-colors duration-500 ${editData ? 'border-orange-200' : 'border-slate-100'}`}
-        style={editData ? { animation: 'editHighlightPulse 1.6s ease-out 2' } : undefined}
-      >
-         {editData && (
-           <div className="relative z-20 flex items-center justify-between">
-             <div className="inline-flex px-6 py-2.5 bg-orange-500 text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg items-center gap-2">
-               <RotateCcw size={12}/> Mode edit
-             </div>
-             <button 
-               onClick={handleCloseEdit}
-               title="Batal edit"
-               className="p-3 bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 rounded-2xl transition-all active:scale-95 shadow-sm"
-             >
-               <X size={18} />
-             </button>
-           </div>
-         )}
-         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full blur-[100px] -mr-32 -mt-32 opacity-50"></div>
+      {/* FOLLOW-UP SECTION (MAIN CONTENT) */}
+      <div className="bg-white p-10 md:p-14 rounded-[4rem] border border-slate-100 shadow-2xl flex flex-col min-h-[450px] relative overflow-hidden">
+         <div className="absolute top-0 right-0 w-80 h-80 bg-blue-50 rounded-full blur-[100px] -mr-40 -mt-40 opacity-40"></div>
          
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
-            <div className="space-y-4">
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><BookOpen size={14} className="text-blue-500"/> Mata Pelajaran</label>
-               <select value={form.subject} onChange={e => setForm({...form, subject: e.target.value})} className="w-full px-8 py-6 bg-slate-50 border-2 border-transparent focus:border-blue-500 rounded-[2rem] font-black text-xs uppercase outline-none transition-all shadow-inner h-[72px]">
-                  <option value="">-- PILIH MATPEL --</option>
-                  {subjects.map(s => <option key={s} value={s}>{s}</option>)}
-               </select>
-            </div>
-
-            <div className="space-y-4">
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><Layers size={14} className="text-blue-500"/> Level Belajar</label>
-               <select value={form.level} onChange={e => setForm({...form, level: e.target.value})} className="w-full px-8 py-6 bg-slate-50 border-2 border-transparent focus:border-blue-500 rounded-[2rem] font-black text-xs uppercase outline-none transition-all shadow-inner h-[72px]">
-   <option value="">-- PILIH LEVEL --</option>
-   {levels.map(l => <option key={l} value={l}>{l}</option>)}
-</select>
-            </div>
-
-            <div className="space-y-4">
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><Home size={14} className="text-blue-500"/> Ruang Kelas</label>
-               <select value={form.room} onChange={e => setForm({...form, room: e.target.value})} className="w-full px-8 py-6 bg-slate-50 border-2 border-transparent focus:border-blue-500 rounded-[2rem] font-black text-xs uppercase outline-none transition-all shadow-inner h-[72px]">
-                  <option value="">-- PILIH RUANGAN --</option>
-                  {classes.map(c => <option key={c} value={c}>{c}</option>)}
-               </select>
-            </div>
-
-            <div className="space-y-4">
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><Zap size={14} className="text-blue-500"/> Tipe Sesi</label>
-               <div className="flex gap-4 p-1.5 bg-slate-100 rounded-[2rem] h-[72px]" title={autoCategory ? 'Mengikuti ruang kelas yang dipilih' : undefined}>
-                  <button type="button" disabled={!form.room || !!autoCategory} onClick={() => setForm({...form, category: 'REGULER', studentName: ''})} className={`flex-1 py-4 rounded-[1.5rem] text-[10px] font-black uppercase transition-all disabled:cursor-not-allowed ${shownCategory === 'REGULER' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-600'}`}>Reguler</button>
-                  <button type="button" disabled={!form.room || !!autoCategory} onClick={() => setForm({...form, category: 'PRIVATE'})} className={`flex-1 py-4 rounded-[1.5rem] text-[10px] font-black uppercase transition-all disabled:cursor-not-allowed ${shownCategory === 'PRIVATE' ? 'bg-white text-orange-600 shadow-md' : 'text-slate-600'}`}>Private</button>
-               </div>
-            </div>
-
-            {form.category === 'PRIVATE' && (
-  <div className="md:col-span-2 space-y-4 animate-in slide-in-from-top-2 relative">
-     <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2">
-       <Users size={14} className="text-blue-500"/> Nama Siswa <span className="text-rose-500 font-black">*WAJIB UNTUK PRIVATE</span>
-     </label>
-     
-     <div className="relative">
-       <input 
-         type="text"
-         placeholder="KETIK NAMA SISWA..."
-         value={studentInputValue}
-         onChange={(e) => {
-           const val = e.target.value.toUpperCase();
-           setStudentInputValue(val);
-           setShowStudentSuggestions(true);
-           
-           // Cek apakah yang diketik ada di database
-           const matchedStudent = studentAccounts.find(s => s.name.toUpperCase() === val);
-           if (matchedStudent) {
-             setForm({...form, studentName: matchedStudent.name});
-           } else {
-             setForm({...form, studentName: ''}); // Reset kalau nggak match
-           }
-         }}
-         onFocus={() => setShowStudentSuggestions(true)}
-         onBlur={() => setTimeout(() => setShowStudentSuggestions(false), 200)}
-         className="w-full px-8 py-6 bg-slate-50 border-2 border-transparent focus:border-blue-500 rounded-[2rem] font-black text-xs uppercase outline-none transition-all shadow-inner h-[72px]"
-       />
-       
-       {/* Dropdown Suggestions */}
-       {showStudentSuggestions && studentInputValue.trim() && (
-         <div className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-2xl border-2 border-blue-100 max-h-[100px] overflow-y-auto">
-           {studentAccounts
-             .filter(s => s.name.toUpperCase().includes(studentInputValue.toUpperCase()))
-             .slice(0, 8)
-             .map(student => (
-               <button
-                 key={student.id}
-                 type="button"
-                 onMouseDown={(e) => {
-                   e.preventDefault();
-                   setStudentInputValue(student.name.toUpperCase());
-                   setForm({...form, studentName: student.name});
-                   setShowStudentSuggestions(false);
-                 }}
-                 className="w-full px-6 py-4 text-left text-[11px] font-black hover:bg-blue-50 transition-all text-slate-700 border-b last:border-0 uppercase"
-               >
-                 {student.name.toUpperCase()}
-               </button>
-             ))
-           }
-           {studentAccounts.filter(s => s.name.toUpperCase().includes(studentInputValue.toUpperCase())).length === 0 && (
-             <div className="px-6 py-4 text-[10px] font-bold text-rose-500 uppercase italic text-center">
-               ❌ Nama "{studentInputValue}" tidak ditemukan!
-             </div>
-           )}
-         </div>
-       )}
-     </div>
-     
-     <p className="text-[8px] font-bold text-slate-400 uppercase ml-4 tracking-widest italic">Tiap siswa private punya kotak gaji terpisah ✨</p>
-  </div>
-)}
-
-            <div className="md:col-span-2 space-y-6 pt-4">
-               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 flex items-center gap-2"><Hash size={14} className="text-blue-500"/> Sesi Terdeteksi Otomatis (1-6)</label>
-               <div className="grid grid-cols-6 gap-3">
-                  {[1, 2, 3, 4, 5, 6].map(n => (
-                    <div 
-                      key={n} 
-                      className={`py-5 rounded-2xl font-black text-lg transition-all border-2 text-center flex items-center justify-center cursor-default ${form.sessionNumber === n ? 'bg-blue-600 text-white border-blue-600 shadow-lg scale-105' : 'bg-slate-50 text-slate-300 border-slate-100 shadow-inner'} ${isDetecting ? 'animate-pulse opacity-50' : ''}`}
-                    >
-                      {n}
-                    </div>
-                  ))}
-               </div>
-               {activePackageId ? (
-                  <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest ml-4 italic animate-pulse">✨ Melanjutkan Siklus Aktif ({form.category}) — Sesi {form.sessionNumber}/6 Terdeteksi</p>
-               ) : (
-                  <p className="text-[9px] font-black text-slate-400 uppercase ml-4 tracking-widest italic">🆕 Memulai Siklus 6 Sesi Baru (Sesi 1)</p>
-               )}
-               
-               <div className="mt-4 bg-blue-50 p-6 rounded-[2rem] border border-blue-100 flex items-start gap-4 shadow-sm animate-in fade-in duration-700">
-                  <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center shrink-0 shadow-md">
-                     <Info size={16} />
-                  </div>
-                  <p className="text-[9px] font-bold text-blue-800 uppercase italic leading-relaxed tracking-wide">
-                     "Jika nomor sesi tidak sesuai, mohon cek kembali: <span className="font-black underline">Mata Pelajaran</span>, <span className="font-black underline">Level Belajar</span>, <span className="font-black underline">Ruang Kelas</span>, <span className="font-black underline">Tipe Sesi</span>, dan <span className="font-black underline">Nama Siswa</span> (Khusus Private) agar sistem mendeteksi paket yang benar ✨"
-                  </p>
-               </div>
-            </div>
-
-            <div className="space-y-4">
-               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 flex items-center gap-2"><Timer size={14} className="text-blue-500"/> Durasi Mengajar (Jam)</label>
-               <div className="h-[72px] rounded-[2rem] bg-orange-500 border-2 border-orange-500 shadow-lg flex items-center justify-center gap-2 text-white cursor-default">
-                  <span className="font-black text-[11px]">2 JAM</span>
-                  <span className="font-black text-[11px]">/ PERTEMUAN</span>
-               </div>
-            </div>
-
-            <div className="space-y-4">
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><Clock size={14} className="text-blue-500"/> Tanggal Pelaksanaan</label>
-               <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner h-[72px]" />
-            </div>
-
-            {!isHomeTutoring && (
-            <div className={`md:col-span-2 p-8 rounded-[3.5rem] border-2 transition-all duration-500 ${isDelegating ? 'bg-rose-50 border-rose-200 shadow-xl' : 'bg-slate-50 border-transparent'}`}>
-               <div className="flex items-center justify-between gap-6">
-                  <div className="flex items-center gap-4">
-                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${isDelegating ? 'bg-rose-500 text-white shadow-lg' : 'bg-slate-200 text-slate-400'}`}>
-                        <HeartPulse size={28}/>
-                     </div>
-                     <div>
-                        <h4 className={`text-sm font-black uppercase italic ${isDelegating ? 'text-rose-600' : 'text-slate-500'}`}>Saya Berhalangan Mengajar?</h4>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Gunakan ini jika teman menggantikan sesi ✨</p>
-                     </div>
-                  </div>
-                  <button onClick={() => setIsDelegating(!isDelegating)} className={`w-16 h-8 rounded-full p-1.5 transition-all duration-500 flex ${isDelegating ? 'bg-rose-500 justify-end' : 'bg-slate-300 justify-start'}`}>
-                     <div className="w-5 h-5 bg-white rounded-full shadow-md"></div>
-                  </button>
-               </div>
-
-               {isDelegating && (
-  <div className="mt-8 space-y-4 animate-in slide-in-from-top-4 relative">
-     <label className="text-[9px] font-black text-rose-500 uppercase ml-4 tracking-widest flex items-center gap-2">
-       <UserPlus size={12}/> Pilih Rekan Yang Menggantikan Anda:
-     </label>
-     
-     <div className="relative">
-       <input 
-         type="text"
-         placeholder="KETIK NAMA TEMAN..."
-         value={teacherInputValue}
-         onChange={(e) => {
-           const val = e.target.value;
-           setTeacherInputValue(val);
-           setShowTeacherSuggestions(true);
-           
-           // Cek apakah yang diketik ada di database
-           const matchedTeacher = teachers.find(t => t.name.toUpperCase() === val.toUpperCase() && t.id !== user.id && t.role === 'TEACHER');
-           if (matchedTeacher) {
-             setForm({...form, targetTeacherId: matchedTeacher.id});
-           } else {
-             setForm({...form, targetTeacherId: ''}); // Reset kalau nggak match
-           }
-         }}
-         onFocus={() => setShowTeacherSuggestions(true)}
-         onBlur={() => setTimeout(() => setShowTeacherSuggestions(false), 200)}
-         className="w-full px-8 py-6 bg-white border-2 border-transparent focus:border-rose-500 rounded-[2rem] font-black text-[11px] outline-none shadow-sm transition-all h-[72px]"
-       />
-       
-       {/* Dropdown Suggestions */}
-       {showTeacherSuggestions && teacherInputValue.trim() && (
-         <div className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-2xl border-2 border-rose-100 max-h-[100px] overflow-y-auto">
-           {teachers
-             .filter(t => t.id !== user.id && t.role === 'TEACHER' && t.name.toUpperCase().includes(teacherInputValue.toUpperCase()))
-             .slice(0, 8)
-             .map(teacher => (
-               <button
-                 key={teacher.id}
-                 type="button"
-                 onMouseDown={(e) => {
-                   e.preventDefault();
-                   setTeacherInputValue(teacher.name);
-                   setForm({...form, targetTeacherId: teacher.id});
-                   setShowTeacherSuggestions(false);
-                 }}
-                 className="w-full px-6 py-4 text-left text-[11px] font-black hover:bg-rose-50 transition-all text-slate-700 border-b last:border-0"
-               >
-                 {teacher.name}
-               </button>
-             ))
-           }
-           {teachers.filter(t => t.id !== user.id && t.role === 'TEACHER' && t.name.toUpperCase().includes(teacherInputValue.toUpperCase())).length === 0 && (
-             <div className="px-6 py-4 text-[10px] font-bold text-rose-500 uppercase italic text-center">
-               ❌ Nama "{teacherInputValue}" tidak ditemukan!
-             </div>
-           )}
-         </div>
-       )}
-     </div>
-  </div>
-)}
-            </div>
-            )}
-         </div>
-
-         <div>
-         <div className="bg-slate-900 p-8 rounded-[3rem] text-white flex items-center justify-between shadow-2xl overflow-hidden relative">
-            <div className="absolute top-0 left-0 w-40 h-40 bg-blue-500/10 rounded-full blur-[40px] -ml-20 -mt-20"></div>
-            <div className="flex items-center gap-4 relative z-10">
-               <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-blue-400 border border-white/10 shadow-inner"><Wallet size={24} /></div>
-               <div>
-                  <p className="text-[8px] font-black uppercase text-blue-300 tracking-[0.2em]">Estimasi Honor Sesi:</p>
-                  <h3 className="text-2xl font-black italic text-emerald-400">Rp {estimatedHonor.toLocaleString()}</h3>
-               </div>
-            </div>
-            <div className="text-right relative z-10 pr-4">
-               <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Penerima Honor:</p>
-               <h3 className={`text-xs font-black italic ${isDelegating ? 'text-orange-400 animate-pulse' : 'text-blue-400'}`}>
-                  {isDelegating ? (teachers.find(t=>t.id===form.targetTeacherId)?.name || 'PILIH TEMAN') : 'SAYA SENDIRI'}
+         <div className="flex justify-between items-center mb-10 relative z-10">
+            <div className="space-y-2">
+               <h3 className="font-black text-slate-800 flex items-center gap-3 italic uppercase text-2xl">
+                  <PhoneForwarded size={28} className="text-blue-600 animate-bounce" /> 
+                  Follow-Up Belajar
                </h3>
             </div>
          </div>
-         {isHomeTutoring && (
-            <p className="mt-4 px-6 text-[10px] font-bold text-slate-400 italic leading-relaxed">
-               ✨ Estimasi ini belum termasuk honor transport. Honor transport 100% akan dibayarkan di akhir paket.
-            </p>
-         )}
+
+         <div className="relative z-10">
+            {followUpList.length > 0 ? (
+               <>
+                  <div className="flex items-start gap-4 rounded-[2rem] border border-blue-100 bg-blue-50/60 px-6 py-5 mb-10 max-w-3xl">
+                     <Info size={20} className="text-blue-500 shrink-0 mt-0.5" />
+                     <div className="text-sm text-slate-600 leading-relaxed space-y-1">
+                        <p>Setelah siswa <b className="text-slate-800">bayar kelas lanjutan dan terverifikasi</b>, namanya hilang dari daftar ini.</p>
+                        <p>Kalau <b className="text-slate-800">30 hari</b> tidak ada kelanjutan (belum bayar atau tidak ada sesi baru), dianggap berhenti dan ikut hilang.</p>
+                     </div>
+                  </div>
+
+                  <div className="space-y-10">
+                     {FOLLOW_UP_SECTIONS.map(sec => {
+                        const rows = followUpList.filter(i => i.kind === sec.kind);
+                        if (rows.length === 0) return null;
+                        return (
+                           <section key={sec.kind}>
+                              <div className="flex items-center gap-5 rounded-[2rem] bg-slate-50 border border-slate-100 px-6 py-5">
+                                 <div className={`w-12 h-12 rounded-[1.25rem] flex items-center justify-center shrink-0 shadow-lg ${sec.iconBox}`}>
+                                    <sec.Icon size={24} />
+                                 </div>
+                                 <div className="min-w-0 flex-1">
+                                    <h4 className="font-black text-slate-800 uppercase italic text-lg leading-tight">{sec.title}</h4>
+                                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mt-1">{sec.hint}</p>
+                                 </div>
+                                 <span className="shrink-0 bg-white border border-slate-100 text-slate-500 text-[10px] font-black uppercase tracking-widest rounded-full px-4 py-2 shadow-sm">{rows.length} siswa</span>
+                              </div>
+
+                              <ul className="mt-3 rounded-[2rem] bg-white border border-slate-100 shadow-sm divide-y divide-slate-100 overflow-hidden">
+                                 {rows.map((s, i) => {
+                                    const rapot = rapotLine(s);
+                                    const soon = s.daysLeft <= EXPIRY_WARN_DAYS;
+                                    // NEXT_CLASS: tanggal keputusan guru tidak disimpan, jadi N hari dihitung dari tanggal siswa klaim rapot (selisihnya biasanya kecil)
+                                    const prefix = s.kind === 'NEXT_CLASS' ? 'Lanjut kelas ' : '';
+                                    const statusText = s.kind === 'NEXT_CLASS'
+                                       ? (s.pendingVerify ? 'Menunggu verifikasi' : 'Belum lapor bayar')
+                                       : `Sesi ${s.lastSess} pada ${shortDate(s.lastDate)}`;
+                                    return (
+                                       <li key={`${s.kind}-${s.student}-${s.fullClass}-${i}`} className="flex items-center justify-between gap-6 px-6 py-4">
+                                          <div className="min-w-0">
+                                             <p className="font-black italic uppercase text-slate-800 truncate">{s.student}</p>
+                                             <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 truncate mt-0.5">{s.fullClass.split(' - ')[0]}</p>
+                                             {rapot && <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${RAPOT_TONE_CLASS[rapot.tone]}`}>{rapot.text}</p>}
+                                          </div>
+                                          <div className="text-right shrink-0">
+                                             <p className="text-xs font-black uppercase tracking-wider text-slate-700">{statusText}</p>
+                                             <p className={`text-[10px] font-bold uppercase tracking-widest mt-1 ${soon ? 'text-red-600' : 'text-slate-400'}`}>
+                                                {prefix}{agoText(s.daysAgo)}{soon ? ` · ${leftText(s.daysLeft)}` : ''}
+                                             </p>
+                                          </div>
+                                       </li>
+                                    );
+                                 })}
+                              </ul>
+                           </section>
+                        );
+                     })}
+                  </div>
+               </>
+            ) : (
+               <div className="col-span-full py-24 flex flex-col items-center justify-center opacity-20 text-center gap-6">
+                  <div className="w-24 h-24 bg-slate-100 rounded-full flex items-center justify-center">
+                     <UserCheck size={64} className="text-slate-300" />
+                  </div>
+                  <div className="space-y-2">
+                     <p className="font-black text-[12px] uppercase tracking-[0.5em]">Semua Beres! ✨</p>
+                     <p className="font-bold text-[9px] uppercase tracking-widest">Belum ada antrean follow-up untuk saat ini.</p>
+                  </div>
+               </div>
+            )}
          </div>
-
-         <button 
-           onClick={handleLaporPresensi} 
-           disabled={loading || isDetecting || !form.subject || !form.level || !form.room}
-           className="w-full py-10 bg-blue-600 text-white rounded-[3rem] font-black text-[14px] uppercase tracking-[0.5em] shadow-2xl hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30 group"
-         >
-            {loading ? <Loader2 className="animate-spin" size={32} /> : isDetecting ? 'HARAP TUNGGU...' : (editData ? <><Save size={28}/> SIMPAN PERUBAHAN ✨</> : <><Send size={28} className="group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform" /> KIRIM PRESENSI</>)}
-         </button>
       </div>
-
-      {/* MODAL BLOCKING SLOT OWNERSHIP */}
-      {blockModal && (
-        <ModalPortal>
-        <div data-modal-container className="fixed inset-0 z-[300000] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-          <div className="bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl relative border-t-8 border-rose-600 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-            <div className="p-8">
-
-              {/* Layout 2 kolom */}
-              <div className="grid grid-cols-2 gap-5">
-
-                {/* KOLOM KIRI: warning + info guru */}
-                <div className="bg-rose-50 rounded-[1.5rem] p-5 flex flex-col gap-4">
-  <div className="flex flex-col items-center gap-3 text-center">
-    <div className="w-9 h-9 bg-rose-200 rounded-xl flex items-center justify-center shrink-0">
-      <AlertTriangle size={18} className="text-rose-800" />
     </div>
-    <p className="text-[11px] font-black text-rose-700 uppercase tracking-wider leading-tight">
-      Kelas Sedang Digunakan!
-    </p>
-  </div>
-
-  <div className="border-t border-rose-200 pt-4 space-y-3">
-    <p className="text-[10px] font-bold text-rose-700 uppercase leading-relaxed text-center">
-      Kelas ini sedang berjalan oleh:
-    </p>
-                    <div className="bg-white rounded-xl px-4 py-2">
-                      <p className="text-[10px] font-black text-slate-800 uppercase tracking-wide leading-relaxed">{blockModal.className}</p>
-                    </div>
-                    <div className="bg-white rounded-xl px-4 py-3 space-y-1">
-                      <p className="text-[10px] font-bold text-rose-600 uppercase tracking-wide">Guru:</p>
-                      <p className="text-[10px] font-black text-slate-800">{blockModal.ownerName}</p>
-                      <p className="text-[10px] font-bold text-rose-600">Sesi {blockModal.currentSession} / 6</p>
-                    </div>
-                  </div>
-                </div>
-
-                {/* KOLOM KANAN: solusi + tombol */}
-                <div className="flex flex-col gap-4">
-                  <div className="bg-slate-50 rounded-[1.5rem] p-5 flex-1">
-                    <p className="text-[11px] font-black text-slate-700 uppercase tracking-wide mb-4">Anda bisa input setelah:</p>
-                    <div className="space-y-3">
-                      <div className="flex items-start gap-2">
-                        <Check size={14} className="text-emerald-500 shrink-0 mt-0.5"/>
-                        <p className="text-[10px] font-bold text-slate-600 leading-relaxed">Beliau menyelesaikan <span className="font-black text-slate-800">Sesi 6</span></p>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <Check size={14} className="text-emerald-500 shrink-0 mt-0.5"/>
-                        <p className="text-[10px] font-bold text-slate-600 leading-relaxed">Beliau <span className="font-black text-slate-800">mendelegasikan</span> kelas kepada Kakak</p>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <Check size={14} className="text-emerald-500 shrink-0 mt-0.5"/>
-                        <p className="text-[10px] font-bold text-slate-600 leading-relaxed">Hubungi <span className="font-black text-slate-800">Admin</span> untuk koordinasi tukar kelas</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => setBlockModal(null)}
-                    className="w-full py-4 bg-slate-900 hover:bg-blue-600 text-white rounded-[1.25rem] font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
-                  >
-                    <Check size={16}/> Saya Mengerti
-                  </button>
-                </div>
-
-              </div>
-            </div>
-          </div>
-        </div>
-        </ModalPortal>
-      )}
-    </div>
-    </>
   );
 };
 
-export default TeacherDashboard;
+export default AdminDashboard;
