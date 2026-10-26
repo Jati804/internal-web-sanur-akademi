@@ -243,6 +243,31 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
     return newClass !== oldClass || form.category !== oldCategory || newStudent !== oldStudent;
   };
 
+  // 👀 PREVIEW nomor sesi saat EDIT: kalau identitas kelas diubah, kotak sesi langsung
+  // menunjukkan posisi barunya (disisipkan sesuai tanggal), sama seperti hasil saat dikirim.
+  useEffect(() => {
+    if (!editData) return;
+    if (!form.subject || !form.level || !form.room) return;
+    if (form.category === 'PRIVATE' && !form.studentName) return;
+
+    let preview = editData.sessionNumber || 1;
+
+    if (isIdentityChanged()) {
+      preview = 1;
+      const dest = findActivePackage(editData.id);
+      if (dest && dest.packageId && dest.packageId !== editData.packageId) {
+        const destLogs = logs
+          .filter(l => l.packageId === dest.packageId && l.id !== editData.id &&
+                       (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG'))
+          .sort((a, b) => Number(a.sessionNumber) - Number(b.sessionNumber));
+        const firstLater = destLogs.find(l => l.date > form.date || (l.date === form.date && l.id > editData.id));
+        preview = firstLater ? Number(firstLater.sessionNumber) : dest.maxNum + 1;
+      }
+    }
+
+    setForm(prev => (prev.sessionNumber === preview ? prev : { ...prev, sessionNumber: preview }));
+  }, [logs, form.subject, form.level, form.room, form.category, form.studentName, form.date, editData]);
+
   // 🔀 Pindahkan sesi ke paket lain: disisipkan sesuai tanggal, nomor sesi yang terdampak digeser.
   const handleMoveSession = async (delegating: boolean) => {
     if (!editData) return;
@@ -316,6 +341,22 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
         alert(`Sesi tidak bisa dipindah dari kotak lama.\n\nAda sesi setelahnya di kotak itu yang sudah LUNAS (sudah dibayar), jadi nomornya tidak bisa dirapatkan setelah sesi ini keluar.\n\nSilakan hubungi Admin ya Kak! 🙏`);
         return;
       }
+
+      // Konfirmasi sebelum pindah: nomor di sini hasil hitungan yang sama dengan preview kotak sesi
+      const destLabel = form.category === 'PRIVATE'
+        ? `${fullClassName} (${form.studentName.toUpperCase()})`
+        : fullClassName;
+      const notes: string[] = [];
+      if (!destPkg) notes.push('Kotak baru akan dibuat karena belum ada kotak yang cocok.');
+      const fmtDate = (d: string) => String(d).slice(0, 10).split('-').reverse().join('/');
+      if (toShiftUp.length > 0) notes.push(`Sesi di kotak itu yang tanggalnya lebih akhir (mulai tanggal ${fmtDate(toShiftUp[0].date)}) akan mundur satu nomor.`);
+      if (toShiftDown.length > 0) notes.push('Sesi di kotak lama yang tanggalnya setelah sesi ini akan maju satu nomor.');
+      const ok = window.confirm(
+        `Sesi ini akan dipindah ke kotak ${destLabel} sebagai sesi ke-${newNumber}.` +
+        (notes.length ? `\n\n${notes.join('\n')}` : '') +
+        `\n\nLanjutkan?`
+      );
+      if (!ok) return;
 
       const groupSuffix = form.category === 'PRIVATE' ? `-${form.studentName.replace(/\s+/g, '-')}` : '-GROUP';
       const finalPackageId = destPkg?.packageId
