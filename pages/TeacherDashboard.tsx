@@ -156,6 +156,65 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
     return Math.round(hourlyRate * form.duration);
   }, [form.category, form.duration, salaryConfig]);
 
+  // ===== Helper urutan sesi berdasarkan TANGGAL =====
+  type PkgRow = { id: string; sessionnumber: number; date: string; paymentstatus?: string };
+  type PkgChange = { id: string; from: number; to: number; date: string; paymentstatus?: string };
+
+  const NEW_ID = 'ATT-~'; // ID sementara untuk sesi baru: kalau tanggal sama, sesi baru dianggap paling akhir
+  const dateOnly = (d: any) => String(d).slice(0, 10);
+  const fmtDate = (d: any) => dateOnly(d).split('-').reverse().join('/');
+  const toPkgRows = (arr: any[]): PkgRow[] =>
+    arr.map(r => ({
+      id: r.id,
+      sessionnumber: Number(r.sessionnumber) || 0,
+      date: dateOnly(r.date),
+      paymentstatus: r.paymentstatus
+    }));
+
+  // Cari posisi sesi (di antara sesi lain di paket yang sama) sesuai tanggal.
+  // "others" = semua sesi di paket TANPA sesi yang sedang disimpan.
+  // Hasil: position (nomor sesi untuk sesi ini) + changes (sesi lain yang nomornya ikut berubah).
+  const placeInPackage = (others: PkgRow[], date: string, id: string) => {
+    const sorted = [...others].sort((a, b) => a.sessionnumber - b.sessionnumber);
+    const idx = sorted.findIndex(r => r.date > date || (r.date === date && r.id > id));
+    const position = idx === -1 ? sorted.length + 1 : idx + 1;
+    const changes: PkgChange[] = sorted
+      .map((r, i) => ({
+        id: r.id,
+        from: r.sessionnumber,
+        to: i < position - 1 ? i + 1 : i + 2,
+        date: r.date,
+        paymentstatus: r.paymentstatus
+      }))
+      .filter(c => c.to !== c.from);
+    return { position, changes };
+  };
+
+  // Rapatkan nomor (1,2,3,...) setelah ada sesi yang keluar dari paket
+  const compressPackage = (rows: PkgRow[]): PkgChange[] =>
+    [...rows]
+      .sort((a, b) => a.sessionnumber - b.sessionnumber)
+      .map((r, i) => ({ id: r.id, from: r.sessionnumber, to: i + 1, date: r.date, paymentstatus: r.paymentstatus }))
+      .filter(c => c.to !== c.from);
+
+  // Urutan eksekusi di database: yang naik dari nomor terbesar, yang turun dari nomor terkecil
+  const toOps = (changes: PkgChange[]) => ({
+    p_up: changes.filter(c => c.to > c.from).sort((a, b) => b.from - a.from).map(c => ({ id: c.id, sessionnumber: c.to })),
+    p_down: changes.filter(c => c.to < c.from).sort((a, b) => a.from - b.from).map(c => ({ id: c.id, sessionnumber: c.to }))
+  });
+
+  const friendlyError = (e: any) => {
+    const raw = String(e?.message || '');
+    const low = raw.toLowerCase();
+    if (low.includes('failed to fetch') || low.includes('network')) return 'Koneksi internet terputus.';
+    if (low.includes('jwt') || low.includes('expired')) return 'Sesi login sudah habis, silakan login ulang.';
+    if (low.includes('row-level security') || low.includes('permission denied')) return 'Akun Kakak tidak punya izin untuk mengubah data ini.';
+    if (low.includes('duplicate key')) return 'Nomor sesi bentrok dengan sesi lain.';
+    if (low.includes('sesi_lunas')) return 'Ada sesi LUNAS yang nomornya ikut bergeser.';
+    if (low.includes('could not find the function')) return 'Fitur urutan sesi belum aktif di database.';
+    return raw || 'Terjadi kendala yang tidak diketahui.';
+  };
+
   // 🔎 Cari paket aktif (siklus yang belum penuh) untuk kombinasi kelas yang sedang dipilih di form.
   // excludeId dipakai saat edit/pindah: sesi yang lagi dipindah jangan ikut dihitung.
   // Nomor sesi berikutnya = nomor TERTINGGI di paket itu + 1 (bukan sekadar log terbaru),
@@ -216,8 +275,12 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
       const active = findActivePackage();
 
       if (active && active.maxNum < 6) {
-        // Paket belum penuh -> lanjutkan
-        setForm(prev => ({ ...prev, sessionNumber: active.maxNum + 1 }));
+        // Paket belum penuh -> lanjutkan, nomor sesi mengikuti TANGGAL (bukan sekadar paling akhir)
+        const pkgRows = toPkgRows(
+          logs.filter(l => l.packageId === active.packageId && (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG'))
+        );
+        const { position } = placeInPackage(pkgRows, form.date, NEW_ID);
+        setForm(prev => ({ ...prev, sessionNumber: position }));
         setActivePackageId(active.packageId);
         setActiveOriginalTeacherId(active.originalTeacherId);
       } else {
@@ -230,7 +293,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [logs, form.subject, form.level, form.room, form.category, form.studentName, editData]);
+  }, [logs, form.subject, form.level, form.room, form.category, form.studentName, form.date, editData]);
 
   // ✏️ Apakah identitas kelas berubah saat edit? (matpel / level / ruang / tipe / nama siswa)
   const isIdentityChanged = () => {
@@ -243,26 +306,32 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
     return newClass !== oldClass || form.category !== oldCategory || newStudent !== oldStudent;
   };
 
-  // 👀 PREVIEW nomor sesi saat EDIT: kalau identitas kelas diubah, kotak sesi langsung
-  // menunjukkan posisi barunya (disisipkan sesuai tanggal), sama seperti hasil saat dikirim.
+  // 👀 PREVIEW nomor sesi saat EDIT: kotak sesi langsung menunjukkan posisi barunya
+  // (diurutkan sesuai tanggal), sama seperti hasil saat dikirim.
   useEffect(() => {
     if (!editData) return;
     if (!form.subject || !form.level || !form.room) return;
     if (form.category === 'PRIVATE' && !form.studentName) return;
 
-    let preview = editData.sessionNumber || 1;
+    let targetPkgId: string | null = editData.packageId || null;
+    let isNewPackage = false;
 
     if (isIdentityChanged()) {
-      preview = 1;
       const dest = findActivePackage(editData.id);
       if (dest && dest.packageId && dest.packageId !== editData.packageId) {
-        const destLogs = logs
-          .filter(l => l.packageId === dest.packageId && l.id !== editData.id &&
-                       (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG'))
-          .sort((a, b) => Number(a.sessionNumber) - Number(b.sessionNumber));
-        const firstLater = destLogs.find(l => l.date > form.date || (l.date === form.date && l.id > editData.id));
-        preview = firstLater ? Number(firstLater.sessionNumber) : dest.maxNum + 1;
+        targetPkgId = dest.packageId;
+      } else {
+        isNewPackage = true;
       }
+    }
+
+    let preview = 1;
+    if (!isNewPackage && targetPkgId) {
+      const rows = toPkgRows(
+        logs.filter(l => l.packageId === targetPkgId && l.id !== editData.id &&
+                         (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG'))
+      );
+      preview = placeInPackage(rows, form.date, editData.id).position;
     }
 
     setForm(prev => (prev.sessionNumber === preview ? prev : { ...prev, sessionNumber: preview }));
@@ -290,67 +359,56 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
       if (freshErr) throw freshErr;
 
       const rows = (freshRows || []) as any[];
-      const srcRows = rows.filter(r => r.packageid === srcPkgId && r.id !== editData.id);
-      const destRows = destPkg
-        ? rows.filter(r => r.packageid === destPkg.packageId).sort((a, b) => a.sessionnumber - b.sessionnumber)
-        : [];
+      const srcRaw = rows.filter(r => r.packageid === srcPkgId && r.id !== editData.id);
+      const destRaw = destPkg ? rows.filter(r => r.packageid === destPkg.packageId) : [];
 
       // Paket tujuan sudah penuh
-      if (destPkg && destRows.length >= 6) {
+      if (destPkg && destRaw.length >= 6) {
         alert(`Paket tujuan (${fullClassName}) sudah terisi 6 sesi, jadi sesi ini tidak bisa disisipkan. Silakan hubungi Admin ya Kak! 🙏`);
         return;
       }
 
       // Validasi ownership paket tujuan (sama seperti saat lapor presensi biasa)
       if (destPkg) {
-        const ownerId = destPkg.originalTeacherId || destRows[0]?.originalteacherid;
+        const ownerId = destPkg.originalTeacherId || destRaw[0]?.originalteacherid;
         if (ownerId && ownerId !== user.id) {
-          const hasSub = destRows.some(r => r.teacherid === user.id && r.status === 'SUB_LOG');
+          const hasSub = destRaw.some(r => r.teacherid === user.id && r.status === 'SUB_LOG');
           if (!hasSub) {
             const owner = teachers.find(t => t.id === ownerId);
             setBlockModal({
               ownerName: owner?.name || 'Guru Lain',
               className: `${form.subject} (${form.level}) - ${form.room}`,
-              currentSession: destRows.length
+              currentSession: destRaw.length
             });
             return;
           }
         }
       }
 
-      // Tentukan nomor sesi baru berdasarkan tanggal (kalau tanggal sama, urutkan pakai ID)
-      let newNumber = 1;
-      if (destRows.length > 0) {
-        const firstLater = destRows.find(r => r.date > form.date || (r.date === form.date && r.id > editData.id));
-        newNumber = firstLater
-          ? firstLater.sessionnumber
-          : Math.max(...destRows.map(r => r.sessionnumber)) + 1;
-      }
-
-      const toShiftUp = destRows.filter(r => r.sessionnumber >= newNumber);
-      const toShiftDown = srcRows.filter(r => r.sessionnumber > editData.sessionNumber);
+      // Posisi di paket tujuan (sesuai tanggal) + rapatkan paket asal
+      const placed = placeInPackage(toPkgRows(destRaw), form.date, editData.id);
+      const newNumber = placed.position;
+      const destChanges = placed.changes;
+      const srcChanges = compressPackage(toPkgRows(srcRaw));
 
       // Sesi yang nomornya ikut bergeser harus masih UNPAID
-      const paidInDest = toShiftUp.some(r => r.paymentstatus !== 'UNPAID');
-      const paidInSrc = toShiftDown.some(r => r.paymentstatus !== 'UNPAID');
-      if (paidInDest) {
-        alert(`Sesi tidak bisa dipindah ke kotak ${fullClassName}.\n\nSesi tanggal ${form.date.split('-').reverse().join('/')} harus disisipkan sebelum sesi lain di kotak itu yang sudah LUNAS (sudah dibayar), dan sesi LUNAS tidak boleh berubah nomornya.\n\nSilakan hubungi Admin ya Kak! 🙏`);
+      if (destChanges.some(c => c.paymentstatus !== 'UNPAID')) {
+        alert(`Sesi tidak bisa dipindah ke kotak ${fullClassName}.\n\nSesi tanggal ${fmtDate(form.date)} harus disisipkan sebelum sesi lain di kotak itu yang sudah LUNAS (sudah dibayar), dan sesi LUNAS tidak boleh berubah nomornya.\n\nSilakan hubungi Admin ya Kak! 🙏`);
         return;
       }
-      if (paidInSrc) {
+      if (srcChanges.some(c => c.paymentstatus !== 'UNPAID')) {
         alert(`Sesi tidak bisa dipindah dari kotak lama.\n\nAda sesi setelahnya di kotak itu yang sudah LUNAS (sudah dibayar), jadi nomornya tidak bisa dirapatkan setelah sesi ini keluar.\n\nSilakan hubungi Admin ya Kak! 🙏`);
         return;
       }
 
-      // Konfirmasi sebelum pindah: nomor di sini hasil hitungan yang sama dengan preview kotak sesi
+      // Konfirmasi sebelum pindah
       const destLabel = form.category === 'PRIVATE'
         ? `${fullClassName} (${form.studentName.toUpperCase()})`
         : fullClassName;
       const notes: string[] = [];
       if (!destPkg) notes.push('Kotak baru akan dibuat karena belum ada kotak yang cocok.');
-      const fmtDate = (d: string) => String(d).slice(0, 10).split('-').reverse().join('/');
-      if (toShiftUp.length > 0) notes.push(`Sesi di kotak itu yang tanggalnya lebih akhir (mulai tanggal ${fmtDate(toShiftUp[0].date)}) akan mundur satu nomor.`);
-      if (toShiftDown.length > 0) notes.push('Sesi di kotak lama yang tanggalnya setelah sesi ini akan maju satu nomor.');
+      if (destChanges.length > 0) notes.push(`Sesi di kotak itu yang tanggalnya lebih akhir (mulai tanggal ${fmtDate(destChanges[0].date)}) akan mundur satu nomor.`);
+      if (srcChanges.length > 0) notes.push('Sesi di kotak lama yang tanggalnya setelah sesi ini akan maju satu nomor.');
       const ok = window.confirm(
         `Sesi ini akan dipindah ke kotak ${destLabel} sebagai sesi ke-${newNumber}.` +
         (notes.length ? `\n\n${notes.join('\n')}` : '') +
@@ -361,7 +419,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
       const groupSuffix = form.category === 'PRIVATE' ? `-${form.studentName.replace(/\s+/g, '-')}` : '-GROUP';
       const finalPackageId = destPkg?.packageId
         || `PKG-${form.category}-${fullClassName.replace(/\s+/g, '-')}${groupSuffix}-${Date.now()}`;
-      const finalOriginalTeacherId = destPkg?.originalTeacherId || destRows[0]?.originalteacherid || user.id;
+      const finalOriginalTeacherId = destPkg?.originalTeacherId || destRaw[0]?.originalteacherid || user.id;
 
       const payload: any = {
         id: editData.id,
@@ -385,31 +443,19 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
 
       // Semua perubahan dijalankan di database dalam SATU transaksi (fungsi move_attendance_session):
       // kalau ada satu langkah gagal, semuanya dibatalkan dan data tetap seperti semula.
+      const ops = toOps([...destChanges, ...srcChanges]);
       const { error: rpcErr } = await supabase.rpc('move_attendance_session', {
-        p_up: [...toShiftUp]
-          .sort((x, y) => y.sessionnumber - x.sessionnumber)
-          .map(r => ({ id: r.id, sessionnumber: r.sessionnumber + 1 })),
+        p_up: ops.p_up,
         p_moved: payload,
-        p_down: [...toShiftDown]
-          .sort((x, y) => x.sessionnumber - y.sessionnumber)
-          .map(r => ({ id: r.id, sessionnumber: r.sessionnumber - 1 }))
+        p_down: ops.p_down
       });
       if (rpcErr) throw rpcErr;
 
       if (refreshAllData) await refreshAllData();
       navigate('/teacher/honor', { replace: true, state: { highlightId: finalPackageId } });
     } catch (e: any) {
-      const raw = String(e?.message || '');
-      const low = raw.toLowerCase();
-      let reason = raw || 'Terjadi kendala yang tidak diketahui.';
-      if (low.includes('failed to fetch') || low.includes('network')) reason = 'Koneksi internet terputus.';
-      else if (low.includes('jwt') || low.includes('expired')) reason = 'Sesi login sudah habis, silakan login ulang.';
-      else if (low.includes('row-level security') || low.includes('permission denied')) reason = 'Akun Kakak tidak punya izin untuk mengubah data ini.';
-      else if (low.includes('duplicate key')) reason = 'Nomor sesi bentrok dengan sesi lain.';
-      else if (low.includes('sesi_lunas')) reason = 'Ada sesi LUNAS yang nomornya ikut bergeser.';
-      else if (low.includes('sesi_tidak_ditemukan')) reason = 'Data sesi tidak ditemukan, mungkin sudah dihapus.';
-      else if (low.includes('could not find the function')) reason = 'Fitur pindah sesi belum aktif di database.';
-      alert("Gagal memindahkan sesi: " + reason + "\n\nTidak ada data yang berubah. Silakan coba lagi, atau hubungi Admin kalau masih gagal ya Kak! 🙏");
+      alert("Gagal memindahkan sesi: " + friendlyError(e) + "\n\nTidak ada data yang berubah. Silakan coba lagi, atau hubungi Admin kalau masih gagal ya Kak! 🙏");
+      if (refreshAllData) await refreshAllData();
     } finally {
       setLoading(false);
     }
@@ -461,8 +507,32 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
       const finalPackageId = activePackageId || `PKG-${form.category}-${fullClassName.replace(/\s+/g, '-')}${groupSuffix}-${Date.now()}`;
       const finalOriginalTeacherId = activeOriginalTeacherId || user.id;
 
+      const payloadId = editData ? editData.id : `ATT-${Date.now()}`; // ID berisi timestamp untuk sorting
+
+      // Nomor sesi ditentukan dari TANGGAL, pakai data terbaru di database
+      let position = form.sessionNumber;
+      let changes: PkgChange[] = [];
+      if (activePackageId) {
+        const { data: freshPkg, error: freshErr } = await supabase
+          .from('attendance')
+          .select('id, sessionnumber, date, paymentstatus')
+          .eq('packageid', activePackageId)
+          .in('status', ['SESSION_LOG', 'SUB_LOG']);
+        if (freshErr) throw freshErr;
+
+        const others = toPkgRows((freshPkg || []).filter((r: any) => r.id !== payloadId));
+        if (!editData && others.length >= 6) {
+          alert('Paket ini sudah terisi 6 sesi, jadi sesi baru tidak bisa ditambahkan. Silakan hubungi Admin ya Kak! 🙏');
+          setLoading(false);
+          return;
+        }
+        const placed = placeInPackage(others, form.date, payloadId);
+        position = placed.position;
+        changes = placed.changes;
+      }
+
       const payload: any = {
-        id: editData ? editData.id : `ATT-${Date.now()}`, // ID berisi timestamp untuk sorting
+        id: payloadId,
         teacherid: delegating ? (targetTeacher?.id || user.id) : user.id,
         teachername: delegating ? (targetTeacher?.name || user.name) : user.name,
         date: form.date,
@@ -472,7 +542,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
         level: form.level,
         sessioncategory: form.category,
         packageid: finalPackageId,
-        sessionnumber: form.sessionNumber, 
+        sessionnumber: position,
         studentsattended: form.category === 'PRIVATE' ? [form.studentName.toUpperCase()] : ['REGULER'],
         earnings: estimatedHonor,
         paymentstatus: 'UNPAID',
@@ -481,15 +551,45 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
         originalteacherid: finalOriginalTeacherId 
       };
 
-      const { error } = await supabase.from('attendance').upsert([payload]);
-      if (error) throw error;
+      if (changes.length > 0) {
+        // Ada sesi lain yang nomornya ikut berubah karena urutan tanggal
+        if (changes.some(c => c.paymentstatus !== 'UNPAID')) {
+          alert(`Sesi tanggal ${fmtDate(form.date)} tidak bisa disimpan di urutan ke-${position}.\n\nAda sesi yang sudah LUNAS (sudah dibayar) yang nomornya ikut berubah, dan sesi LUNAS tidak boleh berubah nomornya.\n\nSilakan hubungi Admin ya Kak! 🙏`);
+          setLoading(false);
+          return;
+        }
+
+        const dates = changes.map(c => fmtDate(c.date)).join(', ');
+        const ok = window.confirm(
+          (editData
+            ? `Sesi ini akan jadi sesi ke-${position}, karena urutannya mengikuti tanggal.`
+            : `Sesi tanggal ${fmtDate(form.date)} akan disimpan sebagai sesi ke-${position}, karena urutannya mengikuti tanggal.`) +
+          `\n\nNomor sesi tanggal ${dates} ikut berubah.\n\nLanjutkan?`
+        );
+        if (!ok) {
+          setLoading(false);
+          return;
+        }
+
+        // Satu transaksi di database: semua berhasil, atau batal semua
+        const ops = toOps(changes);
+        const { error: rpcErr } = await supabase.rpc('move_attendance_session', {
+          p_up: ops.p_up,
+          p_moved: payload,
+          p_down: ops.p_down
+        });
+        if (rpcErr) throw rpcErr;
+      } else {
+        const { error } = await supabase.from('attendance').upsert([payload]);
+        if (error) throw error;
+      }
 
       if (refreshAllData) await refreshAllData();
       setLoading(false);
       navigate('/teacher/honor', { replace: true, state: { highlightId: finalPackageId } }); 
 
     } catch (e: any) {
-      alert("Gagal: " + e.message);
+      alert("Gagal: " + friendlyError(e));
       setLoading(false);
     }
   };
