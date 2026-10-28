@@ -19,11 +19,16 @@ import { createClient } from '@supabase/supabase-js';
 const TABLES_TO_BACKUP = [
   'transactions',        // Keuangan (income/expense)
   'student_payments',    // Pembayaran siswa
-  'student_profiles',    // Buku induk siswa
   'attendance',          // Log kehadiran guru + data payroll
+  'student_attendance',  // Kehadiran siswa / progres sesi per siswa
+  'reports',             // Rapor siswa (nilai, topik, narasi) + permintaan rapor
   'teachers',            // Data akun guru/admin (TANPA kolom PIN mentah, lihat catatan di bawah)
   'student_accounts',    // Data akun siswa
-  'settings',            // Pengaturan sistem (misal status maintenance)
+  'materials',           // Daftar materi (file aslinya ada di Supabase Storage, TIDAK ikut backup ini)
+  'maintenance_notes',   // Catatan maintenance admin
+  'teacher_student_pins',// Pin "Cari Siswa" milik guru
+  'settings',            // Pengaturan sistem (jadwal, konfigurasi akademik & gaji, status maintenance)
+  // Sengaja TIDAK ikut: 'user_pins' (isinya PIN mentah, tidak boleh masuk Git)
 ];
 
 // Kolom yang SENGAJA di-exclude dari backup karena sensitif dan
@@ -42,12 +47,39 @@ function stripSensitiveColumns(rows) {
   });
 }
 
+// Ambil SEMUA baris secara bertahap (per 1000). Supabase membatasi jumlah baris per permintaan
+// (setting "Max rows"); tanpa pagination, backup diam-diam terpotong kalau datanya lebih banyak.
 async function fetchTable(supabase, tableName) {
-  const { data, error } = await supabase.from(tableName).select('*');
-  if (error) {
-    throw new Error(`Gagal fetch tabel "${tableName}": ${error.message}`);
+  const PAGE = 1000;
+  const all = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await supabase
+      .from(tableName)
+      .select('*')
+      .order('id', { ascending: true })
+      .range(from, from + PAGE - 1);
+
+    if (error) {
+      if (from === 0) {
+        // Tabel tanpa kolom 'id' (atau urutan gagal): kembali ke cara lama, tapi beri peringatan di log
+        console.warn(`[backup] "${tableName}" tidak bisa diambil bertahap (${error.message}), pakai select biasa.`);
+        const fallback = await supabase.from(tableName).select('*');
+        if (fallback.error) {
+          throw new Error(`Gagal fetch tabel "${tableName}": ${fallback.error.message}`);
+        }
+        return stripSensitiveColumns(fallback.data);
+      }
+      throw new Error(`Gagal fetch tabel "${tableName}" (baris ${from}+): ${error.message}`);
+    }
+
+    all.push(...(data || []));
+    if (!data || data.length < PAGE) break;
+    from += PAGE;
   }
-  return stripSensitiveColumns(data);
+
+  return stripSensitiveColumns(all);
 }
 
 // ── Commit file ke GitHub lewat Contents API ─────────────────────────
