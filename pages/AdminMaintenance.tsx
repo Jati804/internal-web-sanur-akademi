@@ -247,7 +247,7 @@ useEffect(() => {
                <p className={`text-[10px] font-bold uppercase tracking-widest mt-2 ${isMaintMode ? 'text-orange-100' : 'text-slate-400'}`}>{isMaintMode ? "HANYA ADMIN YANG BISA LOGIN" : "LOGIN NORMAL (ONLINE)"}</p>
             </div>
          </div>
-         <button onClick={toggleMaintenance} className={`w-full md:w-auto px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 shrink-0 ${isMaintMode ? 'bg-white text-orange-600 hover:bg-orange-50' : 'bg-slate-900 text-white hover:bg-black'}`}>
+         <button onClick={toggleMaintenance} className={`w-full md:w-80 px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 shrink-0 ${isMaintMode ? 'bg-white text-orange-600 hover:bg-orange-50' : 'bg-slate-900 text-white hover:bg-black'}`}>
            {isMaintMode ? <><Unlock size={18}/> BUKA AKSES LOGIN</> : <><Lock size={18}/> AKTIFKAN MAINTENANCE</>}
          </button>
       </div>
@@ -259,7 +259,7 @@ useEffect(() => {
                 <h3 className="text-2xl font-black text-slate-800 uppercase italic">Galeri & Optimasi Media</h3>
             </div>
 
-            <button onClick={handleToggleGallery} className="w-full md:w-auto px-10 py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95 shrink-0">
+            <button onClick={handleToggleGallery} className="w-full md:w-80 px-10 py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95 shrink-0">
                {isFetchingGallery ? <Loader2 className="animate-spin" size={18} /> : <Eye size={18} />} {showPreviewList ? 'Tutup Galeri' : 'Buka Galeri Foto'}
             </button>
           </div>
