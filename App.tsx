@@ -33,6 +33,33 @@ import MateriPage from './pages/MateriPage.tsx';
 import { User, Attendance, Transaction, StudentPayment } from './types.ts';
 import { INITIAL_SUBJECTS, CLASS_ROOM_OPTIONS } from './constants.tsx';
 
+// 📦 Ambil SEMUA baris sebuah tabel secara bertahap (per 1000 baris).
+// Supabase membatasi jumlah baris per permintaan (setting "Max rows"), dan kalau datanya lebih banyak
+// hasilnya terpotong tanpa pesan error. Dengan mengambil bertahap, data tidak akan terpotong.
+// Kalau pengambilan bertahap gagal di halaman pertama (misal tabel tidak punya kolom 'id'),
+// otomatis kembali ke cara lama: select('*') biasa.
+const fetchAllRows = async (table: string, orderBy: string = 'id'): Promise<{ data: any[] | null; error: any }> => {
+  const PAGE = 1000;
+  const all: any[] = [];
+  let from = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from(table)
+      .select('*')
+      .order(orderBy, { ascending: true })
+      .range(from, from + PAGE - 1);
+
+    if (error) {
+      if (from === 0) return await supabase.from(table).select('*'); // fallback cara lama
+      return { data: null, error }; // gagal di tengah jalan: jangan timpa data di layar dengan data setengah
+    }
+    all.push(...(data || []));
+    if (!data || data.length < PAGE) break;
+    from += PAGE;
+  }
+  return { data: all, error: null };
+};
+
 const NavItem = ({ to, icon: Icon, label, activeColor = 'blue', onClick, badge }: { to: string, icon: any, label: string, activeColor?: string, onClick?: () => void, badge?: number }) => {
   const location = useLocation();
   const isActive = location.pathname === to;
@@ -569,13 +596,13 @@ const App = () => {
   { data: reps },
   { data: settings }
 ] = await Promise.all([
-  supabase.from('attendance').select('*'),
-  supabase.from('student_attendance').select('*'),
+  fetchAllRows('attendance'),
+  fetchAllRows('student_attendance'),
   supabase.from('teachers').select('*'),
-  supabase.from('student_accounts').select('*'),
-  supabase.from('transactions').select('*'),
-  supabase.from('student_payments').select('*'),
-  supabase.from('reports').select('*'),
+  fetchAllRows('student_accounts'),
+  fetchAllRows('transactions'),
+  fetchAllRows('student_payments'),
+  fetchAllRows('reports'),
   supabase.from('settings').select('*')
 ]);
 
