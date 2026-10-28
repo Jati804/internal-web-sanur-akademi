@@ -4,6 +4,7 @@ import { supabase } from '../services/supabase.ts';
 import ModalPortal from '../ModalPortal.tsx';
 import { 
   Trash2, 
+  Clock,
   Loader2, 
   CheckCircle2,
   ImageIcon,
@@ -251,31 +252,34 @@ useEffect(() => {
          </button>
       </div>
 
-      <div className="mx-2 bg-white p-10 md:p-14 rounded-[4rem] border border-slate-100 shadow-2xl flex flex-col xl:flex-row items-center gap-12">
-          <div className="flex-1 space-y-8 text-center xl:text-left">
-            <div className="flex items-center gap-4 justify-center xl:justify-start">
+      <div className="mx-2 bg-white p-8 md:p-12 rounded-[4rem] border border-slate-100 shadow-2xl space-y-8">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+            <div className="flex items-center gap-4">
                 <div className="p-4 bg-blue-50 text-blue-600 rounded-3xl"><ImageIcon size={32} /></div>
                 <h3 className="text-2xl font-black text-slate-800 uppercase italic">Galeri & Optimasi Media</h3>
             </div>
-            
-            <div className="bg-slate-50 p-6 rounded-[2.5rem] border border-slate-100 space-y-4 max-w-md mx-auto xl:mx-0">
-               <div className="flex justify-between items-center px-2">
-                  <span className={`text-[10px] font-black uppercase tracking-widest ${isStorageCritical ? 'text-rose-500 animate-pulse' : 'text-slate-400'}`}>Kapasitas Memori Cloud</span>
-                  <span className="text-[11px] font-black text-slate-800 italic">{mediaStats.count} / {mediaStats.limit} FOTO</span>
-               </div>
-               <div className="w-full h-4 bg-slate-200 rounded-full overflow-hidden p-1 shadow-inner border border-slate-300">
-                  <div className={`h-full rounded-full transition-all duration-1000 ${isStorageCritical ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.4)]' : 'bg-blue-600'}`} style={{ width: `${mediaUsagePercent}%` }}></div>
-               </div>
-               <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest italic text-center">Foto bukti bayar yang sudah lebih dari 3 hari dihapus otomatis tiap malam (sekitar 02.00 WIB) ⚡</p>
-               <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest italic text-center">Salah upload? Buka galeri lalu hapus per foto.</p>
-            </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center xl:justify-start">
-               <button onClick={handleToggleGallery} className="px-10 py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95">
-                  {isFetchingGallery ? <Loader2 className="animate-spin" size={18} /> : <Eye size={18} />} {showPreviewList ? 'Tutup Galeri' : 'Buka Galeri Foto'}
-               </button>
-               
-            </div>
+            <button onClick={handleToggleGallery} className="w-full md:w-auto px-10 py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95 shrink-0">
+               {isFetchingGallery ? <Loader2 className="animate-spin" size={18} /> : <Eye size={18} />} {showPreviewList ? 'Tutup Galeri' : 'Buka Galeri Foto'}
+            </button>
+          </div>
+
+          <div className="bg-slate-50 p-6 md:p-8 rounded-[2.5rem] border border-slate-100 space-y-4">
+             <div className="flex justify-between items-center px-2">
+                <span className={`text-[10px] font-black uppercase tracking-widest ${isStorageCritical ? 'text-rose-500 animate-pulse' : 'text-slate-400'}`}>Kapasitas Memori Cloud</span>
+                <span className="text-[11px] font-black text-slate-800 italic">{mediaStats.count} / {mediaStats.limit} FOTO</span>
+             </div>
+             <div className="w-full h-4 bg-slate-200 rounded-full overflow-hidden p-1 shadow-inner border border-slate-300">
+                <div className={`h-full rounded-full transition-all duration-1000 ${isStorageCritical ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.4)]' : 'bg-blue-600'}`} style={{ width: `${mediaUsagePercent}%` }}></div>
+             </div>
+             <div className="space-y-2 px-2 pt-1">
+                <p className="flex items-center gap-2 text-[9px] font-bold text-slate-400 uppercase tracking-widest italic">
+                  <Clock size={14} className="shrink-0" /> Foto bukti bayar yang sudah lebih dari 3 hari dihapus otomatis tiap malam (sekitar 02.00 WIB)
+                </p>
+                <p className="flex items-center gap-2 text-[9px] font-bold text-slate-400 uppercase tracking-widest italic">
+                  <Trash2 size={14} className="shrink-0" /> Salah upload? Buka galeri lalu hapus per foto
+                </p>
+             </div>
           </div>
       </div>
 
