@@ -43,6 +43,11 @@ function stripSensitiveColumns(rows) {
     for (const col of SENSITIVE_COLUMNS) {
       if (col in clean) delete clean[col];
     }
+    // Foto bukti bayar (base64) tidak ikut backup: ukurannya besar, dan fotonya memang
+    // sengaja dihapus otomatis dari aplikasi setelah 3 hari (catatan pembayaran tetap ada).
+    if (typeof clean.receiptdata === 'string' && clean.receiptdata.startsWith('data:')) {
+      clean.receiptdata = '[FOTO_TIDAK_DISERTAKAN_DALAM_BACKUP]';
+    }
     return clean;
   });
 }
