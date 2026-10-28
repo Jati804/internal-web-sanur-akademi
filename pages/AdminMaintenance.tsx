@@ -18,7 +18,6 @@ import {
   Unlock,
   ClipboardList,
   FileCode,
-  Eraser,
   Key,
   ShieldCheck
 } from 'lucide-react';
@@ -47,7 +46,6 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
   const [isMaintMode, setIsMaintMode] = useState(false);
 
   const [confirmDeleteMedia, setConfirmDeleteMedia] = useState<any | null>(null);
-  const [confirmPurge, setConfirmPurge] = useState(false);
   const [previewImg, setPreviewImg] = useState<string | null>(null);
   const [galleryItems, setGalleryItems] = useState<any[]>([]);
   const [isFetchingGallery, setIsFetchingGallery] = useState(false);
@@ -75,10 +73,10 @@ const AdminMaintenance: React.FC<AdminMaintenanceProps> = ({
 
 // ✅ Lock body scroll selagi modal/overlay manapun terbuka
 useEffect(() => {
-  const hasModal = confirmPurge || !!confirmDeleteMedia || !!previewImg || processingStatus !== 'IDLE';
+  const hasModal = !!confirmDeleteMedia || !!previewImg || processingStatus !== 'IDLE';
   document.body.style.overflow = hasModal ? 'hidden' : '';
   return () => { document.body.style.overflow = ''; };
-}, [confirmPurge, confirmDeleteMedia, previewImg, processingStatus]);
+}, [confirmDeleteMedia, previewImg, processingStatus]);
 
   const handleVerifyGate = (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,41 +96,6 @@ useEffect(() => {
       setProcessingStatus('IDLE');
       setSuccessText('');
     }, 1500); 
-  };
-
-  const handleAutoPurgeMedia = async () => {
-    setProcessingStatus('LOADING');
-    setLoadingText("MEMINDAI SELURUH MEDIA LAMA...");
-    try {
-      const threeDaysAgo = new Date();
-      threeDaysAgo.setDate(threeDaysAgo.getDate() - 3);
-      const limitDate = threeDaysAgo.toISOString().split('T')[0];
-
-      const { error: err1 } = await supabase
-        .from('attendance')
-        .update({ receiptdata: null })
-        .lte('date', limitDate)
-        .not('receiptdata', 'is', null);
-      
-      if (err1) throw err1;
-      
-      const { error: err2 } = await supabase
-        .from('student_payments')
-        .update({ receiptdata: null })
-        .lte('date', limitDate)
-        .not('receiptdata', 'is', null);
-
-      if (err2) throw err2;
-
-      fetchMediaCount();
-      if (showPreviewList) await fetchGalleryMedia();
-      if (refreshAllData) await refreshAllData();
-      setConfirmPurge(false);
-      triggerSuccessOverlay("SELURUH MEDIA LAMA BERSIH! 🧹✨");
-    } catch (e: any) {
-      alert(e.message);
-      setProcessingStatus('IDLE');
-    }
   };
 
   const toggleMaintenance = async () => {
@@ -303,7 +266,8 @@ useEffect(() => {
                <div className="w-full h-4 bg-slate-200 rounded-full overflow-hidden p-1 shadow-inner border border-slate-300">
                   <div className={`h-full rounded-full transition-all duration-1000 ${isStorageCritical ? 'bg-rose-500 shadow-[0_0_10px_rgba(244,63,94,0.4)]' : 'bg-blue-600'}`} style={{ width: `${mediaUsagePercent}%` }}></div>
                </div>
-               <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest italic text-center">Hapus foto lama untuk menjaga sistem tetap kencang! ⚡</p>
+               <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest italic text-center">Foto bukti bayar yang sudah lebih dari 3 hari dihapus otomatis tiap malam (sekitar 02.00 WIB) ⚡</p>
+               <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest italic text-center">Salah upload? Buka galeri lalu hapus per foto.</p>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center xl:justify-start">
@@ -311,9 +275,6 @@ useEffect(() => {
                   {isFetchingGallery ? <Loader2 className="animate-spin" size={18} /> : <Eye size={18} />} {showPreviewList ? 'Tutup Galeri' : 'Buka Galeri Foto'}
                </button>
                
-               <button onClick={() => setConfirmPurge(true)} className="px-10 py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-rose-700 transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95 ring-4 ring-rose-500/20">
-                  <Eraser size={18} /> PURGE MEDIA &gt; 3 HARI ✨
-               </button>
             </div>
           </div>
       </div>
@@ -339,28 +300,6 @@ useEffect(() => {
               ))}
             </div>
         </div>
-      )}
-
-      {confirmPurge && (
-  <ModalPortal>
-  <div data-modal-container tabIndex={-1} className="fixed inset-0 z-[100000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6">
-        <div className="bg-white w-full max-w-[340px] rounded-[3rem] p-10 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600">
-              <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner animate-pulse"><Eraser size={40} /></div>
-              <div className="space-y-2">
-                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Purge Media?</h4>
-                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest leading-relaxed px-4 italic">
-                    "Semua foto (Base64) di tabel <span className="font-black text-rose-600">PRESENSI/HONOR</span> & <span className="font-black text-rose-600">SPP</span> yang sudah lebih dari <span className="text-rose-600 font-black">3 HARI</span> akan dihapus permanen untuk membersihkan memori. ✨"
-                 </p>
-              </div>
-              <div className="flex gap-4">
-                 <button onClick={() => setConfirmPurge(false)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase">BATAL</button>
-                 <button onClick={handleAutoPurgeMedia} className="flex-[2] py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 flex items-center justify-center gap-2">
-                    <Check size={18}/> IYA, BERSIHKAN! ✨
-                 </button>
-              </div>
-           </div>
-    </div>
-  </ModalPortal>
       )}
 
       {confirmDeleteMedia && (
