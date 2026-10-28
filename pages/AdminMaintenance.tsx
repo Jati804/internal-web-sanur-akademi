@@ -256,7 +256,7 @@ useEffect(() => {
           <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
             <div className="flex items-center gap-4">
                 <div className="p-4 bg-blue-50 text-blue-600 rounded-3xl"><ImageIcon size={32} /></div>
-                <h3 className="text-2xl font-black text-slate-800 uppercase italic">Galeri & Optimasi Media</h3>
+                <h3 className="text-2xl font-black text-slate-800 uppercase italic">Galeri & Media</h3>
             </div>
 
             <button onClick={handleToggleGallery} className="w-full md:w-80 px-10 py-5 bg-slate-900 text-white rounded-2xl font-black text-[10px] uppercase tracking-widest hover:bg-black transition-all shadow-xl flex items-center justify-center gap-3 active:scale-95 shrink-0">
