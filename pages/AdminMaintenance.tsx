@@ -239,15 +239,15 @@ useEffect(() => {
         </div>
       </div>
 
-      <div className={`p-10 rounded-[4rem] border-2 transition-all duration-700 shadow-2xl relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-10 ${isMaintMode ? 'bg-orange-500 border-orange-400 text-white' : 'bg-white border-slate-100'}`}>
-         <div className="flex items-center gap-8 relative z-10">
-            <div className={`w-20 h-20 rounded-[2.2rem] flex items-center justify-center shadow-xl rotate-3 transition-colors ${isMaintMode ? 'bg-white text-orange-600' : 'bg-orange-50 text-orange-600'}`}><Lock size={40} /></div>
-            <div className="text-center md:text-left">
+      <div className={`mx-2 p-8 md:p-12 rounded-[4rem] border transition-all duration-700 shadow-2xl relative overflow-hidden flex flex-col md:flex-row md:items-center md:justify-between gap-6 ${isMaintMode ? 'bg-orange-500 border-orange-400 text-white' : 'bg-white border-slate-100'}`}>
+         <div className="flex items-center gap-4 relative z-10">
+            <div className={`p-4 rounded-3xl transition-colors ${isMaintMode ? 'bg-white text-orange-600' : 'bg-orange-50 text-orange-600'}`}><Lock size={32} /></div>
+            <div>
                <h3 className={`text-2xl font-black uppercase italic leading-none ${isMaintMode ? 'text-white' : 'text-slate-800'}`}>Mode Perbaikan</h3>
                <p className={`text-[10px] font-bold uppercase tracking-widest mt-2 ${isMaintMode ? 'text-orange-100' : 'text-slate-400'}`}>{isMaintMode ? "HANYA ADMIN YANG BISA LOGIN" : "LOGIN NORMAL (ONLINE)"}</p>
             </div>
          </div>
-         <button onClick={toggleMaintenance} className={`px-10 py-6 rounded-full font-black text-[11px] uppercase tracking-[0.2em] shadow-2xl transition-all active:scale-95 flex items-center gap-3 border-4 ${isMaintMode ? 'bg-white text-orange-600 border-orange-400' : 'bg-slate-900 text-white border-slate-800'}`}>
+         <button onClick={toggleMaintenance} className={`w-full md:w-auto px-10 py-5 rounded-2xl font-black text-[10px] uppercase tracking-widest shadow-xl transition-all active:scale-95 flex items-center justify-center gap-3 shrink-0 ${isMaintMode ? 'bg-white text-orange-600 hover:bg-orange-50' : 'bg-slate-900 text-white hover:bg-black'}`}>
            {isMaintMode ? <><Unlock size={18}/> BUKA AKSES LOGIN</> : <><Lock size={18}/> AKTIFKAN MAINTENANCE</>}
          </button>
       </div>
