@@ -8,6 +8,26 @@ import {
   ShieldAlert, BadgeCheck, AlertTriangle, Key, Check, Plus, Info, AlertCircle, Zap
 } from 'lucide-react';
 
+// Ambil SEMUA baris tabel attendance secara bertahap (per 1000), supaya proses ganti nama
+// tidak melewatkan baris ketika data melebihi batas "Max rows" Supabase.
+const fetchAllAttendanceRows = async (): Promise<{ data: any[] | null; error: any }> => {
+  const PAGE = 1000;
+  const all: any[] = [];
+  let from = 0;
+  while (true) {
+    const { data, error } = await supabase
+      .from('attendance')
+      .select('*')
+      .order('id', { ascending: true })
+      .range(from, from + PAGE - 1);
+    if (error) return { data: null, error };
+    all.push(...(data || []));
+    if (!data || data.length < PAGE) break;
+    from += PAGE;
+  }
+  return { data: all, error: null };
+};
+
 interface AdminStaffProps {
   user: User; 
   teachers: User[];
@@ -139,7 +159,7 @@ const AdminStaff: React.FC<AdminStaffProps> = ({
     } else {
       const { error: payErr } = await supabase.from('student_payments').update({ studentname: newNameNorm }).ilike('studentname', oldNameNorm);
       if (payErr) throw payErr;
-      const { data: affectedLogs } = await supabase.from('attendance').select('*');
+      const { data: affectedLogs } = await fetchAllAttendanceRows();
       if (affectedLogs && affectedLogs.length > 0) {
         for (const log of affectedLogs) {
           const attended = (log.studentsattended as string[]) || [];
