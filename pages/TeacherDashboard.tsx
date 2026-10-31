@@ -236,7 +236,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
     const low = raw.toLowerCase();
     if (low.includes('failed to fetch') || low.includes('network')) return 'Koneksi internet terputus.';
     if (low.includes('jwt') || low.includes('expired')) return 'Sesi login sudah habis, silakan login ulang.';
-    if (low.includes('row-level security') || low.includes('permission denied')) return 'Akun Anda tidak punya izin untuk mengubah data ini.';
+    if (low.includes('row-level security') || low.includes('permission denied')) return 'Akun Kakak tidak punya izin untuk mengubah data ini.';
     if (low.includes('duplicate key')) return 'Nomor sesi bentrok dengan sesi lain.';
     if (low.includes('sesi_lunas')) return 'Ada sesi LUNAS yang nomornya ikut bergeser.';
     if (low.includes('could not find the function')) return 'Fitur urutan sesi belum aktif di database.';
@@ -462,7 +462,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
     const delegating = isDelegating && !isHomeTutoring; // Home Tutoring: tidak boleh digantikan
     if (!identity) return alert("Pilih jadwal kelasnya dulu ya! ✨");
     if (identity.category === 'PRIVATE' && identity.students.length === 0 && !editData) {
-      return alert("Jadwal Private ini belum punya siswa. Hubungi Admin untuk mengisinya ya! 🙏");
+      return alert("Jadwal Private ini belum punya siswa. Hubungi Admin untuk mengisinya ya Kak! 🙏");
     }
     if (delegating && !form.targetTeacherId) return alert("Pilih Nama Teman yang menggantikan dulu ya! ✨");
 
@@ -688,7 +688,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                ) : slotsByDay.length === 0 ? (
                  <div className="px-8 py-10 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] text-center space-y-2">
                     <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">Belum ada jadwal untukmu</p>
-                    <p className="text-[11px] font-bold text-slate-300 uppercase">Hubungi Admin untuk menambahkan jadwal mengajarmu</p>
+                    <p className="text-[11px] font-bold text-slate-300">Hubungi Admin untuk menambahkan jadwal mengajarmu ya Kak.</p>
                  </div>
                ) : (
                  <div className="space-y-6">
@@ -756,19 +756,13 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                     </div>
                   ))}
                </div>
-               {!identity ? null : activePackageId ? (
-                  <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest ml-4 italic animate-pulse">✨ Melanjutkan Siklus Aktif ({identity.category}) — Sesi {form.sessionNumber}/6 Terdeteksi</p>
-               ) : (
-                  <p className="text-[9px] font-black text-slate-400 uppercase ml-4 tracking-widest italic">🆕 Memulai Siklus 6 Sesi Baru (Sesi 1)</p>
-               )}
-
                <div className="mt-4 bg-blue-50 p-6 rounded-[2rem] border border-blue-100 flex items-start gap-4 shadow-sm animate-in fade-in duration-700">
                   <div className="space-y-3">
                      <p className="text-[9px] font-bold text-blue-800 uppercase italic leading-relaxed tracking-wide">
                         "Jika nomor sesi tidak sesuai, mohon cek kembali <span className="font-black underline">Jadwal Kelas</span> yang dipilih dan <span className="font-black underline">Tanggal Pelaksanaan</span> ✨"
                      </p>
                      <p className="text-[9px] font-bold text-blue-800 uppercase italic leading-relaxed tracking-wide">
-                        Jika halangan mengajar dan kelas diganti di hari lain, tetap pilih kelas yang diajar sesuai jadwal, dan isi <span className="font-black underline">Tanggal Pelaksanaan</span> sesuai hari Anda mengajar.
+                        Jika ada halangan mengajar dan kelas diganti di hari lain, tetap pilih kelas yang diajar sesuai jadwal, dan isi <span className="font-black underline">Tanggal Pelaksanaan</span> sesuai hari Anda mengajar.
                      </p>
                   </div>
                </div>
