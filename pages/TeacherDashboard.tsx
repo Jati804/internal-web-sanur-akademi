@@ -688,7 +688,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                ) : slotsByDay.length === 0 ? (
                  <div className="px-8 py-10 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] text-center space-y-2">
                     <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">Belum ada jadwal untukmu</p>
-                    <p className="text-[11px] font-bold text-slate-300">Hubungi Admin untuk menambahkan jadwal mengajarmu ya Kak.</p>
+                    <p className="text-[11px] font-bold text-slate-300 uppercase">Hubungi Admin untuk menambahkan jadwal mengajarmu</p>
                  </div>
                ) : (
                  <div className="space-y-6">
