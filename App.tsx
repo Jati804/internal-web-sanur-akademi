@@ -363,31 +363,20 @@ const pendingReportsCount = Array.isArray(reports) ?
   }[user.role as string] || 'bg-slate-600';
 
   // Warna ikon kalender di pil jadwal mengikuti peran
-  const roleScheduleBtn = {
-    TEACHER: 'text-orange-600',
-    STUDENT: 'text-emerald-600'
-  }[user.role as string] || 'text-slate-600';
+  const roleScheduleBtn = 'text-emerald-600';
 
   // Kotak jadwal: latar putih + border abu-abu; saat di-hover border & latar berubah tipis ke warna peran
-  const roleSchedulePill = {
-    TEACHER: 'hover:border-orange-300 hover:bg-orange-50',
-    STUDENT: 'hover:border-emerald-300 hover:bg-emerald-50'
-  }[user.role as string] || 'hover:bg-slate-50';
+  const roleSchedulePill = 'hover:border-emerald-300 hover:bg-emerald-50';
 
   // Tulisan "Jadwal" awalnya gelap; saat di-hover berubah ke warna peran
-  const roleScheduleHover = {
-    TEACHER: 'group-hover:text-orange-600',
-    STUDENT: 'group-hover:text-emerald-600'
-  }[user.role as string] || 'group-hover:text-slate-900';
+  const roleScheduleHover = 'group-hover:text-emerald-600';
 
   // Tombol bantuan (outline): biru seragam untuk semua peran
   const roleHelpIcon = 'text-blue-600';
   const roleHelpHover = 'hover:border-blue-300 hover:bg-blue-50';
 
-  // Di halaman Lapor Presensi & Honor Saya (grup "Utama" guru), tombol jadwal disembunyikan:
-  // Lapor Presensi sudah menampilkan daftar jadwal yang sama, jadi tombolnya dobel.
-  const hideScheduleBtn = user.role === 'TEACHER' &&
-    (location.pathname === '/teacher' || location.pathname === '/teacher/honor');
+  // Tombol & modal jadwal hanya untuk SISWA. Guru sudah melihat jadwalnya langsung
+  // di halaman Lapor Presensi, jadi tidak perlu tombol jadwal di header.
 
   return (
     <div className="min-h-screen bg-[#FDFDFF] flex overflow-hidden font-sans relative">
@@ -398,7 +387,7 @@ const pendingReportsCount = Array.isArray(reports) ?
   />
 )}
 
-      {showSchedule && user.role !== 'ADMIN' && (
+      {showSchedule && user.role === 'STUDENT' && (
         <ScheduleModal
           user={user}
           schedule={schedule}
@@ -483,17 +472,17 @@ const pendingReportsCount = Array.isArray(reports) ?
 </div>
           </div>
           <div className="flex items-center gap-3 shrink-0 ml-4">
-{user.role !== 'ADMIN' && !hideScheduleBtn && (
+{user.role === 'STUDENT' && (
 <button
   onClick={() => setShowSchedule(true)}
-  title="Jadwal saya"
+  title="Jadwal belajar saya"
   aria-label="Jadwal saya"
   className={`group flex items-center gap-2 lg:gap-3 px-4 lg:px-6 py-[15px] bg-white border-[1.5px] border-slate-200 rounded-2xl active:scale-95 transition-all ${roleSchedulePill}`}
 >
   <CalendarDays size={22} className={`${roleScheduleBtn} translate-y-px`} />
   {/* Tulisan hanya tampil di desktop (lg ke atas); di tablet cukup ikon + panah dropdown */}
   <span className={`hidden lg:inline translate-y-0.5 text-[10px] font-extrabold uppercase tracking-widest text-slate-500 transition-colors ${roleScheduleHover}`}>
-    {user.role === 'TEACHER' ? 'Jadwal Mengajar' : 'Jadwal Belajar'}
+    Jadwal Belajar
   </span>
   <ChevronDown size={20} className={`${roleScheduleBtn} translate-y-px`} />
 </button>
