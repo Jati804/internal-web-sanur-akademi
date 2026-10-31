@@ -411,15 +411,28 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
           .filter(l => l.teacherId === user.id)
           .reduce((sum, curr) => sum + (curr.earnings || 0), 0);
         
-        // Nama siswa di kartu = isi sesi TERAKHIR milik guru ini di paket tersebut
-        // (kalau semua sesinya didelegasikan, pakai sesi terakhir paket). Sesi lama yang
-        // tersimpan 'REGULER' tetap tampil GABUNGAN.
+        // Nama siswa di kartu = gabungan semua siswa yang pernah hadir di sesi MILIK guru ini dalam paket
+        // ini (kalau semua sesinya didelegasikan, pakai seluruh sesi paket). Dihitung per paket, jadi paket
+        // baru dengan siswa yang berbeda tidak bercampur dengan paket lama.
         const myCycleLogs = fullCycle.filter(l => l.teacherId === user.id);
-        const lastRef: any = [...(myCycleLogs.length ? myCycleLogs : fullCycle)]
-          .sort((a, b) => (a.sessionNumber || 0) - (b.sessionNumber || 0))
-          .pop() || log;
-        const studentNames: string[] = (Array.isArray(lastRef.studentsAttended) ? lastRef.studentsAttended : [])
+        const namesOf = (l: any): string[] => (Array.isArray(l?.studentsAttended) ? l.studentsAttended : [])
           .filter((n: string) => n && n !== 'REGULER');
+        const unionNames = (rows: any[]): string[] => {
+          const seen = new Set<string>();
+          [...rows]
+            .sort((a, b) => (a.sessionNumber || 0) - (b.sessionNumber || 0))
+            .forEach(l => namesOf(l).forEach(n => seen.add(n)));
+          return Array.from(seen);
+        };
+        let studentNames: string[] = unionNames(myCycleLogs.length ? myCycleLogs : fullCycle);
+        // Kalau sesi milik guru ini tersimpan tanpa nama (sesi lama / cuma 'REGULER'), pinjam nama dari
+        // sesi paling baru di paket yang sama yang sudah punya nama.
+        if (studentNames.length === 0) {
+          const withNames = [...fullCycle]
+            .sort((a, b) => (b.sessionNumber || 0) - (a.sessionNumber || 0))
+            .find(l => namesOf(l).length > 0);
+          if (withNames) studentNames = namesOf(withNames);
+        }
         const studentName = studentNames.length === 0
           ? (log.studentsAttended?.[0] || 'REGULER')
           : studentNames.join(', ');
