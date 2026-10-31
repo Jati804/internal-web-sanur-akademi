@@ -2,36 +2,53 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { User, Attendance } from '../types';
 import ModalPortal from '../ModalPortal.tsx';
 import { supabase } from '../services/supabase.ts';
-import { 
+import { DAYS, sortSchedule, fmtRange, stripPelatihan } from './AdminAcademic.tsx';
+import type { ScheduleItem } from './AdminAcademic.tsx';
+import {
   ClipboardCheck, Loader2, Clock, Send, Zap, HeartPulse,
-  UserPlus, BookOpen, Home, Layers, Wallet, Hash,
-  Timer, RotateCcw, Save, Sparkles, Users, Info, AlertTriangle, X, Check
+  UserPlus, Wallet, Hash, Timer, RotateCcw, Save, Sparkles,
+  Info, AlertTriangle, X, Check, CalendarDays
 } from 'lucide-react';
 import * as ReactRouterDOM from 'react-router-dom';
 const { Link, useLocation, useNavigate } = ReactRouterDOM as any;
 
-interface TeacherDashboardProps { 
-  user: User; 
+// ============================================================================
+// 📅 PRESENSI BERBASIS JADWAL
+// Guru TIDAK lagi memilih matpel / level / ruangan / siswa satu per satu.
+// Guru cukup memilih salah satu slot dari jadwal yang dia pegang (class_schedule),
+// lalu mengisi TANGGAL ASLI mengajar. Hari di slot hanya label pengenal kelas,
+// tidak dicek terhadap tanggal (kelas pengganti di hari lain tetap sah).
+//
+// Identitas paket honor = ID slot (kolom attendance.scheduleid), bukan lagi
+// kombinasi matpel+level+ruang. Nama siswa disimpan di tiap sesi (studentsattended)
+// sesuai isi slot SAAT sesi diinput, jadi riwayat tidak berubah kalau admin mengganti siswa.
+// ============================================================================
+
+interface TeacherDashboardProps {
+  user: User;
   logs: Attendance[];
   studentAccounts: User[];
-  subjects: string[];
-  levels: string[];
-  classes: string[];
+  schedule: ScheduleItem[];
   salaryConfig: { regulerRate: number, privateRate: number };
   teachers: User[];
   refreshAllData: () => Promise<void>;
 }
 
-const TeacherDashboard: React.FC<TeacherDashboardProps> = ({ 
-  user, logs, studentAccounts, subjects, classes, levels, salaryConfig, teachers, refreshAllData
+// Satu aturan "ruang private" untuk semua tempat (sama dengan ScheduleModal)
+const isPrivateRoom = (room: string) => /PRIVATE|PRIVAT|HOME TUTORING/i.test(room || '');
+
+const todayJakarta = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
+
+const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
+  user, logs, studentAccounts, schedule, salaryConfig, teachers, refreshAllData
 }) => {
   const [loading, setLoading] = useState(false);
   const [isDetecting, setIsDetecting] = useState(false);
   const [isDelegating, setIsDelegating] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
-  
-  const editData = location.state?.editLog as Attendance | undefined;
+
+  const editData = location.state?.editLog as any | undefined;
   const formCardRef = useRef<HTMLDivElement>(null);
 
   // AUTO-SCROLL KE KOTAK FORM (BUKAN KE ATAS HALAMAN) KHUSUS MODE EDIT
@@ -45,56 +62,95 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   }, [editData]);
 
   const [form, setForm] = useState({
-    subject: '',
-    level: '',
-    room: '',
-    category: 'REGULER' as 'REGULER' | 'PRIVATE',
-    studentName: '',
-    targetTeacherId: '', 
-    sessionNumber: 1, 
-    duration: 2, 
-    date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date())
+    scheduleId: '',
+    targetTeacherId: '',
+    sessionNumber: 1,
+    duration: 2,
+    date: todayJakarta()
   });
-
-  // 🏠 Home Tutoring: guru wajib datang sendiri selama 6 pertemuan -> tidak ada opsi "digantikan teman"
-  const isHomeTutoring = (form.room || '').toUpperCase().includes('HOME TUTORING');
-
-  // 🏷️ Tipe sesi otomatis ngikutin ruang kelas:
-  // REGULER n -> REGULER | PRIVATE n & HOME TUTORING -> PRIVATE (Home Tutoring pasti private).
-  // Kalau nama ruang belum dikenali (misal ada nama ruang baru), pilihan manual tetap bisa dipakai.
-  const autoCategory: 'REGULER' | 'PRIVATE' | null = (() => {
-    const r = (form.room || '').toUpperCase().trim();
-    if (r.includes('HOME TUTORING') || r.startsWith('PRIVATE')) return 'PRIVATE';
-    if (r.startsWith('REGULER')) return 'REGULER';
-    return null;
-  })();
-  const shownCategory = form.room ? (autoCategory ?? form.category) : null;
 
   const [activePackageId, setActivePackageId] = useState<string | null>(null);
   const [activeOriginalTeacherId, setActiveOriginalTeacherId] = useState<string | null>(null);
-  
-  // STATE BARU: Modal blocking untuk slot yang sedang dipakai
+
   const [blockModal, setBlockModal] = useState<{
     ownerName: string;
     className: string;
     currentSession: number;
   } | null>(null);
 
-  // State untuk autocomplete
-const [showStudentSuggestions, setShowStudentSuggestions] = useState(false);
-const [showTeacherSuggestions, setShowTeacherSuggestions] = useState(false);
-const [studentInputValue, setStudentInputValue] = useState('');
-const [teacherInputValue, setTeacherInputValue] = useState('');
+  const [showTeacherSuggestions, setShowTeacherSuggestions] = useState(false);
+  const [teacherInputValue, setTeacherInputValue] = useState('');
 
+  // ===== JADWAL MILIK GURU INI =====
+  const scheduleList: ScheduleItem[] = Array.isArray(schedule) ? schedule : [];
+  const myId = String(user.id);
+  const mySlots = useMemo(
+    () => sortSchedule(scheduleList.filter(it => String(it.teacherId) === myId)),
+    [scheduleList, myId]
+  );
+  const slotsByDay = useMemo(
+    () => DAYS.map(day => ({ day, list: mySlots.filter(i => i.day === day) })).filter(g => g.list.length > 0),
+    [mySlots]
+  );
+  const studentById = useMemo(
+    () => new Map((studentAccounts || []).map((s: any) => [String(s.id), s])),
+    [studentAccounts]
+  );
+  const todayName = DAYS[(new Date().getDay() + 6) % 7];
+
+  // Sesi lama (dibuat sebelum fitur jadwal) atau slotnya sudah tidak ada -> identitas kelas dikunci dari data sesinya
+  const legacyEdit = !!editData && !(editData.scheduleId && scheduleList.some(it => String(it.id) === String(editData.scheduleId)));
+  const selectedSlot = scheduleList.find(it => String(it.id) === form.scheduleId) || null;
+
+  // 🏷️ IDENTITAS KELAS: semua turunan dari slot yang dipilih
+  const identity = useMemo(() => {
+    if (legacyEdit && editData) {
+      const className = String(editData.className || '');
+      return {
+        scheduleId: null as string | null,
+        className,
+        level: String(editData.level || ''),
+        category: (editData.sessionCategory || 'REGULER') as 'REGULER' | 'PRIVATE',
+        students: ((editData.studentsAttended || []) as string[]).filter(Boolean),
+        room: className.split(' - ').pop() || ''
+      };
+    }
+    if (!selectedSlot) return null;
+    const room = selectedSlot.room || '';
+    const students = (selectedSlot.participants || [])
+      .map(p => String(studentById.get(String(p.id))?.name || p.name || '').toUpperCase().trim())
+      .filter(Boolean);
+    return {
+      scheduleId: String(selectedSlot.id),
+      className: `${selectedSlot.subject} - ${room}`.toUpperCase().trim(),
+      level: '',
+      category: (isPrivateRoom(room) ? 'PRIVATE' : 'REGULER') as 'REGULER' | 'PRIVATE',
+      students,
+      room
+    };
+  }, [legacyEdit, editData, selectedSlot, studentById]);
+
+  const isHomeTutoring = (identity?.className || '').toUpperCase().includes('HOME TUTORING');
+
+  // Apakah slot diganti saat edit? (= pindah sesi ke paket slot lain)
+  const isSlotChanged = !!editData && !legacyEdit && form.scheduleId !== String(editData.scheduleId);
+
+  // Nama siswa yang disimpan di sesi ini:
+  // - sesi baru / dipindah slot -> isi slot saat ini
+  // - edit di slot yang sama -> pertahankan yang sudah tersimpan (riwayat tidak berubah)
+  const studentsToSave = (): string[] => {
+    if (editData && !isSlotChanged) {
+      const old = (editData.studentsAttended || []) as string[];
+      return old.length ? old : ['REGULER'];
+    }
+    return identity && identity.students.length ? identity.students : ['REGULER'];
+  };
+
+  // ===== ISI FORM SAAT MODE EDIT =====
   useEffect(() => {
     if (editData) {
-      const match = editData.className?.match(/(.*) \((.*)\) - (.*)/);
       setForm({
-        subject: match ? match[1] : (editData.className || ''),
-        level: editData.level || (match ? match[2] : 'BASIC'),
-        room: match ? match[3] : '',
-        category: editData.sessionCategory || 'REGULER',
-        studentName: editData.studentsAttended?.[0] === 'REGULER' ? '' : (editData.studentsAttended?.[0] || ''),
+        scheduleId: editData.scheduleId ? String(editData.scheduleId) : '',
         targetTeacherId: editData.teacherId !== user.id ? editData.teacherId : '',
         sessionNumber: editData.sessionNumber || 1,
         duration: editData.duration || 2,
@@ -103,35 +159,21 @@ const [teacherInputValue, setTeacherInputValue] = useState('');
       setIsDelegating(editData.teacherId !== user.id);
       setActivePackageId(editData.packageId || null);
       setActiveOriginalTeacherId(editData.originalTeacherId || null);
-      // Isi input autocomplete juga
-setStudentInputValue(editData.studentsAttended?.[0] === 'REGULER' ? '' : (editData.studentsAttended?.[0] || ''));
-setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id === editData.teacherId)?.name || '') : '');
+      setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id === editData.teacherId)?.name || '') : '');
     }
   }, [editData, user.id]);
 
   // Nutup mode edit: balikin form ke kosong & bersihin location.state
-  // (biar editData balik jadi undefined, otomatis balik ke mode "Lapor Presensi" biasa)
   const handleCloseEdit = () => {
-    setForm({
-      subject: '',
-      level: '',
-      room: '',
-      category: 'REGULER',
-      studentName: '',
-      targetTeacherId: '',
-      sessionNumber: 1,
-      duration: 2,
-      date: new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date())
-    });
+    setForm({ scheduleId: '', targetTeacherId: '', sessionNumber: 1, duration: 2, date: todayJakarta() });
     setIsDelegating(false);
     setActivePackageId(null);
     setActiveOriginalTeacherId(null);
-    setStudentInputValue('');
     setTeacherInputValue('');
     navigate(location.pathname, { replace: true, state: {} });
   };
 
-  // Kalau ruang diganti ke Home Tutoring, status "berhalangan" & guru penggantinya ikut direset
+  // Home Tutoring: guru wajib datang sendiri -> tidak ada opsi "digantikan teman"
   useEffect(() => {
     if (isHomeTutoring && isDelegating) {
       setIsDelegating(false);
@@ -141,20 +183,11 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
     }
   }, [isHomeTutoring, isDelegating]);
 
-  // Ruang kelas dipilih/diganti -> tipe sesi ikut berubah otomatis
-  useEffect(() => {
-    if (!autoCategory || autoCategory === form.category) return;
-    setForm(prev => ({ ...prev, category: autoCategory, studentName: autoCategory === 'REGULER' ? '' : prev.studentName }));
-    if (autoCategory === 'REGULER') {
-      setStudentInputValue('');
-      setShowStudentSuggestions(false);
-    }
-  }, [autoCategory, form.category]);
-
   const estimatedHonor = useMemo(() => {
-    const hourlyRate = form.category === 'PRIVATE' ? (salaryConfig?.privateRate || 25000) : (salaryConfig?.regulerRate || 15000);
+    const isPrivate = identity?.category === 'PRIVATE';
+    const hourlyRate = isPrivate ? (salaryConfig?.privateRate || 25000) : (salaryConfig?.regulerRate || 15000);
     return Math.round(hourlyRate * form.duration);
-  }, [form.category, form.duration, salaryConfig]);
+  }, [identity?.category, form.duration, salaryConfig]);
 
   // ===== Helper urutan sesi berdasarkan TANGGAL =====
   type PkgRow = { id: string; sessionnumber: number; date: string; paymentstatus?: string };
@@ -171,9 +204,6 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
       paymentstatus: r.paymentstatus
     }));
 
-  // Cari posisi sesi (di antara sesi lain di paket yang sama) sesuai tanggal.
-  // "others" = semua sesi di paket TANPA sesi yang sedang disimpan.
-  // Hasil: position (nomor sesi untuk sesi ini) + changes (sesi lain yang nomornya ikut berubah).
   const placeInPackage = (others: PkgRow[], date: string, id: string) => {
     const sorted = [...others].sort((a, b) => a.sessionnumber - b.sessionnumber);
     const idx = sorted.findIndex(r => r.date > date || (r.date === date && r.id > id));
@@ -190,14 +220,12 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
     return { position, changes };
   };
 
-  // Rapatkan nomor (1,2,3,...) setelah ada sesi yang keluar dari paket
   const compressPackage = (rows: PkgRow[]): PkgChange[] =>
     [...rows]
       .sort((a, b) => a.sessionnumber - b.sessionnumber)
       .map((r, i) => ({ id: r.id, from: r.sessionnumber, to: i + 1, date: r.date, paymentstatus: r.paymentstatus }))
       .filter(c => c.to !== c.from);
 
-  // Urutan eksekusi di database: yang naik dari nomor terbesar, yang turun dari nomor terkecil
   const toOps = (changes: PkgChange[]) => ({
     p_up: changes.filter(c => c.to > c.from).sort((a, b) => b.from - a.from).map(c => ({ id: c.id, sessionnumber: c.to })),
     p_down: changes.filter(c => c.to < c.from).sort((a, b) => a.from - b.from).map(c => ({ id: c.id, sessionnumber: c.to }))
@@ -215,28 +243,15 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
     return raw || 'Terjadi kendala yang tidak diketahui.';
   };
 
-  // 🔎 Cari paket aktif (siklus yang belum penuh) untuk kombinasi kelas yang sedang dipilih di form.
+  // 🔎 Cari paket aktif untuk SLOT yang dipilih (identitas paket = ID slot).
   // excludeId dipakai saat edit/pindah: sesi yang lagi dipindah jangan ikut dihitung.
-  // Nomor sesi berikutnya = nomor TERTINGGI di paket itu + 1 (bukan sekadar log terbaru),
-  // supaya tetap benar walau ada sesi yang disisipkan berdasarkan tanggal.
   const findActivePackage = (excludeId?: string) => {
-    const fullClassName = `${form.subject} (${form.level}) - ${form.room}`.toUpperCase().trim();
-    const relevantLogs = logs.filter(l => {
-      const dbClass = (l.className || '').toUpperCase().trim();
-      const dbLevel = (l.level || '').toUpperCase().trim();
-      const dbCategory = (l.sessionCategory || 'REGULER');
-
-      const isSameClass = dbClass === fullClassName;
-      const isSameLevel = dbLevel === form.level.toUpperCase();
-      const isSameCategory = dbCategory === form.category;
-      const isSameGrouping = form.category === 'PRIVATE'
-        ? (l.studentsAttended?.[0] || '').toUpperCase().trim() === form.studentName.toUpperCase().trim()
-        : true;
-
-      return isSameClass && isSameLevel && isSameCategory && isSameGrouping &&
-             (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG') &&
-             l.id !== excludeId;
-    });
+    if (!identity?.scheduleId) return null;
+    const relevantLogs = logs.filter(l =>
+      String((l as any).scheduleId || '') === identity.scheduleId &&
+      (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG') &&
+      l.id !== excludeId
+    );
 
     // Aktivitas input terbaru (ID = timestamp) menentukan paket mana yang sedang berjalan
     const latestAction = [...relevantLogs].sort((a, b) => b.id.localeCompare(a.id))[0];
@@ -248,21 +263,22 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
     return {
       packageId: latestAction.packageId || null,
       originalTeacherId: latestAction.originalTeacherId || null,
+      // Nama kelas & level mengikuti paket yang dilanjutkan, supaya satu paket tidak
+      // berisi dua format nama (paket lama masih ber-"(LEVEL)", sesi baru tidak).
+      className: latestAction.className || null,
+      level: latestAction.level || '',
       maxNum
     };
   };
 
   // LOGIKA DETEKSI SESI OTOMATIS
   useEffect(() => {
-    // Pencarian yang lagi jalan dibatalin oleh cleanup di bawah (clearTimeout), jadi flag
-    // "lagi mencari" harus dimatiin di setiap jalur keluar. Kalau nggak, overlay loading nyangkut.
-    if (editData || !form.subject || !form.level || !form.room || !Array.isArray(logs)) {
+    if (editData) {
       setIsDetecting(false);
       return;
     }
-
-    if (form.category === 'PRIVATE' && !form.studentName) {
-      setForm(prev => ({ ...prev, sessionNumber: 1 }));
+    if (!identity?.scheduleId || !Array.isArray(logs)) {
+      setForm(prev => (prev.sessionNumber === 1 ? prev : { ...prev, sessionNumber: 1 }));
       setActivePackageId(null);
       setActiveOriginalTeacherId(null);
       setIsDetecting(false);
@@ -275,7 +291,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
       const active = findActivePackage();
 
       if (active && active.maxNum < 6) {
-        // Paket belum penuh -> lanjutkan, nomor sesi mengikuti TANGGAL (bukan sekadar paling akhir)
+        // Paket belum penuh -> lanjutkan, nomor sesi mengikuti TANGGAL
         const pkgRows = toPkgRows(
           logs.filter(l => l.packageId === active.packageId && (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG'))
         );
@@ -293,30 +309,16 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
     }, 400);
 
     return () => clearTimeout(timer);
-  }, [logs, form.subject, form.level, form.room, form.category, form.studentName, form.date, editData]);
+  }, [logs, identity?.scheduleId, form.date, editData]);
 
-  // ✏️ Apakah identitas kelas berubah saat edit? (matpel / level / ruang / tipe / nama siswa)
-  const isIdentityChanged = () => {
-    if (!editData) return false;
-    const newClass = `${form.subject} (${form.level}) - ${form.room}`.toUpperCase().trim();
-    const oldClass = (editData.className || '').toUpperCase().trim();
-    const oldCategory = editData.sessionCategory || 'REGULER';
-    const oldStudent = (editData.studentsAttended?.[0] || 'REGULER').toUpperCase().trim();
-    const newStudent = form.category === 'PRIVATE' ? form.studentName.toUpperCase().trim() : 'REGULER';
-    return newClass !== oldClass || form.category !== oldCategory || newStudent !== oldStudent;
-  };
-
-  // 👀 PREVIEW nomor sesi saat EDIT: kotak sesi langsung menunjukkan posisi barunya
-  // (diurutkan sesuai tanggal), sama seperti hasil saat dikirim.
+  // 👀 PREVIEW nomor sesi saat EDIT (sesuai urutan tanggal, sama seperti hasil saat dikirim)
   useEffect(() => {
-    if (!editData) return;
-    if (!form.subject || !form.level || !form.room) return;
-    if (form.category === 'PRIVATE' && !form.studentName) return;
+    if (!editData || !identity) return;
 
     let targetPkgId: string | null = editData.packageId || null;
     let isNewPackage = false;
 
-    if (isIdentityChanged()) {
+    if (isSlotChanged) {
       const dest = findActivePackage(editData.id);
       if (dest && dest.packageId && dest.packageId !== editData.packageId) {
         targetPkgId = dest.packageId;
@@ -335,21 +337,21 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
     }
 
     setForm(prev => (prev.sessionNumber === preview ? prev : { ...prev, sessionNumber: preview }));
-  }, [logs, form.subject, form.level, form.room, form.category, form.studentName, form.date, editData]);
+  }, [logs, form.scheduleId, form.date, editData, identity?.scheduleId]);
 
-  // 🔀 Pindahkan sesi ke paket lain: disisipkan sesuai tanggal, nomor sesi yang terdampak digeser.
+  // 🔀 Ganti slot saat edit = pindahkan sesi ke paket slot tujuan (disisipkan sesuai tanggal).
   const handleMoveSession = async (delegating: boolean) => {
-    if (!editData) return;
+    if (!editData || !identity) return;
     setLoading(true);
     try {
-      const fullClassName = `${form.subject} (${form.level}) - ${form.room}`.toUpperCase();
+      const fullClassName = identity.className;
       const targetTeacher = teachers.find(t => t.id === form.targetTeacherId);
       const srcPkgId = editData.packageId;
 
       const found = findActivePackage(editData.id);
       const destPkg = found && found.packageId && found.packageId !== srcPkgId ? found : null;
 
-      // Ambil data TERBARU dari DB (bukan cuma state lokal) buat jaga-jaga ada perubahan yang belum ke-refresh
+      // Ambil data TERBARU dari DB (bukan cuma state lokal)
       const pkgIds = [srcPkgId, destPkg?.packageId].filter(Boolean) as string[];
       const { data: freshRows, error: freshErr } = await supabase
         .from('attendance')
@@ -362,13 +364,12 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
       const srcRaw = rows.filter(r => r.packageid === srcPkgId && r.id !== editData.id);
       const destRaw = destPkg ? rows.filter(r => r.packageid === destPkg.packageId) : [];
 
-      // Paket tujuan sudah penuh
       if (destPkg && destRaw.length >= 6) {
         alert(`Paket tujuan (${fullClassName}) sudah terisi 6 sesi, jadi sesi ini tidak bisa disisipkan. Silakan hubungi Admin ya Kak! 🙏`);
         return;
       }
 
-      // Validasi ownership paket tujuan (sama seperti saat lapor presensi biasa)
+      // Validasi ownership paket tujuan
       if (destPkg) {
         const ownerId = destPkg.originalTeacherId || destRaw[0]?.originalteacherid;
         if (ownerId && ownerId !== user.id) {
@@ -377,7 +378,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
             const owner = teachers.find(t => t.id === ownerId);
             setBlockModal({
               ownerName: owner?.name || 'Guru Lain',
-              className: `${form.subject} (${form.level}) - ${form.room}`,
+              className: fullClassName,
               currentSession: destRaw.length
             });
             return;
@@ -385,13 +386,11 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
         }
       }
 
-      // Posisi di paket tujuan (sesuai tanggal) + rapatkan paket asal
       const placed = placeInPackage(toPkgRows(destRaw), form.date, editData.id);
       const newNumber = placed.position;
       const destChanges = placed.changes;
       const srcChanges = compressPackage(toPkgRows(srcRaw));
 
-      // Sesi yang nomornya ikut bergeser harus masih UNPAID
       if (destChanges.some(c => c.paymentstatus !== 'UNPAID')) {
         alert(`Sesi tidak bisa dipindah ke kotak ${fullClassName}.\n\nSesi tanggal ${fmtDate(form.date)} harus disisipkan sebelum sesi lain di kotak itu yang sudah LUNAS (sudah dibayar), dan sesi LUNAS tidak boleh berubah nomornya.\n\nSilakan hubungi Admin ya Kak! 🙏`);
         return;
@@ -401,24 +400,21 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
         return;
       }
 
-      // Konfirmasi sebelum pindah
-      const destLabel = form.category === 'PRIVATE'
-        ? `${fullClassName} (${form.studentName.toUpperCase()})`
-        : fullClassName;
       const notes: string[] = [];
       if (!destPkg) notes.push('Kotak baru akan dibuat karena belum ada kotak yang cocok.');
       if (destChanges.length > 0) notes.push(`Sesi di kotak itu yang tanggalnya lebih akhir (mulai tanggal ${fmtDate(destChanges[0].date)}) akan mundur satu nomor.`);
       if (srcChanges.length > 0) notes.push('Sesi di kotak lama yang tanggalnya setelah sesi ini akan maju satu nomor.');
       const ok = window.confirm(
-        `Sesi ini akan dipindah ke kotak ${destLabel} sebagai sesi ke-${newNumber}.` +
+        `Sesi ini akan dipindah ke kotak ${fullClassName} sebagai sesi ke-${newNumber}.` +
         (notes.length ? `\n\n${notes.join('\n')}` : '') +
         `\n\nLanjutkan?`
       );
       if (!ok) return;
 
-      const groupSuffix = form.category === 'PRIVATE' ? `-${form.studentName.replace(/\s+/g, '-')}` : '-GROUP';
+      const classNameToSave = destPkg?.className || fullClassName;
+      const levelToSave = destPkg ? destPkg.level : identity.level;
       const finalPackageId = destPkg?.packageId
-        || `PKG-${form.category}-${fullClassName.replace(/\s+/g, '-')}${groupSuffix}-${Date.now()}`;
+        || `PKG-${identity.category}-${identity.scheduleId}-${Date.now()}`;
       const finalOriginalTeacherId = destPkg?.originalTeacherId || destRaw[0]?.originalteacherid || user.id;
 
       const payload: any = {
@@ -428,12 +424,13 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
         date: form.date,
         clockin: editData.clockIn,
         status: delegating ? 'SUB_LOG' : 'SESSION_LOG',
-        classname: fullClassName,
-        level: form.level,
-        sessioncategory: form.category,
+        classname: classNameToSave,
+        level: levelToSave,
+        sessioncategory: identity.category,
         packageid: finalPackageId,
+        scheduleid: identity.scheduleId,
         sessionnumber: newNumber,
-        studentsattended: form.category === 'PRIVATE' ? [form.studentName.toUpperCase()] : ['REGULER'],
+        studentsattended: studentsToSave(),
         earnings: estimatedHonor,
         paymentstatus: 'UNPAID',
         duration: form.duration,
@@ -441,8 +438,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
         originalteacherid: finalOriginalTeacherId
       };
 
-      // Semua perubahan dijalankan di database dalam SATU transaksi (fungsi move_attendance_session):
-      // kalau ada satu langkah gagal, semuanya dibatalkan dan data tetap seperti semula.
+      // Semua perubahan dijalankan di database dalam SATU transaksi
       const ops = toOps([...destChanges, ...srcChanges]);
       const { error: rpcErr } = await supabase.rpc('move_attendance_session', {
         p_up: ops.p_up,
@@ -462,49 +458,53 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
   };
 
   const handleLaporPresensi = async () => {
-    if (isDetecting) return;
+    if (isDetecting || loading) return;
     const delegating = isDelegating && !isHomeTutoring; // Home Tutoring: tidak boleh digantikan
-    if (!form.subject || !form.level || !form.room) return alert("Pilih Matpel, Level & Ruangan dulu ya! ✨");
-    if (form.category === 'PRIVATE' && !form.studentName) return alert("Pilih Nama Siswa dulu untuk kelas Private! ✨");
+    if (!identity) return alert("Pilih jadwal kelasnya dulu ya! ✨");
+    if (identity.category === 'PRIVATE' && identity.students.length === 0 && !editData) {
+      return alert("Jadwal Private ini belum punya siswa. Hubungi Admin untuk mengisinya ya Kak! 🙏");
+    }
     if (delegating && !form.targetTeacherId) return alert("Pilih Nama Teman yang menggantikan dulu ya! ✨");
 
-    // ✏️ Mode edit + identitas kelas berubah -> pindahkan sesi ke paket yang benar
-    if (editData && isIdentityChanged()) {
+    // ✏️ Mode edit + slot diganti -> pindahkan sesi ke paket yang benar
+    if (editData && isSlotChanged) {
       await handleMoveSession(delegating);
       return;
     }
-    
-    // ⭐ VALIDASI OWNERSHIP SEBELUM SUBMIT!
+
+    // ⭐ VALIDASI OWNERSHIP SEBELUM SUBMIT
     if (activePackageId && activeOriginalTeacherId && activeOriginalTeacherId !== user.id) {
-      // Ini bukan siklus saya, cek apakah saya pernah substitusi di paket ini
-      const mySubLogs = logs.filter(l => 
-        l.packageId === activePackageId && 
-        l.teacherId === user.id && 
+      const mySubLogs = logs.filter(l =>
+        l.packageId === activePackageId &&
+        l.teacherId === user.id &&
         l.status === 'SUB_LOG'
       );
-      
+
       if (mySubLogs.length === 0) {
-        // BLOCK! Saya tidak punya akses ke siklus ini
         const owner = teachers.find(t => t.id === activeOriginalTeacherId);
-        const fullClassName = `${form.subject} (${form.level}) - ${form.room}`;
-        
         setBlockModal({
           ownerName: owner?.name || 'Guru Lain',
-          className: fullClassName,
+          className: identity.className,
           currentSession: form.sessionNumber
         });
-        return; // STOP SUBMIT!
+        return;
       }
     }
-    
+
     setLoading(true);
     try {
-      const fullClassName = `${form.subject} (${form.level}) - ${form.room}`.toUpperCase();
       const targetTeacher = teachers.find(t => t.id === form.targetTeacherId);
-      
-      const groupSuffix = form.category === 'PRIVATE' ? `-${form.studentName.replace(/\s+/g, '-')}` : '-GROUP';
-      // ID Paket ditentukan di sini: kalau Sesi 1 buat baru, kalau 2-6 pakai yang lama
-      const finalPackageId = activePackageId || `PKG-${form.category}-${fullClassName.replace(/\s+/g, '-')}${groupSuffix}-${Date.now()}`;
+
+      // Kalau melanjutkan paket yang sudah ada, nama kelas & level mengikuti baris paket itu
+      const pkgRef: any = activePackageId
+        ? [...logs].filter(l => l.packageId === activePackageId).sort((a, b) => b.id.localeCompare(a.id))[0]
+        : null;
+      const fullClassName = pkgRef?.className || identity.className;
+      const levelToSave = pkgRef ? String(pkgRef.level || '') : identity.level;
+
+      // ID Paket: sesi 1 buat baru, selanjutnya pakai yang lama
+      const finalPackageId = activePackageId
+        || `PKG-${identity.category}-${identity.scheduleId || 'LAMA'}-${Date.now()}`;
       const finalOriginalTeacherId = activeOriginalTeacherId || user.id;
 
       const payloadId = editData ? editData.id : `ATT-${Date.now()}`; // ID berisi timestamp untuk sorting
@@ -539,20 +539,20 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
         clockin: editData ? editData.clockIn : new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' }).format(new Date()),
         status: delegating ? 'SUB_LOG' : 'SESSION_LOG',
         classname: fullClassName,
-        level: form.level,
-        sessioncategory: form.category,
+        level: levelToSave,
+        sessioncategory: identity.category,
         packageid: finalPackageId,
+        scheduleid: identity.scheduleId,
         sessionnumber: position,
-        studentsattended: form.category === 'PRIVATE' ? [form.studentName.toUpperCase()] : ['REGULER'],
+        studentsattended: studentsToSave(),
         earnings: estimatedHonor,
         paymentstatus: 'UNPAID',
         duration: form.duration,
         substitutefor: delegating ? user.name : (editData?.substituteFor || null),
-        originalteacherid: finalOriginalTeacherId 
+        originalteacherid: finalOriginalTeacherId
       };
 
       if (changes.length > 0) {
-        // Ada sesi lain yang nomornya ikut berubah karena urutan tanggal
         if (changes.some(c => c.paymentstatus !== 'UNPAID')) {
           alert(`Sesi tanggal ${fmtDate(form.date)} tidak bisa disimpan di urutan ke-${position}.\n\nAda sesi yang sudah LUNAS (sudah dibayar) yang nomornya ikut berubah, dan sesi LUNAS tidak boleh berubah nomornya.\n\nSilakan hubungi Admin ya Kak! 🙏`);
           setLoading(false);
@@ -571,7 +571,6 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
           return;
         }
 
-        // Satu transaksi di database: semua berhasil, atau batal semua
         const ops = toOps(changes);
         const { error: rpcErr } = await supabase.rpc('move_attendance_session', {
           p_up: ops.p_up,
@@ -586,7 +585,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
 
       if (refreshAllData) await refreshAllData();
       setLoading(false);
-      navigate('/teacher/honor', { replace: true, state: { highlightId: finalPackageId } }); 
+      navigate('/teacher/honor', { replace: true, state: { highlightId: finalPackageId } });
 
     } catch (e: any) {
       alert("Gagal: " + friendlyError(e));
@@ -598,25 +597,13 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
     <>
       <style>{`
         @keyframes modalFadeIn {
-          from {
-            opacity: 0;
-          }
-          to {
-            opacity: 1;
-          }
+          from { opacity: 0; }
+          to { opacity: 1; }
         }
-
         @keyframes modalZoomIn {
-          from {
-            opacity: 0;
-            transform: scale(0.95);
-          }
-          to {
-            opacity: 1;
-            transform: scale(1);
-          }
+          from { opacity: 0; transform: scale(0.95); }
+          to { opacity: 1; transform: scale(1); }
         }
-
         @keyframes editHighlightPulse {
           0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.45); }
           50% { box-shadow: 0 0 0 18px rgba(249, 115, 22, 0); }
@@ -662,7 +649,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
          </Link>
       </div>
 
-      <div 
+      <div
         ref={formCardRef}
         className={`bg-white p-10 md:p-14 rounded-[4rem] shadow-2xl border space-y-12 relative overflow-hidden scroll-mt-32 transition-colors duration-500 ${editData ? 'border-orange-200' : 'border-slate-100'}`}
         style={editData ? { animation: 'editHighlightPulse 1.6s ease-out 2' } : undefined}
@@ -672,7 +659,7 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
              <div className="inline-flex px-6 py-2.5 bg-orange-500 text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg items-center gap-2">
                <RotateCcw size={12}/> Mode edit
              </div>
-             <button 
+             <button
                onClick={handleCloseEdit}
                title="Batal edit"
                className="p-3 bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 rounded-2xl transition-all active:scale-95 shadow-sm"
@@ -682,128 +669,107 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
            </div>
          )}
          <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full blur-[100px] -mr-32 -mt-32 opacity-50"></div>
-         
+
          <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
-            <div className="space-y-4">
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><BookOpen size={14} className="text-blue-500"/> Mata Pelajaran</label>
-               <select value={form.subject} onChange={e => setForm({...form, subject: e.target.value})} className="w-full px-8 py-6 bg-slate-50 border-2 border-transparent focus:border-blue-500 rounded-[2rem] font-black text-xs uppercase outline-none transition-all shadow-inner h-[72px]">
-                  <option value="">-- PILIH MATPEL --</option>
-                  {subjects.map(s => <option key={s} value={s}>{s}</option>)}
-               </select>
-            </div>
 
-            <div className="space-y-4">
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><Layers size={14} className="text-blue-500"/> Level Belajar</label>
-               <select value={form.level} onChange={e => setForm({...form, level: e.target.value})} className="w-full px-8 py-6 bg-slate-50 border-2 border-transparent focus:border-blue-500 rounded-[2rem] font-black text-xs uppercase outline-none transition-all shadow-inner h-[72px]">
-   <option value="">-- PILIH LEVEL --</option>
-   {levels.map(l => <option key={l} value={l}>{l}</option>)}
-</select>
-            </div>
+            {/* ===== PILIH JADWAL ===== */}
+            <div className="md:col-span-2 space-y-5">
+               <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2">
+                 <CalendarDays size={14} className="text-blue-500"/> Pilih Jadwal Kelas
+               </label>
 
-            <div className="space-y-4">
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><Home size={14} className="text-blue-500"/> Ruang Kelas</label>
-               <select value={form.room} onChange={e => setForm({...form, room: e.target.value})} className="w-full px-8 py-6 bg-slate-50 border-2 border-transparent focus:border-blue-500 rounded-[2rem] font-black text-xs uppercase outline-none transition-all shadow-inner h-[72px]">
-                  <option value="">-- PILIH RUANGAN --</option>
-                  {classes.map(c => <option key={c} value={c}>{c}</option>)}
-               </select>
-            </div>
+               {legacyEdit && editData ? (
+                 <div className="px-8 py-6 bg-slate-50 border-2 border-slate-100 rounded-[2rem] space-y-2">
+                    <p className="text-xs font-black text-slate-800 uppercase italic">{identity?.className}</p>
+                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic leading-relaxed">
+                      Sesi ini dibuat sebelum sistem jadwal, jadi kelasnya tidak bisa diganti. Tanggal dan guru pengganti tetap bisa diubah.
+                    </p>
+                 </div>
+               ) : slotsByDay.length === 0 ? (
+                 <div className="px-8 py-10 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] text-center space-y-2">
+                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">Belum ada jadwal untukmu</p>
+                    <p className="text-[11px] font-bold text-slate-300">Hubungi Admin untuk menambahkan jadwal mengajarmu ya Kak.</p>
+                 </div>
+               ) : (
+                 <div className="space-y-6">
+                   {slotsByDay.map(g => (
+                     <div key={g.day} className="space-y-3">
+                       <div className="flex items-center gap-3 px-2">
+                         <h4 className="text-sm font-black text-slate-800 uppercase italic tracking-tight">{g.day}</h4>
+                         {g.day === todayName && (
+                           <span className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest">
+                             <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
+                             <span className="text-slate-400">Hari ini</span>
+                           </span>
+                         )}
+                       </div>
+                       <div className="space-y-2">
+                         {g.list.map(it => {
+                           const sel = form.scheduleId === String(it.id);
+                           const priv = isPrivateRoom(it.room);
+                           const people = (it.participants || []).map(p => String(studentById.get(String(p.id))?.name || p.name || ''));
+                           return (
+                             <button
+                               type="button"
+                               key={it.id}
+                               onClick={() => setForm(prev => ({ ...prev, scheduleId: String(it.id) }))}
+                               className={`w-full text-left flex gap-4 rounded-[1.5rem] px-5 py-4 border-2 transition-all active:scale-[0.99] ${sel ? 'bg-blue-50 border-blue-500 shadow-lg' : 'bg-slate-50 border-slate-100 hover:border-blue-200'}`}
+                             >
+                               <p className="w-[5.5rem] shrink-0 text-xs font-black text-slate-800 leading-snug">{fmtRange(it.start, it.end)}</p>
+                               <div className="min-w-0 flex-1 space-y-1.5">
+                                 <div className="flex flex-wrap items-center gap-2">
+                                   <p className="text-xs font-black text-slate-800 uppercase italic">{stripPelatihan(it.subject)}</p>
+                                   <span className={`px-3 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest text-white ${priv ? 'bg-orange-500' : 'bg-blue-900'}`}>{it.room}</span>
+                                 </div>
+                                 {people.length > 0 && (
+                                   <div className={`text-[11px] font-semibold space-y-0.5 ${priv ? 'text-orange-600' : 'text-blue-900/70'}`}>
+                                     {people.map((n, k) => (
+                                       <p key={k}>{people.length > 1 ? `${k + 1}. ` : ''}{n}</p>
+                                     ))}
+                                   </div>
+                                 )}
+                               </div>
+                               {sel && <Check size={20} className="text-blue-600 shrink-0 self-center" />}
+                             </button>
+                           );
+                         })}
+                       </div>
+                     </div>
+                   ))}
+                 </div>
+               )}
 
-            <div className="space-y-4">
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><Zap size={14} className="text-blue-500"/> Tipe Sesi</label>
-               <div className="flex gap-4 p-1.5 bg-slate-100 rounded-[2rem] h-[72px]" title={autoCategory ? 'Mengikuti ruang kelas yang dipilih' : undefined}>
-                  <button type="button" disabled={!form.room || !!autoCategory} onClick={() => setForm({...form, category: 'REGULER', studentName: ''})} className={`flex-1 py-4 rounded-[1.5rem] text-[10px] font-black uppercase transition-all disabled:cursor-not-allowed ${shownCategory === 'REGULER' ? 'bg-white text-blue-600 shadow-md' : 'text-slate-600'}`}>Reguler</button>
-                  <button type="button" disabled={!form.room || !!autoCategory} onClick={() => setForm({...form, category: 'PRIVATE'})} className={`flex-1 py-4 rounded-[1.5rem] text-[10px] font-black uppercase transition-all disabled:cursor-not-allowed ${shownCategory === 'PRIVATE' ? 'bg-white text-orange-600 shadow-md' : 'text-slate-600'}`}>Private</button>
-               </div>
+               {identity && identity.category === 'PRIVATE' && identity.students.length === 0 && !editData && (
+                 <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest ml-4 italic">Jadwal Private ini belum punya siswa — hubungi Admin.</p>
+               )}
             </div>
-
-            {form.category === 'PRIVATE' && (
-  <div className="md:col-span-2 space-y-4 animate-in slide-in-from-top-2 relative">
-     <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2">
-       <Users size={14} className="text-blue-500"/> Nama Siswa <span className="text-rose-500 font-black">*WAJIB UNTUK PRIVATE</span>
-     </label>
-     
-     <div className="relative">
-       <input 
-         type="text"
-         placeholder="KETIK NAMA SISWA..."
-         value={studentInputValue}
-         onChange={(e) => {
-           const val = e.target.value.toUpperCase();
-           setStudentInputValue(val);
-           setShowStudentSuggestions(true);
-           
-           // Cek apakah yang diketik ada di database
-           const matchedStudent = studentAccounts.find(s => s.name.toUpperCase() === val);
-           if (matchedStudent) {
-             setForm({...form, studentName: matchedStudent.name});
-           } else {
-             setForm({...form, studentName: ''}); // Reset kalau nggak match
-           }
-         }}
-         onFocus={() => setShowStudentSuggestions(true)}
-         onBlur={() => setTimeout(() => setShowStudentSuggestions(false), 200)}
-         className="w-full px-8 py-6 bg-slate-50 border-2 border-transparent focus:border-blue-500 rounded-[2rem] font-black text-xs uppercase outline-none transition-all shadow-inner h-[72px]"
-       />
-       
-       {/* Dropdown Suggestions */}
-       {showStudentSuggestions && studentInputValue.trim() && (
-         <div className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-2xl border-2 border-blue-100 max-h-[100px] overflow-y-auto">
-           {studentAccounts
-             .filter(s => s.name.toUpperCase().includes(studentInputValue.toUpperCase()))
-             .slice(0, 8)
-             .map(student => (
-               <button
-                 key={student.id}
-                 type="button"
-                 onMouseDown={(e) => {
-                   e.preventDefault();
-                   setStudentInputValue(student.name.toUpperCase());
-                   setForm({...form, studentName: student.name});
-                   setShowStudentSuggestions(false);
-                 }}
-                 className="w-full px-6 py-4 text-left text-[11px] font-black hover:bg-blue-50 transition-all text-slate-700 border-b last:border-0 uppercase"
-               >
-                 {student.name.toUpperCase()}
-               </button>
-             ))
-           }
-           {studentAccounts.filter(s => s.name.toUpperCase().includes(studentInputValue.toUpperCase())).length === 0 && (
-             <div className="px-6 py-4 text-[10px] font-bold text-rose-500 uppercase italic text-center">
-               ❌ Nama "{studentInputValue}" tidak ditemukan!
-             </div>
-           )}
-         </div>
-       )}
-     </div>
-     
-     <p className="text-[8px] font-bold text-slate-400 uppercase ml-4 tracking-widest italic">Tiap siswa private punya kotak gaji terpisah ✨</p>
-  </div>
-)}
 
             <div className="md:col-span-2 space-y-6 pt-4">
                <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 flex items-center gap-2"><Hash size={14} className="text-blue-500"/> Sesi Terdeteksi Otomatis (1-6)</label>
                <div className="grid grid-cols-6 gap-3">
                   {[1, 2, 3, 4, 5, 6].map(n => (
-                    <div 
-                      key={n} 
-                      className={`py-5 rounded-2xl font-black text-lg transition-all border-2 text-center flex items-center justify-center cursor-default ${form.sessionNumber === n ? 'bg-blue-600 text-white border-blue-600 shadow-lg scale-105' : 'bg-slate-50 text-slate-300 border-slate-100 shadow-inner'} ${isDetecting ? 'animate-pulse opacity-50' : ''}`}
+                    <div
+                      key={n}
+                      className={`py-5 rounded-2xl font-black text-lg transition-all border-2 text-center flex items-center justify-center cursor-default ${identity && form.sessionNumber === n ? 'bg-blue-600 text-white border-blue-600 shadow-lg scale-105' : 'bg-slate-50 text-slate-300 border-slate-100 shadow-inner'} ${isDetecting ? 'animate-pulse opacity-50' : ''}`}
                     >
                       {n}
                     </div>
                   ))}
                </div>
-               {activePackageId ? (
-                  <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest ml-4 italic animate-pulse">✨ Melanjutkan Siklus Aktif ({form.category}) — Sesi {form.sessionNumber}/6 Terdeteksi</p>
+               {!identity ? (
+                  <p className="text-[9px] font-black text-slate-400 uppercase ml-4 tracking-widest italic">Pilih jadwal dulu untuk melihat nomor sesi</p>
+               ) : activePackageId ? (
+                  <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest ml-4 italic animate-pulse">✨ Melanjutkan Siklus Aktif ({identity.category}) — Sesi {form.sessionNumber}/6 Terdeteksi</p>
                ) : (
                   <p className="text-[9px] font-black text-slate-400 uppercase ml-4 tracking-widest italic">🆕 Memulai Siklus 6 Sesi Baru (Sesi 1)</p>
                )}
-               
+
                <div className="mt-4 bg-blue-50 p-6 rounded-[2rem] border border-blue-100 flex items-start gap-4 shadow-sm animate-in fade-in duration-700">
                   <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center shrink-0 shadow-md">
                      <Info size={16} />
                   </div>
                   <p className="text-[9px] font-bold text-blue-800 uppercase italic leading-relaxed tracking-wide">
-                     "Jika nomor sesi tidak sesuai, mohon cek kembali: <span className="font-black underline">Mata Pelajaran</span>, <span className="font-black underline">Level Belajar</span>, <span className="font-black underline">Ruang Kelas</span>, <span className="font-black underline">Tipe Sesi</span>, dan <span className="font-black underline">Nama Siswa</span> (Khusus Private) agar sistem mendeteksi paket yang benar ✨"
+                     "Jika nomor sesi tidak sesuai, mohon cek kembali <span className="font-black underline">Jadwal Kelas</span> yang dipilih dan <span className="font-black underline">Tanggal Pelaksanaan</span> ✨"
                   </p>
                </div>
             </div>
@@ -839,66 +805,64 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
                </div>
 
                {isDelegating && (
-  <div className="mt-8 space-y-4 animate-in slide-in-from-top-4 relative">
-     <label className="text-[9px] font-black text-rose-500 uppercase ml-4 tracking-widest flex items-center gap-2">
-       <UserPlus size={12}/> Pilih Rekan Yang Menggantikan Anda:
-     </label>
-     
-     <div className="relative">
-       <input 
-         type="text"
-         placeholder="KETIK NAMA TEMAN..."
-         value={teacherInputValue}
-         onChange={(e) => {
-           const val = e.target.value;
-           setTeacherInputValue(val);
-           setShowTeacherSuggestions(true);
-           
-           // Cek apakah yang diketik ada di database
-           const matchedTeacher = teachers.find(t => t.name.toUpperCase() === val.toUpperCase() && t.id !== user.id && t.role === 'TEACHER');
-           if (matchedTeacher) {
-             setForm({...form, targetTeacherId: matchedTeacher.id});
-           } else {
-             setForm({...form, targetTeacherId: ''}); // Reset kalau nggak match
-           }
-         }}
-         onFocus={() => setShowTeacherSuggestions(true)}
-         onBlur={() => setTimeout(() => setShowTeacherSuggestions(false), 200)}
-         className="w-full px-8 py-6 bg-white border-2 border-transparent focus:border-rose-500 rounded-[2rem] font-black text-[11px] outline-none shadow-sm transition-all h-[72px]"
-       />
-       
-       {/* Dropdown Suggestions */}
-       {showTeacherSuggestions && teacherInputValue.trim() && (
-         <div className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-2xl border-2 border-rose-100 max-h-[100px] overflow-y-auto">
-           {teachers
-             .filter(t => t.id !== user.id && t.role === 'TEACHER' && t.name.toUpperCase().includes(teacherInputValue.toUpperCase()))
-             .slice(0, 8)
-             .map(teacher => (
-               <button
-                 key={teacher.id}
-                 type="button"
-                 onMouseDown={(e) => {
-                   e.preventDefault();
-                   setTeacherInputValue(teacher.name);
-                   setForm({...form, targetTeacherId: teacher.id});
-                   setShowTeacherSuggestions(false);
-                 }}
-                 className="w-full px-6 py-4 text-left text-[11px] font-black hover:bg-rose-50 transition-all text-slate-700 border-b last:border-0"
-               >
-                 {teacher.name}
-               </button>
-             ))
-           }
-           {teachers.filter(t => t.id !== user.id && t.role === 'TEACHER' && t.name.toUpperCase().includes(teacherInputValue.toUpperCase())).length === 0 && (
-             <div className="px-6 py-4 text-[10px] font-bold text-rose-500 uppercase italic text-center">
-               ❌ Nama "{teacherInputValue}" tidak ditemukan!
-             </div>
-           )}
-         </div>
-       )}
-     </div>
-  </div>
-)}
+                 <div className="mt-8 space-y-4 animate-in slide-in-from-top-4 relative">
+                   <label className="text-[9px] font-black text-rose-500 uppercase ml-4 tracking-widest flex items-center gap-2">
+                     <UserPlus size={12}/> Pilih Rekan Yang Menggantikan Anda:
+                   </label>
+
+                   <div className="relative">
+                     <input
+                       type="text"
+                       placeholder="KETIK NAMA TEMAN..."
+                       value={teacherInputValue}
+                       onChange={(e) => {
+                         const val = e.target.value;
+                         setTeacherInputValue(val);
+                         setShowTeacherSuggestions(true);
+
+                         const matchedTeacher = teachers.find(t => t.name.toUpperCase() === val.toUpperCase() && t.id !== user.id && t.role === 'TEACHER');
+                         if (matchedTeacher) {
+                           setForm({...form, targetTeacherId: matchedTeacher.id});
+                         } else {
+                           setForm({...form, targetTeacherId: ''});
+                         }
+                       }}
+                       onFocus={() => setShowTeacherSuggestions(true)}
+                       onBlur={() => setTimeout(() => setShowTeacherSuggestions(false), 200)}
+                       className="w-full px-8 py-6 bg-white border-2 border-transparent focus:border-rose-500 rounded-[2rem] font-black text-[11px] outline-none shadow-sm transition-all h-[72px]"
+                     />
+
+                     {showTeacherSuggestions && teacherInputValue.trim() && (
+                       <div className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-2xl border-2 border-rose-100 max-h-[100px] overflow-y-auto">
+                         {teachers
+                           .filter(t => t.id !== user.id && t.role === 'TEACHER' && t.name.toUpperCase().includes(teacherInputValue.toUpperCase()))
+                           .slice(0, 8)
+                           .map(teacher => (
+                             <button
+                               key={teacher.id}
+                               type="button"
+                               onMouseDown={(e) => {
+                                 e.preventDefault();
+                                 setTeacherInputValue(teacher.name);
+                                 setForm({...form, targetTeacherId: teacher.id});
+                                 setShowTeacherSuggestions(false);
+                               }}
+                               className="w-full px-6 py-4 text-left text-[11px] font-black hover:bg-rose-50 transition-all text-slate-700 border-b last:border-0"
+                             >
+                               {teacher.name}
+                             </button>
+                           ))
+                         }
+                         {teachers.filter(t => t.id !== user.id && t.role === 'TEACHER' && t.name.toUpperCase().includes(teacherInputValue.toUpperCase())).length === 0 && (
+                           <div className="px-6 py-4 text-[10px] font-bold text-rose-500 uppercase italic text-center">
+                             ❌ Nama "{teacherInputValue}" tidak ditemukan!
+                           </div>
+                         )}
+                       </div>
+                     )}
+                   </div>
+                 </div>
+               )}
             </div>
             )}
          </div>
@@ -927,9 +891,9 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
          )}
          </div>
 
-         <button 
-           onClick={handleLaporPresensi} 
-           disabled={loading || isDetecting || !form.subject || !form.level || !form.room}
+         <button
+           onClick={handleLaporPresensi}
+           disabled={loading || isDetecting || !identity}
            className="w-full py-10 bg-blue-600 text-white rounded-[3rem] font-black text-[14px] uppercase tracking-[0.5em] shadow-2xl hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30 group"
          >
             {loading ? <Loader2 className="animate-spin" size={32} /> : isDetecting ? 'HARAP TUNGGU...' : (editData ? <><Save size={28}/> SIMPAN PERUBAHAN ✨</> : <><Send size={28} className="group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform" /> KIRIM PRESENSI</>)}
@@ -942,25 +906,21 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
         <div data-modal-container className="fixed inset-0 z-[300000] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
           <div className="bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl relative border-t-8 border-rose-600 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
             <div className="p-8">
-
-              {/* Layout 2 kolom */}
               <div className="grid grid-cols-2 gap-5">
-
-                {/* KOLOM KIRI: warning + info guru */}
                 <div className="bg-rose-50 rounded-[1.5rem] p-5 flex flex-col gap-4">
-  <div className="flex flex-col items-center gap-3 text-center">
-    <div className="w-9 h-9 bg-rose-200 rounded-xl flex items-center justify-center shrink-0">
-      <AlertTriangle size={18} className="text-rose-800" />
-    </div>
-    <p className="text-[11px] font-black text-rose-700 uppercase tracking-wider leading-tight">
-      Kelas Sedang Digunakan!
-    </p>
-  </div>
+                  <div className="flex flex-col items-center gap-3 text-center">
+                    <div className="w-9 h-9 bg-rose-200 rounded-xl flex items-center justify-center shrink-0">
+                      <AlertTriangle size={18} className="text-rose-800" />
+                    </div>
+                    <p className="text-[11px] font-black text-rose-700 uppercase tracking-wider leading-tight">
+                      Kelas Sedang Digunakan!
+                    </p>
+                  </div>
 
-  <div className="border-t border-rose-200 pt-4 space-y-3">
-    <p className="text-[10px] font-bold text-rose-700 uppercase leading-relaxed text-center">
-      Kelas ini sedang berjalan oleh:
-    </p>
+                  <div className="border-t border-rose-200 pt-4 space-y-3">
+                    <p className="text-[10px] font-bold text-rose-700 uppercase leading-relaxed text-center">
+                      Kelas ini sedang berjalan oleh:
+                    </p>
                     <div className="bg-white rounded-xl px-4 py-2">
                       <p className="text-[10px] font-black text-slate-800 uppercase tracking-wide leading-relaxed">{blockModal.className}</p>
                     </div>
@@ -972,7 +932,6 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
                   </div>
                 </div>
 
-                {/* KOLOM KANAN: solusi + tombol */}
                 <div className="flex flex-col gap-4">
                   <div className="bg-slate-50 rounded-[1.5rem] p-5 flex-1">
                     <p className="text-[11px] font-black text-slate-700 uppercase tracking-wide mb-4">Anda bisa input setelah:</p>
@@ -999,7 +958,6 @@ setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id =
                     <Check size={16}/> Saya Mengerti
                   </button>
                 </div>
-
               </div>
             </div>
           </div>
