@@ -48,6 +48,9 @@ export const fmtFullDate = (d?: string) => {
 
 const stripPelatihan = (s: string) => s.replace(/^PELATIHAN\s+/i, '');
 
+// Satu aturan "ruang private" yang sama dengan TeacherDashboard / ScheduleModal
+const isPrivateRoom = (room: string) => /PRIVATE|PRIVAT|HOME TUTORING/i.test(room || '');
+
 const LEVEL_ORDER = ['BASIC', 'INTERMEDIATE', 'ADVANCED'];
 const levelRank = (lvl: string) => {
   const i = LEVEL_ORDER.indexOf(lvl);
@@ -560,7 +563,7 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
                 <h4 className="px-2 text-sm font-black text-slate-800 uppercase italic tracking-wide">{stripPelatihan(sg.subject)}</h4>
                 {sg.groups.map(g => (
                   <div key={`${g.level}||${g.room}`} className="space-y-3">
-                    <span className="inline-block ml-2 px-4 py-1 rounded-full bg-blue-900 text-white text-[8px] font-black uppercase tracking-widest">
+                    <span className={`inline-block ml-2 px-4 py-1 rounded-full text-white text-[8px] font-black uppercase tracking-widest ${isPrivateRoom(g.room) ? 'bg-orange-500' : 'bg-blue-900'}`}>
                       {[g.level, g.room].filter(Boolean).join(' · ') || 'Kelas'}
                     </span>
                     {g.items.map(it => {
