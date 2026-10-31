@@ -674,8 +674,8 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
             {/* ===== PILIH JADWAL ===== */}
             <div className="md:col-span-2 space-y-5">
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2">
-                 <CalendarDays size={14} className="text-blue-500"/> Pilih Jadwal Kelas
+               <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest flex items-center gap-2 leading-none">
+                 <CalendarDays size={14} className="text-blue-500 -translate-y-px"/> Pilih Jadwal Kelas
                </label>
 
                {legacyEdit && editData ? (
@@ -768,9 +768,14 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                   <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center shrink-0 shadow-md">
                      <Info size={16} />
                   </div>
-                  <p className="text-[9px] font-bold text-blue-800 uppercase italic leading-relaxed tracking-wide">
-                     "Jika nomor sesi tidak sesuai, mohon cek kembali <span className="font-black underline">Jadwal Kelas</span> yang dipilih dan <span className="font-black underline">Tanggal Pelaksanaan</span> ✨"
-                  </p>
+                  <div className="space-y-3">
+                     <p className="text-[9px] font-bold text-blue-800 uppercase italic leading-relaxed tracking-wide">
+                        "Jika nomor sesi tidak sesuai, mohon cek kembali <span className="font-black underline">Jadwal Kelas</span> yang dipilih dan <span className="font-black underline">Tanggal Pelaksanaan</span> ✨"
+                     </p>
+                     <p className="text-[9px] font-bold text-blue-800 uppercase italic leading-relaxed tracking-wide">
+                        Jika ada halangan mengajar dan kelas diganti di hari lain, tetap pilih kelas yang diajar sesuai jadwal, dan isi <span className="font-black underline">Tanggal Pelaksanaan</span> sesuai hari Anda mengajar.
+                     </p>
+                  </div>
                </div>
             </div>
 
