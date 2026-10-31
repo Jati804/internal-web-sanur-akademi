@@ -543,7 +543,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest italic">Halo Kak {user.name.split(' ')[0]}! Semangat mengajar ✨</p>
             </div>
             <div className="flex bg-white/5 backdrop-blur-xl p-6 rounded-[2.5rem] border border-white/10 items-center gap-6 min-w-[260px]">
-               <div className="w-16 h-16 bg-white text-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/40"><Wallet size={32}/></div>
+               <div className="w-16 h-16 bg-slate-200 text-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/40"><Wallet size={32}/></div>
                <div>
                   <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Belum Cair ({selectedYear}):</p>
                   <h4 className="text-3xl font-black text-blue-400 italic">Rp {formatRupiah(unpaidTotal)}</h4>
