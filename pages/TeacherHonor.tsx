@@ -630,9 +630,19 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
       </div>
 
       <div className="space-y-10">
-         {cycleGroups.length > 0 ? cycleGroups.map((pkg) => {
+         {cycleGroups.length > 0 ? cycleGroups.map((pkg, idx) => {
             const isNew = highlightId === pkg.id;
+            // Pemisah muncul sekali, tepat sebelum kartu LUNAS pertama, dan hanya kalau di atasnya ada kartu belum cair.
+            const showDivider = pkg.status === 'LUNAS' && idx > 0 && cycleGroups[idx - 1].status !== 'LUNAS';
             return (
+              <React.Fragment key={pkg.id}>
+              {showDivider && (
+                <div className="flex items-center gap-4 px-6" role="separator" aria-label="Pembayaran sudah diterima">
+                  <div className="flex-1 h-px bg-slate-200"></div>
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-400">Pembayaran sudah diterima</span>
+                  <div className="flex-1 h-px bg-slate-200"></div>
+                </div>
+              )}
               <div 
                 key={pkg.id} 
                 id={`pkg-card-${pkg.id}`} // FIXED: Menambahkan ID untuk auto-scroll
@@ -770,6 +780,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                    </div>
                 )}
               </div>
+              </React.Fragment>
             );
          }) : (
             <div className="py-40 text-center bg-white rounded-[4rem] border-2 border-dashed border-slate-100 opacity-30">
