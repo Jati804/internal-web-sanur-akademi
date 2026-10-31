@@ -544,6 +544,10 @@ const pendingReportsCount = Array.isArray(reports) ?
   );
 };
 
+// 🔄 LOGOUT PAKSA SEKALI. Ganti nilai ini (mis. '2026-10-31-1' -> '2026-11-15-1') hanya kalau suatu saat
+// ingin menendang semua orang sekali lagi. Selama nilainya sama, tidak terjadi apa-apa.
+const FORCE_LOGOUT_VERSION = '2026-10-31-1';
+
 const App = () => {
   useAutoRefreshOnDeploy();
   const [user, setUser] = useState<User | null>(null);
@@ -695,6 +699,18 @@ if (reps) setReports(reps.map((r: any) => ({
   }, [forceLogout]);
 
   useEffect(() => {
+    // Kalau perangkat ini belum pernah "dikonfirmasi" untuk versi ini, keluarkan sekali lalu catat versinya.
+    // Login berikutnya normal dan sesinya tidak disentuh lagi. scope 'local' = hanya perangkat ini.
+    try {
+      if (localStorage.getItem('sanur_force_logout_v') !== FORCE_LOGOUT_VERSION) {
+        localStorage.setItem('sanur_force_logout_v', FORCE_LOGOUT_VERSION);
+        localStorage.removeItem('sanur_user');
+        supabase.auth.signOut({ scope: 'local' }).catch(() => {});
+        return;
+      }
+    } catch (e) {
+      console.warn('Cek versi logout paksa gagal:', e);
+    }
     const savedUser = localStorage.getItem('sanur_user');
     if (savedUser) setUser(JSON.parse(savedUser));
   }, []);
