@@ -722,7 +722,9 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                                    </div>
                                  )}
                                </div>
-                               {sel && <Check size={20} className="text-blue-600 shrink-0 self-center" />}
+                               {sel
+                                 ? <Check size={20} className="text-blue-600 shrink-0 self-center" />
+                                 : <span className="w-5 h-5 rounded-full border-2 border-slate-300 shrink-0 self-center" aria-hidden="true" />}
                              </button>
                            );
                          })}
