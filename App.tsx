@@ -120,7 +120,6 @@ const GuideModal = ({ role, onClose }: {
         { title: 'Guru Pengganti', desc: 'Jika digantikan teman, gunakan tombol "Berhalangan". Honor akan otomatis beralih ke temanmu.' },
         { title: 'Pantau Honor', desc: 'Lihat status honor cair & unduh slip gaji digital resmi di menu "Honor Saya".' },
         { title: 'Materi', desc: 'Pantau & akses bahan ajar di menu "Materi".' },
-        { title: 'Jadwal', desc: 'Tekan tombol Jadwal di samping namamu untuk melihat jadwal mengajarmu.' },
         { title: 'Pantau Siswa', desc: 'Cari nama siswa lalu tekan ikon pin 📌 untuk memantau progres sesinya, berguna untuk tahu kapan giliran eval sesi 6.' },
         { title: 'Proses Rapot', desc: 'Terima pengajuan rapot dan isi data rapot siswa.' }
       ],
@@ -385,6 +384,11 @@ const pendingReportsCount = Array.isArray(reports) ?
   const roleHelpIcon = 'text-blue-600';
   const roleHelpHover = 'hover:border-blue-300 hover:bg-blue-50';
 
+  // Di halaman Lapor Presensi & Honor Saya (grup "Utama" guru), tombol jadwal disembunyikan:
+  // Lapor Presensi sudah menampilkan daftar jadwal yang sama, jadi tombolnya dobel.
+  const hideScheduleBtn = user.role === 'TEACHER' &&
+    (location.pathname === '/teacher' || location.pathname === '/teacher/honor');
+
   return (
     <div className="min-h-screen bg-[#FDFDFF] flex overflow-hidden font-sans relative">
       {showGuide && (
@@ -479,7 +483,7 @@ const pendingReportsCount = Array.isArray(reports) ?
 </div>
           </div>
           <div className="flex items-center gap-3 shrink-0 ml-4">
-{user.role !== 'ADMIN' && (
+{user.role !== 'ADMIN' && !hideScheduleBtn && (
 <button
   onClick={() => setShowSchedule(true)}
   title="Jadwal saya"
