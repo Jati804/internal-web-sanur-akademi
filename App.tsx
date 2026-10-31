@@ -514,7 +514,7 @@ const pendingReportsCount = Array.isArray(reports) ?
               <Route path="/admin/academic" element={<AdminAcademic subjects={subjects} setSubjects={setSubjects} classes={classes} setClasses={setClasses} levels={levels} setLevels={setLevels} salaryConfig={salaryConfig} setSalaryConfig={setSalaryConfig} teachers={teachers} studentAccounts={studentAccounts} />} />
               <Route path="/admin/maintenance" element={<AdminMaintenance attendanceLogs={attendanceLogs} setAttendanceLogs={setAttendanceLogs} studentPayments={studentPayments} setStudentPayments={setStudentPayments} refreshAllData={refreshAllData} />} />
               <Route path="/admin/materi" element={<MateriPage user={user} subjects={subjects} levels={levels} attendanceLogs={attendanceLogs} studentPayments={studentPayments} />} />
-              <Route path="/teacher" element={<TeacherDashboard user={user} logs={attendanceLogs} studentAccounts={studentAccounts} subjects={subjects} classes={classes} levels={levels} salaryConfig={salaryConfig} teachers={teachers} refreshAllData={refreshAllData} />} />
+              <Route path="/teacher" element={<TeacherDashboard user={user} logs={attendanceLogs} studentAccounts={studentAccounts} schedule={schedule} salaryConfig={salaryConfig} teachers={teachers} refreshAllData={refreshAllData} />} />
               <Route path="/teacher/honor" element={<TeacherHonor user={user} logs={attendanceLogs} refreshAllData={refreshAllData} />} />
               <Route path="/teacher/students" element={<TeacherStudentSearch user={user} studentAccounts={studentAccounts} studentPayments={studentPayments} studentAttendanceLogs={studentAttendanceLogs} reports={reports} />} />
               <Route path="/teacher/reports" element={
@@ -615,6 +615,7 @@ const App = () => {
         level: a.level,
         sessionCategory: a.sessioncategory,
         packageId: a.packageid,
+        scheduleId: a.scheduleid,
         sessionNumber: a.sessionnumber,
         studentsAttended: a.studentsattended,
         studentSessions: a.studentsessions,
