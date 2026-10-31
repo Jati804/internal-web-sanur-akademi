@@ -705,7 +705,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                              <button
                                type="button"
                                key={it.id}
-                               onClick={() => setForm(prev => ({ ...prev, scheduleId: String(it.id) }))}
+                               onClick={() => setForm(prev => ({ ...prev, scheduleId: prev.scheduleId === String(it.id) ? '' : String(it.id) }))}
                                className={`w-full text-left flex gap-4 rounded-[1.5rem] px-5 py-4 border-2 transition-all active:scale-[0.99] ${sel ? 'bg-blue-50 border-blue-500 shadow-lg' : 'bg-slate-50 border-slate-100 hover:border-blue-200'}`}
                              >
                                <p className="w-[5.5rem] shrink-0 text-xs font-black text-slate-800 leading-snug">{fmtRange(it.start, it.end)}</p>
