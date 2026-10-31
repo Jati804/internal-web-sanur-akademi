@@ -346,7 +346,14 @@ const uniqueCategories = useMemo(() => {
           // Dipakai buat urutan antrean: guru pengganti ikut naik kalau paketnya sudah 6 sesi.
           packageFilled: packageContextLogs.length,
           category: log.sessionCategory || 'REGULER',
-          studentName: log.sessionCategory === 'REGULER' ? 'GABUNGAN' : (log.studentsAttended?.[0] || 'UMUM'),
+          // Nama siswa = isi sesi TERAKHIR di paket (semua guru), sama seperti di halaman Honor guru.
+          // Kelas reguler tampil nama-nama yang hadir; 'GABUNGAN' hanya fallback kalau datanya kosong.
+          studentName: (() => {
+            const lastRef: any = [...packageContextLogs].sort((a: any, b: any) => (a.sessionNumber || 0) - (b.sessionNumber || 0)).pop() || log;
+            const names: string[] = (Array.isArray(lastRef.studentsAttended) ? lastRef.studentsAttended : []).filter((n: string) => n && n !== 'REGULER');
+            if (names.length > 0) return names.join(', ');
+            return log.sessionCategory === 'REGULER' ? 'GABUNGAN' : (log.studentsAttended?.[0] || 'UMUM');
+          })(),
           lastUpdate: log.date
         };
       }
@@ -832,6 +839,9 @@ const executePayTeacher = async () => {
 
   const formatDate = (dateStr: string) => dateStr.split('-').reverse().join('/');
 
+  // Buang level di dalam kurung, mis. 'EXCEL (INTERMEDIATE) - REGULER 4' -> 'EXCEL - REGULER 4' (hanya untuk tampilan)
+  const stripLevel = (name: string) => String(name || '').replace(/\s*\([^()]*\)(\s*-\s*[^()]*)$/, '$1');
+
   return (
     <>
       <style>{`
@@ -1188,9 +1198,9 @@ const executePayTeacher = async () => {
               <div key={it.id} className="bg-white rounded-[4rem] border border-slate-100 shadow-2xl p-10 md:p-14 space-y-8 group hover:border-blue-200 transition-all duration-500">
                 <div className="flex flex-col lg:flex-row justify-between lg:items-stretch gap-6">
                   <div className="flex-1 min-w-0 space-y-3 flex flex-col justify-center">
-                    <h4 className="text-xl md:text-2xl font-black text-slate-800 uppercase italic leading-snug">{it.className}</h4>
+                    <h4 className="text-xl md:text-2xl font-black text-slate-800 uppercase italic leading-snug">{stripLevel(it.className)}</h4>
                     <div className="space-y-3 text-[10px] font-black uppercase tracking-wider text-slate-500">
-                      <p className="flex items-center gap-1.5 text-blue-600"><Users size={13}/> Siswa: {it.studentName}</p>
+                      <p className={`flex items-start gap-1.5 ${(it.category === 'PRIVATE' || String(it.className).toUpperCase().includes('HOME TUTORING')) ? 'text-orange-600' : 'text-blue-600'}`}><Users size={13} className="shrink-0 mt-0.5"/> Siswa: {it.studentName}</p>
                       <p className="flex items-center gap-1.5"><UserCheck size={13} className="text-slate-400"/> Penerima: {it.teacherName}</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
@@ -1285,7 +1295,7 @@ const executePayTeacher = async () => {
 
                 <div className="text-center px-6">
                   <h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Cairkan Honor</h4>
-                  <p className="text-[10px] font-bold text-blue-600 tracking-widest mt-2 leading-relaxed">{selectedPayout.teacherName} - <span className="uppercase">{selectedPayout.className.replace(/PELATIHAN\s*/i, '')}</span></p>
+                  <p className="text-[10px] font-bold text-blue-600 tracking-widest mt-2 leading-relaxed">{selectedPayout.teacherName} - <span className="uppercase">{stripLevel(selectedPayout.className).replace(/PELATIHAN\s*/i, '')}</span></p>
                 </div>
 
                 <div className="flex justify-center">
