@@ -346,12 +346,17 @@ const uniqueCategories = useMemo(() => {
           // Dipakai buat urutan antrean: guru pengganti ikut naik kalau paketnya sudah 6 sesi.
           packageFilled: packageContextLogs.length,
           category: log.sessionCategory || 'REGULER',
-          // Nama siswa = isi sesi TERAKHIR di paket (semua guru), sama seperti di halaman Honor guru.
-          // Kelas reguler tampil nama-nama yang hadir; 'GABUNGAN' hanya fallback kalau datanya kosong.
+          // Nama siswa = gabungan siswa yang pernah hadir di sesi MILIK guru penerima dalam paket ini.
+          // Dihitung per paket, jadi paket baru dengan siswa lain tidak bercampur. 'GABUNGAN' hanya fallback.
           studentName: (() => {
-            const lastRef: any = [...packageContextLogs].sort((a: any, b: any) => (a.sessionNumber || 0) - (b.sessionNumber || 0)).pop() || log;
-            const names: string[] = (Array.isArray(lastRef.studentsAttended) ? lastRef.studentsAttended : []).filter((n: string) => n && n !== 'REGULER');
-            if (names.length > 0) return names.join(', ');
+            const namesOf = (l: any): string[] => (Array.isArray(l?.studentsAttended) ? l.studentsAttended : []).filter((n: string) => n && n !== 'REGULER');
+            const bySession = (rows: any[]) => [...rows].sort((a: any, b: any) => (a.sessionNumber || 0) - (b.sessionNumber || 0));
+            const seen = new Set<string>();
+            bySession(packageContextLogs.filter((l: any) => l.teacherId === log.teacherId)).forEach((l: any) => namesOf(l).forEach(n => seen.add(n)));
+            if (seen.size > 0) return Array.from(seen).join(', ');
+            // Sesi guru ini tersimpan tanpa nama (sesi lama): pinjam dari sesi terbaru di paket yang punya nama
+            const withNames = [...packageContextLogs].sort((a: any, b: any) => (b.sessionNumber || 0) - (a.sessionNumber || 0)).find((l: any) => namesOf(l).length > 0);
+            if (withNames) return namesOf(withNames).join(', ');
             return log.sessionCategory === 'REGULER' ? 'GABUNGAN' : (log.studentsAttended?.[0] || 'UMUM');
           })(),
           lastUpdate: log.date
