@@ -7,7 +7,7 @@ import type { ScheduleItem } from './AdminAcademic.tsx';
 import {
   ClipboardCheck, Loader2, Clock, Send, Zap, HeartPulse,
   UserPlus, Wallet, Hash, Timer, RotateCcw, Save, Sparkles,
-  Info, AlertTriangle, X, Check, CalendarDays
+  AlertTriangle, X, Check, CalendarDays
 } from 'lucide-react';
 import * as ReactRouterDOM from 'react-router-dom';
 const { Link, useLocation, useNavigate } = ReactRouterDOM as any;
@@ -236,7 +236,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
     const low = raw.toLowerCase();
     if (low.includes('failed to fetch') || low.includes('network')) return 'Koneksi internet terputus.';
     if (low.includes('jwt') || low.includes('expired')) return 'Sesi login sudah habis, silakan login ulang.';
-    if (low.includes('row-level security') || low.includes('permission denied')) return 'Akun Kakak tidak punya izin untuk mengubah data ini.';
+    if (low.includes('row-level security') || low.includes('permission denied')) return 'Akun Anda tidak punya izin untuk mengubah data ini.';
     if (low.includes('duplicate key')) return 'Nomor sesi bentrok dengan sesi lain.';
     if (low.includes('sesi_lunas')) return 'Ada sesi LUNAS yang nomornya ikut bergeser.';
     if (low.includes('could not find the function')) return 'Fitur urutan sesi belum aktif di database.';
@@ -462,7 +462,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
     const delegating = isDelegating && !isHomeTutoring; // Home Tutoring: tidak boleh digantikan
     if (!identity) return alert("Pilih jadwal kelasnya dulu ya! ✨");
     if (identity.category === 'PRIVATE' && identity.students.length === 0 && !editData) {
-      return alert("Jadwal Private ini belum punya siswa. Hubungi Admin untuk mengisinya ya Kak! 🙏");
+      return alert("Jadwal Private ini belum punya siswa. Hubungi Admin untuk mengisinya ya! 🙏");
     }
     if (delegating && !form.targetTeacherId) return alert("Pilih Nama Teman yang menggantikan dulu ya! ✨");
 
@@ -745,7 +745,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             </div>
 
             <div className="md:col-span-2 space-y-6 pt-4">
-               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 flex items-center gap-2"><Hash size={14} className="text-blue-500"/> Sesi Terdeteksi Otomatis (1-6)</label>
+               <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest flex items-center gap-2 leading-none"><Hash size={14} className="text-blue-500 -translate-y-px"/> Sesi Terdeteksi Otomatis (1-6)</label>
                <div className="grid grid-cols-6 gap-3">
                   {[1, 2, 3, 4, 5, 6].map(n => (
                     <div
@@ -756,18 +756,13 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                     </div>
                   ))}
                </div>
-               {!identity ? (
-                  <p className="text-[9px] font-black text-slate-400 uppercase ml-4 tracking-widest italic">Pilih jadwal dulu untuk melihat nomor sesi</p>
-               ) : activePackageId ? (
+               {!identity ? null : activePackageId ? (
                   <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest ml-4 italic animate-pulse">✨ Melanjutkan Siklus Aktif ({identity.category}) — Sesi {form.sessionNumber}/6 Terdeteksi</p>
                ) : (
                   <p className="text-[9px] font-black text-slate-400 uppercase ml-4 tracking-widest italic">🆕 Memulai Siklus 6 Sesi Baru (Sesi 1)</p>
                )}
 
                <div className="mt-4 bg-blue-50 p-6 rounded-[2rem] border border-blue-100 flex items-start gap-4 shadow-sm animate-in fade-in duration-700">
-                  <div className="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center shrink-0 shadow-md">
-                     <Info size={16} />
-                  </div>
                   <div className="space-y-3">
                      <p className="text-[9px] font-bold text-blue-800 uppercase italic leading-relaxed tracking-wide">
                         "Jika nomor sesi tidak sesuai, mohon cek kembali <span className="font-black underline">Jadwal Kelas</span> yang dipilih dan <span className="font-black underline">Tanggal Pelaksanaan</span> ✨"
@@ -780,7 +775,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             </div>
 
             <div className="space-y-4">
-               <label className="text-[10px] font-black text-slate-400 uppercase tracking-widest ml-4 flex items-center gap-2"><Timer size={14} className="text-blue-500"/> Durasi Mengajar (Jam)</label>
+               <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest flex items-center gap-2 leading-none"><Timer size={14} className="text-blue-500 -translate-y-px"/> Durasi Mengajar (Jam)</label>
                <div className="h-[72px] rounded-[2rem] bg-orange-500 border-2 border-orange-500 shadow-lg flex items-center justify-center gap-2 text-white cursor-default">
                   <span className="font-black text-[11px]">2 JAM</span>
                   <span className="font-black text-[11px]">/ PERTEMUAN</span>
@@ -788,7 +783,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             </div>
 
             <div className="space-y-4">
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest flex items-center gap-2"><Clock size={14} className="text-blue-500"/> Tanggal Pelaksanaan</label>
+               <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest flex items-center gap-2 leading-none"><Clock size={14} className="text-blue-500 -translate-y-px"/> Tanggal Pelaksanaan</label>
                <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner h-[72px]" />
             </div>
 
