@@ -342,6 +342,9 @@ const uniqueCategories = useMemo(() => {
         items[key] = {
           id: key, packageId: log.packageId, teacherId: log.teacherId, teacherName: log.teacherName,
           className: log.className, amount: 0, sessionCount: 0, packageContextLogs,
+          // Jumlah sesi yang sudah terisi di PAKET ini (semua guru), bukan cuma sesi guru penerima.
+          // Dipakai buat urutan antrean: guru pengganti ikut naik kalau paketnya sudah 6 sesi.
+          packageFilled: packageContextLogs.length,
           category: log.sessionCategory || 'REGULER',
           studentName: log.sessionCategory === 'REGULER' ? 'GABUNGAN' : (log.studentsAttended?.[0] || 'UMUM'),
           lastUpdate: log.date
@@ -356,7 +359,13 @@ const uniqueCategories = useMemo(() => {
       const q = payrollSearch.toLowerCase();
       result = result.filter((it: any) => it.teacherName.toLowerCase().includes(q) || it.className.toLowerCase().includes(q) || it.studentName.toLowerCase().includes(q) || it.category.toLowerCase().includes(q));
     }
-    return result.sort((a, b) => new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime());
+    // Paket yang sudah paling penuh (6 sesi) di atas, lalu 5, 4, dst.
+    // Dihitung dari total sesi di paket (semua guru), jadi guru pengganti yang cuma
+    // punya 1 sesi tetap naik kalau paketnya sudah 6 sesi. Kalau sama, update terbaru dulu.
+    return result.sort((a: any, b: any) => {
+      if (b.packageFilled !== a.packageFilled) return b.packageFilled - a.packageFilled;
+      return new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime();
+    });
   }, [attendanceLogs, payrollSearch]);
 
   // 🚗 Rincian transport — KHUSUS Home Tutoring (kolom transportamount / transportteacherid di student_payments).
@@ -1185,7 +1194,6 @@ const executePayTeacher = async () => {
                       <p className="flex items-center gap-1.5"><UserCheck size={13} className="text-slate-400"/> Penerima: {it.teacherName}</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                      <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${it.category === 'PRIVATE' ? 'bg-orange-500 text-white' : 'bg-blue-600 text-white'}`}>{it.category}</span>
                       <span className="flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider text-slate-500"><Calendar size={13} className="text-slate-400"/> Update {formatDate(it.lastUpdate)}</span>
                     </div>
                   </div>
