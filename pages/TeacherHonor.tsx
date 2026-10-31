@@ -538,8 +538,8 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
             <div className="flex bg-white/5 backdrop-blur-xl p-6 rounded-[2.5rem] border border-white/10 items-center gap-6 min-w-[260px]">
                <div className="w-16 h-16 bg-orange-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-900/40"><Wallet size={32}/></div>
                <div>
-                  <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Belum Cair ({selectedYear}):</p>
-                  <h4 className="text-3xl font-black text-orange-400 italic">Rp {formatRupiah(unpaidTotal)}</h4>
+                  <p className="text-[9px] font-black uppercase text-orange-400 tracking-widest">Belum Cair ({selectedYear}):</p>
+                  <h4 className="text-3xl font-black text-slate-200 italic">Rp {formatRupiah(unpaidTotal)}</h4>
                </div>
             </div>
          </div>
@@ -632,9 +632,9 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                       </div>
                    </div>
 
-                   <div className={`shrink-0 lg:min-w-[200px] px-6 py-5 rounded-[2rem] bg-gradient-to-br to-white border text-left lg:text-center flex flex-col justify-center ${pkg.status === 'LUNAS' ? 'from-emerald-50 border-emerald-100' : 'from-orange-50 border-orange-100'}`}>
-                      <p className={`text-[9px] font-black uppercase tracking-[0.25em] mb-1.5 ${pkg.status === 'LUNAS' ? 'text-emerald-500' : 'text-orange-500'}`}>{pkg.status === 'LUNAS' ? 'Diterima' : 'Belum Cair'}</p>
-                      <p className={`text-2xl font-black italic tracking-tighter whitespace-nowrap ${pkg.status === 'LUNAS' ? 'text-emerald-600' : 'text-orange-600'}`}>Rp {formatRupiah(pkg.myTotalPaid)}</p>
+                   <div className="shrink-0 lg:min-w-[200px] px-6 py-5 rounded-[2rem] bg-slate-50 border border-slate-100 text-left lg:text-center flex flex-col justify-center">
+                      <p className={`text-[9px] font-black uppercase tracking-[0.25em] mb-1.5 ${pkg.status === 'LUNAS' ? 'text-emerald-600' : 'text-orange-600'}`}>{pkg.status === 'LUNAS' ? 'Diterima' : 'Belum Cair'}</p>
+                      <p className="text-2xl font-black italic tracking-tighter text-slate-700 whitespace-nowrap">Rp {formatRupiah(pkg.myTotalPaid)}</p>
                    </div>
                 </div>
 
