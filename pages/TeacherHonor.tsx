@@ -434,7 +434,13 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
           logs: fullCycle,
           myTotalPaid: myEarningsInThisCycle,
           lastUpdate: log.date,
-          status: fullCycle.some(l => l.teacherId === user.id && l.paymentStatus === 'UNPAID') ? 'ANTREAN' : 'LUNAS',
+          // LUNAS hanya kalau memang tidak ada yang tersisa untuk dibayar.
+          // Kalau guru ini punya sesi sendiri di paket -> cek sesi miliknya.
+          // Kalau TIDAK punya sesi sendiri (semua sesinya digantikan teman) -> baru LUNAS kalau seluruh sesi paket sudah dibayar.
+          // (Tanpa ini, 'some' pada daftar kosong = false, sehingga paket yang cuma berisi sesi digantikan salah tampil LUNAS.)
+          status: (myCycleLogs.length > 0
+            ? myCycleLogs.some(l => l.paymentStatus === 'UNPAID')
+            : fullCycle.some(l => l.paymentStatus === 'UNPAID')) ? 'ANTREAN' : 'LUNAS',
           receiptData: fullCycle.find(l => l.teacherId === user.id && l.paymentStatus === 'PAID' && l.receiptData)?.receiptData || null,
           paidDate: fullCycle.find(l => l.teacherId === user.id && l.paymentStatus === 'PAID')?.paidDate || null,
           fullClassName: stripLevel(log.className || ''),
