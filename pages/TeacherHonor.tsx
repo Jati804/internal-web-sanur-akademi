@@ -36,6 +36,10 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
 
   const years = Array.from({ length: 11 }, (_, i) => (2024 + i).toString());
 
+  // Level di nama kelas tidak lagi ditampilkan ("X (BASIC) - REGULER 3" -> "X - REGULER 3").
+  // Hanya untuk tampilan: data di database tidak diubah.
+  const stripLevel = (name: string) => String(name || '').replace(/\s*\([^()]*\)(\s*-\s*[^()]*)$/, '$1');
+
   const formatDate = (dateStr: string) => {
     if (!dateStr) return "-";
     return dateStr.split('-').reverse().join('/');
@@ -407,13 +411,27 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
           .filter(l => l.teacherId === user.id)
           .reduce((sum, curr) => sum + (curr.earnings || 0), 0);
         
-        const studentName = log.studentsAttended?.[0] || 'REGULER';
+        // Nama siswa di kartu = isi sesi TERAKHIR milik guru ini di paket tersebut
+        // (kalau semua sesinya didelegasikan, pakai sesi terakhir paket). Sesi lama yang
+        // tersimpan 'REGULER' tetap tampil GABUNGAN.
+        const myCycleLogs = fullCycle.filter(l => l.teacherId === user.id);
+        const lastRef: any = [...(myCycleLogs.length ? myCycleLogs : fullCycle)]
+          .sort((a, b) => (a.sessionNumber || 0) - (b.sessionNumber || 0))
+          .pop() || log;
+        const studentNames: string[] = (Array.isArray(lastRef.studentsAttended) ? lastRef.studentsAttended : [])
+          .filter((n: string) => n && n !== 'REGULER');
+        const studentName = studentNames.length === 0
+          ? (log.studentsAttended?.[0] || 'REGULER')
+          : studentNames.length <= 3
+            ? studentNames.join(', ')
+            : `${studentNames.slice(0, 3).join(', ')} +${studentNames.length - 3}`;
         const isCycleOwner = fullCycle.some(l => l.originalTeacherId === user.id);
 
         groups[pkgId] = {
           id: pkgId,
-          className: log.className || 'SLOT UMUM',
+          className: stripLevel(log.className || 'SLOT UMUM'),
           studentName: studentName === 'REGULER' ? 'GABUNGAN' : studentName,
+          studentSearch: studentNames.join(' '),
           category: log.sessionCategory || 'REGULER',
           logs: fullCycle,
           myTotalPaid: myEarningsInThisCycle,
@@ -421,7 +439,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
           status: fullCycle.some(l => l.teacherId === user.id && l.paymentStatus === 'UNPAID') ? 'ANTREAN' : 'LUNAS',
           receiptData: fullCycle.find(l => l.teacherId === user.id && l.paymentStatus === 'PAID' && l.receiptData)?.receiptData || null,
           paidDate: fullCycle.find(l => l.teacherId === user.id && l.paymentStatus === 'PAID')?.paidDate || null,
-          fullClassName: log.className,
+          fullClassName: stripLevel(log.className || ''),
           // 🏠 Home Tutoring: transport diisi admin saat pencairan (disimpan di satu baris sesi terakhir paket)
           isHomeTutoring: String(log.className || '').toUpperCase().includes('HOME TUTORING'),
           myTransport: fullCycle
@@ -445,6 +463,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
       results = results.filter((g: any) => 
         g.className.toLowerCase().includes(term) ||
         g.studentName.toLowerCase().includes(term) ||
+        (g.studentSearch || '').toLowerCase().includes(term) ||
         g.id.toLowerCase().includes(term)
       );
     }
