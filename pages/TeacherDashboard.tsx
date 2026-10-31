@@ -96,7 +96,6 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
     () => new Map((studentAccounts || []).map((s: any) => [String(s.id), s])),
     [studentAccounts]
   );
-  const todayName = DAYS[(new Date().getDay() + 6) % 7];
 
   // Sesi lama (dibuat sebelum fitur jadwal) atau slotnya sudah tidak ada -> identitas kelas dikunci dari data sesinya
   const legacyEdit = !!editData && !(editData.scheduleId && scheduleList.some(it => String(it.id) === String(editData.scheduleId)));
@@ -696,12 +695,6 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                      <div key={g.day} className="space-y-3">
                        <div className="flex items-center gap-3 px-2">
                          <h4 className="text-sm font-black text-slate-800 uppercase italic tracking-tight">{g.day}</h4>
-                         {g.day === todayName && (
-                           <span className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest">
-                             <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                             <span className="text-slate-400">Hari ini</span>
-                           </span>
-                         )}
                        </div>
                        <div className="space-y-2">
                          {g.list.map(it => {
