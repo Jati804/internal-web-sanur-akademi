@@ -2,624 +2,532 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { User, Attendance } from '../types';
 import ModalPortal from '../ModalPortal.tsx';
 import { supabase } from '../services/supabase.ts';
-import { DAYS, sortSchedule, fmtRange, stripPelatihan } from './AdminAcademic.tsx';
-import type { ScheduleItem } from './AdminAcademic.tsx';
-import {
-  ClipboardCheck, Loader2, Clock, Send, Zap, HeartPulse,
-  UserPlus, Wallet, Hash, Timer, RotateCcw, Save, Sparkles,
-  AlertTriangle, X, Check, CalendarDays
+import { 
+  Calendar, UserCheck, ArrowRight,
+  ClipboardCheck, Wallet, Edit3, Repeat, Clock, Sparkles,
+  ChevronDown, Filter, Search, X, FileDown, Eye, Loader2,
+  Zap, Info, Trash2, AlertTriangle, Check, CheckCircle2, Maximize2
 } from 'lucide-react';
 import * as ReactRouterDOM from 'react-router-dom';
+import { jsPDF } from 'jspdf';
+
 const { Link, useLocation, useNavigate } = ReactRouterDOM as any;
 
-// ============================================================================
-// 📅 PRESENSI BERBASIS JADWAL
-// Guru TIDAK lagi memilih matpel / level / ruangan / siswa satu per satu.
-// Guru cukup memilih salah satu slot dari jadwal yang dia pegang (class_schedule),
-// lalu mengisi TANGGAL ASLI mengajar. Hari di slot hanya label pengenal kelas,
-// tidak dicek terhadap tanggal (kelas pengganti di hari lain tetap sah).
-//
-// Identitas paket honor = ID slot (kolom attendance.scheduleid), bukan lagi
-// kombinasi matpel+level+ruang. Nama siswa disimpan di tiap sesi (studentsattended)
-// sesuai isi slot SAAT sesi diinput, jadi riwayat tidak berubah kalau admin mengganti siswa.
-// ============================================================================
-
-interface TeacherDashboardProps {
+interface TeacherHonorProps {
   user: User;
   logs: Attendance[];
-  studentAccounts: User[];
-  schedule: ScheduleItem[];
-  salaryConfig: { regulerRate: number, privateRate: number };
-  teachers: User[];
-  refreshAllData: () => Promise<void>;
+  refreshAllData?: () => Promise<void>;
 }
 
-// Satu aturan "ruang private" untuk semua tempat (sama dengan ScheduleModal)
-const isPrivateRoom = (room: string) => /PRIVATE|PRIVAT|HOME TUTORING/i.test(room || '');
-
-const todayJakarta = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
-
-const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
-  user, logs, studentAccounts, schedule, salaryConfig, teachers, refreshAllData
-}) => {
-  const [loading, setLoading] = useState(false);
-  const [isDetecting, setIsDetecting] = useState(false);
-  const [isDelegating, setIsDelegating] = useState(false);
-  const location = useLocation();
+const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const highlightId = location.state?.highlightId;
+  
+  const [selectedYear, setSelectedYear] = useState('2026');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [showProofModal, setShowProofModal] = useState<string | null>(null);
+  const [showPurgedInfo, setShowPurgedInfo] = useState(false);
+  const [isDownloading, setIsDownloading] = useState<string | null>(null);
+  const [actionModalLog, setActionModalLog] = useState<any | null>(null); // { log, pkg } - pilihan Edit/Hapus per sesi
+  const [confirmDeleteLog, setConfirmDeleteLog] = useState<any | null>(null); // { log, pkg } - konfirmasi hapus sesi
+  const [confirmDeletePkg, setConfirmDeletePkg] = useState<any | null>(null); // pkg - konfirmasi hapus seluruh paket
+  const [isDeleting, setIsDeleting] = useState(false);
 
-  const editData = location.state?.editLog as any | undefined;
-  const formCardRef = useRef<HTMLDivElement>(null);
+  const years = Array.from({ length: 11 }, (_, i) => (2024 + i).toString());
 
-  // AUTO-SCROLL KE KOTAK FORM (BUKAN KE ATAS HALAMAN) KHUSUS MODE EDIT
+  // Level di nama kelas tidak lagi ditampilkan ("X (BASIC) - REGULER 3" -> "X - REGULER 3").
+  // Hanya untuk tampilan: data di database tidak diubah.
+  const stripLevel = (name: string) => String(name || '').replace(/\s*\([^()]*\)(\s*-\s*[^()]*)$/, '$1');
+
+  const formatDate = (dateStr: string) => {
+    if (!dateStr) return "-";
+    return dateStr.split('-').reverse().join('/');
+  };
+
+  // 🆕 Format angka pakai titik sebagai pemisah ribuan (format Indonesia)
+  // Contoh: 720000 -> "720.000"
+  const formatRupiah = (amt: number) => {
+    if (!amt || isNaN(amt)) return '0';
+    return amt.toString().replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+  };
+
+  const getFullMonthName = (dateStr?: string) => {
+    const dateToUse = dateStr ? new Date(dateStr) : new Date();
+    return new Intl.DateTimeFormat('id-ID', { month: 'long', year: 'numeric' }).format(dateToUse).toUpperCase();
+  };
+
+  const generateProRef = (id: string) => {
+    const cleanId = id.replace(/PKG-|SIMULASI-|-/g, '').toUpperCase();
+    return `SN/PAY/${selectedYear}/${cleanId.slice(-6)}`;
+  };
+
+  // Muat gambar dari URL jadi data URL (base64), dibutuhin jsPDF buat nempel gambar (addImage).
+  // Sekalian balikin dimensi asli gambarnya biar aspect ratio-nya nggak gepeng pas ditempel.
+  const loadImageAsDataURL = (url: string): Promise<{ dataUrl: string; width: number; height: number }> => {
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) { reject(new Error('Canvas context tidak tersedia')); return; }
+        ctx.drawImage(img, 0, 0);
+        resolve({ dataUrl: canvas.toDataURL('image/png'), width: img.naturalWidth, height: img.naturalHeight });
+      };
+      img.onerror = () => reject(new Error('Gagal memuat gambar'));
+      img.src = url;
+    });
+  };
+
+  const LOGO_URL = "https://raw.githubusercontent.com/Jati804/internal-web-sanur-akademi/main/images/SANUR%20Logo.png";
+
+  const handleDownloadPdf = async (pkg: any) => {
+    setIsDownloading(pkg.id);
+    try {
+      const pdf = new jsPDF({ orientation: 'portrait', unit: 'mm', format: 'a4' });
+      const marginL = 20;
+      const marginR = 190;
+
+      // Palet warna (RGB), disamain persis sama warna Tailwind yang dipake di desain web-nya
+      const slate900: [number, number, number] = [15, 23, 42];
+      const slate800: [number, number, number] = [30, 41, 59];
+      const slate400: [number, number, number] = [148, 163, 184];
+      const slate200: [number, number, number] = [226, 232, 240];
+      const slate100: [number, number, number] = [241, 245, 249];
+      const blue600: [number, number, number] = [37, 99, 235];
+      const blue400: [number, number, number] = [96, 165, 250];
+
+      // Bingkai luar dobel (niru efek border-8 border-double), mepet ke tepi kertas
+      pdf.setDrawColor(...slate100);
+      pdf.setLineWidth(1.4);
+      pdf.rect(2, 2, 206, 293);
+      pdf.setLineWidth(0.3);
+      pdf.rect(4.5, 4.5, 201, 288);
+
+      let y = 24;
+
+      // ===== HEADER: Logo kiri, judul + REF kanan =====
+      try {
+        const logo = await loadImageAsDataURL(LOGO_URL);
+        const logoW = 36;
+        const logoH = (logo.height / logo.width) * logoW;
+        pdf.addImage(logo.dataUrl, 'PNG', marginL, y - 8, logoW, logoH);
+      } catch {
+        // Kalau logo gagal dimuat (misal lagi offline), lanjut tanpa logo — nggak fatal
+      }
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(15);
+      pdf.setTextColor(...slate800);
+      pdf.text('SLIP HONOR DIGITAL', marginR, y, { align: 'right' });
+      pdf.setFontSize(9);
+      pdf.text(`REF: ${generateProRef(pkg.id)}`, marginR, y + 6, { align: 'right' });
+
+      y += 18;
+      pdf.setDrawColor(...slate900);
+      pdf.setLineWidth(0.6);
+      pdf.line(marginL, y, marginR, y);
+      y += 10;
+
+      // ===== INFO GRID: Nama Pengajar / Ruangan Kelas / Tanggal Terbit =====
+      // Lebar kolom nggak sama rata — Nama & Ruangan Kelas dikasih lebih luas (biar nama
+      // matkul yang panjang nggak kepaksa numpuk 3 baris), Tanggal dibiarin sempit & rata
+      // kanan (soalnya isinya emang selalu pendek). Yang dijaga konsisten cuma JARAK (gap)
+      // antar kolomnya, bukan lebar kolomnya.
+      const colGap = 6;
+      const col1W = 55, col2W = 71; // sisanya (170 - 55 - 71 - 6 - 6 = 32mm) buat kolom Tanggal
+      const col1X = marginL;
+      const col2X = col1X + col1W + colGap;
+      const col3RightEdge = marginR; // kolom Tanggal rata kanan, nempel ke margin kanan
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(7);
+      pdf.setTextColor(...slate400);
+      pdf.text('NAMA PENGAJAR:', col1X, y);
+      pdf.text('RUANGAN KELAS:', col2X, y);
+      pdf.text('TANGGAL TERBIT:', col3RightEdge, y, { align: 'right' });
+
+      y += 6;
+      pdf.setFontSize(11);
+      pdf.setTextColor(...slate900);
+      const namaLines = pdf.splitTextToSize(user.name, col1W);
+      pdf.text(namaLines, col1X, y);
+
+      pdf.setTextColor(...slate800);
+      const kelasLines = pdf.splitTextToSize(String(pkg.fullClassName).toUpperCase(), col2W);
+      pdf.text(kelasLines, col2X, y);
+
+      pdf.setTextColor(...blue600);
+      pdf.text(formatDate(pkg.paidDate || pkg.lastUpdate).toUpperCase(), col3RightEdge, y, { align: 'right' });
+
+      y += (Math.max(namaLines.length, kelasLines.length) - 1) * 5;
+
+      if (pkg.category === 'PRIVATE') {
+        y += 7;
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(6);
+        pdf.setTextColor(...blue400);
+        pdf.text('SISWA PRIVATE:', col2X, y);
+        y += 5;
+        pdf.setFontSize(10);
+        pdf.setTextColor(...blue600);
+        pdf.text(String(pkg.studentName).toUpperCase(), col2X, y);
+      }
+
+      y += 13;
+
+      // ===== SECTION HEADER: Rincian Per Sesi (ikon "layers" digambar manual pake garis) =====
+      pdf.setDrawColor(...slate900);
+      pdf.setLineWidth(0.5);
+      pdf.line(marginL, y - 1.5, marginL + 3.5, y - 1.5);
+      pdf.line(marginL + 0.7, y, marginL + 4.2, y);
+      pdf.line(marginL + 1.4, y + 1.5, marginL + 4.9, y + 1.5);
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(9);
+      pdf.setTextColor(...slate900);
+      pdf.text('RINCIAN PER SESI', marginL + 9, y + 1);
+
+      y += 4;
+      pdf.setDrawColor(...slate100);
+      pdf.setLineWidth(0.3);
+      pdf.line(marginL, y, marginR, y);
+      y += 9;
+
+      // ===== TABEL SESI =====
+      pkg.paidSessionsDetails.forEach((s: any, idx: number) => {
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(9);
+        pdf.setTextColor(...slate400);
+        pdf.text(String(s.sessionNumber), marginL + 3, y, { align: 'center' });
+
+        pdf.setFontSize(10);
+        pdf.setTextColor(...slate800);
+        pdf.text(formatDate(s.date).toUpperCase(), marginL + 13, y);
+
+        pdf.setFontSize(9);
+        pdf.setTextColor(...blue600);
+        pdf.text(`${s.duration || 2} JAM`, marginL + 100, y, { align: 'center' });
+
+        pdf.setFontSize(10);
+        pdf.setTextColor(...slate900);
+        pdf.text(`Rp ${formatRupiah(s.earnings)}`, marginR, y, { align: 'right' });
+
+        y += 7;
+        if (idx < pkg.paidSessionsDetails.length - 1) {
+          pdf.setDrawColor(...slate100);
+          pdf.setLineWidth(0.2);
+          pdf.line(marginL, y - 3, marginR, y - 3);
+        }
+        y += 3;
+      });
+
+      y += 3;
+
+      // ===== TOTAL & VERIFIKASI =====
+      pdf.setDrawColor(...slate900);
+      pdf.setLineWidth(0.6);
+      pdf.line(marginL, y, marginR, y);
+      y += 6;
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(8);
+      pdf.setTextColor(...slate400);
+      pdf.text('VERIFIKASI SISTEM:', marginL, y);
+      pdf.text('TERVERIFIKASI DIGITAL', marginR, y, { align: 'right' });
+
+      y += 5;
+      pdf.setTextColor(...blue600);
+      pdf.text('STATUS: LUNAS', marginR, y, { align: 'right' });
+
+      // 🏠 Home Tutoring: transport tampil sebagai baris tersendiri (dibayar 100% tanpa potongan)
+      const transportPaid = pkg.isHomeTutoring ? (Number(pkg.myTransport) || 0) : 0;
+      const grandTotal = pkg.myTotalPaid + transportPaid;
+
+      if (transportPaid > 0) {
+        y += 11;
+        pdf.setFont('helvetica', 'bold');
+        pdf.setFontSize(8);
+        pdf.setTextColor(...slate400);
+        pdf.text('HONOR MENGAJAR', marginL, y);
+        pdf.setFontSize(10);
+        pdf.setTextColor(...slate800);
+        pdf.text(`Rp ${formatRupiah(pkg.myTotalPaid)}`, marginR, y, { align: 'right' });
+
+        y += 7;
+        pdf.setFontSize(8);
+        pdf.setTextColor(...slate400);
+        pdf.text('HONOR TRANSPORT', marginL, y);
+        pdf.setFontSize(10);
+        pdf.setTextColor(...slate800);
+        pdf.text(`Rp ${formatRupiah(transportPaid)}`, marginR, y, { align: 'right' });
+
+        // Kalimat 100% khusus untuk transport saja (honor mengajar tetap ada potongan/charge yayasan)
+        y += 5;
+        pdf.setFont('helvetica', 'italic');
+        pdf.setFontSize(7);
+        pdf.setTextColor(...slate400);
+        const transportNote = pdf.splitTextToSize('Honor transport dibayarkan 100% dari orang tua siswa kepada guru, tanpa potongan.', marginR - marginL);
+        pdf.text(transportNote, marginL, y);
+        y += (transportNote.length - 1) * 3.5;
+        pdf.setFont('helvetica', 'bold');
+
+        y += 4;
+        pdf.setDrawColor(...slate100);
+        pdf.setLineWidth(0.3);
+        pdf.line(marginL, y, marginR, y);
+
+        y += 7;
+        pdf.setFontSize(8);
+        pdf.setTextColor(...slate400);
+        pdf.text('TOTAL DITERIMA', marginL, y);
+        y += 13;
+      } else {
+        y += 15;
+      }
+
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(27);
+      pdf.setTextColor(...blue600);
+      pdf.text(`Rp ${formatRupiah(grandTotal)}`, marginL, y);
+
+      y += 15;
+
+      // ===== FOOTER =====
+      pdf.setDrawColor(...slate200);
+      pdf.setLineWidth(0.3);
+      pdf.line(marginL, y, marginR, y);
+      y += 8;
+
+      pdf.setFont('helvetica', 'italic');
+      pdf.setFontSize(8);
+      pdf.setTextColor(...slate400);
+      const disclaimer = pdf.splitTextToSize(
+        '"Terima kasih atas kepercayaannya bergabung di SANUR Akademi Inspirasi. Slip ini adalah bukti pembayaran sah yang diverifikasi sistem internal."',
+        115
+      );
+      pdf.text(disclaimer, marginL, y);
+
+      // "Finance Sanur" rata kanan, sejajar sama baris atas paragraf terima kasih
+      // (nggak pake ikon lagi, jadi nggak perlu itung-itungan vertical-center lagi)
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(10);
+      pdf.setTextColor(...slate900);
+      pdf.text('FINANCE SANUR', marginR, y, { align: 'right' });
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(6);
+      pdf.setTextColor(...slate400);
+      pdf.text('OFFICIAL DIGITAL SLIP', marginR, y + 4, { align: 'right' });
+
+      pdf.save(`SLIP_HONOR_${user.name.replace(/[.,]/g, '').replace(/\s+/g, '_')}_${pkg.id.slice(-8)}.pdf`);
+    } catch (e) {
+      console.error('Gagal generate PDF:', e);
+      alert("Gagal mengunduh PDF. Coba lagi ya Kak!");
+    } finally {
+      setIsDownloading(null);
+    }
+  };
+
+  const handleDeleteSession = async () => {
+  if (!confirmDeleteLog) return;
+  setIsDeleting(true);
+  try {
+    const { error } = await supabase
+      .from('attendance')
+      .delete()
+      .eq('id', confirmDeleteLog.log.id);
+    
+    if (error) throw error;
+    if (refreshAllData) await refreshAllData();
+    
+    setConfirmDeleteLog(null); // Langsung close modal aja
+  } catch (e: any) {
+    alert("Terjadi kendala saat menghapus: " + e.message);
+  } finally {
+    setIsDeleting(false);
+  }
+};
+
+  const handleDeletePackage = async () => {
+  if (!confirmDeletePkg) return;
+  setIsDeleting(true);
+  try {
+    // ⚠️ SAFETY CHECK: pastikan tidak ada satupun sesi di paket ini yang sudah PAID
+    // (dicek ulang langsung ke DB, bukan cuma percaya state lokal, buat jaga-jaga kalau ada
+    // perubahan status pembayaran yang belum ke-refresh di layar)
+    const { data: freshRows, error: checkError } = await supabase
+      .from('attendance')
+      .select('id, paymentstatus')
+      .eq('packageid', confirmDeletePkg.id);
+
+    if (checkError) throw checkError;
+
+    const hasPaidSession = (freshRows || []).some((r: any) => r.paymentstatus === 'PAID');
+    if (hasPaidSession) {
+      alert("Paket ini sudah ada sesi yang LUNAS, jadi tidak bisa dihapus. Silakan hubungi Admin ya Kak! 🙏");
+      setConfirmDeletePkg(null);
+      setIsDeleting(false);
+      return;
+    }
+
+    const { error } = await supabase
+      .from('attendance')
+      .delete()
+      .eq('packageid', confirmDeletePkg.id);
+
+    if (error) throw error;
+    if (refreshAllData) await refreshAllData();
+
+    setConfirmDeletePkg(null);
+  } catch (e: any) {
+    alert("Terjadi kendala saat menghapus: " + e.message);
+  } finally {
+    setIsDeleting(false);
+  }
+};
+
+  const cycleGroups = useMemo(() => {
+    if (!Array.isArray(logs)) return [];
+    const groups: Record<string, any> = {};
+    
+    const relevantLogs = logs.filter(l => 
+  (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG') && 
+  (l.teacherId === user.id || l.originalTeacherId === user.id) &&
+  l.teacherId !== 'SISWA_MANDIRI' && // TAMBAHAN BARIS INI
+  l.date.startsWith(selectedYear) &&
+  (l.earnings || 0) > 0
+);
+
+    relevantLogs.forEach(log => {
+      const pkgId = log.packageId || 'UNKNOWN';
+      if (!groups[pkgId]) {
+        const fullCycle = logs.filter(l => l.packageId === pkgId && (l.earnings || 0) > 0)
+                              .sort((a,b) => (a.sessionNumber||0) - (b.sessionNumber||0));
+
+        const myEarningsInThisCycle = fullCycle
+          .filter(l => l.teacherId === user.id)
+          .reduce((sum, curr) => sum + (curr.earnings || 0), 0);
+        
+        // Nama siswa di kartu = isi sesi TERAKHIR milik guru ini di paket tersebut
+        // (kalau semua sesinya didelegasikan, pakai sesi terakhir paket). Sesi lama yang
+        // tersimpan 'REGULER' tetap tampil GABUNGAN.
+        const myCycleLogs = fullCycle.filter(l => l.teacherId === user.id);
+        const lastRef: any = [...(myCycleLogs.length ? myCycleLogs : fullCycle)]
+          .sort((a, b) => (a.sessionNumber || 0) - (b.sessionNumber || 0))
+          .pop() || log;
+        const studentNames: string[] = (Array.isArray(lastRef.studentsAttended) ? lastRef.studentsAttended : [])
+          .filter((n: string) => n && n !== 'REGULER');
+        const studentName = studentNames.length === 0
+          ? (log.studentsAttended?.[0] || 'REGULER')
+          : studentNames.join(', ');
+        const isCycleOwner = fullCycle.some(l => l.originalTeacherId === user.id);
+
+        groups[pkgId] = {
+          id: pkgId,
+          className: stripLevel(log.className || 'SLOT UMUM'),
+          studentName: studentName === 'REGULER' ? 'GABUNGAN' : studentName,
+          studentSearch: studentNames.join(' '),
+          category: log.sessionCategory || 'REGULER',
+          logs: fullCycle,
+          myTotalPaid: myEarningsInThisCycle,
+          lastUpdate: log.date,
+          status: fullCycle.some(l => l.teacherId === user.id && l.paymentStatus === 'UNPAID') ? 'ANTREAN' : 'LUNAS',
+          receiptData: fullCycle.find(l => l.teacherId === user.id && l.paymentStatus === 'PAID' && l.receiptData)?.receiptData || null,
+          paidDate: fullCycle.find(l => l.teacherId === user.id && l.paymentStatus === 'PAID')?.paidDate || null,
+          fullClassName: stripLevel(log.className || ''),
+          // 🏠 Home Tutoring: transport diisi admin saat pencairan (disimpan di satu baris sesi terakhir paket)
+          isHomeTutoring: String(log.className || '').toUpperCase().includes('HOME TUTORING'),
+          myTransport: fullCycle
+            .filter(l => l.teacherId === user.id)
+            .reduce((sum, curr) => sum + (Number((curr as any).transportamount) || 0), 0),
+          paidSessionsDetails: fullCycle.filter(l => l.teacherId === user.id),
+          isCycleOwner: isCycleOwner,
+          // 🆕 Buat syarat tombol Hapus Paket: HARUS semua baris (siapapun pengajarnya) masih UNPAID
+          allUnpaid: fullCycle.every(l => l.paymentStatus === 'UNPAID'),
+          // 🆕 Buat syarat tombol Hapus Sesi kecil: cuma sesi dengan nomor tertinggi yang boleh dihapus
+          lastSessionNumber: fullCycle.reduce((max, l) => Math.max(max, l.sessionNumber || 0), 0)
+        };
+      } else if (new Date(log.date) > new Date(groups[pkgId].lastUpdate)) {
+        groups[pkgId].lastUpdate = log.date;
+      }
+    });
+
+    let results = Object.values(groups);
+    if (searchTerm.trim()) {
+      const term = searchTerm.toLowerCase();
+      results = results.filter((g: any) => 
+        g.className.toLowerCase().includes(term) ||
+        g.studentName.toLowerCase().includes(term) ||
+        (g.studentSearch || '').toLowerCase().includes(term) ||
+        g.id.toLowerCase().includes(term)
+      );
+    }
+    // Belum cair (ANTREAN) selalu di atas, LUNAS di bawah.
+    // Di dalam masing-masing kelompok, urut dari update terbaru.
+    return results.sort((a: any, b: any) => {
+      const aDone = a.status === 'LUNAS' ? 1 : 0;
+      const bDone = b.status === 'LUNAS' ? 1 : 0;
+      if (aDone !== bDone) return aDone - bDone;
+      return new Date(b.lastUpdate).getTime() - new Date(a.lastUpdate).getTime();
+    });
+  }, [logs, user.id, selectedYear, searchTerm]);
+
+  // LOGIKA AUTO-SCROLL KE PAKET TERBARU
   useEffect(() => {
-    if (editData) {
+    if (highlightId && cycleGroups.length > 0) {
+      // Tunggu render sebentar agar element muncul di DOM
       const timer = setTimeout(() => {
-        formCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      }, 300);
+        const element = document.getElementById(`pkg-card-${highlightId}`);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 500);
       return () => clearTimeout(timer);
     }
-  }, [editData]);
+  }, [highlightId, cycleGroups]);
 
-  const [form, setForm] = useState({
-    scheduleId: '',
-    targetTeacherId: '',
-    sessionNumber: 1,
-    duration: 2,
-    date: todayJakarta()
-  });
-
-  const [activePackageId, setActivePackageId] = useState<string | null>(null);
-  const [activeOriginalTeacherId, setActiveOriginalTeacherId] = useState<string | null>(null);
-
-  const [blockModal, setBlockModal] = useState<{
-    ownerName: string;
-    className: string;
-    currentSession: number;
-  } | null>(null);
-
-  const [showTeacherSuggestions, setShowTeacherSuggestions] = useState(false);
-  const [teacherInputValue, setTeacherInputValue] = useState('');
-
-  // ===== JADWAL MILIK GURU INI =====
-  const scheduleList: ScheduleItem[] = Array.isArray(schedule) ? schedule : [];
-  const myId = String(user.id);
-  const mySlots = useMemo(
-    () => sortSchedule(scheduleList.filter(it => String(it.teacherId) === myId)),
-    [scheduleList, myId]
-  );
-  const slotsByDay = useMemo(
-    () => DAYS.map(day => ({ day, list: mySlots.filter(i => i.day === day) })).filter(g => g.list.length > 0),
-    [mySlots]
-  );
-  const studentById = useMemo(
-    () => new Map((studentAccounts || []).map((s: any) => [String(s.id), s])),
-    [studentAccounts]
-  );
-  const todayName = DAYS[(new Date().getDay() + 6) % 7];
-
-  // Sesi lama (dibuat sebelum fitur jadwal) atau slotnya sudah tidak ada -> identitas kelas dikunci dari data sesinya
-  const legacyEdit = !!editData && !(editData.scheduleId && scheduleList.some(it => String(it.id) === String(editData.scheduleId)));
-  const selectedSlot = scheduleList.find(it => String(it.id) === form.scheduleId) || null;
-
-  // 🏷️ IDENTITAS KELAS: semua turunan dari slot yang dipilih
-  const identity = useMemo(() => {
-    if (legacyEdit && editData) {
-      const className = String(editData.className || '');
-      return {
-        scheduleId: null as string | null,
-        className,
-        level: String(editData.level || ''),
-        category: (editData.sessionCategory || 'REGULER') as 'REGULER' | 'PRIVATE',
-        students: ((editData.studentsAttended || []) as string[]).filter(Boolean),
-        room: className.split(' - ').pop() || ''
-      };
-    }
-    if (!selectedSlot) return null;
-    const room = selectedSlot.room || '';
-    const students = (selectedSlot.participants || [])
-      .map(p => String(studentById.get(String(p.id))?.name || p.name || '').toUpperCase().trim())
-      .filter(Boolean);
-    return {
-      scheduleId: String(selectedSlot.id),
-      className: `${selectedSlot.subject} - ${room}`.toUpperCase().trim(),
-      level: '',
-      category: (isPrivateRoom(room) ? 'PRIVATE' : 'REGULER') as 'REGULER' | 'PRIVATE',
-      students,
-      room
-    };
-  }, [legacyEdit, editData, selectedSlot, studentById]);
-
-  const isHomeTutoring = (identity?.className || '').toUpperCase().includes('HOME TUTORING');
-
-  // Apakah slot diganti saat edit? (= pindah sesi ke paket slot lain)
-  const isSlotChanged = !!editData && !legacyEdit && form.scheduleId !== String(editData.scheduleId);
-
-  // Nama siswa yang disimpan di sesi ini:
-  // - sesi baru / dipindah slot -> isi slot saat ini
-  // - edit di slot yang sama -> pertahankan yang sudah tersimpan (riwayat tidak berubah)
-  const studentsToSave = (): string[] => {
-    if (editData && !isSlotChanged) {
-      const old = (editData.studentsAttended || []) as string[];
-      return old.length ? old : ['REGULER'];
-    }
-    return identity && identity.students.length ? identity.students : ['REGULER'];
-  };
-
-  // ===== ISI FORM SAAT MODE EDIT =====
-  useEffect(() => {
-    if (editData) {
-      setForm({
-        scheduleId: editData.scheduleId ? String(editData.scheduleId) : '',
-        targetTeacherId: editData.teacherId !== user.id ? editData.teacherId : '',
-        sessionNumber: editData.sessionNumber || 1,
-        duration: editData.duration || 2,
-        date: editData.date
-      });
-      setIsDelegating(editData.teacherId !== user.id);
-      setActivePackageId(editData.packageId || null);
-      setActiveOriginalTeacherId(editData.originalTeacherId || null);
-      setTeacherInputValue(editData.teacherId !== user.id ? (teachers.find(t => t.id === editData.teacherId)?.name || '') : '');
-    }
-  }, [editData, user.id]);
-
-  // Nutup mode edit: balikin form ke kosong & bersihin location.state
-  const handleCloseEdit = () => {
-    setForm({ scheduleId: '', targetTeacherId: '', sessionNumber: 1, duration: 2, date: todayJakarta() });
-    setIsDelegating(false);
-    setActivePackageId(null);
-    setActiveOriginalTeacherId(null);
-    setTeacherInputValue('');
-    navigate(location.pathname, { replace: true, state: {} });
-  };
-
-  // Home Tutoring: guru wajib datang sendiri -> tidak ada opsi "digantikan teman"
-  useEffect(() => {
-    if (isHomeTutoring && isDelegating) {
-      setIsDelegating(false);
-      setForm(prev => ({ ...prev, targetTeacherId: '' }));
-      setTeacherInputValue('');
-      setShowTeacherSuggestions(false);
-    }
-  }, [isHomeTutoring, isDelegating]);
-
-  const estimatedHonor = useMemo(() => {
-    const isPrivate = identity?.category === 'PRIVATE';
-    const hourlyRate = isPrivate ? (salaryConfig?.privateRate || 25000) : (salaryConfig?.regulerRate || 15000);
-    return Math.round(hourlyRate * form.duration);
-  }, [identity?.category, form.duration, salaryConfig]);
-
-  // ===== Helper urutan sesi berdasarkan TANGGAL =====
-  type PkgRow = { id: string; sessionnumber: number; date: string; paymentstatus?: string };
-  type PkgChange = { id: string; from: number; to: number; date: string; paymentstatus?: string };
-
-  const NEW_ID = 'ATT-~'; // ID sementara untuk sesi baru: kalau tanggal sama, sesi baru dianggap paling akhir
-  const dateOnly = (d: any) => String(d).slice(0, 10);
-  const fmtDate = (d: any) => dateOnly(d).split('-').reverse().join('/');
-  const toPkgRows = (arr: any[]): PkgRow[] =>
-    arr.map(r => ({
-      id: r.id,
-      sessionnumber: Number(r.sessionnumber) || 0,
-      date: dateOnly(r.date),
-      paymentstatus: r.paymentstatus
-    }));
-
-  const placeInPackage = (others: PkgRow[], date: string, id: string) => {
-    const sorted = [...others].sort((a, b) => a.sessionnumber - b.sessionnumber);
-    const idx = sorted.findIndex(r => r.date > date || (r.date === date && r.id > id));
-    const position = idx === -1 ? sorted.length + 1 : idx + 1;
-    const changes: PkgChange[] = sorted
-      .map((r, i) => ({
-        id: r.id,
-        from: r.sessionnumber,
-        to: i < position - 1 ? i + 1 : i + 2,
-        date: r.date,
-        paymentstatus: r.paymentstatus
-      }))
-      .filter(c => c.to !== c.from);
-    return { position, changes };
-  };
-
-  const compressPackage = (rows: PkgRow[]): PkgChange[] =>
-    [...rows]
-      .sort((a, b) => a.sessionnumber - b.sessionnumber)
-      .map((r, i) => ({ id: r.id, from: r.sessionnumber, to: i + 1, date: r.date, paymentstatus: r.paymentstatus }))
-      .filter(c => c.to !== c.from);
-
-  const toOps = (changes: PkgChange[]) => ({
-    p_up: changes.filter(c => c.to > c.from).sort((a, b) => b.from - a.from).map(c => ({ id: c.id, sessionnumber: c.to })),
-    p_down: changes.filter(c => c.to < c.from).sort((a, b) => a.from - b.from).map(c => ({ id: c.id, sessionnumber: c.to }))
-  });
-
-  const friendlyError = (e: any) => {
-    const raw = String(e?.message || '');
-    const low = raw.toLowerCase();
-    if (low.includes('failed to fetch') || low.includes('network')) return 'Koneksi internet terputus.';
-    if (low.includes('jwt') || low.includes('expired')) return 'Sesi login sudah habis, silakan login ulang.';
-    if (low.includes('row-level security') || low.includes('permission denied')) return 'Akun Kakak tidak punya izin untuk mengubah data ini.';
-    if (low.includes('duplicate key')) return 'Nomor sesi bentrok dengan sesi lain.';
-    if (low.includes('sesi_lunas')) return 'Ada sesi LUNAS yang nomornya ikut bergeser.';
-    if (low.includes('could not find the function')) return 'Fitur urutan sesi belum aktif di database.';
-    return raw || 'Terjadi kendala yang tidak diketahui.';
-  };
-
-  // 🔎 Cari paket aktif untuk SLOT yang dipilih (identitas paket = ID slot).
-  // excludeId dipakai saat edit/pindah: sesi yang lagi dipindah jangan ikut dihitung.
-  const findActivePackage = (excludeId?: string) => {
-    if (!identity?.scheduleId) return null;
-    const relevantLogs = logs.filter(l =>
-      String((l as any).scheduleId || '') === identity.scheduleId &&
-      (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG') &&
-      l.id !== excludeId
-    );
-
-    // Aktivitas input terbaru (ID = timestamp) menentukan paket mana yang sedang berjalan
-    const latestAction = [...relevantLogs].sort((a, b) => b.id.localeCompare(a.id))[0];
-    if (!latestAction) return null;
-
-    const pkgLogs = relevantLogs.filter(l => l.packageId === latestAction.packageId);
-    const maxNum = pkgLogs.reduce((max, l) => Math.max(max, Number(l.sessionNumber) || 0), 0);
-
-    return {
-      packageId: latestAction.packageId || null,
-      originalTeacherId: latestAction.originalTeacherId || null,
-      // Nama kelas & level mengikuti paket yang dilanjutkan, supaya satu paket tidak
-      // berisi dua format nama (paket lama masih ber-"(LEVEL)", sesi baru tidak).
-      className: latestAction.className || null,
-      level: latestAction.level || '',
-      maxNum
-    };
-  };
-
-  // LOGIKA DETEKSI SESI OTOMATIS
-  useEffect(() => {
-    if (editData) {
-      setIsDetecting(false);
-      return;
-    }
-    if (!identity?.scheduleId || !Array.isArray(logs)) {
-      setForm(prev => (prev.sessionNumber === 1 ? prev : { ...prev, sessionNumber: 1 }));
-      setActivePackageId(null);
-      setActiveOriginalTeacherId(null);
-      setIsDetecting(false);
-      return;
-    }
-
-    setIsDetecting(true);
-
-    const timer = setTimeout(() => {
-      const active = findActivePackage();
-
-      if (active && active.maxNum < 6) {
-        // Paket belum penuh -> lanjutkan, nomor sesi mengikuti TANGGAL
-        const pkgRows = toPkgRows(
-          logs.filter(l => l.packageId === active.packageId && (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG'))
-        );
-        const { position } = placeInPackage(pkgRows, form.date, NEW_ID);
-        setForm(prev => ({ ...prev, sessionNumber: position }));
-        setActivePackageId(active.packageId);
-        setActiveOriginalTeacherId(active.originalTeacherId);
-      } else {
-        // Belum ada riwayat, atau paket terakhir sudah 6 sesi -> buka paket baru (Sesi 1)
-        setForm(prev => ({ ...prev, sessionNumber: 1 }));
-        setActivePackageId(null);
-        setActiveOriginalTeacherId(null);
-      }
-      setIsDetecting(false);
-    }, 400);
-
-    return () => clearTimeout(timer);
-  }, [logs, identity?.scheduleId, form.date, editData]);
-
-  // 👀 PREVIEW nomor sesi saat EDIT (sesuai urutan tanggal, sama seperti hasil saat dikirim)
-  useEffect(() => {
-    if (!editData || !identity) return;
-
-    let targetPkgId: string | null = editData.packageId || null;
-    let isNewPackage = false;
-
-    if (isSlotChanged) {
-      const dest = findActivePackage(editData.id);
-      if (dest && dest.packageId && dest.packageId !== editData.packageId) {
-        targetPkgId = dest.packageId;
-      } else {
-        isNewPackage = true;
-      }
-    }
-
-    let preview = 1;
-    if (!isNewPackage && targetPkgId) {
-      const rows = toPkgRows(
-        logs.filter(l => l.packageId === targetPkgId && l.id !== editData.id &&
-                         (l.status === 'SESSION_LOG' || l.status === 'SUB_LOG'))
-      );
-      preview = placeInPackage(rows, form.date, editData.id).position;
-    }
-
-    setForm(prev => (prev.sessionNumber === preview ? prev : { ...prev, sessionNumber: preview }));
-  }, [logs, form.scheduleId, form.date, editData, identity?.scheduleId]);
-
-  // 🔀 Ganti slot saat edit = pindahkan sesi ke paket slot tujuan (disisipkan sesuai tanggal).
-  const handleMoveSession = async (delegating: boolean) => {
-    if (!editData || !identity) return;
-    setLoading(true);
-    try {
-      const fullClassName = identity.className;
-      const targetTeacher = teachers.find(t => t.id === form.targetTeacherId);
-      const srcPkgId = editData.packageId;
-
-      const found = findActivePackage(editData.id);
-      const destPkg = found && found.packageId && found.packageId !== srcPkgId ? found : null;
-
-      // Ambil data TERBARU dari DB (bukan cuma state lokal)
-      const pkgIds = [srcPkgId, destPkg?.packageId].filter(Boolean) as string[];
-      const { data: freshRows, error: freshErr } = await supabase
-        .from('attendance')
-        .select('id, packageid, sessionnumber, date, paymentstatus, status, teacherid, originalteacherid')
-        .in('packageid', pkgIds)
-        .in('status', ['SESSION_LOG', 'SUB_LOG']);
-      if (freshErr) throw freshErr;
-
-      const rows = (freshRows || []) as any[];
-      const srcRaw = rows.filter(r => r.packageid === srcPkgId && r.id !== editData.id);
-      const destRaw = destPkg ? rows.filter(r => r.packageid === destPkg.packageId) : [];
-
-      if (destPkg && destRaw.length >= 6) {
-        alert(`Paket tujuan (${fullClassName}) sudah terisi 6 sesi, jadi sesi ini tidak bisa disisipkan. Silakan hubungi Admin ya Kak! 🙏`);
-        return;
-      }
-
-      // Validasi ownership paket tujuan
-      if (destPkg) {
-        const ownerId = destPkg.originalTeacherId || destRaw[0]?.originalteacherid;
-        if (ownerId && ownerId !== user.id) {
-          const hasSub = destRaw.some(r => r.teacherid === user.id && r.status === 'SUB_LOG');
-          if (!hasSub) {
-            const owner = teachers.find(t => t.id === ownerId);
-            setBlockModal({
-              ownerName: owner?.name || 'Guru Lain',
-              className: fullClassName,
-              currentSession: destRaw.length
-            });
-            return;
-          }
-        }
-      }
-
-      const placed = placeInPackage(toPkgRows(destRaw), form.date, editData.id);
-      const newNumber = placed.position;
-      const destChanges = placed.changes;
-      const srcChanges = compressPackage(toPkgRows(srcRaw));
-
-      if (destChanges.some(c => c.paymentstatus !== 'UNPAID')) {
-        alert(`Sesi tidak bisa dipindah ke kotak ${fullClassName}.\n\nSesi tanggal ${fmtDate(form.date)} harus disisipkan sebelum sesi lain di kotak itu yang sudah LUNAS (sudah dibayar), dan sesi LUNAS tidak boleh berubah nomornya.\n\nSilakan hubungi Admin ya Kak! 🙏`);
-        return;
-      }
-      if (srcChanges.some(c => c.paymentstatus !== 'UNPAID')) {
-        alert(`Sesi tidak bisa dipindah dari kotak lama.\n\nAda sesi setelahnya di kotak itu yang sudah LUNAS (sudah dibayar), jadi nomornya tidak bisa dirapatkan setelah sesi ini keluar.\n\nSilakan hubungi Admin ya Kak! 🙏`);
-        return;
-      }
-
-      const notes: string[] = [];
-      if (!destPkg) notes.push('Kotak baru akan dibuat karena belum ada kotak yang cocok.');
-      if (destChanges.length > 0) notes.push(`Sesi di kotak itu yang tanggalnya lebih akhir (mulai tanggal ${fmtDate(destChanges[0].date)}) akan mundur satu nomor.`);
-      if (srcChanges.length > 0) notes.push('Sesi di kotak lama yang tanggalnya setelah sesi ini akan maju satu nomor.');
-      const ok = window.confirm(
-        `Sesi ini akan dipindah ke kotak ${fullClassName} sebagai sesi ke-${newNumber}.` +
-        (notes.length ? `\n\n${notes.join('\n')}` : '') +
-        `\n\nLanjutkan?`
-      );
-      if (!ok) return;
-
-      const classNameToSave = destPkg?.className || fullClassName;
-      const levelToSave = destPkg ? destPkg.level : identity.level;
-      const finalPackageId = destPkg?.packageId
-        || `PKG-${identity.category}-${identity.scheduleId}-${Date.now()}`;
-      const finalOriginalTeacherId = destPkg?.originalTeacherId || destRaw[0]?.originalteacherid || user.id;
-
-      const payload: any = {
-        id: editData.id,
-        teacherid: delegating ? (targetTeacher?.id || user.id) : user.id,
-        teachername: delegating ? (targetTeacher?.name || user.name) : user.name,
-        date: form.date,
-        clockin: editData.clockIn,
-        status: delegating ? 'SUB_LOG' : 'SESSION_LOG',
-        classname: classNameToSave,
-        level: levelToSave,
-        sessioncategory: identity.category,
-        packageid: finalPackageId,
-        scheduleid: identity.scheduleId,
-        sessionnumber: newNumber,
-        studentsattended: studentsToSave(),
-        earnings: estimatedHonor,
-        paymentstatus: 'UNPAID',
-        duration: form.duration,
-        substitutefor: delegating ? user.name : (editData.substituteFor || null),
-        originalteacherid: finalOriginalTeacherId
-      };
-
-      // Semua perubahan dijalankan di database dalam SATU transaksi
-      const ops = toOps([...destChanges, ...srcChanges]);
-      const { error: rpcErr } = await supabase.rpc('move_attendance_session', {
-        p_up: ops.p_up,
-        p_moved: payload,
-        p_down: ops.p_down
-      });
-      if (rpcErr) throw rpcErr;
-
-      if (refreshAllData) await refreshAllData();
-      navigate('/teacher/honor', { replace: true, state: { highlightId: finalPackageId } });
-    } catch (e: any) {
-      alert("Gagal memindahkan sesi: " + friendlyError(e) + "\n\nTidak ada data yang berubah. Silakan coba lagi, atau hubungi Admin kalau masih gagal ya Kak! 🙏");
-      if (refreshAllData) await refreshAllData();
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const handleLaporPresensi = async () => {
-    if (isDetecting || loading) return;
-    const delegating = isDelegating && !isHomeTutoring; // Home Tutoring: tidak boleh digantikan
-    if (!identity) return alert("Pilih jadwal kelasnya dulu ya! ✨");
-    if (identity.category === 'PRIVATE' && identity.students.length === 0 && !editData) {
-      return alert("Jadwal Private ini belum punya siswa. Hubungi Admin untuk mengisinya ya Kak! 🙏");
-    }
-    if (delegating && !form.targetTeacherId) return alert("Pilih Nama Teman yang menggantikan dulu ya! ✨");
-
-    // ✏️ Mode edit + slot diganti -> pindahkan sesi ke paket yang benar
-    if (editData && isSlotChanged) {
-      await handleMoveSession(delegating);
-      return;
-    }
-
-    // ⭐ VALIDASI OWNERSHIP SEBELUM SUBMIT
-    if (activePackageId && activeOriginalTeacherId && activeOriginalTeacherId !== user.id) {
-      const mySubLogs = logs.filter(l =>
-        l.packageId === activePackageId &&
-        l.teacherId === user.id &&
-        l.status === 'SUB_LOG'
-      );
-
-      if (mySubLogs.length === 0) {
-        const owner = teachers.find(t => t.id === activeOriginalTeacherId);
-        setBlockModal({
-          ownerName: owner?.name || 'Guru Lain',
-          className: identity.className,
-          currentSession: form.sessionNumber
-        });
-        return;
-      }
-    }
-
-    setLoading(true);
-    try {
-      const targetTeacher = teachers.find(t => t.id === form.targetTeacherId);
-
-      // Kalau melanjutkan paket yang sudah ada, nama kelas & level mengikuti baris paket itu
-      const pkgRef: any = activePackageId
-        ? [...logs].filter(l => l.packageId === activePackageId).sort((a, b) => b.id.localeCompare(a.id))[0]
-        : null;
-      const fullClassName = pkgRef?.className || identity.className;
-      const levelToSave = pkgRef ? String(pkgRef.level || '') : identity.level;
-
-      // ID Paket: sesi 1 buat baru, selanjutnya pakai yang lama
-      const finalPackageId = activePackageId
-        || `PKG-${identity.category}-${identity.scheduleId || 'LAMA'}-${Date.now()}`;
-      const finalOriginalTeacherId = activeOriginalTeacherId || user.id;
-
-      const payloadId = editData ? editData.id : `ATT-${Date.now()}`; // ID berisi timestamp untuk sorting
-
-      // Nomor sesi ditentukan dari TANGGAL, pakai data terbaru di database
-      let position = form.sessionNumber;
-      let changes: PkgChange[] = [];
-      if (activePackageId) {
-        const { data: freshPkg, error: freshErr } = await supabase
-          .from('attendance')
-          .select('id, sessionnumber, date, paymentstatus')
-          .eq('packageid', activePackageId)
-          .in('status', ['SESSION_LOG', 'SUB_LOG']);
-        if (freshErr) throw freshErr;
-
-        const others = toPkgRows((freshPkg || []).filter((r: any) => r.id !== payloadId));
-        if (!editData && others.length >= 6) {
-          alert('Paket ini sudah terisi 6 sesi, jadi sesi baru tidak bisa ditambahkan. Silakan hubungi Admin ya Kak! 🙏');
-          setLoading(false);
-          return;
-        }
-        const placed = placeInPackage(others, form.date, payloadId);
-        position = placed.position;
-        changes = placed.changes;
-      }
-
-      const payload: any = {
-        id: payloadId,
-        teacherid: delegating ? (targetTeacher?.id || user.id) : user.id,
-        teachername: delegating ? (targetTeacher?.name || user.name) : user.name,
-        date: form.date,
-        clockin: editData ? editData.clockIn : new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Jakarta', hour: '2-digit', minute: '2-digit' }).format(new Date()),
-        status: delegating ? 'SUB_LOG' : 'SESSION_LOG',
-        classname: fullClassName,
-        level: levelToSave,
-        sessioncategory: identity.category,
-        packageid: finalPackageId,
-        scheduleid: identity.scheduleId,
-        sessionnumber: position,
-        studentsattended: studentsToSave(),
-        earnings: estimatedHonor,
-        paymentstatus: 'UNPAID',
-        duration: form.duration,
-        substitutefor: delegating ? user.name : (editData?.substituteFor || null),
-        originalteacherid: finalOriginalTeacherId
-      };
-
-      if (changes.length > 0) {
-        if (changes.some(c => c.paymentstatus !== 'UNPAID')) {
-          alert(`Sesi tanggal ${fmtDate(form.date)} tidak bisa disimpan di urutan ke-${position}.\n\nAda sesi yang sudah LUNAS (sudah dibayar) yang nomornya ikut berubah, dan sesi LUNAS tidak boleh berubah nomornya.\n\nSilakan hubungi Admin ya Kak! 🙏`);
-          setLoading(false);
-          return;
-        }
-
-        const dates = changes.map(c => fmtDate(c.date)).join(', ');
-        const ok = window.confirm(
-          (editData
-            ? `Sesi ini akan jadi sesi ke-${position}, karena urutannya mengikuti tanggal.`
-            : `Sesi tanggal ${fmtDate(form.date)} akan disimpan sebagai sesi ke-${position}, karena urutannya mengikuti tanggal.`) +
-          `\n\nNomor sesi tanggal ${dates} ikut berubah.\n\nLanjutkan?`
-        );
-        if (!ok) {
-          setLoading(false);
-          return;
-        }
-
-        const ops = toOps(changes);
-        const { error: rpcErr } = await supabase.rpc('move_attendance_session', {
-          p_up: ops.p_up,
-          p_moved: payload,
-          p_down: ops.p_down
-        });
-        if (rpcErr) throw rpcErr;
-      } else {
-        const { error } = await supabase.from('attendance').upsert([payload]);
-        if (error) throw error;
-      }
-
-      if (refreshAllData) await refreshAllData();
-      setLoading(false);
-      navigate('/teacher/honor', { replace: true, state: { highlightId: finalPackageId } });
-
-    } catch (e: any) {
-      alert("Gagal: " + friendlyError(e));
-      setLoading(false);
-    }
-  };
+  const unpaidTotal = useMemo(() => 
+    logs.filter(l => 
+      l.teacherId === user.id && 
+      l.paymentStatus === 'UNPAID' && 
+      l.date.startsWith(selectedYear) &&
+      (l.earnings || 0) > 0
+    ).reduce((acc, curr) => acc + (curr.earnings || 0), 0)
+  , [logs, user.id, selectedYear]);
 
   return (
     <>
       <style>{`
         @keyframes modalFadeIn {
-          from { opacity: 0; }
-          to { opacity: 1; }
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
         }
+
         @keyframes modalZoomIn {
-          from { opacity: 0; transform: scale(0.95); }
-          to { opacity: 1; transform: scale(1); }
-        }
-        @keyframes editHighlightPulse {
-          0% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0.45); }
-          50% { box-shadow: 0 0 0 18px rgba(249, 115, 22, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(249, 115, 22, 0); }
+          from {
+            opacity: 0;
+            transform: scale(0.95);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
         }
       `}</style>
 
-      <div className="max-w-4xl mx-auto space-y-12 pb-40 px-4">
-      {(loading || isDetecting) && (
-        <div className="fixed inset-0 z-[200000] bg-slate-900/80 backdrop-blur-xl flex flex-col items-center justify-center text-white animate-in fade-in">
-           <div className="w-24 h-24 bg-blue-600 rounded-[2.5rem] flex items-center justify-center shadow-xl mb-8 animate-bounce">
-              <Loader2 className="animate-spin" size={48} />
-           </div>
-           <p className="text-[12px] font-black uppercase tracking-[0.4em] italic animate-pulse">
-             {isDetecting ? 'Mencari Riwayat Sesi...' : 'Memproses Data Sanur...'}
-           </p>
+      <div className="max-w-7xl mx-auto space-y-12 pb-40 px-4">
+
+      {isDeleting && (
+        <div className="fixed inset-0 z-[300000] bg-slate-900/60 backdrop-blur-xl flex flex-col items-center justify-center text-white">
+           <Loader2 className="animate-spin mb-4" size={48} />
+           <p className="text-[10px] font-black uppercase tracking-[0.4em]">Menghapus Data...</p>
         </div>
       )}
 
@@ -629,338 +537,336 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             <div className="space-y-4 text-center md:text-left">
                <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-white/10 backdrop-blur-md rounded-full border border-white/20">
                   <Sparkles size={14} className="text-yellow-400" />
-                  <span className="text-[9px] font-black uppercase tracking-widest">{editData ? 'Mode KOREKSI DATA' : 'SANUR PRESENCE CORE'}</span>
+                  <span className="text-[9px] font-black uppercase tracking-widest text-blue-300">Sanur Wallet System</span>
                </div>
-               <h2 className="text-4xl font-black uppercase italic leading-none">{editData ? 'Edit' : 'Lapor'} <span className="text-blue-500">Presensi</span></h2>
+               <h2 className="text-4xl font-black uppercase italic leading-none">Dompet <span className="text-blue-500">Honor</span></h2>
                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest italic">Halo Kak {user.name.split(' ')[0]}! Semangat mengajar ✨</p>
             </div>
-            <div className="w-24 h-24 bg-white/5 backdrop-blur-xl rounded-3xl flex items-center justify-center shadow-inner border border-white/10 rotate-3 group-hover:rotate-6 transition-all duration-500">
-               {editData ? <RotateCcw size={48} className="text-orange-500" /> : <ClipboardCheck size={48} className="text-blue-500" />}
+            <div className="flex bg-white/5 backdrop-blur-xl p-6 rounded-[2.5rem] border border-white/10 items-center gap-6 min-w-[260px]">
+               <div className="w-16 h-16 bg-slate-200 text-blue-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-900/40"><Wallet size={32}/></div>
+               <div>
+                  <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Belum Cair ({selectedYear}):</p>
+                  <h4 className="text-3xl font-black text-blue-400 italic">Rp {formatRupiah(unpaidTotal)}</h4>
+               </div>
             </div>
          </div>
       </header>
 
-      <div className="flex bg-white p-2 rounded-[2.5rem] border border-slate-100 shadow-xl max-w-sm mx-auto">
-         <Link to="/teacher" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase transition-all text-center flex items-center justify-center gap-3 bg-blue-600 text-white shadow-lg shadow-blue-200">
-            <ClipboardCheck size={16}/> Presensi
-         </Link>
-         <Link to="/teacher/honor" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase transition-all text-center flex items-center justify-center gap-3 text-slate-400 hover:text-orange-600">
-            <Wallet size={16}/> Honor
-         </Link>
+<div className="space-y-8">
+  {/* QuickNav CENTERED - IDENTIK Dashboard */}
+  <div className="flex bg-white p-2 rounded-[2.5rem] border border-slate-100 shadow-xl max-w-sm mx-auto">
+     <Link to="/teacher" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase transition-all text-center flex items-center justify-center gap-3 text-slate-400 hover:text-blue-600">
+        <ClipboardCheck size={16}/> Presensi
+     </Link>
+     <Link to="/teacher/honor" className="flex-1 py-4 px-8 rounded-[2rem] text-[10px] font-black uppercase transition-all text-center flex items-center justify-center gap-3 bg-blue-600 text-white shadow-lg shadow-blue-200">
+        <Wallet size={16}/> Honor
+     </Link>
+  </div>
+
+  {/* SearchBar + Filter INTEGRATED - Panjang kayak Info Box */}
+  <div className="max-w-5xl mx-auto">
+     <div className="flex items-center gap-3 bg-white border-2 border-slate-100 rounded-3xl shadow-xl p-2 pr-3">
+        {/* Search Input */}
+        <div className="flex-1 relative">
+           <div className="absolute left-6 top-1/2 -translate-y-1/2 text-slate-400"><Search size={18} /></div>
+           <input 
+              type="text" 
+              placeholder="CARI SISWA / KELAS..." 
+              value={searchTerm} 
+              onChange={(e) => setSearchTerm(e.target.value.toUpperCase())} 
+              className="w-full pl-14 pr-4 py-4 bg-transparent font-black text-[10px] uppercase outline-none" 
+           />
+        </div>
+
+        {/* Divider */}
+        <div className="w-px h-8 bg-slate-200"></div>
+
+        {/* Filter Tahun - Integrated */}
+        <div className="relative group shrink-0">
+           <div className="absolute left-3 top-1/2 -translate-y-1/2 text-blue-500"><Filter size={14} /></div>
+           <select 
+              value={selectedYear} 
+              onChange={(e) => setSelectedYear(e.target.value)} 
+              className="pl-9 pr-3 py-3 bg-transparent font-black text-[10px] uppercase outline-none appearance-none cursor-pointer min-w-[100px] text-center"
+           >
+              {years.map(y => <option key={y} value={y}>{y}</option>)}
+           </select>
+        </div>
+     </div>
+  </div>
+</div>
+
+      <div className="mx-2 bg-blue-50/60 backdrop-blur-sm border-2 border-dashed border-blue-200/60 rounded-[3rem] p-8 shadow-sm flex flex-col md:flex-row items-center gap-6 animate-in slide-in-from-top-4 group">
+         <div className="w-14 h-14 bg-white text-blue-500 rounded-full flex items-center justify-center shrink-0 shadow-sm border border-blue-100 animate-pulse transition-all">
+            <Info size={28} />
+         </div>
+         <div className="text-center md:text-left flex-1">
+            <div className="flex items-center justify-center md:justify-start gap-2">
+               <Sparkles size={14} className="text-blue-400" />
+               <p className="text-[11px] font-black text-blue-800 uppercase tracking-widest leading-relaxed">
+                  "Foto bukti transfer tersedia <span className="bg-rose-100 text-rose-600 px-2 py-0.5 rounded-lg">maksimal 3 hari</span>, namun <span className="bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-lg">SLIP GAJI DIGITAL</span> aktif selamanya dan bisa diunduh kapan saja!"
+               </p>
+            </div>
+         </div>
       </div>
 
-      <div
-        ref={formCardRef}
-        className={`bg-white p-10 md:p-14 rounded-[4rem] shadow-2xl border space-y-12 relative overflow-hidden scroll-mt-32 transition-colors duration-500 ${editData ? 'border-orange-200' : 'border-slate-100'}`}
-        style={editData ? { animation: 'editHighlightPulse 1.6s ease-out 2' } : undefined}
-      >
-         {editData && (
-           <div className="relative z-20 flex items-center justify-between">
-             <div className="inline-flex px-6 py-2.5 bg-orange-500 text-white rounded-full text-[9px] font-black uppercase tracking-widest shadow-lg items-center gap-2">
-               <RotateCcw size={12}/> Mode edit
-             </div>
-             <button
-               onClick={handleCloseEdit}
-               title="Batal edit"
-               className="p-3 bg-slate-50 text-slate-400 hover:bg-rose-50 hover:text-rose-500 rounded-2xl transition-all active:scale-95 shadow-sm"
-             >
-               <X size={18} />
-             </button>
-           </div>
-         )}
-         <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50 rounded-full blur-[100px] -mr-32 -mt-32 opacity-50"></div>
+      <div className="space-y-10">
+         {cycleGroups.length > 0 ? cycleGroups.map((pkg) => {
+            const isNew = highlightId === pkg.id;
+            return (
+              <div 
+                key={pkg.id} 
+                id={`pkg-card-${pkg.id}`} // FIXED: Menambahkan ID untuk auto-scroll
+                className={`bg-white rounded-[4rem] border-2 shadow-2xl overflow-hidden group hover:border-blue-200 transition-all duration-500 relative ${isNew ? 'glow-new ring-4 ring-blue-500/20' : 'border-slate-50'}`}
+              >
+                {pkg.isCycleOwner && pkg.allUnpaid && (
+                   <button 
+                     onClick={() => setConfirmDeletePkg(pkg)}
+                     className="absolute top-0 right-0 p-8 text-slate-200 hover:text-rose-600 transition-all z-30 active:scale-95 group/close"
+                     title="Hapus Kotak Honor Ini"
+                   >
+                      <X size={28} strokeWidth={4} className="group-hover/close:rotate-90 transition-transform duration-300" />
+                   </button>
+                )}
 
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-10 relative z-10">
+                <div className="px-10 pt-14 pb-8 pr-16 flex flex-col lg:flex-row lg:items-stretch justify-between gap-6">
+                   <div className="flex-1 min-w-0 space-y-3">
+                      <h4 className="text-xl md:text-2xl font-black text-slate-800 uppercase italic leading-snug">{pkg.className}</h4>
 
-            {/* ===== PILIH JADWAL ===== */}
-            <div className="md:col-span-2 space-y-5">
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest flex items-center gap-2 leading-none">
-                 <CalendarDays size={14} className="text-blue-500 -translate-y-px"/> Pilih Jadwal Kelas
-               </label>
+                      <div className="flex flex-col items-start gap-2 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                         <span className="flex items-start gap-1.5 text-blue-600"><UserCheck size={13} className="shrink-0 mt-0.5"/> Siswa: {pkg.studentName}</span>
+                         <span className="flex items-center gap-1.5"><Calendar size={13} className="text-slate-400"/> Update {formatDate(pkg.lastUpdate)}</span>
+                      </div>
+                   </div>
 
-               {legacyEdit && editData ? (
-                 <div className="px-8 py-6 bg-slate-50 border-2 border-slate-100 rounded-[2rem] space-y-2">
-                    <p className="text-xs font-black text-slate-800 uppercase italic">{identity?.className}</p>
-                    <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest italic leading-relaxed">
-                      Sesi ini dibuat sebelum sistem jadwal, jadi kelasnya tidak bisa diganti. Tanggal dan guru pengganti tetap bisa diubah.
-                    </p>
-                 </div>
-               ) : slotsByDay.length === 0 ? (
-                 <div className="px-8 py-10 bg-slate-50 border-2 border-dashed border-slate-200 rounded-[2rem] text-center space-y-2">
-                    <p className="text-[11px] font-black text-slate-400 uppercase tracking-widest italic">Belum ada jadwal untukmu</p>
-                    <p className="text-[11px] font-bold text-slate-300">Hubungi Admin untuk menambahkan jadwal mengajarmu ya Kak.</p>
-                 </div>
-               ) : (
-                 <div className="space-y-6">
-                   {slotsByDay.map(g => (
-                     <div key={g.day} className="space-y-3">
-                       <div className="flex items-center gap-3 px-2">
-                         <h4 className="text-sm font-black text-slate-800 uppercase italic tracking-tight">{g.day}</h4>
-                         {g.day === todayName && (
-                           <span className="inline-flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest">
-                             <span className="w-1.5 h-1.5 rounded-full bg-blue-600" />
-                             <span className="text-slate-400">Hari ini</span>
-                           </span>
-                         )}
+                   <div className="shrink-0 lg:min-w-[200px] px-6 py-5 rounded-[2rem] bg-gradient-to-br from-blue-50 to-white border border-blue-100 text-left lg:text-center flex flex-col justify-center">
+                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] mb-1.5">{pkg.status === 'LUNAS' ? 'Diterima' : 'Belum Cair'}</p>
+                      <p className="text-2xl font-black italic tracking-tighter text-blue-600 whitespace-nowrap">Rp {formatRupiah(pkg.myTotalPaid)}</p>
+                   </div>
+                </div>
+
+                <div className="mx-10 border-t border-slate-200"></div>
+
+                <div className="px-10 pt-8 pb-6">
+                   <div className="mb-4 flex flex-wrap items-center gap-x-4 gap-y-2">
+                     <div className="flex items-center gap-2"><div className="w-3 h-3 bg-blue-600 rounded-full"></div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Sesi Anda</p></div>
+                     {!pkg.isHomeTutoring && (
+                       <div className="flex items-center gap-2"><div className="w-3 h-3 bg-orange-600 rounded-full ml-2"></div><p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Anda Gantikan Teman</p></div>
+                     )}
+                     {pkg.isHomeTutoring && pkg.status !== 'LUNAS' && (
+                       <div className="flex items-center gap-2 px-4 py-1.5 bg-orange-50 border border-orange-100 rounded-full">
+                         <Info size={12} className="text-orange-500 shrink-0" />
+                         <p className="text-[10px] font-bold text-orange-600 italic">Honor transport akan dibayarkan di akhir paket.</p>
                        </div>
-                       <div className="space-y-2">
-                         {g.list.map(it => {
-                           const sel = form.scheduleId === String(it.id);
-                           const priv = isPrivateRoom(it.room);
-                           const people = (it.participants || []).map(p => String(studentById.get(String(p.id))?.name || p.name || ''));
-                           return (
-                             <button
-                               type="button"
-                               key={it.id}
-                               onClick={() => setForm(prev => ({ ...prev, scheduleId: String(it.id) }))}
-                               className={`w-full text-left flex gap-4 rounded-[1.5rem] px-5 py-4 border-2 transition-all active:scale-[0.99] ${sel ? 'bg-blue-50 border-blue-500 shadow-lg' : 'bg-slate-50 border-slate-100 hover:border-blue-200'}`}
-                             >
-                               <p className="w-[5.5rem] shrink-0 text-xs font-black text-slate-800 leading-snug">{fmtRange(it.start, it.end)}</p>
-                               <div className="min-w-0 flex-1 space-y-1.5">
-                                 <div className="flex flex-wrap items-center gap-2">
-                                   <p className="text-xs font-black text-slate-800 uppercase italic">{stripPelatihan(it.subject)}</p>
-                                   <span className={`px-3 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest text-white ${priv ? 'bg-orange-500' : 'bg-blue-900'}`}>{it.room}</span>
-                                 </div>
-                                 {people.length > 0 && (
-                                   <div className={`text-[11px] font-semibold space-y-0.5 ${priv ? 'text-orange-600' : 'text-blue-900/70'}`}>
-                                     {people.map((n, k) => (
-                                       <p key={k}>{people.length > 1 ? `${k + 1}. ` : ''}{n}</p>
-                                     ))}
-                                   </div>
-                                 )}
-                               </div>
-                               {sel && <Check size={20} className="text-blue-600 shrink-0 self-center" />}
-                             </button>
-                           );
-                         })}
-                       </div>
-                     </div>
-                   ))}
-                 </div>
-               )}
-
-               {identity && identity.category === 'PRIVATE' && identity.students.length === 0 && !editData && (
-                 <p className="text-[10px] font-black text-rose-500 uppercase tracking-widest ml-4 italic">Jadwal Private ini belum punya siswa — hubungi Admin.</p>
-               )}
-            </div>
-
-            <div className="md:col-span-2 space-y-6 pt-4">
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest flex items-center gap-2 leading-none"><Hash size={14} className="text-blue-500 -translate-y-px"/> Sesi Terdeteksi Otomatis (1-6)</label>
-               <div className="grid grid-cols-6 gap-3">
-                  {[1, 2, 3, 4, 5, 6].map(n => (
-                    <div
-                      key={n}
-                      className={`py-5 rounded-2xl font-black text-lg transition-all border-2 text-center flex items-center justify-center cursor-default ${identity && form.sessionNumber === n ? 'bg-blue-600 text-white border-blue-600 shadow-lg scale-105' : 'bg-slate-50 text-slate-300 border-slate-100 shadow-inner'} ${isDetecting ? 'animate-pulse opacity-50' : ''}`}
-                    >
-                      {n}
-                    </div>
-                  ))}
-               </div>
-               {!identity ? null : activePackageId ? (
-                  <p className="text-[9px] font-black text-blue-500 uppercase tracking-widest ml-4 italic animate-pulse">✨ Melanjutkan Siklus Aktif ({identity.category}) — Sesi {form.sessionNumber}/6 Terdeteksi</p>
-               ) : (
-                  <p className="text-[9px] font-black text-slate-400 uppercase ml-4 tracking-widest italic">🆕 Memulai Siklus 6 Sesi Baru (Sesi 1)</p>
-               )}
-
-               <div className="mt-4 bg-blue-50 p-6 rounded-[2rem] border border-blue-100 flex items-start gap-4 shadow-sm animate-in fade-in duration-700">
-                  <div className="space-y-3">
-                     <p className="text-[9px] font-bold text-blue-800 uppercase italic leading-relaxed tracking-wide">
-                        "Jika nomor sesi tidak sesuai, mohon cek kembali <span className="font-black underline">Jadwal Kelas</span> yang dipilih dan <span className="font-black underline">Tanggal Pelaksanaan</span> ✨"
-                     </p>
-                     <p className="text-[9px] font-bold text-blue-800 uppercase italic leading-relaxed tracking-wide">
-                        Jika ada halangan mengajar dan kelas diganti di hari lain, tetap pilih kelas yang diajar sesuai jadwal, dan isi <span className="font-black underline">Tanggal Pelaksanaan</span> sesuai hari Anda mengajar.
-                     </p>
-                  </div>
-               </div>
-            </div>
-
-            <div className="space-y-4">
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest flex items-center gap-2 leading-none"><Timer size={14} className="text-blue-500 -translate-y-px"/> Durasi Mengajar (Jam)</label>
-               <div className="h-[72px] rounded-[2rem] bg-orange-500 border-2 border-orange-500 shadow-lg flex items-center justify-center gap-2 text-white cursor-default">
-                  <span className="font-black text-[11px]">2 JAM</span>
-                  <span className="font-black text-[11px]">/ PERTEMUAN</span>
-               </div>
-            </div>
-
-            <div className="space-y-4">
-               <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest flex items-center gap-2 leading-none"><Clock size={14} className="text-blue-500 -translate-y-px"/> Tanggal Pelaksanaan</label>
-               <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner h-[72px]" />
-            </div>
-
-            {!isHomeTutoring && (
-            <div className={`md:col-span-2 p-8 rounded-[3.5rem] border-2 transition-all duration-500 ${isDelegating ? 'bg-rose-50 border-rose-200 shadow-xl' : 'bg-slate-50 border-transparent'}`}>
-               <div className="flex items-center justify-between gap-6">
-                  <div className="flex items-center gap-4">
-                     <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-all ${isDelegating ? 'bg-rose-500 text-white shadow-lg' : 'bg-slate-200 text-slate-400'}`}>
-                        <HeartPulse size={28}/>
-                     </div>
-                     <div>
-                        <h4 className={`text-sm font-black uppercase italic ${isDelegating ? 'text-rose-600' : 'text-slate-500'}`}>Saya Berhalangan Mengajar?</h4>
-                        <p className="text-[9px] font-bold text-slate-400 uppercase tracking-widest mt-1">Gunakan ini jika teman menggantikan sesi ✨</p>
-                     </div>
-                  </div>
-                  <button onClick={() => setIsDelegating(!isDelegating)} className={`w-16 h-8 rounded-full p-1.5 transition-all duration-500 flex ${isDelegating ? 'bg-rose-500 justify-end' : 'bg-slate-300 justify-start'}`}>
-                     <div className="w-5 h-5 bg-white rounded-full shadow-md"></div>
-                  </button>
-               </div>
-
-               {isDelegating && (
-                 <div className="mt-8 space-y-4 animate-in slide-in-from-top-4 relative">
-                   <label className="text-[9px] font-black text-rose-500 uppercase ml-4 tracking-widest flex items-center gap-2">
-                     <UserPlus size={12}/> Pilih Rekan Yang Menggantikan Anda:
-                   </label>
-
-                   <div className="relative">
-                     <input
-                       type="text"
-                       placeholder="KETIK NAMA TEMAN..."
-                       value={teacherInputValue}
-                       onChange={(e) => {
-                         const val = e.target.value;
-                         setTeacherInputValue(val);
-                         setShowTeacherSuggestions(true);
-
-                         const matchedTeacher = teachers.find(t => t.name.toUpperCase() === val.toUpperCase() && t.id !== user.id && t.role === 'TEACHER');
-                         if (matchedTeacher) {
-                           setForm({...form, targetTeacherId: matchedTeacher.id});
-                         } else {
-                           setForm({...form, targetTeacherId: ''});
-                         }
-                       }}
-                       onFocus={() => setShowTeacherSuggestions(true)}
-                       onBlur={() => setTimeout(() => setShowTeacherSuggestions(false), 200)}
-                       className="w-full px-8 py-6 bg-white border-2 border-transparent focus:border-rose-500 rounded-[2rem] font-black text-[11px] outline-none shadow-sm transition-all h-[72px]"
-                     />
-
-                     {showTeacherSuggestions && teacherInputValue.trim() && (
-                       <div className="absolute z-50 w-full mt-2 bg-white rounded-2xl shadow-2xl border-2 border-rose-100 max-h-[100px] overflow-y-auto">
-                         {teachers
-                           .filter(t => t.id !== user.id && t.role === 'TEACHER' && t.name.toUpperCase().includes(teacherInputValue.toUpperCase()))
-                           .slice(0, 8)
-                           .map(teacher => (
-                             <button
-                               key={teacher.id}
-                               type="button"
-                               onMouseDown={(e) => {
-                                 e.preventDefault();
-                                 setTeacherInputValue(teacher.name);
-                                 setForm({...form, targetTeacherId: teacher.id});
-                                 setShowTeacherSuggestions(false);
-                               }}
-                               className="w-full px-6 py-4 text-left text-[11px] font-black hover:bg-rose-50 transition-all text-slate-700 border-b last:border-0"
-                             >
-                               {teacher.name}
-                             </button>
-                           ))
-                         }
-                         {teachers.filter(t => t.id !== user.id && t.role === 'TEACHER' && t.name.toUpperCase().includes(teacherInputValue.toUpperCase())).length === 0 && (
-                           <div className="px-6 py-4 text-[10px] font-bold text-rose-500 uppercase italic text-center">
-                             ❌ Nama "{teacherInputValue}" tidak ditemukan!
-                           </div>
-                         )}
+                     )}
+                     {pkg.isHomeTutoring && pkg.status === 'LUNAS' && pkg.myTransport > 0 && (
+                       <div className="flex items-center gap-2 px-4 py-1.5 bg-emerald-50 border border-emerald-100 rounded-full">
+                         <CheckCircle2 size={12} className="text-emerald-600 shrink-0" />
+                         <p className="text-[10px] font-bold text-emerald-700 italic">Honor transport sebesar Rp {formatRupiah(pkg.myTransport)} telah diterima.</p>
                        </div>
                      )}
                    </div>
-                 </div>
-               )}
-            </div>
-            )}
-         </div>
+                   <div className="grid grid-cols-3 md:grid-cols-6 gap-4 p-8 bg-slate-50 rounded-[3rem] border border-slate-100 shadow-inner">
+                      {[1,2,3,4,5,6].map((num) => {
+                         const log = pkg.logs.find((l: any) => l.sessionNumber === num);
+                         const isCycleOwner = log && log.originalTeacherId === user.id;
+                         const isMeTeaching = log && log.teacherId === user.id;
+                         const isMeSubstituting = log && log.teacherId === user.id && log.originalTeacherId && log.originalTeacherId !== user.id;
+                         const isMeDelegated = log && log.originalTeacherId === user.id && log.teacherId !== user.id;
+                         
+                         const canEdit = isCycleOwner && log.paymentStatus === 'UNPAID';
+                         // 🆕 Cuma sesi dengan nomor tertinggi (terakhir) di paket ini yang boleh dihapus
+                         const isLastSession = log && num === pkg.lastSessionNumber;
+                         
+                         let bgColor = "bg-white text-slate-200 border-dashed border-2 border-slate-100";
+                         let label = "BELUM ADA";
+                         let subInfo = "";
+                         let dateText = "";
+                         if (log) dateText = formatDate(log.date);
 
-         <div>
-         <div className="bg-slate-900 p-8 rounded-[3rem] text-white flex items-center justify-between shadow-2xl overflow-hidden relative">
-            <div className="absolute top-0 left-0 w-40 h-40 bg-blue-500/10 rounded-full blur-[40px] -ml-20 -mt-20"></div>
-            <div className="flex items-center gap-4 relative z-10">
-               <div className="w-12 h-12 bg-white/10 rounded-2xl flex items-center justify-center text-blue-400 border border-white/10 shadow-inner"><Wallet size={24} /></div>
-               <div>
-                  <p className="text-[8px] font-black uppercase text-blue-300 tracking-[0.2em]">Estimasi Honor Sesi:</p>
-                  <h3 className="text-2xl font-black italic text-emerald-400">Rp {estimatedHonor.toLocaleString()}</h3>
-               </div>
+                         if (isMeTeaching && !isMeSubstituting) { 
+                            bgColor = "bg-blue-600 text-white shadow-lg ring-4 ring-blue-50"; 
+                            label = "SESI ANDA"; 
+                         } else if (isMeSubstituting) { 
+                            bgColor = "bg-orange-600 text-white shadow-lg ring-4 ring-orange-100"; 
+                            label = "MENGGANTIKAN"; 
+                            subInfo = `GANTI: ${log.substituteFor?.split(' ')[0] || 'TEMAN'}`; 
+                         } else if (isMeDelegated) { 
+                            bgColor = "bg-slate-300 text-slate-500 shadow-sm border-slate-400"; 
+                            label = "DIGANTIKAN"; 
+                            subInfo = `OLEH: ${log.teacherName?.split(' ')[0] || 'TEMAN'}`; 
+                         } else if (log) { 
+                            bgColor = "bg-slate-200 text-slate-400 opacity-50"; 
+                            label = "GURU LAIN"; 
+                            subInfo = `OLEH: ${log.teacherName?.split(' ')[0] || 'TEMAN'}`;
+                         }
+
+                         return (
+                           <div key={num} className={`relative p-5 py-8 rounded-[2.5rem] flex flex-col items-center justify-center text-center gap-2 transition-all ${bgColor}`}>
+                              {canEdit && (
+                                <button 
+                                  onClick={() => {
+                                    if (isLastSession) {
+                                      setActionModalLog({ log, pkg }); // sesi terakhir: bisa pilih Edit atau Hapus
+                                    } else {
+                                      navigate('/teacher', { state: { editLog: log } }); // sesi lama: langsung Edit aja
+                                    }
+                                  }} 
+                                  className="absolute -top-2 -right-2 w-10 h-10 bg-white text-slate-800 rounded-full shadow-lg flex items-center justify-center hover:scale-110 active:scale-95 transition-all border border-slate-100 z-20"
+                                >
+                                  <Edit3 size={14} />
+                                </button>
+                              )}
+                              <p className="text-[9px] font-black uppercase tracking-widest opacity-60">Sesi {num}</p>
+                              {isMeTeaching && !isMeSubstituting ? <UserCheck size={24}/> : isMeSubstituting ? <Repeat size={24}/> : isMeDelegated ? <Clock size={24}/> : <Zap size={24}/>}
+                              <p className="text-[7px] font-black uppercase tracking-widest leading-none mt-1">{label}</p>
+                              {subInfo && <p className="text-[6px] font-black opacity-90 mt-1">{subInfo}</p>}
+                              {dateText && <div className="mt-2 pt-2 border-t border-white/20 w-full"><p className="text-[8px] font-black tracking-widest opacity-80">{dateText}</p></div>}
+                           </div>
+                         );
+                      })}
+                   </div>
+                </div>
+
+                {pkg.status === 'LUNAS' && (
+                   <div className="px-10 pb-10 flex justify-center gap-4 animate-in fade-in">
+                      <button 
+                        onClick={() => {
+                          if (pkg.receiptData) setShowProofModal(pkg.receiptData);
+                          else setShowPurgedInfo(true);
+                        }} 
+                        className="px-10 py-5 bg-emerald-50 text-emerald-600 rounded-[1.8rem] font-black text-[11px] uppercase flex items-center justify-center gap-3 hover:bg-emerald-100 transition-all border-2 border-emerald-100 shadow-sm"
+                      >
+                         <Eye size={22}/> LIHAT BUKTI BAYAR
+                      </button>
+                      <button onClick={() => handleDownloadPdf(pkg)} disabled={isDownloading === pkg.id} className="px-10 py-5 bg-slate-900 text-white rounded-[1.8rem] font-black text-[11px] uppercase flex items-center justify-center gap-3 hover:bg-blue-600 transition-all shadow-xl disabled:opacity-50">
+                        {isDownloading === pkg.id ? <><Loader2 size={22} className="animate-spin"/> PROSES...</> : <><FileDown size={22}/> DOWNLOAD SLIP GAJI</>}
+                      </button>
+                   </div>
+                )}
+              </div>
+            );
+         }) : (
+            <div className="py-40 text-center bg-white rounded-[4rem] border-2 border-dashed border-slate-100 opacity-30">
+               <ClipboardCheck size={64} className="mx-auto mb-6 text-slate-300" />
+               <p className="font-black text-[11px] uppercase tracking-[0.4em] italic leading-relaxed text-center">Belum ada riwayat honor di tahun {selectedYear}</p>
             </div>
-            <div className="text-right relative z-10 pr-4">
-               <p className="text-[8px] font-black text-slate-400 uppercase tracking-widest">Penerima Honor:</p>
-               <h3 className={`text-xs font-black italic ${isDelegating ? 'text-orange-400 animate-pulse' : 'text-blue-400'}`}>
-                  {isDelegating ? (teachers.find(t=>t.id===form.targetTeacherId)?.name || 'PILIH TEMAN') : 'SAYA SENDIRI'}
-               </h3>
-            </div>
-         </div>
-         {isHomeTutoring && (
-            <p className="mt-4 px-6 text-[10px] font-bold text-slate-400 italic leading-relaxed">
-               ✨ Estimasi ini belum termasuk honor transport. Honor transport 100% akan dibayarkan di akhir paket.
-            </p>
          )}
-         </div>
-
-         <button
-           onClick={handleLaporPresensi}
-           disabled={loading || isDetecting || !identity}
-           className="w-full py-10 bg-blue-600 text-white rounded-[3rem] font-black text-[14px] uppercase tracking-[0.5em] shadow-2xl hover:bg-blue-700 active:scale-95 transition-all flex items-center justify-center gap-4 disabled:opacity-30 group"
-         >
-            {loading ? <Loader2 className="animate-spin" size={32} /> : isDetecting ? 'HARAP TUNGGU...' : (editData ? <><Save size={28}/> SIMPAN PERUBAHAN ✨</> : <><Send size={28} className="group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform" /> KIRIM PRESENSI</>)}
-         </button>
       </div>
 
-      {/* MODAL BLOCKING SLOT OWNERSHIP */}
-      {blockModal && (
+      {showProofModal && (
         <ModalPortal>
-        <div data-modal-container className="fixed inset-0 z-[300000] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-          <div className="bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl relative border-t-8 border-rose-600 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-            <div className="p-8">
-              <div className="grid grid-cols-2 gap-5">
-                <div className="bg-rose-50 rounded-[1.5rem] p-5 flex flex-col gap-4">
-                  <div className="flex flex-col items-center gap-3 text-center">
-                    <div className="w-9 h-9 bg-rose-200 rounded-xl flex items-center justify-center shrink-0">
-                      <AlertTriangle size={18} className="text-rose-800" />
-                    </div>
-                    <p className="text-[11px] font-black text-rose-700 uppercase tracking-wider leading-tight">
-                      Kelas Sedang Digunakan!
+        <div data-modal-container className="fixed inset-0 z-[100000] bg-slate-900/95 backdrop-blur-xl flex flex-col items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}} onClick={() => setShowProofModal(null)}>
+           <div className="relative max-w-2xl w-full flex flex-col items-center opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+              <button className="absolute -top-12 right-0 p-4 text-white hover:text-rose-500 transition-colors" onClick={() => setShowProofModal(null)}><X size={32}/></button>
+              <img src={showProofModal} className="max-w-full max-h-[75vh] rounded-[3rem] shadow-2xl border-4 border-white/10 object-contain" alt="Bukti Transfer" />
+              <div className="mt-8 text-center"><p className="text-[10px] font-black text-white/50 uppercase tracking-[0.5em] italic">Sanur Transfer Receipt ✨</p></div>
+           </div>
+        </div>
+        </ModalPortal>
+      )}
+
+      {showPurgedInfo && (
+        <ModalPortal>
+        <div data-modal-container className="fixed inset-0 z-[200000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+           <div className="bg-white w-full max-w-sm rounded-[4rem] p-12 text-center space-y-8 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+              <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner animate-pulse"><Info size={40} /></div>
+              <div className="space-y-4">
+                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Media Bersih</h4>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4 italic">
+                    "Mohon maaf Kak, foto bukti transfer ini hanya tersedia <span className="text-rose-600 font-black">Maksimal 3 Hari</span> guna menjaga database tetap kencang."
+                 </p>
+                 <div className="p-4 bg-emerald-50 rounded-2xl border border-emerald-100 flex items-center gap-3">
+                    <Zap size={16} className="text-emerald-600 shrink-0" />
+                    <p className="text-[9px] font-black text-emerald-800 uppercase text-left leading-tight">
+                       "Jangan khawatir! <span className="underline">SLIP GAJI DIGITAL</span> tetap aktif selamanya dan bisa diunduh kapan saja sebagai bukti sah"
                     </p>
-                  </div>
-
-                  <div className="border-t border-rose-200 pt-4 space-y-3">
-                    <p className="text-[10px] font-bold text-rose-700 uppercase leading-relaxed text-center">
-                      Kelas ini sedang berjalan oleh:
-                    </p>
-                    <div className="bg-white rounded-xl px-4 py-2">
-                      <p className="text-[10px] font-black text-slate-800 uppercase tracking-wide leading-relaxed">{blockModal.className}</p>
-                    </div>
-                    <div className="bg-white rounded-xl px-4 py-3 space-y-1">
-                      <p className="text-[10px] font-bold text-rose-600 uppercase tracking-wide">Guru:</p>
-                      <p className="text-[10px] font-black text-slate-800">{blockModal.ownerName}</p>
-                      <p className="text-[10px] font-bold text-rose-600">Sesi {blockModal.currentSession} / 6</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-4">
-                  <div className="bg-slate-50 rounded-[1.5rem] p-5 flex-1">
-                    <p className="text-[11px] font-black text-slate-700 uppercase tracking-wide mb-4">Anda bisa input setelah:</p>
-                    <div className="space-y-3">
-                      <div className="flex items-start gap-2">
-                        <Check size={14} className="text-emerald-500 shrink-0 mt-0.5"/>
-                        <p className="text-[10px] font-bold text-slate-600 leading-relaxed">Beliau menyelesaikan <span className="font-black text-slate-800">Sesi 6</span></p>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <Check size={14} className="text-emerald-500 shrink-0 mt-0.5"/>
-                        <p className="text-[10px] font-bold text-slate-600 leading-relaxed">Beliau <span className="font-black text-slate-800">mendelegasikan</span> kelas kepada Kakak</p>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <Check size={14} className="text-emerald-500 shrink-0 mt-0.5"/>
-                        <p className="text-[10px] font-bold text-slate-600 leading-relaxed">Hubungi <span className="font-black text-slate-800">Admin</span> untuk koordinasi tukar kelas</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => setBlockModal(null)}
-                    className="w-full py-4 bg-slate-900 hover:bg-blue-600 text-white rounded-[1.25rem] font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
-                  >
-                    <Check size={16}/> Saya Mengerti
-                  </button>
-                </div>
+                 </div>
               </div>
-            </div>
-          </div>
+              <button onClick={() => setShowPurgedInfo(false)} className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 transition-all">SAYA MENGERTI</button>
+           </div>
+        </div>
+        </ModalPortal>
+      )}
+
+      {actionModalLog && (
+        <ModalPortal>
+        <div data-modal-container className="fixed inset-0 z-[200000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}} onClick={() => setActionModalLog(null)}>
+           <div onClick={(e) => e.stopPropagation()} className="bg-white w-full max-w-sm rounded-[4rem] p-12 text-center space-y-8 shadow-2xl relative opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+              <button onClick={() => setActionModalLog(null)} className="absolute top-8 right-8 p-2 text-slate-300 hover:text-rose-600 transition-colors"><X size={22} strokeWidth={3}/></button>
+              <div className="w-20 h-20 bg-blue-50 text-blue-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner"><Edit3 size={36} /></div>
+              <div className="space-y-2">
+                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Sesi {actionModalLog.log.sessionNumber}</h4>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4 italic">
+                    {formatDate(actionModalLog.log.date)}
+                 </p>
+              </div>
+              <div className="flex flex-col gap-4">
+                 <button 
+                   onClick={() => {
+                     const { log } = actionModalLog;
+                     setActionModalLog(null);
+                     navigate('/teacher', { state: { editLog: log } });
+                   }} 
+                   className="w-full py-5 bg-blue-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 flex items-center justify-center gap-2"
+                 >
+                    <Edit3 size={18}/> EDIT SESI
+                 </button>
+                 <button 
+                   onClick={() => {
+                     setConfirmDeleteLog(actionModalLog);
+                     setActionModalLog(null);
+                   }} 
+                   className="w-full py-5 bg-rose-50 text-rose-600 rounded-2xl font-black text-[10px] uppercase active:scale-95 flex items-center justify-center gap-2 border border-rose-100"
+                 >
+                    <Trash2 size={18}/> HAPUS SESI
+                 </button>
+              </div>
+           </div>
+        </div>
+        </ModalPortal>
+      )}
+
+      {confirmDeleteLog && (
+        <ModalPortal>
+        <div data-modal-container className="fixed inset-0 z-[200000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+           <div className="bg-white w-full max-w-sm rounded-[4rem] p-12 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+              <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner animate-pulse"><X size={40} className="text-rose-600" /></div>
+              <div className="space-y-2">
+                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Hapus Sesi Ini?</h4>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4 italic">
+                    "Sesi <span className="font-black text-rose-600">{confirmDeleteLog.log.sessionNumber}</span> ({formatDate(confirmDeleteLog.log.date)}) di kelas <span className="font-black text-rose-600">{confirmDeleteLog.pkg.className}</span> akan dihapus. Sesi lain di paket ini tidak akan terpengaruh."
+                 </p>
+              </div>
+              <div className="flex gap-4">
+                 <button onClick={() => setConfirmDeleteLog(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase">BATAL</button>
+                 <button onClick={handleDeleteSession} disabled={isDeleting} className="flex-[2] py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 flex items-center justify-center gap-2">
+                    {isDeleting ? <Loader2 size={18} className="animate-spin" /> : <><Check size={18}/> IYA, HAPUS</>}
+                 </button>
+              </div>
+           </div>
+        </div>
+        </ModalPortal>
+      )}
+
+      {confirmDeletePkg && (
+        <ModalPortal>
+        <div data-modal-container className="fixed inset-0 z-[200000] bg-slate-900/90 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
+           <div className="bg-white w-full max-w-sm rounded-[4rem] p-12 text-center space-y-8 shadow-2xl relative border-t-8 border-rose-600 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
+              <div className="w-20 h-20 bg-rose-50 text-rose-600 rounded-[2rem] flex items-center justify-center mx-auto shadow-inner animate-pulse"><X size={40} className="text-rose-600" /></div>
+              <div className="space-y-2">
+                 <h4 className="text-2xl font-black text-slate-800 uppercase italic leading-none">Hapus Kotak Honor?</h4>
+                 <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest leading-relaxed px-4 italic">
+                    "Semua data pengajaran Kakak di kotak <span className="font-black text-rose-600">{confirmDeletePkg.className}</span> ({confirmDeletePkg.logs?.length || 0} sesi) akan dihapus permanen. Lakukan ini hanya jika data salah input ya Kak!"
+                 </p>
+              </div>
+              <div className="flex gap-4">
+                 <button onClick={() => setConfirmDeletePkg(null)} className="flex-1 py-5 bg-slate-50 text-slate-400 rounded-2xl font-black text-[10px] uppercase">BATAL</button>
+                 <button onClick={handleDeletePackage} disabled={isDeleting} className="flex-[2] py-5 bg-rose-600 text-white rounded-2xl font-black text-[10px] uppercase shadow-xl active:scale-95 flex items-center justify-center gap-2">
+                    {isDeleting ? <Loader2 size={18} className="animate-spin" /> : <><Check size={18}/> IYA, HAPUS</>}
+                 </button>
+              </div>
+           </div>
         </div>
         </ModalPortal>
       )}
@@ -969,4 +875,4 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
   );
 };
 
-export default TeacherDashboard;
+export default TeacherHonor;
