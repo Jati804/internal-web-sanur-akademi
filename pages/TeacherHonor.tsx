@@ -422,9 +422,7 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
           .filter((n: string) => n && n !== 'REGULER');
         const studentName = studentNames.length === 0
           ? (log.studentsAttended?.[0] || 'REGULER')
-          : studentNames.length <= 3
-            ? studentNames.join(', ')
-            : `${studentNames.slice(0, 3).join(', ')} +${studentNames.length - 3}`;
+          : studentNames.join(', ');
         const isCycleOwner = fullCycle.some(l => l.originalTeacherId === user.id);
 
         groups[pkgId] = {
@@ -538,10 +536,10 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                <p className="text-slate-400 font-bold text-xs uppercase tracking-widest italic">Halo Kak {user.name.split(' ')[0]}! Semangat mengajar ✨</p>
             </div>
             <div className="flex bg-white/5 backdrop-blur-xl p-6 rounded-[2.5rem] border border-white/10 items-center gap-6 min-w-[260px]">
-               <div className="w-16 h-16 bg-emerald-600 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-900/40"><Wallet size={32}/></div>
+               <div className="w-16 h-16 bg-orange-500 text-white rounded-2xl flex items-center justify-center shadow-lg shadow-orange-900/40"><Wallet size={32}/></div>
                <div>
                   <p className="text-[9px] font-black uppercase text-slate-400 tracking-widest">Belum Cair ({selectedYear}):</p>
-                  <h4 className="text-3xl font-black text-emerald-400 italic">Rp {formatRupiah(unpaidTotal)}</h4>
+                  <h4 className="text-3xl font-black text-orange-400 italic">Rp {formatRupiah(unpaidTotal)}</h4>
                </div>
             </div>
          </div>
@@ -628,20 +626,15 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                    <div className="flex-1 min-w-0 space-y-3">
                       <h4 className="text-xl md:text-2xl font-black text-slate-800 uppercase italic leading-snug">{pkg.className}</h4>
 
-                      <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[10px] font-black uppercase tracking-wider text-slate-500">
-                         <span className="flex items-center gap-1.5 text-blue-600"><UserCheck size={13}/> Siswa: {pkg.studentName}</span>
+                      <div className="flex flex-col items-start gap-2 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                         <span className="flex items-start gap-1.5 text-blue-600"><UserCheck size={13} className="shrink-0 mt-0.5"/> Siswa: {pkg.studentName}</span>
                          <span className="flex items-center gap-1.5"><Calendar size={13} className="text-slate-400"/> Update {formatDate(pkg.lastUpdate)}</span>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-2 pt-1">
-                         <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${pkg.category === 'PRIVATE' ? 'bg-orange-500 text-white' : 'bg-blue-900 text-white'}`}>{pkg.category}</span>
-                         <span className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${pkg.status === 'LUNAS' ? 'bg-emerald-600 text-white' : 'bg-orange-50 text-orange-600 border border-orange-100'}`}>{pkg.status}</span>
                       </div>
                    </div>
 
-                   <div className="shrink-0 lg:min-w-[200px] px-6 py-5 rounded-[2rem] bg-gradient-to-br from-blue-50 to-white border border-blue-100 text-left lg:text-center flex flex-col justify-center">
-                      <p className="text-[9px] font-black text-slate-400 uppercase tracking-[0.25em] mb-1.5">{pkg.status === 'LUNAS' ? 'Diterima' : 'Belum Cair'}</p>
-                      <p className="text-2xl font-black italic tracking-tighter text-blue-600 whitespace-nowrap">Rp {formatRupiah(pkg.myTotalPaid)}</p>
+                   <div className={`shrink-0 lg:min-w-[200px] px-6 py-5 rounded-[2rem] bg-gradient-to-br to-white border text-left lg:text-center flex flex-col justify-center ${pkg.status === 'LUNAS' ? 'from-emerald-50 border-emerald-100' : 'from-orange-50 border-orange-100'}`}>
+                      <p className={`text-[9px] font-black uppercase tracking-[0.25em] mb-1.5 ${pkg.status === 'LUNAS' ? 'text-emerald-500' : 'text-orange-500'}`}>{pkg.status === 'LUNAS' ? 'Diterima' : 'Belum Cair'}</p>
+                      <p className={`text-2xl font-black italic tracking-tighter whitespace-nowrap ${pkg.status === 'LUNAS' ? 'text-emerald-600' : 'text-orange-600'}`}>Rp {formatRupiah(pkg.myTotalPaid)}</p>
                    </div>
                 </div>
 
