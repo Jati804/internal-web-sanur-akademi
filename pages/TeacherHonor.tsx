@@ -633,10 +633,16 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                    <div className="flex-1 min-w-0 space-y-3">
                       <h4 className="text-xl md:text-2xl font-black text-slate-800 uppercase italic leading-snug">{pkg.className}</h4>
 
-                      <div className="flex flex-col items-start gap-2 text-[10px] font-black uppercase tracking-wider text-slate-500">
-                         <span className="flex items-start gap-1.5 text-blue-600"><UserCheck size={13} className="shrink-0 mt-0.5"/> Siswa: {pkg.studentName}</span>
-                         <span className="flex items-center gap-1.5"><Calendar size={13} className="text-slate-400"/> Update {formatDate(pkg.lastUpdate)}</span>
-                      </div>
+                      {(() => {
+                        // Private & Home Tutoring: hanya nama siswa yang oranye (reguler tetap biru)
+                        const warm = pkg.category === 'PRIVATE' || pkg.isHomeTutoring;
+                        return (
+                          <div className="flex flex-col items-start gap-2 text-[10px] font-black uppercase tracking-wider text-slate-500">
+                             <span className={`flex items-start gap-1.5 ${warm ? 'text-orange-600' : 'text-blue-600'}`}><UserCheck size={13} className="shrink-0 mt-0.5"/> Siswa: {pkg.studentName}</span>
+                             <span className="flex items-center gap-1.5"><Calendar size={13} className="text-slate-400"/> Update {formatDate(pkg.lastUpdate)}</span>
+                          </div>
+                        );
+                      })()}
                    </div>
 
                    <div className="shrink-0 lg:min-w-[200px] px-6 py-5 rounded-[2rem] bg-gradient-to-br from-blue-50 to-white border border-blue-100 text-left lg:text-center flex flex-col justify-center">
