@@ -504,7 +504,7 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
       <div className="flex items-start gap-3 px-2">
         <Eye size={16} className="text-slate-400 shrink-0 mt-0.5" />
         <p className="text-[10px] font-bold text-slate-500 leading-relaxed">
-          Progres di sini diambil dari absen mandiri siswa, sebagai patokan kapan siswa masuk sesi evaluasi. Halaman ini hanya untuk dilihat dan tidak mengubah absen siswa. Cari nama siswa yang Anda ajar, lalu tekan ikon pin 📌 di sebelah kanan kartu siswa untuk memantau progres mereka.
+          Progres di sini diambil dari absen mandiri siswa, sebagai patokan kapan siswa masuk sesi evaluasi. Halaman ini hanya untuk dilihat dan tidak mengubah absen siswa. Cari nama siswa yang Anda ajar, lalu tekan ikon pin 📌 di sebelah kanan kartu siswa untuk memantau progres mereka. Siswa yang sudah klaim rapot otomatis hilang dari daftar (cek di menu Rapot Siswa), dan muncul lagi saat mereka mendaftar kelas berikutnya.
         </p>
       </div>
 
