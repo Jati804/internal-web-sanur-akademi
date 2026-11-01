@@ -548,7 +548,7 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
         )}
 
         {query.trim().length >= 2 && results.length === 0 && (
-          <div className="bg-white rounded-[2.5rem] border-2 border-dashed border-slate-100 p-10 text-center">
+          <div className="bg-white rounded-[2.5rem] border-2 border-solid border-slate-100 p-10 text-center">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Siswa dengan nama itu tidak ditemukan</p>
           </div>
         )}
@@ -606,11 +606,11 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
             <p className="text-[10px] font-bold text-rose-700 leading-relaxed">{loadError}</p>
           </div>
         ) : pins.length === 0 ? (
-          <div className="bg-white rounded-[2.5rem] border-2 border-dashed border-slate-100 p-12 text-center space-y-2">
+          <div className="bg-white rounded-[2.5rem] border-2 border-solid border-slate-100 p-12 text-center space-y-2">
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Belum ada siswa yang dipantau</p>
           </div>
         ) : watch.total === 0 ? (
-          <div className="bg-white rounded-[2.5rem] border-2 border-dashed border-slate-100 p-12 text-center space-y-2">
+          <div className="bg-white rounded-[2.5rem] border-2 border-solid border-slate-100 p-12 text-center space-y-2">
             <CheckCircle2 size={28} className="mx-auto text-emerald-400" />
             <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Tidak ada siswa yang sedang belajar saat ini</p>
             <p className="text-[10px] font-bold text-slate-300">Yang sudah klaim rapot ada di menu Rapot Siswa. Kalau mereka membeli kelas lagi, otomatis muncul di sini.</p>
