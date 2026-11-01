@@ -221,7 +221,7 @@ type Tone = 'blue' | 'amber' | 'orange' | 'rose' | 'emerald';
 export const getStatus = (c: CourseInfo): { text: string; tone: Tone; bolt?: boolean } | null => {
   if (c.waitingRelease) return { text: 'Rapot siap, menunggu rilis', tone: 'amber' };
   if (c.requesting) return { text: 'Sudah klaim rapot', tone: 'orange' };
-  if (c.rejected) return { text: 'Klaim rapot ditolak', tone: 'rose' };
+  if (c.rejected) return { text: 'Klaim rapot ditolak · Klaim ulang', tone: 'emerald' };
   if (c.displayDone >= 6) return { text: 'Selesai 6/6 · belum klaim rapot', tone: 'emerald' };
   if (c.displayDone === 5) return { text: 'Berikutnya: EVALUASI', tone: 'blue', bolt: true };
   return null;
@@ -407,6 +407,8 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
       if (!acc) continue;
       getRunningCourses(idx, acc.name)
         .filter(c => c.subject === norm(pin.subject))
+        // Sudah klaim / rapot siap menunggu rilis -> sudah terlihat di menu "Rapot Siswa", jadi tidak perlu tampil di pantauan
+        .filter(c => !c.requesting && !c.waitingRelease)
         .forEach(c => items.push({ studentId: String(acc.id), studentName: String(acc.name), course: c }));
     }
 
@@ -545,9 +547,9 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
                       key={c.key}
                       onClick={() => setSubjectFilter(c.key)}
                       className={`shrink-0 px-5 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 ${
-                        priv
-                          ? (active ? 'bg-orange-500 text-white shadow-md' : 'bg-orange-50 text-orange-600 hover:bg-orange-100')
-                          : (active ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200')
+                        active
+                          ? (priv ? 'bg-orange-500 text-white shadow-md' : 'bg-blue-600 text-white shadow-md')
+                          : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
                       }`}
                     >
                       {c.label}
