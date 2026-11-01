@@ -357,6 +357,7 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
   const [loadError, setLoadError] = useState('');
   const [busyKey, setBusyKey] = useState<string | null>(null);
   const [subjectFilter, setSubjectFilter] = useState('SEMUA');
+  const [showInfo, setShowInfo] = useState(false);
 
   // Muat daftar pin milik guru ini
   useEffect(() => {
@@ -501,11 +502,22 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
         <h2 className="text-4xl font-black text-slate-800 tracking-tight leading-none uppercase italic">Pantau <span className="text-orange-600">Siswa</span></h2>
       </header>
 
-      <div className="flex items-start gap-3 px-2">
-        <Eye size={16} className="text-slate-400 shrink-0 mt-0.5" />
-        <p className="text-[10px] font-bold text-slate-500 leading-relaxed">
-          Progres di sini diambil dari absen mandiri siswa, sebagai patokan kapan siswa masuk sesi evaluasi. Halaman ini hanya untuk dilihat dan tidak mengubah absen siswa. Cari nama siswa yang Anda ajar, lalu tekan ikon pin 📌 di sebelah kanan kartu siswa untuk memantau progres mereka. Siswa yang sudah klaim rapot otomatis hilang dari daftar (cek di menu Rapot Siswa), dan muncul lagi saat mereka mendaftar kelas berikutnya.
-        </p>
+      <div className="px-2 space-y-2">
+        <div className="flex items-start gap-3">
+          <Eye size={16} className="text-slate-400 shrink-0 mt-0.5" />
+          <p className="text-xs font-bold text-slate-500 leading-relaxed">
+            Pantau progres absen mandiri siswa menuju sesi evaluasi. Cari nama siswa, lalu tekan 📌 untuk memantau.{' '}
+            <button type="button" onClick={() => setShowInfo(v => !v)} className="text-blue-600 font-black hover:underline">
+              {showInfo ? 'Tutup' : 'Selengkapnya'}
+            </button>
+          </p>
+        </div>
+        {showInfo && (
+          <ul className="ml-7 pl-4 list-disc space-y-1.5 text-xs font-bold text-slate-500 leading-relaxed">
+            <li>Halaman ini hanya untuk dilihat dan tidak mengubah absen siswa.</li>
+            <li>Siswa yang sudah klaim rapot otomatis hilang dari daftar (cek di menu Rapot Siswa), dan muncul lagi saat mereka mendaftar kelas berikutnya.</li>
+          </ul>
+        )}
       </div>
 
       {/* KOTAK CARI */}
@@ -516,9 +528,9 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
             type="text"
             value={query}
             onChange={e => setQuery(e.target.value)}
-            placeholder="Cari nama siswa..."
+            placeholder="Cari nama siswa"
             autoComplete="off"
-            className="w-full pl-16 pr-6 py-5 bg-white rounded-full font-black text-sm outline-none border-2 border-slate-100 focus:border-blue-500 shadow-sm transition-all"
+            className="w-full pl-16 pr-6 py-5 bg-white rounded-full font-bold text-sm text-slate-700 placeholder:text-slate-400 outline-none border-2 border-slate-100 focus:border-blue-500 shadow-sm transition-all"
           />
         </div>
 
