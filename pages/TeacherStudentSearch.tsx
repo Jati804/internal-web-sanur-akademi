@@ -642,7 +642,7 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
               <div key={g.key} className="space-y-3">
                 <h4 className="px-2 text-sm font-black text-slate-800 uppercase italic tracking-wide">
                   {stripPelatihan(g.subject)}
-                  {g.room && <span className={isPrivateRoom(g.room) ? 'text-orange-500' : 'text-blue-900'}> - {g.room}</span>}
+                  {g.room && <span className={isPrivateRoom(g.room) ? 'text-orange-600' : 'text-blue-900'}> - {g.room}</span>}
                 </h4>
                 {g.items.map(it => {
                   const key = `${it.studentId}|${it.course.subject}`;
