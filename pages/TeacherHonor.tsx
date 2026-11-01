@@ -663,11 +663,11 @@ const TeacherHonor: React.FC<TeacherHonorProps> = ({ user, logs, refreshAllData 
                       <h4 className="text-xl md:text-2xl font-black text-slate-800 uppercase italic leading-snug">{pkg.className}</h4>
 
                       {(() => {
-                        // Private & Home Tutoring: hanya nama siswa yang oranye (reguler tetap biru)
+                        // Private & Home Tutoring: nama siswa oranye. Reguler: nama abu-abu kebiruan, ikon tetap biru
                         const warm = pkg.category === 'PRIVATE' || pkg.isHomeTutoring;
                         return (
                           <div className="flex flex-col items-start gap-2 text-[10px] font-black uppercase tracking-wider text-slate-500">
-                             <span className={`flex items-start gap-1.5 ${warm ? 'text-orange-600' : 'text-blue-600'}`}><UserCheck size={13} className="shrink-0 mt-0.5"/> Siswa: {pkg.studentName}</span>
+                             <span className={`flex items-start gap-1.5 ${warm ? 'text-orange-500' : 'text-slate-500'}`}><UserCheck size={13} className={`shrink-0 mt-0.5 ${warm ? '' : 'text-blue-600'}`}/> Siswa: {pkg.studentName}</span>
                              <span className="flex items-center gap-1.5"><Calendar size={13} className="text-slate-400"/> Update {formatDate(pkg.lastUpdate)}</span>
                           </div>
                         );
