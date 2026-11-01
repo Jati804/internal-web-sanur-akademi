@@ -102,7 +102,7 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ user, schedule, teachers,
                         <div className="min-w-0 flex-1 space-y-1.5">
                           <p className="text-xs font-black uppercase italic text-slate-800">
                             {stripPelatihan(it.subject)}
-                            <span className={priv ? 'text-orange-500' : 'text-blue-900'}> - {it.room}</span>
+                            <span className={priv ? 'text-orange-600' : 'text-blue-900'}> - {it.room}</span>
                           </p>
                           {!isTeacher && (
                             <p className="text-[11px] font-bold text-slate-500">{teacherName(it)}</p>
