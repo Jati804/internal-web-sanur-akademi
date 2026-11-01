@@ -564,7 +564,7 @@ const handleImportExcelFile = (e: React.ChangeEvent<HTMLInputElement>) => {
       const isHeaderValid = EXPECTED_HEADERS.every((h, i) => headerRow[i] === h);
 
       if (!isHeaderValid) {
-        alert(`Maaf, urutan kolom di dalam file nya nggak sesuai. Coba lagi yaa ✨\n\nUrutan yang benar: ${EXPECTED_HEADERS.join(', ')}`);
+        alert(`Maaf, urutan kolom di dalam file nya nggak sesuai. Coba lagi yaa ✨\n\nUrutan yang benar: ${EXPECTED_HEADERS.join(', ')}\n\nBiar gampang, download template-nya di jendela import ya ✨`);
         e.target.value = '';
         return;
       }
@@ -577,6 +577,11 @@ const handleImportExcelFile = (e: React.ChangeEvent<HTMLInputElement>) => {
           const m = String(val.getMonth() + 1).padStart(2, '0');
           const d = String(val.getDate()).padStart(2, '0');
           return `${y}-${m}-${d}`;
+        }
+        if (typeof val === 'number') {
+          // Sel bertipe tanggal di Excel tersimpan sebagai angka serial -> ubah ke YYYY-MM-DD
+          const d = XLSX.SSF.parse_date_code(val);
+          if (d) return `${d.y}-${String(d.m).padStart(2, '0')}-${String(d.d).padStart(2, '0')}`;
         }
         return normalizeDate(String(val).trim());
       };
@@ -611,6 +616,42 @@ const handleImportExcelFile = (e: React.ChangeEvent<HTMLInputElement>) => {
     }
   };
   reader.readAsBinaryString(file);
+};
+
+const handleDownloadTemplate = () => {
+  // Sheet 1 = template kosong (satu-satunya sheet yang dibaca saat import). Sheet 2 = petunjuk & contoh (tidak ikut diimport).
+  const sheet1: any = XLSX.utils.aoa_to_sheet([EXPECTED_HEADERS]);
+  // Kolom TANGGAL diformat sebagai teks, supaya tanggal yang diketik (mis. 11/01/2026) tidak diubah Excel
+  for (let r = 1; r <= 1000; r++) {
+    sheet1[XLSX.utils.encode_cell({ r, c: 0 })] = { t: 's', v: '', z: '@' };
+  }
+  sheet1['!ref'] = 'A1:E1001';
+  sheet1['!cols'] = [{ wch: 16 }, { wch: 70 }, { wch: 24 }, { wch: 14 }, { wch: 18 }];
+  sheet1['!rows'] = Array.from({ length: 1001 }, () => ({ hpt: 20 }));
+
+  const guide: any[][] = [
+    ['PETUNJUK PENGISIAN (sheet ini tidak ikut diimport)'],
+    [],
+    ['KOLOM', 'CARA ISI'],
+    ['TANGGAL', 'Bulan/tanggal/tahun, contoh 11/01/2026 (= 1 November 2026). Format 2026-11-01 juga boleh.'],
+    ['DESKRIPSI', 'Keterangan transaksi. Otomatis jadi huruf besar.'],
+    ['KATEGORI', 'Contoh: UMUM, SEWA, HONOR GURU. Kalau dikosongkan jadi UMUM.'],
+    ['TIPE', 'Isi INCOME (pemasukan) atau EXPENSE (pengeluaran).'],
+    ['NOMINAL', 'Angka saja, tanpa Rp, titik, atau koma. Contoh: 720000'],
+    [],
+    ['CONTOH ISIAN'],
+    EXPECTED_HEADERS,
+    ['11/01/2026', 'PENGHARUM RUANGAN DAHLIA SPRAY 400ML', 'UMUM', 'EXPENSE', 33300],
+    ['10/30/2026', 'SPP MASUK: NAMA SISWA | PELATIHAN MICROSOFT WORD (BASIC) - REGULER 1', 'SPP SISWA', 'INCOME', 720000],
+  ];
+  const sheet2: any = XLSX.utils.aoa_to_sheet(guide);
+  sheet2['!cols'] = [{ wch: 16 }, { wch: 80 }, { wch: 18 }, { wch: 14 }, { wch: 16 }];
+  sheet2['!rows'] = guide.map(() => ({ hpt: 20 }));
+
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, sheet1, 'Template');
+  XLSX.utils.book_append_sheet(wb, sheet2, 'Petunjuk dan Contoh');
+  XLSX.writeFile(wb, 'TEMPLATE_IMPORT_KAS_SANUR.xlsx');
 };
 
 const handleDeleteTx = async () => {
@@ -718,19 +759,70 @@ const handleExportExcel = async () => {
       return;
     }
 
-    const data = allRows.map(t => {
-      const [year, month, day] = t.date.split('-');
-      const americanDate = `${month}/${day}/${year}`;
-      return {
-        TANGGAL: americanDate,
-        DESKRIPSI: t.description,
-        KATEGORI: t.category,
-        TIPE: t.type,
-        NOMINAL: t.amount
-      };
-    });
+    const toUsDate = (d: string) => {
+      const [year, month, day] = String(d).split('-');
+      return `${month}/${day}/${year}`;
+    };
+    const NUM_FMT = '#,##0';
+    const isAllTypes = ledgerFilters.type === 'ALL';
+    const amountOf = (t: any) => Number(t.amount) || 0;
 
-    const worksheet = XLSX.utils.json_to_sheet(data);
+    let aoa: any[][];
+    let amountCols: number[];
+    let lastDataRow = 0, totalRow = 0, netRow = 0, totalIncome = 0, totalExpense = 0;
+
+    if (isAllTypes) {
+      // Semua tipe: pemasukan & pengeluaran dipisah kolom (zig-zag), lalu ada total + kas bersih di paling bawah
+      aoa = [['TANGGAL', 'DESKRIPSI', 'KATEGORI', 'TIPE', 'NOMINAL INCOME', 'NOMINAL EXPENSE']];
+      allRows.forEach((t: any) => {
+        const amt = amountOf(t);
+        const isIncome = t.type === 'INCOME';
+        if (isIncome) totalIncome += amt; else totalExpense += amt;
+        aoa.push([toUsDate(t.date), t.description, t.category, t.type, isIncome ? amt : null, isIncome ? null : amt]);
+      });
+      lastDataRow = aoa.length;      // nomor baris Excel terakhir yang berisi transaksi (header = baris 1)
+      totalRow = lastDataRow + 2;    // 1 baris kosong sebagai jeda
+      netRow = lastDataRow + 3;
+      aoa.push([]);
+      aoa.push([null, null, null, 'TOTAL', totalIncome, totalExpense]);
+      aoa.push([null, null, null, 'KAS BERSIH', totalIncome - totalExpense, null]);
+      amountCols = [4, 5];
+    } else {
+      // Filter income saja / expense saja: tetap satu kolom NOMINAL
+      aoa = [['TANGGAL', 'DESKRIPSI', 'KATEGORI', 'TIPE', 'NOMINAL']];
+      allRows.forEach((t: any) => aoa.push([toUsDate(t.date), t.description, t.category, t.type, amountOf(t)]));
+      amountCols = [4];
+    }
+
+    const worksheet: any = XLSX.utils.aoa_to_sheet(aoa);
+
+    // Format angka ribuan di kolom nominal (tampil 1.500.000 di Excel berbahasa Indonesia)
+    for (let r = 1; r < aoa.length; r++) {
+      for (const c of amountCols) {
+        const cell = worksheet[XLSX.utils.encode_cell({ r, c })];
+        if (cell && cell.t === 'n') cell.z = NUM_FMT;
+      }
+    }
+
+    // Total & kas bersih pakai rumus Excel, jadi ikut berubah kalau angka di atasnya diedit
+    if (isAllTypes) {
+      worksheet[`E${totalRow}`] = { t: 'n', v: totalIncome, f: `SUM(E2:E${lastDataRow})`, z: NUM_FMT };
+      worksheet[`F${totalRow}`] = { t: 'n', v: totalExpense, f: `SUM(F2:F${lastDataRow})`, z: NUM_FMT };
+      worksheet[`E${netRow}`] = { t: 'n', v: totalIncome - totalExpense, f: `E${totalRow}-F${totalRow}`, z: NUM_FMT };
+    }
+
+    // Lebar kolom otomatis mengikuti isi (+ ruang lega), supaya tidak perlu dilebarkan manual
+    worksheet['!cols'] = Array.from({ length: aoa[0].length }, (_, c) => {
+      const longest = aoa.reduce((m, row) => {
+        const v = row[c];
+        const len = v == null ? 0 : (typeof v === 'number' ? v.toLocaleString('id-ID').length : String(v).length);
+        return Math.max(m, len);
+      }, 0);
+      return { wch: Math.min(Math.max(longest + 4, 14), 100) };
+    });
+    // Tinggi baris sedikit dilonggarkan supaya tidak terlalu dempet
+    worksheet['!rows'] = aoa.map(() => ({ hpt: 20 }));
+
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Laporan Kas');
     XLSX.writeFile(workbook, `LAPORAN_KAS_SANUR_${new Date().toISOString().split('T')[0]}.xlsx`);
@@ -1591,7 +1683,9 @@ const executePayTeacher = async () => {
 </div>
 <div className="space-y-6">
   <div className="p-6 bg-blue-50 rounded-[2rem] border border-blue-100">
-    <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-3 text-center">Urutan Kolom Harus Sesuai:</p>
+    <p className="text-[9px] font-black text-blue-600 uppercase tracking-widest mb-3 text-center">Isi data pakai template ini ya:</p>
+    <button type="button" onClick={handleDownloadTemplate} className="w-full py-4 bg-emerald-600 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center justify-center gap-2 hover:bg-emerald-700 transition-all shadow-xl"><Download size={14}/> Download Template Excel</button>
+    <p className="text-[8px] font-bold text-slate-400 uppercase tracking-widest mt-4 mb-2 text-center">Urutan kolom:</p>
     <code className="text-[9px] font-mono font-bold text-slate-500 block bg-white p-4 rounded-xl border border-blue-50 leading-relaxed text-center uppercase">TANGGAL, DESKRIPSI, KATEGORI, TIPE, NOMINAL</code>
   </div>
   <div className="relative">
