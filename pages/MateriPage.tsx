@@ -633,9 +633,9 @@ const MateriPage: React.FC<MateriPageProps> = ({ user, subjects, levels, student
       ) : grouped.length === 0 ? (
         <div className="bg-white p-14 rounded-[4rem] border border-slate-100 shadow-xl flex flex-col items-center text-center gap-4 opacity-60">
           <FolderOpen size={56} className="text-slate-300" />
-          <p className="font-black text-[12px] uppercase tracking-[0.4em] text-slate-400">Belum Ada Materi</p>
+          <p className="font-black text-[12px] uppercase tracking-[0.4em] text-slate-400 italic">Belum Ada Materi</p>
           <p className="text-[10px] font-bold uppercase text-slate-400">
-            {isAdmin ? 'Klik "Upload Materi" untuk mulai menambahkan.' : 'Materi untuk kelasmu belum tersedia.'}
+            {isAdmin ? 'Klik "Upload Materi" untuk mulai menambahkan.' : 'Materi untuk kelasmu belum tersedia'}
           </p>
         </div>
       ) : (
