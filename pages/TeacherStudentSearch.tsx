@@ -513,9 +513,18 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
           </p>
         </div>
         {showInfo && (
-          <ul className="ml-7 pl-4 list-disc space-y-1.5 text-xs font-bold text-slate-500 leading-relaxed">
-            <li>Halaman ini hanya untuk dilihat dan tidak mengubah absen siswa.</li>
-            <li>Siswa yang sudah klaim rapot otomatis hilang dari daftar (cek di menu Rapot Siswa), dan muncul lagi saat mereka mendaftar kelas berikutnya.</li>
+          <ul className="space-y-1.5 text-xs font-bold text-slate-500 leading-relaxed">
+            {[
+              'Halaman ini hanya untuk dilihat dan tidak mengubah absen siswa.',
+              'Siswa yang sudah klaim rapot otomatis hilang dari daftar (cek di menu Rapot Siswa), dan muncul lagi saat mereka mendaftar kelas berikutnya.',
+            ].map(t => (
+              <li key={t} className="flex items-start gap-3">
+                <span className="w-4 shrink-0 flex justify-center mt-2" aria-hidden="true">
+                  <span className="w-1 h-1 rounded-full bg-slate-500" />
+                </span>
+                <span>{t}</span>
+              </li>
+            ))}
           </ul>
         )}
       </div>
