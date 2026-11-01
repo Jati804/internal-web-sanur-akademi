@@ -1,7 +1,7 @@
 import React, { useState, useMemo, useEffect, useRef } from 'react';
 import { User, TeacherStudentPin } from '../types';
 import { supabase, waitForActiveSession } from '../services/supabase.ts';
-import { Search, Pin, Zap, Check, CheckCircle2, Loader2, Info, Eye } from 'lucide-react';
+import { Search, Pin, Zap, Check, CheckCircle2, Loader2, Info, Eye, ChevronLeft, ChevronRight } from 'lucide-react';
 
 // ============================================================================
 // 🔍 CARI SISWA (khusus guru) — HANYA LIHAT, tidak mengubah absen apa pun.
@@ -289,6 +289,65 @@ const PinButton: React.FC<{ pinned: boolean; busy: boolean; onClick: () => void;
   </button>
 );
 
+// Baris pil yang bisa digeser: scrollbar bawaan disembunyikan, diganti pudar di tepi + tombol panah bulat
+const ChipScroller: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const ref = useRef<HTMLDivElement>(null);
+  const [edge, setEdge] = useState({ left: false, right: false });
+
+  const update = () => {
+    const el = ref.current;
+    if (!el) return;
+    const left = el.scrollLeft > 4;
+    const right = el.scrollLeft + el.clientWidth < el.scrollWidth - 4;
+    setEdge(prev => (prev.left === left && prev.right === right ? prev : { left, right }));
+  };
+
+  useEffect(() => {
+    update();
+    const el = ref.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver(update);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [children]);
+
+  const scrollByDir = (dir: number) => {
+    const el = ref.current;
+    if (el) el.scrollBy({ left: dir * el.clientWidth * 0.7, behavior: 'smooth' });
+  };
+
+  const arrowCls = 'absolute top-1/2 -translate-y-1/2 z-10 w-9 h-9 rounded-full bg-white border border-slate-100 shadow-md flex items-center justify-center text-slate-500 hover:text-blue-600 active:scale-95 transition-all';
+
+  return (
+    <div className="relative">
+      {edge.left && (
+        <>
+          <div className="pointer-events-none absolute left-0 top-0 bottom-0 w-16 z-[5] bg-gradient-to-r from-slate-50 via-slate-50/80 to-transparent" />
+          <button type="button" aria-label="Geser ke kiri" onClick={() => scrollByDir(-1)} className={`${arrowCls} left-0`}>
+            <ChevronLeft size={16} strokeWidth={3} />
+          </button>
+        </>
+      )}
+      <div
+        ref={ref}
+        onScroll={update}
+        style={{ scrollbarWidth: 'none' }}
+        className="flex gap-2 overflow-x-auto py-1 px-1 [&::-webkit-scrollbar]:hidden"
+      >
+        {children}
+      </div>
+      {edge.right && (
+        <>
+          <div className="pointer-events-none absolute right-0 top-0 bottom-0 w-16 z-[5] bg-gradient-to-l from-slate-50 via-slate-50/80 to-transparent" />
+          <button type="button" aria-label="Geser ke kanan" onClick={() => scrollByDir(1)} className={`${arrowCls} right-0`}>
+            <ChevronRight size={16} strokeWidth={3} />
+          </button>
+        </>
+      )}
+    </div>
+  );
+};
+
 // ---------- halaman ----------
 
 const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentPayments, studentAttendanceLogs, reports }) => {
@@ -532,20 +591,20 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
         ) : watch.total === 0 ? (
           <div className="bg-white rounded-[2.5rem] border-2 border-dashed border-slate-100 p-12 text-center space-y-2">
             <CheckCircle2 size={28} className="mx-auto text-emerald-400" />
-            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Semua siswa yang dipantau sudah selesai</p>
-            <p className="text-[10px] font-bold text-slate-300">Kalau mereka membeli kelas lagi, otomatis muncul di sini.</p>
+            <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest italic">Tidak ada siswa yang sedang belajar saat ini</p>
+            <p className="text-[10px] font-bold text-slate-300">Yang sudah klaim rapot ada di menu Rapot Siswa. Kalau mereka membeli kelas lagi, otomatis muncul di sini.</p>
           </div>
         ) : (
           <div className="space-y-10">
             {watch.groups.length > 1 && (
-              <div className="flex gap-2 overflow-x-auto pb-1 px-2 -mx-2">
+              <ChipScroller>
                 {[{ key: 'SEMUA', label: 'Semua', room: '' }, ...watch.groups.map(g => ({ key: g.key, label: classLabel(g.subject, g.room), room: g.room }))].map(c => {
                   const priv = isPrivateRoom(c.room);
                   const active = activeFilter === c.key;
                   return (
                     <button
                       key={c.key}
-                      onClick={() => setSubjectFilter(c.key)}
+                      onClick={e => { setSubjectFilter(c.key); e.currentTarget.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' }); }}
                       className={`shrink-0 px-5 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 ${
                         active
                           ? (priv ? 'bg-orange-500 text-white shadow-md' : 'bg-blue-600 text-white shadow-md')
@@ -556,7 +615,7 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
                     </button>
                   );
                 })}
-              </div>
+              </ChipScroller>
             )}
             {visibleGroups.map(g => (
               <div key={g.key} className="space-y-3">
