@@ -541,7 +541,7 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ subjects, classes, tea
                     <div className="min-w-0 flex-1 space-y-2">
                       <p className="text-sm font-black uppercase italic text-slate-800">
                         {stripPelatihan(it.subject)}
-                        <span className={isPrivateRoom(it.room) ? 'text-orange-500' : 'text-blue-900'}> - {it.room}</span>
+                        <span className={isPrivateRoom(it.room) ? 'text-orange-600' : 'text-blue-900'}> - {it.room}</span>
                       </p>
                       <p className="text-xs font-bold text-slate-500">{teacherName(it)}</p>
                       {it.participants.length > 0 && (
