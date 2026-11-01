@@ -51,6 +51,9 @@ const stripPelatihan = (s: string) => s.replace(/^PELATIHAN\s+/i, '');
 // Satu aturan "ruang private" yang sama dengan TeacherDashboard / ScheduleModal
 const isPrivateRoom = (room: string) => /PRIVATE|PRIVAT|HOME TUTORING/i.test(room || '');
 
+// Label kelas untuk chip filter: "CANVA - PRIVATE 1"
+const classLabel = (subject: string, room: string) => [stripPelatihan(subject), room].filter(Boolean).join(' - ');
+
 const LEVEL_ORDER = ['BASIC', 'INTERMEDIATE', 'ADVANCED'];
 const levelRank = (lvl: string) => {
   const i = LEVEL_ORDER.indexOf(lvl);
@@ -395,7 +398,7 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
     };
   }, [query, studentAccounts, idx]);
 
-  // ---------- daftar pantauan: subject -> level · ruang -> siswa (progres tertinggi di atas) ----------
+  // ---------- daftar pantauan: mata pelajaran + ruang (mis. CANVA - PRIVATE 1) -> siswa (level, lalu progres tertinggi) ----------
   const watch = useMemo(() => {
     type Item = { studentId: string; studentName: string; course: CourseInfo };
     const items: Item[] = [];
@@ -407,40 +410,29 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
         .forEach(c => items.push({ studentId: String(acc.id), studentName: String(acc.name), course: c }));
     }
 
-    const bySubject = new Map<string, Map<string, Item[]>>();
+    const byClass = new Map<string, { key: string; subject: string; room: string; items: Item[] }>();
     for (const it of items) {
-      const gKey = `${it.course.level}||${it.course.room}`;
-      const sub = bySubject.get(it.course.subject) || new Map<string, Item[]>();
-      const list = sub.get(gKey) || [];
-      list.push(it);
-      sub.set(gKey, list);
-      bySubject.set(it.course.subject, sub);
+      const key = `${it.course.subject}||${it.course.room}`;
+      const g = byClass.get(key) || { key, subject: it.course.subject, room: it.course.room, items: [] };
+      g.items.push(it);
+      byClass.set(key, g);
     }
 
-    const groups = Array.from(bySubject.entries())
-      .sort((a, b) => a[0].localeCompare(b[0]))
-      .map(([subject, g]) => ({
-        subject,
-        groups: Array.from(g.entries())
-          .sort((a, b) => {
-            const [la, ra] = a[0].split('||');
-            const [lb, rb] = b[0].split('||');
-            return levelRank(la) - levelRank(lb) || la.localeCompare(lb) || ra.localeCompare(rb);
-          })
-          .map(([gKey, list]) => {
-            const [level, room] = gKey.split('||');
-            return {
-              level, room,
-              items: [...list].sort((a, b) => b.course.displayDone - a.course.displayDone || a.studentName.localeCompare(b.studentName)),
-            };
-          }),
+    const groups = Array.from(byClass.values())
+      .sort((a, b) => a.subject.localeCompare(b.subject) || a.room.localeCompare(b.room))
+      .map(g => ({
+        ...g,
+        items: [...g.items].sort((a, b) =>
+          levelRank(a.course.level) - levelRank(b.course.level) ||
+          b.course.displayDone - a.course.displayDone ||
+          a.studentName.localeCompare(b.studentName)),
       }));
     return { groups, total: items.length };
   }, [pins, accountsById, idx]);
 
-  // Kalau matkul yang sedang difilter sudah tidak ada (pin terakhirnya dilepas), otomatis balik ke "Semua"
-  const activeFilter = watch.groups.some(g => g.subject === subjectFilter) ? subjectFilter : 'SEMUA';
-  const visibleGroups = activeFilter === 'SEMUA' ? watch.groups : watch.groups.filter(g => g.subject === activeFilter);
+  // Kalau kelas yang sedang difilter sudah tidak ada (pin terakhirnya dilepas), otomatis balik ke "Semua"
+  const activeFilter = watch.groups.some(g => g.key === subjectFilter) ? subjectFilter : 'SEMUA';
+  const visibleGroups = activeFilter === 'SEMUA' ? watch.groups : watch.groups.filter(g => g.key === activeFilter);
 
   return (
     <div className="max-w-5xl mx-auto space-y-10 pb-40 px-4">
@@ -545,47 +537,52 @@ const TeacherStudentSearch: React.FC<Props> = ({ user, studentAccounts, studentP
           <div className="space-y-10">
             {watch.groups.length > 1 && (
               <div className="flex gap-2 overflow-x-auto pb-1 px-2 -mx-2">
-                {['SEMUA', ...watch.groups.map(g => g.subject)].map(s => (
-                  <button
-                    key={s}
-                    onClick={() => setSubjectFilter(s)}
-                    className={`shrink-0 px-5 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 ${
-                      activeFilter === s ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200'
-                    }`}
-                  >
-                    {s === 'SEMUA' ? 'Semua' : stripPelatihan(s)}
-                  </button>
-                ))}
+                {[{ key: 'SEMUA', label: 'Semua', room: '' }, ...watch.groups.map(g => ({ key: g.key, label: classLabel(g.subject, g.room), room: g.room }))].map(c => {
+                  const priv = isPrivateRoom(c.room);
+                  const active = activeFilter === c.key;
+                  return (
+                    <button
+                      key={c.key}
+                      onClick={() => setSubjectFilter(c.key)}
+                      className={`shrink-0 px-5 py-2.5 rounded-full text-[9px] font-black uppercase tracking-widest transition-all active:scale-95 ${
+                        priv
+                          ? (active ? 'bg-orange-500 text-white shadow-md' : 'bg-orange-50 text-orange-600 hover:bg-orange-100')
+                          : (active ? 'bg-blue-600 text-white shadow-md' : 'bg-slate-100 text-slate-500 hover:bg-slate-200')
+                      }`}
+                    >
+                      {c.label}
+                    </button>
+                  );
+                })}
               </div>
             )}
-            {visibleGroups.map(sg => (
-              <div key={sg.subject} className="space-y-5">
-                <h4 className="px-2 text-sm font-black text-slate-800 uppercase italic tracking-wide">{stripPelatihan(sg.subject)}</h4>
-                {sg.groups.map(g => (
-                  <div key={`${g.level}||${g.room}`} className="space-y-3">
-                    <span className={`inline-block ml-2 px-4 py-1 rounded-full text-white text-[8px] font-black uppercase tracking-widest ${isPrivateRoom(g.room) ? 'bg-orange-500' : 'bg-blue-900'}`}>
-                      {[g.level, g.room].filter(Boolean).join(' · ') || 'Kelas'}
-                    </span>
-                    {g.items.map(it => {
-                      const key = `${it.studentId}|${it.course.subject}`;
-                      return (
-                        <div key={`${it.studentId}|${it.course.paymentId}`} className="relative flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white border-2 border-slate-100 shadow-sm rounded-[2rem] px-6 py-5">
-                          <div className="min-w-0 space-y-2 pr-14 xl:pr-0 xl:flex-1">
-                            <p className="text-[12px] font-black text-slate-800 uppercase italic leading-tight">{it.studentName}</p>
-                            <ProgressLine c={it.course} />
-                          </div>
-                          <SessionChips c={it.course} />
-                          <PinButton
-                            pinned
-                            busy={busyKey === key}
-                            onClick={() => togglePin(it.studentId, it.course.subject)}
-                            className="absolute top-4 right-4 xl:static"
-                          />
-                        </div>
-                      );
-                    })}
-                  </div>
-                ))}
+            {visibleGroups.map(g => (
+              <div key={g.key} className="space-y-3">
+                <h4 className="px-2 text-sm font-black text-slate-800 uppercase italic tracking-wide">
+                  {stripPelatihan(g.subject)}
+                  {g.room && <span className={isPrivateRoom(g.room) ? 'text-orange-500' : 'text-blue-900'}> - {g.room}</span>}
+                </h4>
+                {g.items.map(it => {
+                  const key = `${it.studentId}|${it.course.subject}`;
+                  return (
+                    <div key={`${it.studentId}|${it.course.paymentId}`} className="relative flex flex-col xl:flex-row xl:items-center justify-between gap-4 bg-white border-2 border-slate-100 shadow-sm rounded-[2rem] px-6 py-5">
+                      <div className="min-w-0 space-y-2 pr-14 xl:pr-0 xl:flex-1">
+                        <p className="text-[12px] font-black text-slate-800 uppercase italic leading-tight">
+                          {it.studentName}
+                          {it.course.level && <span className="text-slate-400"> - {it.course.level}</span>}
+                        </p>
+                        <ProgressLine c={it.course} />
+                      </div>
+                      <SessionChips c={it.course} />
+                      <PinButton
+                        pinned
+                        busy={busyKey === key}
+                        onClick={() => togglePin(it.studentId, it.course.subject)}
+                        className="absolute top-4 right-4 xl:static"
+                      />
+                    </div>
+                  );
+                })}
               </div>
             ))}
           </div>
