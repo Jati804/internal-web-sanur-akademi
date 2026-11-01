@@ -100,10 +100,10 @@ const ScheduleModal: React.FC<ScheduleModalProps> = ({ user, schedule, teachers,
                       <div key={it.id} className="flex gap-4 bg-slate-50 border border-slate-100 rounded-[1.5rem] px-5 py-4">
                         <p className="w-[5.5rem] shrink-0 text-xs font-black text-slate-800 leading-snug">{fmtRange(it.start, it.end)}</p>
                         <div className="min-w-0 flex-1 space-y-1.5">
-                          <div className="flex flex-wrap items-center gap-2">
-                            <p className="text-xs font-black text-slate-800 uppercase italic">{stripPelatihan(it.subject)}</p>
-                            <span className={`px-3 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest text-white ${priv ? 'bg-orange-500' : 'bg-blue-900'}`}>{it.room}</span>
-                          </div>
+                          <p className="text-xs font-black uppercase italic text-slate-800">
+                            {stripPelatihan(it.subject)}
+                            <span className={priv ? 'text-orange-500' : 'text-blue-900'}> - {it.room}</span>
+                          </p>
                           {!isTeacher && (
                             <p className="text-[11px] font-bold text-slate-500">{teacherName(it)}</p>
                           )}
