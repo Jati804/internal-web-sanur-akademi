@@ -710,10 +710,10 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
                              >
                                <p className="w-[5.5rem] shrink-0 text-xs font-black text-slate-800 leading-snug">{fmtRange(it.start, it.end)}</p>
                                <div className="min-w-0 flex-1 space-y-1.5">
-                                 <div className="flex flex-wrap items-center gap-2">
-                                   <p className="text-xs font-black text-slate-800 uppercase italic">{stripPelatihan(it.subject)}</p>
-                                   <span className={`px-3 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest text-white ${priv ? 'bg-orange-500' : 'bg-blue-900'}`}>{it.room}</span>
-                                 </div>
+<p className="text-xs font-black uppercase italic text-slate-800">
+  {stripPelatihan(it.subject)}
+  <span className={priv ? 'text-orange-500' : 'text-blue-900'}> - {it.room}</span>
+</p>
                                  {people.length > 0 && (
                                    <div className={`text-[11px] font-semibold space-y-0.5 ${priv ? 'text-orange-600' : 'text-blue-900/70'}`}>
                                      {people.map((n, k) => (
