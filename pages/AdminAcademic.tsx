@@ -539,10 +539,10 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ subjects, classes, tea
                   <div key={it.id} className="flex flex-col md:flex-row md:items-start gap-4 bg-slate-50 border border-slate-100 rounded-[2rem] px-6 py-5">
                     <p className="md:w-36 shrink-0 text-sm font-black text-slate-800">{fmtRange(it.start, it.end)}</p>
                     <div className="min-w-0 flex-1 space-y-2">
-                      <div className="flex flex-wrap items-center gap-3">
-                        <p className="text-sm font-black text-slate-800 uppercase italic">{stripPelatihan(it.subject)}</p>
-                        <span className={`px-4 py-1 rounded-full text-[8px] font-black uppercase tracking-widest text-white ${isPrivateRoom(it.room) ? 'bg-orange-500' : 'bg-blue-900'}`}>{it.room}</span>
-                      </div>
+                      <p className="text-sm font-black uppercase italic text-slate-800">
+                        {stripPelatihan(it.subject)}
+                        <span className={isPrivateRoom(it.room) ? 'text-orange-500' : 'text-blue-900'}> - {it.room}</span>
+                      </p>
                       <p className="text-xs font-bold text-slate-500">{teacherName(it)}</p>
                       {it.participants.length > 0 && (
                         <div className={`text-[11px] font-semibold space-y-0.5 ${isPrivateRoom(it.room) ? 'text-orange-600' : 'text-blue-900/70'}`}>
