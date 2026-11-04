@@ -1009,7 +1009,7 @@ const executePayTeacher = async () => {
                   <div className="flex flex-wrap gap-3">
                      <button onClick={() => setShowAddModal(true)} className="px-6 py-4 bg-blue-600 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:bg-blue-700 transition-all shadow-xl shadow-blue-200"><Plus size={14}/> TAMBAH</button>
                      <button onClick={() => setShowImportModal(true)} className="px-6 py-4 bg-slate-900 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:bg-black transition-all shadow-xl"><Upload size={14}/> IMPORT</button>
-                     <button onClick={handleExportExcel} className="px-6 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-700 transition-all"><FileSpreadsheet size={14}/> EXPORT EXCEL</button>
+                     <button onClick={handleExportExcel} className="px-6 py-4 bg-emerald-600 text-white rounded-2xl font-black text-[9px] uppercase tracking-widest flex items-center gap-2 hover:bg-emerald-700 transition-all shadow-xl shadow-emerald-200"><FileSpreadsheet size={14}/> EXPORT EXCEL</button>
                   </div>
                </div>
                {/* 🔍 SEARCH BOX */}
