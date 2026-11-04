@@ -13,7 +13,7 @@ import {
   Banknote,
   Loader2,
   AlertTriangle,
-  Download,
+  FileSpreadsheet,
   X,
   Search
 } from 'lucide-react';
@@ -504,9 +504,9 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ subjects, classes, tea
           <button
             onClick={handleExport}
             disabled={exporting || items.length === 0}
-            className="px-8 py-4 bg-slate-100 text-slate-700 rounded-full font-black text-[10px] uppercase tracking-widest flex items-center gap-2 hover:bg-slate-200 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed"
+            className="px-8 py-4 bg-emerald-600 text-white rounded-full font-black text-[10px] uppercase tracking-widest flex items-center gap-2 shadow-xl shadow-emerald-200 hover:bg-emerald-700 transition-all active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none"
           >
-            {exporting ? <Loader2 size={16} className="animate-spin" /> : <Download size={16} />} Ekspor Excel
+            {exporting ? <Loader2 size={16} className="animate-spin" /> : <FileSpreadsheet size={16} />} Ekspor Excel
           </button>
           <button
             onClick={openAdd}
