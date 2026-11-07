@@ -535,7 +535,7 @@ const pendingReportsCount = Array.isArray(reports) ?
 
 // 🔄 LOGOUT PAKSA SEKALI. Ganti nilai ini (mis. '2026-11-01-1' -> '2026-11-15-1') hanya kalau suatu saat
 // ingin menendang semua orang sekali lagi. Selama nilainya sama, tidak terjadi apa-apa.
-const FORCE_LOGOUT_VERSION = '2026-11-01-2';
+const FORCE_LOGOUT_VERSION = '2026-11-07-1';
 
 const App = () => {
   useAutoRefreshOnDeploy();
