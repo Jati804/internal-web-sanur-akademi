@@ -1297,7 +1297,7 @@ const executePayTeacher = async () => {
                   <div className="flex-1 min-w-0 space-y-3 flex flex-col justify-center">
                     <h4 className="text-xl md:text-2xl font-black text-slate-800 uppercase italic leading-snug">{stripLevel(it.className)}</h4>
                     <div className="space-y-3 text-[10px] font-black uppercase tracking-wider text-slate-500">
-                      <p className={`flex items-start gap-1.5 ${(it.category === 'PRIVATE' || String(it.className).toUpperCase().includes('HOME TUTORING')) ? 'text-orange-600' : 'text-blue-600'}`}><Users size={13} className="shrink-0 mt-0.5"/> Siswa: {it.studentName}</p>
+                      <p className={`flex items-start gap-1.5 ${(it.category === 'PRIVATE' || String(it.className).toUpperCase().includes('HOME TUTORING')) ? 'text-orange-600' : 'text-blue-900/70'}`}><Users size={13} className="shrink-0 mt-0.5"/> Siswa: {it.studentName}</p>
                       <p className="flex items-center gap-1.5"><UserCheck size={13} className="text-slate-400"/> Penerima: {it.teacherName}</p>
                     </div>
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
