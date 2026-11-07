@@ -7,7 +7,7 @@ import type { ScheduleItem } from './AdminAcademic.tsx';
 import {
   ClipboardCheck, Loader2, Clock, Send, Zap, HeartPulse,
   UserPlus, Wallet, Hash, Timer, RotateCcw, Save, Sparkles,
-  AlertTriangle, X, Check, CalendarDays
+  X, Check, CalendarDays
 } from 'lucide-react';
 import * as ReactRouterDOM from 'react-router-dom';
 const { Link, useLocation, useNavigate } = ReactRouterDOM as any;
@@ -71,12 +71,6 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
   const [activePackageId, setActivePackageId] = useState<string | null>(null);
   const [activeOriginalTeacherId, setActiveOriginalTeacherId] = useState<string | null>(null);
-
-  const [blockModal, setBlockModal] = useState<{
-    ownerName: string;
-    className: string;
-    currentSession: number;
-  } | null>(null);
 
   const [showTeacherSuggestions, setShowTeacherSuggestions] = useState(false);
   const [teacherInputValue, setTeacherInputValue] = useState('');
@@ -368,23 +362,6 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
         return;
       }
 
-      // Validasi ownership paket tujuan
-      if (destPkg) {
-        const ownerId = destPkg.originalTeacherId || destRaw[0]?.originalteacherid;
-        if (ownerId && ownerId !== user.id) {
-          const hasSub = destRaw.some(r => r.teacherid === user.id && r.status === 'SUB_LOG');
-          if (!hasSub) {
-            const owner = teachers.find(t => t.id === ownerId);
-            setBlockModal({
-              ownerName: owner?.name || 'Guru Lain',
-              className: fullClassName,
-              currentSession: destRaw.length
-            });
-            return;
-          }
-        }
-      }
-
       const placed = placeInPackage(toPkgRows(destRaw), form.date, editData.id);
       const newNumber = placed.position;
       const destChanges = placed.changes;
@@ -464,30 +441,15 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
       return alert("Jadwal Private ini belum punya siswa. Hubungi Admin untuk mengisinya ya Kak! 🙏");
     }
     if (delegating && !form.targetTeacherId) return alert("Pilih Nama Teman yang menggantikan dulu ya! ✨");
+    // Tanggal pelaksanaan tidak boleh di masa depan (presensi = sesi yang sudah terjadi)
+    if (!form.date || form.date > todayJakarta()) {
+      return alert("Tanggal pelaksanaan tidak boleh lebih dari hari ini ya Kak! 🙏");
+    }
 
     // ✏️ Mode edit + slot diganti -> pindahkan sesi ke paket yang benar
     if (editData && isSlotChanged) {
       await handleMoveSession(delegating);
       return;
-    }
-
-    // ⭐ VALIDASI OWNERSHIP SEBELUM SUBMIT
-    if (activePackageId && activeOriginalTeacherId && activeOriginalTeacherId !== user.id) {
-      const mySubLogs = logs.filter(l =>
-        l.packageId === activePackageId &&
-        l.teacherId === user.id &&
-        l.status === 'SUB_LOG'
-      );
-
-      if (mySubLogs.length === 0) {
-        const owner = teachers.find(t => t.id === activeOriginalTeacherId);
-        setBlockModal({
-          ownerName: owner?.name || 'Guru Lain',
-          className: identity.className,
-          currentSession: form.sessionNumber
-        });
-        return;
-      }
     }
 
     setLoading(true);
@@ -773,7 +735,7 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
 
             <div className="space-y-4">
                <label className="text-[10px] font-black text-slate-400 uppercase ml-2 tracking-widest flex items-center gap-2 leading-none"><Clock size={14} className="text-blue-500 -translate-y-px"/> Tanggal Pelaksanaan</label>
-               <input type="date" value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner h-[72px]" />
+               <input type="date" max={todayJakarta()} value={form.date} onChange={e => setForm({...form, date: e.target.value})} className="w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-black text-xs outline-none focus:bg-white border-2 border-transparent focus:border-blue-500 transition-all shadow-inner h-[72px]" />
             </div>
 
             {!isHomeTutoring && (
@@ -888,71 +850,6 @@ const TeacherDashboard: React.FC<TeacherDashboardProps> = ({
             {loading ? <Loader2 className="animate-spin" size={32} /> : isDetecting ? 'HARAP TUNGGU...' : (editData ? <><Save size={28}/> SIMPAN PERUBAHAN ✨</> : <><Send size={28} className="group-hover:translate-x-2 group-hover:-translate-y-2 transition-transform" /> KIRIM PRESENSI</>)}
          </button>
       </div>
-
-      {/* MODAL BLOCKING SLOT OWNERSHIP */}
-      {blockModal && (
-        <ModalPortal>
-        <div data-modal-container className="fixed inset-0 z-[300000] bg-slate-900/95 backdrop-blur-xl flex items-center justify-center p-6 opacity-0" style={{animation: 'modalFadeIn 0.3s ease-out forwards'}}>
-          <div className="bg-white w-full max-w-xl rounded-[2.5rem] shadow-2xl relative border-t-8 border-rose-600 opacity-0" style={{animation: 'modalZoomIn 0.3s ease-out 0.1s forwards'}}>
-            <div className="p-8">
-              <div className="grid grid-cols-2 gap-5">
-                <div className="bg-rose-50 rounded-[1.5rem] p-5 flex flex-col gap-4">
-                  <div className="flex flex-col items-center gap-3 text-center">
-                    <div className="w-9 h-9 bg-rose-200 rounded-xl flex items-center justify-center shrink-0">
-                      <AlertTriangle size={18} className="text-rose-800" />
-                    </div>
-                    <p className="text-[11px] font-black text-rose-700 uppercase tracking-wider leading-tight">
-                      Kelas Sedang Digunakan!
-                    </p>
-                  </div>
-
-                  <div className="border-t border-rose-200 pt-4 space-y-3">
-                    <p className="text-[10px] font-bold text-rose-700 uppercase leading-relaxed text-center">
-                      Kelas ini sedang berjalan oleh:
-                    </p>
-                    <div className="bg-white rounded-xl px-4 py-2">
-                      <p className="text-[10px] font-black text-slate-800 uppercase tracking-wide leading-relaxed">{blockModal.className}</p>
-                    </div>
-                    <div className="bg-white rounded-xl px-4 py-3 space-y-1">
-                      <p className="text-[10px] font-bold text-rose-600 uppercase tracking-wide">Guru:</p>
-                      <p className="text-[10px] font-black text-slate-800">{blockModal.ownerName}</p>
-                      <p className="text-[10px] font-bold text-rose-600">Sesi {blockModal.currentSession} / 6</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-4">
-                  <div className="bg-slate-50 rounded-[1.5rem] p-5 flex-1">
-                    <p className="text-[11px] font-black text-slate-700 uppercase tracking-wide mb-4">Anda bisa input setelah:</p>
-                    <div className="space-y-3">
-                      <div className="flex items-start gap-2">
-                        <Check size={14} className="text-emerald-500 shrink-0 mt-0.5"/>
-                        <p className="text-[10px] font-bold text-slate-600 leading-relaxed">Beliau menyelesaikan <span className="font-black text-slate-800">Sesi 6</span></p>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <Check size={14} className="text-emerald-500 shrink-0 mt-0.5"/>
-                        <p className="text-[10px] font-bold text-slate-600 leading-relaxed">Beliau <span className="font-black text-slate-800">mendelegasikan</span> kelas kepada Kakak</p>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <Check size={14} className="text-emerald-500 shrink-0 mt-0.5"/>
-                        <p className="text-[10px] font-bold text-slate-600 leading-relaxed">Hubungi <span className="font-black text-slate-800">Admin</span> untuk koordinasi tukar kelas</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => setBlockModal(null)}
-                    className="w-full py-4 bg-slate-900 hover:bg-blue-600 text-white rounded-[1.25rem] font-black text-[11px] uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2"
-                  >
-                    <Check size={16}/> Saya Mengerti
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-        </ModalPortal>
-      )}
     </div>
     </>
   );
