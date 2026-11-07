@@ -43,6 +43,7 @@ const StudentPortal: React.FC<StudentPortalProps> = ({
   const [confirmingAbsen, setConfirmingAbsen] = useState<{course: any, sessionNum: number} | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>('SEMUA');
   const [activePaymentFilter, setActivePaymentFilter] = useState<string>('SEMUA');
+  const todayWIB = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date());
   const [selectedAbsenDate, setSelectedAbsenDate] = useState(new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Jakarta' }).format(new Date()));
   const [requestingReportFor, setRequestingReportFor] = useState<any | null>(null);
   const [selectedTeacherForReport, setSelectedTeacherForReport] = useState('');
@@ -244,6 +245,9 @@ const findOfficialReportLog = (course: any) => {
       setShowErrors(true);
       return alert("Waduh! Tolong lengkapi kolom yang warna merah dulu yaa ✨");
     }
+    if (!payForm.date || payForm.date > todayWIB()) {
+      return alert("Tanggal pembayaran tidak boleh lebih dari hari ini yaa ✨");
+    }
     setLoading(true);
     try {
       const fullClassName = `${payForm.subject} (${payForm.level}) - ${payForm.room}`.toUpperCase();
@@ -313,6 +317,9 @@ setTimeout(() => {
 
   const handleConfirmAbsen = async () => {
   if (!confirmingAbsen) return;
+  if (!selectedAbsenDate || selectedAbsenDate > todayWIB()) {
+    return alert("Tanggal belajar tidak boleh lebih dari hari ini yaa ✨");
+  }
   setLoading(true);
   try {
     // ✅ GANTI: Sekarang insert ke student_attendance
@@ -342,6 +349,9 @@ setTimeout(() => {
 
   const executeUpdateSessionDate = async () => {
   if (!showEditDateModal || !editDateValue) return;
+  if (editDateValue > todayWIB()) {
+    return alert("Tanggal sesi tidak boleh lebih dari hari ini yaa ✨");
+  }
   setLoading(true);
   try {
     // ✅ GANTI TABLE-NYA!
@@ -1251,7 +1261,7 @@ const handleDownloadPDFReport = async (course: any) => {
                 )}
                 <div className="space-y-3">
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Tanggal</label>
-                  <input type="date" value={payForm.date} onChange={e => setPayForm({...payForm, date: e.target.value})} className="w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-black text-[14px] outline-none h-[72px]" />
+                  <input type="date" max={todayWIB()} value={payForm.date} onChange={e => setPayForm({...payForm, date: e.target.value})} className="w-full px-8 py-6 bg-slate-50 rounded-[2rem] font-black text-[14px] outline-none h-[72px]" />
                 </div>
                 <div className="space-y-3">
                   <label className="text-[10px] font-black text-slate-400 uppercase ml-4 tracking-widest">Bukti Transfer (JPG/PNG)</label>
@@ -1703,7 +1713,7 @@ const completedSessions = studentAttendanceLogs
               <button onClick={() => setShowEditDateModal(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
               <div className="w-14 h-14 bg-blue-50 text-blue-600 rounded-2xl flex items-center justify-center mx-auto shadow-sm"><Calendar size={28} /></div>
               <div className="space-y-1"><h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Koreksi Tanggal</h4><p className="text-[8px] font-black text-blue-600 uppercase tracking-widest">Sesi {showEditDateModal.num} ✨</p></div>
-              <div className="space-y-2 text-left"><label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Pilih Tanggal Baru:</label><input type="date" value={editDateValue} onChange={e => setEditDateValue(e.target.value)} className="w-full px-4 py-3 bg-slate-50 rounded-xl font-black text-xs outline-none border-2 border-blue-50 shadow-inner" /></div>
+              <div className="space-y-2 text-left"><label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Pilih Tanggal Baru:</label><input type="date" max={todayWIB()} value={editDateValue} onChange={e => setEditDateValue(e.target.value)} className="w-full px-4 py-3 bg-slate-50 rounded-xl font-black text-xs outline-none border-2 border-blue-50 shadow-inner" /></div>
               <div className="flex gap-3"><button onClick={() => setShowEditDateModal(null)} className="flex-1 py-4 bg-slate-50 text-slate-400 rounded-xl font-black text-[9px] uppercase active:scale-95 transition-all">BATAL</button><button onClick={executeUpdateSessionDate} disabled={loading} className="flex-[2] py-4 bg-blue-600 text-white rounded-xl font-black text-[9px] uppercase shadow-lg active:scale-95 flex items-center justify-center gap-2">{loading ? <Loader2 size={14} className="animate-spin" /> : <><Save size={14}/> SIMPAN PERUBAHAN ✨</>}</button></div>
            </div>
         </div>
@@ -1783,7 +1793,7 @@ const completedSessions = studentAttendanceLogs
               <button onClick={() => setConfirmingAbsen(null)} className="absolute top-4 right-4 p-2 text-slate-300 hover:text-rose-500 transition-colors"><X size={20}/></button>
               <div className="w-14 h-14 bg-emerald-600 text-white rounded-full flex items-center justify-center mx-auto animate-bounce shadow-lg"><Check size={28} strokeWidth={4} /></div>
               <div className="space-y-1"><h4 className="text-xl font-black text-slate-800 uppercase italic leading-none">Konfirmasi Sesi</h4><p className="text-[8px] font-black text-blue-600 uppercase tracking-widest">{confirmingAbsen.course.className} - SESI {confirmingAbsen.sessionNum}</p></div>
-              <div className="space-y-2 text-left"><label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Kapan kamu belajarnya?</label><input type="date" value={selectedAbsenDate} onChange={e => setSelectedAbsenDate(e.target.value)} className="w-full px-4 py-3 bg-slate-50 rounded-xl font-black text-xs outline-none border-2 border-emerald-50 shadow-inner" /></div>
+              <div className="space-y-2 text-left"><label className="text-[8px] font-black text-slate-400 uppercase ml-2 tracking-widest">Kapan kamu belajarnya?</label><input type="date" max={todayWIB()} value={selectedAbsenDate} onChange={e => setSelectedAbsenDate(e.target.value)} className="w-full px-4 py-3 bg-slate-50 rounded-xl font-black text-xs outline-none border-2 border-emerald-50 shadow-inner" /></div>
               <button onClick={handleConfirmAbsen} disabled={loading} className="w-full py-4 bg-emerald-600 text-white rounded-xl font-black text-[9px] uppercase tracking-[0.2em] shadow-lg active:scale-95 transition-all flex items-center justify-center gap-2">{loading ? <Loader2 size={14} className="animate-spin" /> : 'SAYA SUDAH BELAJAR! ✨'}</button>
            </div>
         </div>
