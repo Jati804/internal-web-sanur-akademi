@@ -434,12 +434,63 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ subjects, classes, tea
     return () => { window.cancelAnimationFrame(id); window.removeEventListener('resize', updateThumb); };
   }, [form]);
 
+  // Jenis kelas dari nama ruangan (dipakai buat deteksi perubahan Reguler / Private / Home Tutoring)
+  const roomKind = (room: string) =>
+    /HOME TUTORING/i.test(room) ? 'HOME TUTORING' : /PRIVATE|PRIVAT/i.test(room) ? 'PRIVATE' : 'REGULER';
+
+  // Cari paket yang sedang berjalan (belum sesi 6) di slot ini. null = tidak ada.
+  const getRunningPackage = async (scheduleId: string): Promise<{ maxNum: number } | null> => {
+    const { data: rows, error } = await supabase
+      .from('attendance')
+      .select('id, packageid, sessionnumber')
+      .eq('scheduleid', scheduleId)
+      .in('status', ['SESSION_LOG', 'SUB_LOG']);
+    if (error) throw error;
+    const list = (rows || []) as any[];
+    // Paket yang sedang berjalan = paket dari input terbaru (ID berisi timestamp)
+    const latest = [...list].sort((x, y) => String(y.id).localeCompare(String(x.id)))[0];
+    if (!latest) return null;
+    const maxNum = list
+      .filter(r => r.packageid === latest.packageid)
+      .reduce((m, r) => Math.max(m, Number(r.sessionnumber) || 0), 0);
+    return maxNum < 6 ? { maxNum } : null;
+  };
+
   const handleSave = async () => {
     if (!form) return;
     if (!form.day || !form.start || !form.end || !form.subject || !form.teacherId || !form.room) {
       return alert('Lengkapi dulu hari, jam mulai, jam selesai, jenis pelatihan, pengajar, dan kelas.');
     }
     if (form.end <= form.start) return alert('Jam selesai harus setelah jam mulai.');
+
+    // Peringatan: ganti pengajar / ubah jenis kelas saat paket slot ini masih berjalan (belum sesi 6)
+    const oldItem = editingId ? items.find(i => i.id === editingId) : null;
+    if (oldItem) {
+      const teacherChanged = oldItem.teacherId !== form.teacherId;
+      const kindChanged = roomKind(oldItem.room) !== roomKind(form.room);
+      if (teacherChanged || kindChanged) {
+        try {
+          const running = await getRunningPackage(oldItem.id);
+          if (running) {
+            const warns: string[] = [];
+            if (teacherChanged) {
+              const oldName = teacherById.get(oldItem.teacherId)?.name || oldItem.teacherName || 'pengajar sebelumnya';
+              warns.push(`• Pengajar diganti. Sebaiknya jangan diganti dulu. Kalau ${oldName} berhalangan, minta beliau memakai fitur delegasi (Menggantikan) supaya guru lain yang mengisi sesinya.`);
+            }
+            if (kindChanged) {
+              warns.push(`• Jenis kelas diubah dari ${roomKind(oldItem.room)} menjadi ${roomKind(form.room)}. Sesi berikutnya memakai tarif dan kategori yang baru, jadi satu paket bisa bercampur tarif. Sebaiknya diubah setelah paket selesai (sesi 6).`);
+            }
+            const ok = window.confirm(
+              `Paket kelas ini masih berjalan (baru sesi ${running.maxNum} dari 6).\n\n${warns.join('\n\n')}\n\nTetap simpan perubahan ini?`
+            );
+            if (!ok) return;
+          }
+        } catch (e) {
+          // Cuma peringatan: kalau pengecekan gagal, simpan tetap dilanjutkan
+          console.error('Gagal mengecek paket yang sedang berjalan:', e);
+        }
+      }
+    }
 
     const item: ScheduleItem = {
       id: editingId || `SCH-${Date.now()}`,
@@ -459,6 +510,18 @@ export const ScheduleTab: React.FC<ScheduleTabProps> = ({ subjects, classes, tea
 
   const handleDelete = async () => {
     if (!confirmDelete) return;
+    // Peringatan: hapus jadwal saat paketnya masih berjalan (belum sesi 6)
+    try {
+      const running = await getRunningPackage(confirmDelete.id);
+      if (running) {
+        const ok = window.confirm(
+          `Jadwal ini punya paket yang masih berjalan (baru sesi ${running.maxNum} dari 6).\n\nKalau dihapus, guru tidak bisa lagi melanjutkan paket ini lewat jadwal, dan sesinya akan dianggap sesi lama.\n\nTetap hapus jadwal ini?`
+        );
+        if (!ok) { setConfirmDelete(null); return; }
+      }
+    } catch (e) {
+      console.error('Gagal mengecek paket yang sedang berjalan:', e);
+    }
     if (await persist(items.filter(i => i.id !== confirmDelete.id))) setConfirmDelete(null);
   };
 
