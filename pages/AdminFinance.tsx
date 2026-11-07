@@ -849,6 +849,8 @@ const payoutTotal = selectedPayout ? Number(selectedPayout.amount) + payoutTrans
 
 const executePayTeacher = async () => {
   if (!selectedPayout || !payForm.receiptData) return alert("Upload bukti transfer dulu! ✨");
+  // Tanggal pembayaran tidak boleh di masa depan (pencairan = uang yang sudah dibayarkan)
+  if (!payForm.date || payForm.date > getWIBDate()) return alert("Tanggal pembayaran tidak boleh lebih dari hari ini ya.");
   if (isHTpayout && payoutTransport === '') return alert("Isi nominal honor transport dulu ya (isi 0 kalau tidak ada) ✨");
   setIsLoading(true);
   // ID transport dibuat lebih kecil 1 angka dari ID honor, supaya di ledger (urut ID menurun) baris honor tampil di atas baris transport.
@@ -1398,6 +1400,7 @@ const executePayTeacher = async () => {
                 <div className="flex justify-center">
                   <input
                     type="date"
+                    max={getWIBDate()}
                     value={payForm.date}
                     onChange={e => setPayForm({ ...payForm, date: e.target.value })}
                     className={`px-3 py-2 bg-slate-50 rounded-xl font-black text-[11px] outline-none border-2 shadow-inner text-center ${selectedPayout.category === 'PRIVATE' ? 'border-orange-100 focus:border-orange-500' : 'border-blue-100 focus:border-blue-500'}`}
